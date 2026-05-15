@@ -61,8 +61,14 @@ levels. Every rule MUST use one of these words:
 1. **Git workflow** — branch, commit, PR, merge, issues
 2. **Domain operations** — how to add/modify the project's core data or
    entities (project-specific — e.g. "add a new lens", "add a migration")
-3. **Maintenance** — update dependencies, quality conventions, ADRs
-4. **Release and deploy** — release process, tagging, deployment
+3. **Quality** — testing, CI checks, linting, link checking, secret
+   scanning, and other quality verification workflows
+4. **Maintenance** — update dependencies, quality conventions, ADRs
+5. **Release and deploy** — release process, tagging, deployment
+
+Projects MAY add sections beyond these five (e.g. "Observability",
+"Infrastructure") — append them before Release and deploy, which MUST
+remain the last section.
 
 ## Documentation rule
 
