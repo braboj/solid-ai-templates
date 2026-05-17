@@ -65,6 +65,17 @@ gate categories to GitHub Actions workflows and GitHub-native features.
 
 ---
 
+## GitHub Pages
+
+[ID: platform-github-pages]
+
+- MUST enable "Enforce HTTPS" in repository Settings → Pages for custom
+  domains — GitHub Pages does not enforce HTTPS by default
+- HTTP requests MUST 301 redirect to HTTPS — without enforcement, HTTP
+  serves content with 200 OK, causing duplicate content and SEO penalties
+
+---
+
 ## Quality gate integration
 
 [ID: platform-github-gates]

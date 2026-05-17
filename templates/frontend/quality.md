@@ -88,5 +88,18 @@ Rules:
 - `robots.txt`, Open Graph, and Twitter Card meta tags required for
   server-rendered and static pages
 - Canonical URLs required for publicly indexed pages
+- MUST pick a trailing slash convention (with or without) and enforce it
+  across all internal links, canonical URLs, and sitemap entries — redirect
+  chains waste crawl budget, split link equity, and can prevent indexing
+- Verify the chosen convention matches the hosting platform's behavior
 - Privacy-friendly analytics only — no consent banner required
 - No third-party tracking scripts without explicit user consent
+
+## Structured data (if applicable)
+
+- Schema `@type` MUST match the page's actual role — do not use
+  `Product` + `Offer` on informational pages that do not sell anything
+- Fields MUST NOT imply capabilities the site lacks (e.g. `availability`
+  implies commerce, `priceValidUntil` implies a store)
+- Review schema choice when site role differs from template examples —
+  e-commerce examples applied to editorial sites produce misleading markup
