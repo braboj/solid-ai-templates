@@ -99,9 +99,12 @@ summarize — visible sequential execution prevents missed steps.
 3. **Epic checklists** — update epic checklists if relevant
 4. **Dev journal** — add a session entry to `docs/dev-journal.md`
    (date, tool, key changes, PRs merged, issues closed/created)
-5. **ADRs** — record any architectural decisions in `docs/decisions/`
-6. **CLAUDE.md** — for each new convention or rule introduced, does it
-   belong here? Name the section.
+5. **ADRs** — record any architectural decisions in `docs/decisions/`.
+   Check: were any new directories created or content moved between
+   documents? Each one needs an ADR.
+6. **CLAUDE.md** — list each new convention/rule by name, then evaluate
+   individually: does it belong here? Name the section. Do not
+   batch-dismiss.
 7. **README.md** — for each new command, dependency, or structural
    change, is it reflected? Name the section.
 8. **ONBOARDING.md** — for each new tool, prerequisite, or setup step,
