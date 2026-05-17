@@ -130,6 +130,17 @@ to change.
 
 ---
 
+## Trailing slash
+[ID: static-site-trailing-slash]
+
+- MUST verify the trailing slash convention matches the hosting platform's
+  behavior (e.g. GitHub Pages forces trailing slashes, Netlify and Vercel
+  are configurable)
+- SHOULD add a CI check that scans built HTML output for internal hrefs
+  violating the convention
+
+---
+
 ## SEO
 [ID: static-site-seo]
 [EXTEND: frontend-quality]

@@ -204,6 +204,13 @@ files into `src/content/`.
 - **ESLint** with `@typescript-eslint/recommended` and
   `eslint-plugin-sonarjs` for any `.ts` / `.tsx` files —
   configured in `eslint.config.js`, run on save
+- Enable `parserOptions.projectService` for type-checked linting — many
+  `sonarjs` rules (e.g. `no-alphabetical-sort`) require type info and are
+  silently inert without it; use `recommended` not `recommendedTypeChecked`
+  (the latter enables `no-unsafe-*` rules that break on CSS module imports
+  and Astro content collection types)
+- `eslint-plugin-unicorn` SHOULD be added for rules not covered by sonarjs
+  (e.g. `no-zero-fractions`, `prefer-number-properties`)
 - **Prettier** owns all formatting — commit `.prettierrc`; no style debates
   in code review
 - `.astro` files formatted with the official Prettier Astro plugin
@@ -273,6 +280,14 @@ Rules:
 - Hook framework: `husky` + `lint-staged` — config in `package.json`
 - Lighthouse thresholds: accessibility ≥ 90 (error), performance / SEO /
   best practices ≥ 90 (warn)
+
+---
+
+## Trailing slash
+[EXTEND: static-site-trailing-slash]
+
+- MUST set `trailingSlash` in `astro.config.mjs` to match hosting platform
+  (`"always"` for GitHub Pages, `"never"` for Netlify/Vercel defaults)
 
 ---
 
