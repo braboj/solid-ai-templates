@@ -70,6 +70,11 @@ Projects MAY add sections beyond these five (e.g. "Observability",
 "Infrastructure") — append them before Release and deploy, which MUST
 remain the last section.
 
+Subsection headings SHOULD follow the pattern **"what it checks (tool
+name)"** — e.g. "Secret scanning (gitleaks)", "Type checking (astro
+check)". Description-first naming keeps the section scannable regardless
+of tool changes.
+
 ## Documentation rule
 
 Before every commit, update all relevant documentation:
@@ -116,6 +121,14 @@ Before every commit, update all relevant documentation:
   data model specs, and migration tracking — decisions go in ADRs, data
   model is the code (`src/types/`), migration tracking belongs in the
   dev journal or issue tracker
+- ADRs MUST NOT reference future ADRs that do not exist yet — reference
+  backward only; each ADR is self-contained at the time of writing
+- Implementation details (phrase tables, templates, worked examples) belong
+  in the ADR itself, not in separate spec files — external specs create
+  maintenance burden and go stale
+- Creating a new directory or moving content between documents is an
+  architectural decision — write the ADR **at the moment of the decision**,
+  before creating the files
 
 ## Development journal
 

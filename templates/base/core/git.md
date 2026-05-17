@@ -78,6 +78,12 @@ remaining commits are silently lost.
   8. `git checkout main && git pull`
   9. `git tag vX.Y.Z && git push origin vX.Y.Z`
 
+### Post-release verification
+  10. Verify the manifest version matches the tag — e.g.
+      `grep '"version"' package.json` matches `git describe --tags`
+  11. A mismatch means the bump was missed or the wrong commit was
+      tagged — fix before announcing the release
+
 ### Projects without a version manifest (no-build)
   4. `git checkout main && git pull`
   5. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
