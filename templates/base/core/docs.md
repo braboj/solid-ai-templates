@@ -62,7 +62,10 @@ levels. Every rule MUST use one of these words:
 2. **Domain operations** — how to add/modify the project's core data or
    entities (project-specific — e.g. "add a new lens", "add a migration")
 3. **Quality** — testing, CI checks, linting, link checking, secret
-   scanning, and other quality verification workflows
+   scanning, and other quality verification workflows; manual verification
+   tools (analytics, search indexing, SEO crawls, performance field data)
+   belong here alongside automated checks — list automated first, manual
+   last
 4. **Maintenance** — update dependencies, quality conventions, ADRs
 5. **Release and deploy** — release process, tagging, deployment
 
