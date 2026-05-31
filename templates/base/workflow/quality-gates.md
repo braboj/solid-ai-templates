@@ -114,6 +114,59 @@ Stack templates MAY add additional thresholds (e.g. Lighthouse scores).
 
 ---
 
+## Skip noisy gates when input is unchanged
+
+[ID: quality-gates-skip-equivalent]
+
+Some gates measure a property of the *build output* (Lighthouse
+score, bundle size, visual diff, e2e behavior) and have enough
+single-sample variance to produce false positives near their
+threshold. When a PR's file set cannot affect the gate's input —
+e.g. a Dependabot bump of `package.json` + `package-lock.json` for
+a static site — running the gate is pure noise. Failure on a
+byte-identical build output is not a real regression; it is
+runner-variance pretending to be one.
+
+For a gate to be a skip candidate it MUST satisfy all three:
+
+1. **Output-measuring** — the gate evaluates the build output, not
+   the source (Lighthouse, bundle-size, visual diff, e2e, screenshot
+   diff)
+2. **Noisy at sample size 1** — single runs near the threshold
+   produce different verdicts on retry without any code change
+3. **Path-determined input** — there is a file-pattern subset that
+   provably cannot change the build output (lockfile-only changes
+   on a static site, README changes, etc.)
+
+Deterministic gates (lint, type check, unit tests, build success)
+and gates whose input depends on more than file changes (anything
+that hits the network or external state) MUST NOT be skipped.
+
+Example with GitHub Actions `dorny/paths-filter`: skip the
+Lighthouse job when the PR touches only dependency manifests
+(`build` still runs to verify the bump compiles):
+
+```yaml
+- uses: dorny/paths-filter@v3
+  id: changes
+  with:
+    filters: |
+      output_affecting:
+        - '!package.json'
+        - '!package-lock.json'
+
+- name: Lighthouse
+  if: steps.changes.outputs.output_affecting == 'true'
+  run: npm run lighthouse
+```
+
+Document the skip rule in an ADR alongside the workflow change —
+the reasoning ("this gate cannot produce signal on these PRs")
+should be discoverable later when someone wonders why the gate
+sometimes doesn't run.
+
+---
+
 ## What NOT to gate
 
 [ID: quality-gates-exclusions]
