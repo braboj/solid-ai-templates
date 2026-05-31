@@ -4,7 +4,7 @@ How to keep the template library in shape so that loading many
 templates doesn't dilute the agent's attention.
 
 This is the operational companion to
-`docs/patterns/agent-context-tradeoffs.md` (specifically the
+`docs/meta/agent-context-tradeoffs.md` (specifically the
 Attention dilution section). That document explains *why* dilution
 happens and why it's the only failure mode the project actually
 controls; this one covers *what to do about it* during review and
@@ -110,7 +110,7 @@ concerns, and this document supplies the operational checks.
 ## Source material
 
 This document was extracted from
-`docs/patterns/agent-context-tradeoffs.md` when the dilution
+`docs/meta/agent-context-tradeoffs.md` when the dilution
 discussion outgrew its host section. The mechanism explanation, the
 no-force-push redundancy example, and the review implications all
 originated in a wuseria-audit conversation (see source-material note

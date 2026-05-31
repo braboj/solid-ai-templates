@@ -269,17 +269,29 @@ this contract.
 
 ### Pattern files
 
-Pattern files (`docs/patterns/`) are human reference documentation.
-They are NOT part of the dependency graph or agent context. Parent
-rules files list which patterns to use as one-line conventions.
+Pattern files (`docs/patterns/`) are human reference documentation
+for *projects that use the templates*. They are NOT part of the
+dependency graph or agent context. Parent rules files list which
+patterns to use as one-line conventions.
 
 Current pattern files: `cicd.md`, `devsecops.md`, `frontend.md`,
-`security.md`, `testing.md`, `agent-context-tradeoffs.md` (explains
-how CLAUDE.md size and startup-block design affect agent latency
-and quality), `template-content-quality.md` (operational companion
-— how to keep the template library in shape so it doesn't dilute
-the agent's attention, with implications for code review, smoke
-tests, structure audit, and 360).
+`security.md`, `testing.md`.
+
+### Meta documents
+
+Meta documents (`docs/meta/`) are reference material *about the
+template library itself* — not conventions for projects using it.
+They cover how the library should be reasoned about, audited, and
+maintained.
+
+Current meta documents:
+
+- `agent-context-tradeoffs.md` — how CLAUDE.md size and
+  startup-block design affect agent latency and quality
+- `template-content-quality.md` — operational companion: how to
+  keep the template library in shape so it doesn't dilute the
+  agent's attention, with implications for code review, smoke
+  tests, structure audit, and 360
 
 ---
 
