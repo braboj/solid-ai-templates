@@ -156,6 +156,7 @@ A defect in existing functionality.
 ## Practices for Agent Effectiveness
 
 ### Write things down
+[ID: ai-workflow-write-down]
 
 The agent has no memory between sessions. Persistent context lives in:
 - **CLAUDE.md** — project conventions, stack, commands, rules
@@ -164,6 +165,36 @@ The agent has no memory between sessions. Persistent context lives in:
 - **README** — project overview and setup
 
 If you find yourself repeating instructions, add them to CLAUDE.md.
+
+### Doc placement decision tree
+[ID: ai-workflow-doc-placement]
+
+When the agent learns a new rule, convention, or fact worth persisting,
+it MUST consider all valid homes before saving — not default to
+CLAUDE.md or memory. Evaluate in priority order:
+
+1. **Code / JSDoc / docstrings** — naming, typing, or invariant rules
+   a developer reads while editing the relevant code
+2. **ADR** — architectural decisions with alternatives weighed
+3. **README** (project or package) — discoverable user-facing setup,
+   usage, or capability
+4. **PLAYBOOK** — operational workflow (commands, recipes)
+5. **CLAUDE.md** — only if the agent MUST apply the rule on every turn
+6. **Memory** — only for user / feedback / project / reference facts
+   that do not fit a code-side home
+
+Application rule:
+
+- If the right home is obviously memory (user preference, agent
+  behaviour) or obviously CLAUDE.md (every-turn rule), the agent MAY
+  act without asking
+- Otherwise the agent MUST ask one question — "the right home for
+  this looks like X — agree?" — and act on the user's call
+- The agent MUST NOT silently default to CLAUDE.md or memory
+
+This prevents CLAUDE.md and memory from silently absorbing content
+that belongs in code, ADRs, READMEs, or PLAYBOOK — which dilutes
+attention on rules that genuinely need to fire on every turn.
 
 ### Decide before delegating
 
