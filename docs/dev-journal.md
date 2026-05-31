@@ -554,3 +554,52 @@ recorded in ADR-004.
 - `sync.py --check` now validates generated/ files
 - Branch protection updated: only `smoke` required (removed `e2e`)
 - run_e2e.py refactored to use shared resolver from tools/resolve.py
+
+## 2026-05-31 — Viability spikes and milestone-rule fix
+
+**Tool:** Claude Code (Opus 4.7, 1M context)
+
+**PRs opened:**
+- #353 — Require milestone on every GitHub issue (closes #352)
+
+**Issues created:**
+- #349 — Spike: deep-knowledge + tutorial-extraction workflow
+  (v3.0 — Restructure, P3)
+- #350 — Spike: viability audit — does solid-ai-templates deliver
+  repeatable SOLID-grade quality? (v3.0 — Restructure, P2)
+- #352 — Enforce milestone-on-every-issue convention in
+  platform/github.md (v2.5 — Conventions, P2)
+
+**Issue grooming:**
+- Triaged 13 open issues: every open issue now has type + priority
+  + milestone (#332, #333, #334, #335, #337, #344, #345, #348,
+  #351, #354, #355, #356, #357)
+- New convention-rule issues parked in v2.5; restructure-scope
+  issues in v3.0
+
+**Key changes:**
+- Milestone rule added to `templates/platform/github.md` under
+  the existing `[EXTEND: base-issues-types]` block — milestones
+  are a GitHub feature, so the rule belongs in the platform layer,
+  not in platform-agnostic `base/workflow/issues.md`
+- Two spikes opened motivated by me-fuji CLAUDE.md bloat (29KB,
+  349 lines) and its forced 17-file SessionStart preload: #349
+  proposes a three-layer knowledge model (conventions / deep
+  knowledge / extractable tutorials), #350 is the broader
+  viability meta-audit
+
+**Process notes:**
+- First pass at the milestone rule landed in the wrong layer
+  (base instead of platform) and was duplicated in this repo's
+  own CLAUDE.md — caught during template re-read, reverted, and
+  reapplied correctly. Root cause: skipped the §6.1 startup
+  template read before editing the templates themselves.
+- Reinforces the case for #330 / #355 (mandatory template-file
+  reads at session start) — even with the rules visible, an
+  agent that doesn't read them edits at the wrong layer.
+
+**Lessons captured:** these are template-relevant, not
+project-specific — the layer-placement discipline (platform-
+specific concepts belong in the platform template, not base)
+should be reflected in #354's doc-placement decision tree when
+that issue is worked.
