@@ -353,8 +353,18 @@ summarize — visible sequential execution prevents missed steps.
    `docs/decisions/`
 6. **Smoke tests** — run `py tests/run_smoke.py` and confirm all
    checks pass
-7. **CLAUDE.md** — for each new convention or rule introduced,
-   does it belong here? Name the section.
+7. **CLAUDE.md** — for each new convention/rule, apply the
+   doc-placement decision tree in
+   `templates/base/workflow/ai-workflow.md` (Doc placement decision
+   tree section): evaluate code → ADR → README → PLAYBOOK →
+   CLAUDE.md → memory in order. CLAUDE.md is the home ONLY if the
+   agent MUST apply the rule on every turn.
+
+   CLAUDE.md contains rules only — not changelogs, package
+   architecture, per-feature progress, or session logs. Each rule
+   fits on one line; if it needs a paragraph, write an ADR and
+   leave a one-line pointer here. Evaluate items individually; do
+   not batch-dismiss.
 8. **README.md** — for each new command, dependency, or structural
    change, is it reflected? Name the section.
 9. **docs/SPEC.md** — for each change to composition model or ID

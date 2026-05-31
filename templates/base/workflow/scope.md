@@ -102,9 +102,16 @@ summarize — visible sequential execution prevents missed steps.
 5. **ADRs** — record any architectural decisions in `docs/decisions/`.
    Check: were any new directories created or content moved between
    documents? Each one needs an ADR.
-6. **CLAUDE.md** — list each new convention/rule by name, then evaluate
-   individually: does it belong here? Name the section. Do not
-   batch-dismiss.
+6. **CLAUDE.md** — for each new convention/rule, apply the doc-placement
+   decision tree in `ai-workflow.md` (Doc placement decision tree
+   section): evaluate code → ADR → README → PLAYBOOK → CLAUDE.md →
+   memory in order. CLAUDE.md is the home ONLY if the agent MUST
+   apply the rule on every turn.
+
+   CLAUDE.md contains rules only — not changelogs, package architecture,
+   per-feature progress, or session logs. Each rule fits on one line;
+   if it needs a paragraph, write an ADR and leave a one-line pointer
+   here. Evaluate items individually; do not batch-dismiss.
 7. **README.md** — for each new command, dependency, or structural
    change, is it reflected? Name the section.
 8. **ONBOARDING.md** — for each new tool, prerequisite, or setup step,
