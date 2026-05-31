@@ -21,12 +21,16 @@ Before starting any work, the agent MUST:
    proceeding
 4. Check `git status` — if uncommitted changes exist, resolve before
    starting new work
-5. Confirm the scope with the user before making changes
-6. If the task is ambiguous, ask: "What is the specific deliverable for
+5. Clean up stale branches: `git fetch --prune` to remove stale
+   remote-tracking refs, then `git branch --merged main | grep -v
+   main | xargs -r git branch -d` to delete local branches whose
+   PRs have squash-merged
+6. Confirm the scope with the user before making changes
+7. If the task is ambiguous, ask: "What is the specific deliverable for
    this session?"
-7. Write down the agreed scope — refer back to it when the session
+8. Write down the agreed scope — refer back to it when the session
    drifts
-8. Review open issues related to the agreed scope before writing code
+9. Review open issues related to the agreed scope before writing code
 
 ## Mandatory startup block
 
