@@ -100,11 +100,14 @@ dependency-free diff.
   7. Push, open PR, merge
   8. `git checkout main && git pull`
   9. `git tag vX.Y.Z && git push origin vX.Y.Z`
+  10. SHOULD create a GitHub Release from the tag:
+      `gh release create vX.Y.Z --title "vX.Y.Z" --generate-notes`
+      — a pushed tag alone does NOT create a Releases page entry.
 
 ### Post-release verification
-  10. Verify the manifest version matches the tag — e.g.
+  11. Verify the manifest version matches the tag — e.g.
       `grep '"version"' package.json` matches `git describe --tags`
-  11. A mismatch means the bump was missed or the wrong commit was
+  12. A mismatch means the bump was missed or the wrong commit was
       tagged — fix before announcing the release
 
 ### Projects without a version manifest (no-build)
