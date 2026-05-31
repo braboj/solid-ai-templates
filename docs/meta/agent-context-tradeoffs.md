@@ -114,15 +114,15 @@ to make CLAUDE.md small for speed — it is to make every line a rule
 the model can see clearly. Changelogs, package architecture, and
 per-feature progress dilute attention without adding to compliance.
 
-Loading many templates is mostly fine on this axis — structured
+Loading many templates is usually fine on this axis — structured
 separation helps the model keep topics distinct, and the imperative
 tone of well-written templates is easier to track than mixed prose.
-But two things compound dilution: redundant rules restated across
-templates (three near-duplicate no-force-push rules are worse than
-one), and loaded templates that don't apply to the project's stack
-(dead weight that dilutes without adding compliance). Trim the
-dependency chain to templates the project actually uses, and
-consolidate rules to single sources.
+The patterns that break this (redundant rules across templates,
+loaded-but-irrelevant templates) and what they imply for code review
+and audits are covered in detail in
+`docs/meta/template-content-quality.md` — that's the operational
+home for keeping the template library in shape so this section's
+"mostly fine" stays true.
 
 ---
 
