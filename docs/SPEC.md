@@ -273,6 +273,12 @@ Pattern files (`docs/patterns/`) are human reference documentation.
 They are NOT part of the dependency graph or agent context. Parent
 rules files list which patterns to use as one-line conventions.
 
+Current pattern files: `cicd.md`, `devsecops.md`, `frontend.md`,
+`security.md`, `testing.md`, `agent-context-tradeoffs.md` (the last
+explains how CLAUDE.md size and startup-block design affect agent
+latency and quality — useful when reasoning about what belongs in a
+project's CLAUDE.md).
+
 ---
 
 ## Override mechanism
