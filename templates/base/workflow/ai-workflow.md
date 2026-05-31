@@ -196,6 +196,23 @@ This prevents CLAUDE.md and memory from silently absorbing content
 that belongs in code, ADRs, READMEs, or PLAYBOOK — which dilutes
 attention on rules that genuinely need to fire on every turn.
 
+### Agent output style
+[ID: ai-workflow-output-style]
+
+Output to the user MUST be terse and scannable. Optimize for the
+reader skimming the screen, not the writer covering all bases.
+
+- Short sections with clear headings
+- Bullets over paragraphs; one sentence per point where possible
+- Tables and lists over prose when comparing options
+- State the recommendation directly; reserve rationale for when asked
+- Skip throat-clearing ("Good call", "Fair enough", "Great question")
+- Skip restating the problem — the user already knows it
+- Match the response shape to the request: a one-line question gets
+  a one-line answer, not a structured document
+
+The aim is the reader's time, not the writer's thoroughness.
+
 ### Decide before delegating
 
 The agent will build whatever you ask. The expensive mistake is building the wrong thing fast. Spend time on:
