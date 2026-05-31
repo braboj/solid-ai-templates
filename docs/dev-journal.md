@@ -603,3 +603,72 @@ project-specific — the layer-placement discipline (platform-
 specific concepts belong in the platform template, not base)
 should be reflected in #354's doc-placement decision tree when
 that issue is worked.
+
+**Continued — v2.5 closeout:**
+
+After the spike work, picked up v2.5 — Conventions one by one.
+All 12 originally-open v2.5 issues plus #352 (filed and merged
+during session) are now closed. Milestone shows 14 closed / 0 open.
+
+**PRs merged (continued):**
+- #353 — Require milestone on every GitHub issue (#352)
+- #359 — Forbid force-push, even --force-with-lease (#329)
+- #361 — De-stack a PR by branching fresh + cherry-pick (#336)
+- #362 — Add GitHub Release step to with-manifest release path (#338)
+- #363 — Add doc-placement decision tree (#354)
+- #365 — Rewrite end-of-session step 6 around content rules (#355)
+- #366 — Agent context trade-offs pattern doc (#356)
+- #367 — Multi-template loading + template dilution coverage (#356)
+- #370 — Split template content quality into docs/meta/ (#356)
+- #371 — Agent output style rule (#351)
+- #372 — Match document convention rule (#357)
+- #373 — Branch cleanup at session startup (#326)
+- #374 — YAGNI revisit trigger discipline (#340)
+- #375 — Import-time env mutation testing rule (#341)
+- #376 — CodeQL paths-ignore for captured fixtures (#343)
+- #377 — Skip noisy gates on equivalent-input PRs (#348)
+
+**Issues created (continued):**
+- #364 — Smoke check SYS-02 false-positive on inline ID refs
+  (bug, Backlog)
+- #368 — Spike: measure cold-start and template-loading cost
+  (scopes 1+2, v3.0)
+- #369 — Spike: cross-window cold-start comparison (Backlog,
+  blocked on #368)
+
+**Key changes:**
+- New docs/meta/ folder for library-facing reference material
+  (agent-context-tradeoffs.md, template-content-quality.md) —
+  distinct from docs/patterns/ which is project-facing
+- Agent-behavior cluster in base/workflow/ai-workflow.md now
+  covers four rules: doc placement, end-of-session content,
+  output style, document-convention matching
+- base/core/git.md gains three rules: no-force-push, de-stack PR,
+  optional gh release create step
+- base/core/quality.md YAGNI bullet extended with revisit-trigger
+  discipline
+- base/core/testing.md gains env-mutation-isolation rule
+- platform/github.md gains milestone requirement and CodeQL
+  paths-ignore for fixtures
+- base/workflow/quality-gates.md gains conditional-skip pattern
+  for noisy output gates
+- base/workflow/scope.md session startup gains branch cleanup
+  step (step 5), end-of-session step 6 rewritten around
+  doc-placement decision tree
+
+**Process notes (continued):**
+- Switched mid-session to `gh pr merge --auto --squash
+  --delete-branch` per user direction — saved time on the long
+  v2.5 sweep
+- The PR #370 saga (mid-PR split into two files, then folder move
+  to docs/meta/) illustrated the doc-placement decision tree
+  *operating in real time*: the dilution discussion outgrew its
+  host file, then the new file revealed it didn't belong in
+  patterns/. Both reorganizations were the right call mid-stream.
+
+**Lessons captured (continued):** the v2.5 closeout demonstrates
+that small, focused, well-anchored PRs scale well with auto-merge.
+The agent-behavior cluster in ai-workflow.md ended up as four
+sibling sections — proves the YAGNI hold from #354 (don't pre-emptively
+create agent-behavior.md) was correct. The split into docs/meta/
+was the right move when content actually accumulated.
