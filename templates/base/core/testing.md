@@ -192,6 +192,16 @@ fixing the design fixes the testability.
   problem
 - Test behaviour, not implementation details
 - Each test MUST be independent — no shared mutable state between tests
+- Environment variables and other process-global state are shared
+  across the entire test process. A module that mutates the
+  environment (or any global) at *import time* leaks the change into
+  every test, and import order is not guaranteed. Tests that depend
+  on a variable being a specific value — including *unset* — MUST
+  set or clear it explicitly per test (e.g. `pytest`'s
+  `monkeypatch.setenv` / `monkeypatch.delenv`, equivalents in other
+  frameworks), never rely on the ambient process state. A test that
+  passes or fails depending on run order is an isolation bug, not
+  flakiness
 - A failing test MUST trigger an investigation before any other action —
   never suppress or skip a failing test without a documented reason
 - Tests are code and MUST be treated as such — they MAY contain bugs; when
