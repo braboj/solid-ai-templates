@@ -54,6 +54,21 @@ remaining commits are silently lost.
 - SHOULD enable "automatically delete head branches" in repository
   settings to prevent stale branches from accumulating
 
+### De-stacking a dependent branch
+
+When branch B was stacked on branch A and A has squash-merged to main,
+B still contains A's now-duplicate commit. The tempting fix is to
+rebase B onto main — but B is already pushed, so this requires a
+force-push, which is forbidden.
+
+- MUST NOT rebase the already-pushed B to drop A's commit
+- MUST branch fresh off the updated main and cherry-pick only B's
+  own commits; open the PR from the new branch
+- Delete the old stacked branch once its superseded PR is closed
+
+This keeps remote history intact and yields a clean,
+dependency-free diff.
+
 ## README
 - Every repository MUST contain a `README.md`
 - The README MUST conform to the structure and rules defined in `templates/base/core/readme.md`
