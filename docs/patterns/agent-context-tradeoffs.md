@@ -114,71 +114,15 @@ to make CLAUDE.md small for speed — it is to make every line a rule
 the model can see clearly. Changelogs, package architecture, and
 per-feature progress dilute attention without adding to compliance.
 
-Loading many templates is usually fine on this axis, but it pays to
-understand *why* — and which patterns break that.
-
-A model's attention isn't a fixed budget spread evenly across every
-token in context. It's allocated based on signals that make some
-content stand out as relevant. Two structural properties give
-well-written templates an advantage. First, **distinct topics with
-clear boundaries**: a file titled `base/core/git.md` containing only
-commit, branch, and PR rules is easier for the model to retrieve
-from than a CLAUDE.md where the same rules are sprinkled between a
-changelog, a tool catalog, and a per-feature progress log. Headings
-and consistent file organization act as retrieval cues; mixing
-topics removes them. Second, **imperative, deduplicated rules**:
-"MUST do X" stated once is a single high-confidence signal. The
-same rule restated three times in slightly different words is three
-lower-confidence signals the model has to reconcile — and
-reconciliation can drop the rule entirely if the variants seem to
-conflict.
-
-So 17 well-structured templates with unique, scoped rules behave
-roughly like 17 chapters of one well-organized reference. The same
-17 templates' content dumped into a single 100 KB CLAUDE.md would
-lose that advantage even though the bytes are identical. Structure
-itself reduces dilution.
-
-Two patterns reliably break this and cause attention loss regardless
-of byte count. The first is **redundancy across templates**. Concrete
-example: suppose `base/core/git.md`, `base/workflow/scope.md`, and
-`platform/github.md` each restate a no-force-push rule in slightly
-different words — one says "never force-push," another says "do not
-rewrite shared history," the third says "MUST NOT use --force." The
-model now sees three signals and has to treat them as either one
-rule (the right read) or three distinct constraints (and then wonder
-which is authoritative when they don't match word-for-word). When
-the rule fires on the next turn, the reconciliation cost makes it
-*less* likely to apply cleanly than if it were stated once. The
-second pattern is **loaded but irrelevant templates**. A static-site
-project that loads backend service templates pays full attention
-cost for rules the agent will never apply. The model still reads
-them, still weighs them against the current turn's question, still
-gets occasional false-positive matches. Trim the dependency chain
-so every loaded template's rules can plausibly fire on this project.
-
-The discipline is twofold: keep each rule in exactly one template
-(the single source of truth principle from `base/core/docs.md`
-applies to templates themselves), and only load templates whose
-rules are applicable to the project.
-
-Because template content quality is the only dilution lever the
-project actually controls, code review, structure audit, smoke
-tests, and 360-degree analysis should treat redundancy and
-relevance as first-class quality concerns — not just correctness or
-style. Code review of a template change should ask whether any
-existing template in the resolved chain already states the rule, and
-consolidate rather than restate. Smoke tests could detect
-near-duplicate rules across a stack's resolved chain (fuzzy
-line-match across DEPENDS-ON closures); today they cover structural
-validity but not content overlap. Structure audits should extend
-beyond ref-resolution and ID uniqueness to flag rules that appear in
-multiple templates with variant wording. And 360-degree analysis,
-when run against the template library itself rather than only
-projects using it, should include "are these rules unique, scoped,
-and applicable?" as an explicit category. See spike #350 (viability
-audit) for the broader framing — axes 2 (rule effectiveness) and 7
-(validation gap) are the load-bearing concerns.
+Loading many templates is usually fine on this axis — structured
+separation helps the model keep topics distinct, and the imperative
+tone of well-written templates is easier to track than mixed prose.
+The patterns that break this (redundant rules across templates,
+loaded-but-irrelevant templates) and what they imply for code review
+and audits are covered in detail in
+`docs/patterns/template-content-quality.md` — that's the operational
+home for keeping the template library in shape so this section's
+"mostly fine" stays true.
 
 ---
 

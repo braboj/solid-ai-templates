@@ -274,10 +274,12 @@ They are NOT part of the dependency graph or agent context. Parent
 rules files list which patterns to use as one-line conventions.
 
 Current pattern files: `cicd.md`, `devsecops.md`, `frontend.md`,
-`security.md`, `testing.md`, `agent-context-tradeoffs.md` (the last
-explains how CLAUDE.md size and startup-block design affect agent
-latency and quality — useful when reasoning about what belongs in a
-project's CLAUDE.md).
+`security.md`, `testing.md`, `agent-context-tradeoffs.md` (explains
+how CLAUDE.md size and startup-block design affect agent latency
+and quality), `template-content-quality.md` (operational companion
+— how to keep the template library in shape so it doesn't dilute
+the agent's attention, with implications for code review, smoke
+tests, structure audit, and 360).
 
 ---
 
