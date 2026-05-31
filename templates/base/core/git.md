@@ -26,6 +26,14 @@
 - **Before pushing or creating a PR**, check `git status` and list open PRs.
   If the previous PR is closed or merged, create a new branch rather than
   pushing to a stale one.
+- **Never force-push a branch**, including with `--force-with-lease`.
+  Force-push rewrites shared history and can clobber upstream commits
+  (collaborators, agents, CI bots) that haven't been fetched locally.
+  - When a PR branch is behind `main`, merge `main` into the branch —
+    do not rebase and force-push. On GitHub, use the "Update branch"
+    button or `gh pr update-branch <N>`.
+  - Squash-merge collapses the merge commit on merge, so local branch
+    shape does not pollute `main` history.
 - **After a PR is merged**, delete both remote and local branch, then pull main:
   ```
   git branch -d <branch>
