@@ -213,6 +213,25 @@ reader skimming the screen, not the writer covering all bases.
 
 The aim is the reader's time, not the writer's thoroughness.
 
+### Match document convention
+[ID: ai-workflow-match-convention]
+
+Before appending to or editing any document with an established
+format (dev journal, ADRs, README, changelog, specs-log,
+scoring-log, etc.), the agent MUST read the most recent 1–2 prior
+entries and copy their skeleton: heading levels, section order,
+label style (e.g. `#### PRs` vs `**PRs:**`), bullet vs paragraph
+form, and presence/absence of preamble.
+
+This applies even when a project's CLAUDE.md or PLAYBOOK names the
+required *content* but not the exact *format* — the prior entry is
+the authoritative structural template. Do not let stylistic choices
+from the current chat session bleed into documents with their own
+convention.
+
+If the prior format is genuinely problematic and worth changing,
+raise it explicitly — never silently deviate.
+
 ### Decide before delegating
 
 The agent will build whatever you ask. The expensive mistake is building the wrong thing fast. Spend time on:

@@ -150,6 +150,10 @@ Before every commit, update all relevant documentation:
 - Do not duplicate content that belongs elsewhere — link to ADRs for
   decisions, link to issues for task tracking, do not repeat data model
   specs that live in code
+- When writing a new entry, follow the document-convention-matching
+  rule in `templates/base/workflow/ai-workflow.md` (Match document
+  convention section) — read prior entries and copy their skeleton
+  exactly; the prior entry is the authoritative structural template
 
 ### Post-mortems
 
