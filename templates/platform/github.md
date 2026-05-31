@@ -27,6 +27,33 @@ gate categories to GitHub Actions workflows and GitHub-native features.
 - Runs as a GitHub Actions workflow or as automatic analysis
 - Supports: JavaScript, TypeScript, Python, Go, Java, C/C++, C#, Ruby
 - Stack-specific SAST supplements (Bandit, govulncheck) run as CI steps
+- **Exclude captured-content test fixtures from CodeQL analysis.**
+  Projects with web-scraper snapshots, contract-test fixtures, or
+  vendored example payloads frequently get high-severity alerts on
+  third-party minified JS / vendor libraries embedded in those
+  fixtures. The fixtures are not project code — they are frozen
+  snapshots for offline test repeatability. Add a
+  `.github/codeql-config.yml` with `paths-ignore` for the fixture
+  directories and reference it from the workflow:
+
+  ```yaml
+  # .github/codeql-config.yml
+  name: "Project CodeQL config"
+  paths-ignore:
+    - "tests/fixtures/**"
+    - "tools/**/tests/fixtures/**"
+  ```
+
+  ```yaml
+  # .github/workflows/codeql.yml
+  - uses: github/codeql-action/init@v4
+    with:
+      languages: javascript-typescript
+      config-file: ./.github/codeql-config.yml
+  ```
+
+  Applies to any captured-content fixture (HTML, JSON, JS), not just
+  web-scraper output.
 
 ---
 
