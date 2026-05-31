@@ -92,6 +92,14 @@ system prompt leaves ~172k for everything else. Most sessions never
 fill that — but a session that reads many large files or runs many
 tool calls can.
 
+A startup block that force-reads N templates contributes to context
+pressure on top of CLAUDE.md itself. Rough budget intuition: 17 base
+templates run ≈ 80–120 KB ≈ 20–30k tokens — about 2–3% of a 1M-token
+window, or 10–15% of a 200k window. Comfortably within budget on
+modern windows. The point isn't that template loading is free — it's
+that *fit* is rarely the failure mode. The failure modes that matter
+are convention compliance and attention dilution.
+
 ### Attention dilution
 
 Models pay less attention to rules buried in long context than to
@@ -105,6 +113,16 @@ This is the strongest argument for content discipline. The aim is not
 to make CLAUDE.md small for speed — it is to make every line a rule
 the model can see clearly. Changelogs, package architecture, and
 per-feature progress dilute attention without adding to compliance.
+
+Loading many templates is mostly fine on this axis — structured
+separation helps the model keep topics distinct, and the imperative
+tone of well-written templates is easier to track than mixed prose.
+But two things compound dilution: redundant rules restated across
+templates (three near-duplicate no-force-push rules are worse than
+one), and loaded templates that don't apply to the project's stack
+(dead weight that dilutes without adding compliance). Trim the
+dependency chain to templates the project actually uses, and
+consolidate rules to single sources.
 
 ---
 
