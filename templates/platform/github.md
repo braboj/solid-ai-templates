@@ -111,6 +111,10 @@ GitHub implements issue types and priorities as labels. Every issue
 MUST have exactly one type label and one priority label. Triage
 labels are terminal — applied when closing without action.
 
+Every issue MUST also be assigned to a milestone at creation. Issues
+without a target release MUST use the `Backlog` milestone — the
+milestone field MUST NOT be empty.
+
 Colors follow the Atlassian design system palette. Type labels use
 saturated hues; priority labels use a warm-to-cool gradient to
 remain visually distinct when displayed side by side.
