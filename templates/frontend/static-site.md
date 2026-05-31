@@ -130,6 +130,17 @@ to change.
 
 ---
 
+## Trailing slash
+[ID: static-site-trailing-slash]
+
+- MUST verify the trailing slash convention matches the hosting platform's
+  behavior (e.g. GitHub Pages forces trailing slashes, Netlify and Vercel
+  are configurable)
+- SHOULD add a CI check that scans built HTML output for internal hrefs
+  violating the convention
+
+---
+
 ## SEO
 [ID: static-site-seo]
 [EXTEND: frontend-quality]
@@ -145,3 +156,15 @@ to change.
 - JSON-LD structured data SHOULD be present on content pages (Article,
   Course, or appropriate schema type)
 - Privacy-friendly analytics only (no consent banner required)
+
+### SEO strategy (structure audit)
+
+- **Title-intent alignment** — page titles SHOULD match the queries users
+  actually type (check GSC or keyword research); include the primary
+  keyword, not just abbreviations or internal jargon; 50–60 characters
+- **Internal linking** — related pages SHOULD link to each other (topical
+  clusters); no orphan pages (every page reachable within 3 clicks from
+  the homepage); content pages SHOULD average 3+ internal links
+- **Content depth** — pages intended for indexing SHOULD exceed ~150 words;
+  pages below threshold are either enriched or noindexed; no
+  duplicate/near-duplicate thin pages
