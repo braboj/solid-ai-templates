@@ -92,6 +92,21 @@ system prompt leaves ~172k for everything else. Most sessions never
 fill that — but a session that reads many large files or runs many
 tool calls can.
 
+#### Multi-template loading
+
+A startup block that force-reads N templates contributes to context
+pressure on top of CLAUDE.md itself. Rough budget intuition:
+
+- 17 base templates ≈ 80–120 KB ≈ 20–30k tokens
+- Against a 1M-token window: ~2–3% — comfortably within budget
+- Against a 200k window: ~10–15% — meaningful but not crowding
+
+The point isn't that template loading is free — it's that *fit* is
+rarely the failure mode on modern context windows. The failure modes
+that matter are convention compliance (does the rule fire on the
+right turn?) and attention dilution (does the model see the rule
+clearly enough to apply it?).
+
 ### Attention dilution
 
 Models pay less attention to rules buried in long context than to
@@ -105,6 +120,27 @@ This is the strongest argument for content discipline. The aim is not
 to make CLAUDE.md small for speed — it is to make every line a rule
 the model can see clearly. Changelogs, package architecture, and
 per-feature progress dilute attention without adding to compliance.
+
+#### Does loading 17 templates dilute attention?
+
+Mostly no, with one caveat:
+
+- **Structured separation helps.** Templates with clear headings,
+  distinct topics, and consistent imperative tone are easier for the
+  model to keep distinct than the same bytes mixed into long prose.
+  The structure itself reduces dilution.
+- **Redundant rules compound.** If three base templates each restate
+  the no-force-push rule in slightly different words, the model has
+  to reconcile near-duplicate signals — worse than stating it once.
+  Dilution scales with *redundancy*, not file count.
+- **Every loaded template should earn its place.** A template loaded
+  but never relevant to the project's stack is dead weight that
+  dilutes attention without adding compliance. Trim the dependency
+  chain to templates the project actually uses.
+
+The 17-template budget is fine on context size. The discipline that
+matters is keeping each template's rules unique, scoped, and actually
+applicable to the project.
 
 ---
 
