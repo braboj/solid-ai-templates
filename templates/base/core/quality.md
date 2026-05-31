@@ -10,7 +10,12 @@
   complexity must be justified by a requirement, not by elegance
 - **YAGNI — You Aren't Gonna Need It**: do not build for hypothetical
   future requirements; build what is needed now, refactor when the
-  need is real
+  need is real. When YAGNI defers a dependency, abstraction, or
+  feature, record the concrete *revisit trigger* alongside the
+  deferral (e.g. "when this grows to N config values," "when this
+  is extracted to its own repo," "when a second call site appears").
+  A deferral without a trigger gets re-argued every time it comes up
+  or quietly forgotten; a deferral with a trigger is a decision.
 
 ## Architecture
 
