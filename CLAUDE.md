@@ -333,6 +333,11 @@ Run `py tests/run_smoke.py` before every PR. It checks:
 - Run `py tests/run_smoke.py` after any template or manifest change
 - If a change affects multiple documents, update all in the same PR
 - Do not drift from the agreed scope without checking with the user
+- When a path-based shell query (`test -f`, `ls`, `git -C <path>`,
+  `git submodule status`, `git ls-tree`, etc.) returns an
+  unexpected empty/negative, FIRST verify the working directory
+  (`pwd`) — shell tool cwd persists across commands and an earlier
+  `cd` may make "from the repo root" diagnostics false-negative
 
 ### 6.3 End of session
 

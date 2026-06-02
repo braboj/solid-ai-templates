@@ -1,5 +1,74 @@
 # Dev Journal
 
+## 2026-06-02 — v2.6 agent discipline & ADR governance
+
+**Tool:** Claude Code (Opus 4.7, 1M context)
+
+**Key changes:**
+- Fixed SYS-02 smoke check to treat inline `[ID:]` references as
+  references, not declarations — sole-line shape only. Routed
+  SYS-02, TPL-04, TPL-06, TPL-07, TPL-08, TPL-09 through a shared
+  `iter_id_declarations()` helper. Spec updated (#364, PR #383)
+- Added close-and-resubmit pattern to `base/core/git.md` under
+  Pull requests — codifies SHOULD close + new PR when branch /
+  title / body no longer match the actual decision (#382, PR #384)
+- Added Probe scripts subsection to `base/core/quality.md` under
+  Debug code — throwaway investigation scripts (`probe_*.py`)
+  MUST be deleted before commit; findings move to comments / ADRs
+  / docs (#360, PR #385)
+- Added Generated files section to `base/core/docs.md` between
+  Docs-as-code and Output file by agent — banner + `--check` flag
+  + formatter-ignore SHOULDs (#380, PR #386)
+- Added Verify working directory before concluding on a negative
+  rule to `base/workflow/ai-workflow.md` with
+  `[ID: ai-workflow-pwd-on-negative]` — pwd check as first
+  diagnostic step on unexpected negative path queries (#358, PR #388)
+- Added inline-ASCII-diagram SHOULD rule for non-trivial ADRs to
+  the Decision logs section of `base/core/docs.md` — plain ASCII
+  (+/-/|), not Unicode box-drawing (#342, PR #389)
+- Added Findings docs subsection to `base/core/docs.md` Decision
+  logs — lightweight markdown co-located with data, distinguishing
+  from ADRs (decisions) and dev journal (history) (#347, PR #390)
+- Recorded ADR-010 ADR governance model + `docs/decisions/TEMPLATE.md`
+  — YAML frontmatter (id, status, date, category, supersedes,
+  superseded_by); closed status set (Proposed / Accepted /
+  Superseded); closed category set (composition, templates,
+  tooling, process, release); two-way supersession links as the
+  ONE exception to immutability; flat-folder + status-filter
+  archival; ADRs MUST NOT cite other ADRs in prose except via
+  the frontmatter graph (#379, PR #394)
+
+**Audit at session start:**
+- Closed #304 as already done (RFC 2119 keywords already in
+  `base/core/docs.md` Rule language table)
+- Closed #327 as already done (wrap-up checklist in `scope.md`
+  already enumerates steps 6 and 9 with "Name the section")
+- Closed #328 as duplicate of #337 (newer, more concrete version
+  of the docs/audits/ proposal)
+
+**Triage:**
+- 5 unmilestoned backlog issues moved to Backlog (#358, #360,
+  #380, #381, #382) — none fit v3.0 restructure scope
+- Created v2.6 milestone with 8 issues (Mixed: agent discipline
+  + ADR governance + smoke bug)
+
+**Follow-up issues created from session work:**
+- #387 — Apply generated-file banner + --check to this repo's
+  `generated/` files (dogfood ADR-010's convention)
+- #391 — ADR migration: retrofit frontmatter onto ADRs 001-009
+- #392 — Smoke check: enforce ADR frontmatter schema
+- #393 — `CLAUDE.md` §2.9: summarize ADR governance, point to
+  TEMPLATE.md
+
+**Issues closed:** #304, #327, #328, #342, #347, #358, #360,
+  #364, #379, #380, #382 (11 total — 8 v2.6 + 3 audit)
+
+**PRs merged:** #383, #384, #385, #386, #388, #389, #390, #394
+
+**v2.6 closeout: 8/8 done.**
+
+---
+
 ## 2026-05-07 — v2.5 coverage and scope
 
 **Tool:** Claude Code (Opus 4.6, 1M context)
