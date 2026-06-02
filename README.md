@@ -3,15 +3,22 @@
 *Forged in real work, not theorized — every rule here came from a real
 AI-assisted project.*
 
-Five developers with five agents produce five coding styles — unless they
-share the same context file.
+You've shipped the same CLAUDE.md three times this quarter. Each copy is
+slightly different, none of them are right, and the agent still doesn't
+know your team's conventions.
 
-Your AI agent writes better code when it has good instructions — but most
-teams write CLAUDE.md and AGENTS.md files from scratch, and they quickly
-fall out of sync.
+You're not alone, and it's not negligence — writing context files from
+scratch is the quiet cost of every agent-assisted team. Everyone pays
+it, few teams have a system for it, and the codebase drifts a little
+further from your standards every sprint.
 
-This repo gives you composable, SOLID-inspired templates for building
-consistent context files for any stack and any agent.
+This repo gives you composable templates that codify your team's
+conventions once — base rules, stack rules, company rules — and feed
+them to every agent on every project. Tax paid. Move on.
+
+Back to the work that actually moves the product. The spikes, the design
+conversations, the reviews that catch bugs instead of style nits. That's
+what your team's time is for.
 
 ## What it does
 
