@@ -1,8 +1,7 @@
 # SOLID-AI Templates
 
 *Forged in real work, not theorized — every rule here came from a real
-AI-assisted project. See
-[ADR-011](docs/decisions/011-provenance-principle.md).*
+AI-assisted project.*
 
 Five developers with five agents produce five coding styles — unless they
 share the same context file.
