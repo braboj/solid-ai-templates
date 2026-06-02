@@ -232,6 +232,34 @@ convention.
 If the prior format is genuinely problematic and worth changing,
 raise it explicitly — never silently deviate.
 
+### Verify working directory before concluding on a negative
+[ID: ai-workflow-pwd-on-negative]
+
+Agent shell tools persist the working directory across commands
+within a session. An earlier `cd` (yours or implicit from a chained
+command) can change where subsequent relative paths resolve, so a
+diagnostic that returns empty may be false-negative — running from
+the wrong directory rather than the file/entry actually being
+missing.
+
+When a path-based shell query (`test -f`, `ls`, `git -C <path>`,
+`cat`, etc.) returns empty or fails against a path you have reason
+to believe exists, the FIRST diagnostic step MUST be to verify the
+working directory (`pwd` or equivalent). Specifically check `pwd`
+when:
+
+- `test -f X` returns empty for a file you have grounds to expect
+- `git submodule status` returns empty in a repo with known
+  submodules — you may be inside a submodule, where the parent's
+  submodule list does not apply
+- `git ls-tree HEAD <path>` shows no expected entry — you may be
+  in a sibling repo or worktree
+- Any "from the repo root" diagnostic gives an unexpected negative
+
+During investigative work where the conclusion depends on a
+negative result, SHOULD use absolute paths for path-based queries
+to remove ambient-directory dependence entirely.
+
 ### Decide before delegating
 
 The agent will build whatever you ask. The expensive mistake is building the wrong thing fast. Spend time on:
