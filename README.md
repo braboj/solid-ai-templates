@@ -31,9 +31,9 @@ what your team's time is for.
 
 ## How to use
 
-**Prerequisites:** any LLM interface — local agent (Claude Code,
-Cursor, Codex CLI), web portal (Claude.ai, ChatGPT, Gemini), or
-REST API (Anthropic, OpenAI).
+**Prerequisites:** a local coding agent that can read files from
+your project directory (Claude Code, Cursor, Codex CLI, Windsurf,
+or similar).
 
 **Output:** a `CLAUDE.md` or `AGENTS.md` file placed at your project
 root, containing coding conventions tailored to your stack. Works
@@ -43,33 +43,35 @@ whether starting from scratch or improving existing code. Review and
 adjust the output before adopting it — results vary by model and
 prompt size.
 
-### Try it — attach one file
+### Try it — clone and point the agent at the templates
 
-No install required. Download a stack template from GitHub and attach
-it to your agent:
+*Fastest path. The agent picks the stack on its own — least
+input from you, most variance in output.*
 
-1. Find your stack in the [supported stacks](#supported-stacks) table
-2. Open the raw file on GitHub and save it (or copy the contents)
-3. Open your agent in your project directory
-4. Attach the stack template and provide your project details:
+Clone the repo and tell the agent to generate from it:
 
-```
-Attach: python-fastapi.md
-
-Generate a CLAUDE.md for this project.
-Name: my-service, owner: Acme, repo: github.com/acme/my-service,
-database: PostgreSQL, auth: JWT.
+```bash
+git clone https://github.com/braboj/solid-ai-templates.git
 ```
 
-The agent drafts a context file. Review it, adjust as needed, and
-place it at your project root.
+1. Open your agent in your project directory
+2. Tell the agent:
 
-> **Web portal or API?** Use a pre-resolved file from `generated/`
-> instead of a single stack template — it includes the full
-> dependency chain in one file. See
-> [model limitations](#model-limitations) for token guidance.
+```
+Use solid-ai-templates/ to generate a CLAUDE.md for this
+project. Start by reading templates/manifest.yaml to discover
+the available stacks, then follow the [DEPENDS ON] chain for
+the stack that fits.
+```
+
+3. The agent picks a matching stack, resolves the chain, and
+   drafts the file
+4. Review, adjust, and place at your project root
 
 ### Use it — clone and run the interview
+
+*Guided path. The agent asks about your project before generating —
+slower, but tighter fit to your context.*
 
 Clone the templates and let the agent guide you through setup:
 
@@ -84,10 +86,11 @@ git clone https://github.com/braboj/solid-ai-templates.git
 4. Confirm the stack — the agent generates `CLAUDE.md` or `AGENTS.md`
 5. Place the generated file at your project root
 
-The interview tends to produce more complete output than attaching a
-single file, because the agent resolves the full dependency chain
-(base rules, layer rules, stack rules). Results depend on the model
-and context window available.
+The interview tends to produce a tighter fit than the
+manifest-discovery path, because the agent gathers project
+specifics from you before resolving the dependency chain (base
+rules, layer rules, stack rules). Results depend on the model and
+context window available.
 
 ### Adopt it — vendor as a submodule
 
@@ -121,8 +124,6 @@ latest rules.
   may be truncated — generate section by section or set `max_tokens`
   to the model maximum
 - **Output token limit 32K+**: full inline file fits in one pass
-- **Free tier rate limits**: use a local agent or a pre-resolved file
-  to minimise round trips
 
 ## Supported stacks
 
