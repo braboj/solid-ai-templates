@@ -36,6 +36,26 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
+# [ID: ...] declaration matching
+# ---------------------------------------------------------------------------
+# An [ID: foo] tag is a declaration only when it is the entire content of
+# its line (whitespace-only surroundings allowed). Inline occurrences in
+# prose, code blocks, or table cells are references and MUST NOT count as
+# declarations — otherwise referencing another template's ID in prose
+# would trip duplicate-detection (SYS-02).
+
+_DECL_LINE = re.compile(r'^\s*\[ID:\s*([^\]]+)\]\s*$')
+
+
+def iter_id_declarations(content):
+    """Yield (section_id, line_number) for each [ID:] declaration line."""
+    for i, line in enumerate(content.splitlines(), start=1):
+        m = _DECL_LINE.match(line)
+        if m:
+            yield m.group(1).strip(), i
+
+
+# ---------------------------------------------------------------------------
 # Manifest resolution helpers (shared by MNF-02, MNF-03, MNF-04)
 # ---------------------------------------------------------------------------
 
@@ -146,14 +166,12 @@ def check_sys_01():
 
 def check_sys_02():
     failures = []
-    pattern = re.compile(r'\[ID:\s*([^\]]+)\]')
     seen = {}
 
     for filepath in all_template_files():
         content = read(filepath)
         rel = os.path.relpath(filepath, ROOT)
-        for match in pattern.finditer(content):
-            sid = match.group(1).strip()
+        for sid, _ in iter_id_declarations(content):
             if sid in seen:
                 failures.append(
                     f"  Duplicate ID '{sid}': "
@@ -171,14 +189,13 @@ def check_sys_02():
 
 def check_tpl_04():
     failures = []
-    id_pattern  = re.compile(r'\[ID:\s*([^\]]+)\]')
     ref_pattern = re.compile(r'\[(EXTEND|OVERRIDE):\s*([^\]]+)\]')
 
     declared = set()
     for filepath in all_template_files():
         content = read(filepath)
-        for match in id_pattern.finditer(content):
-            declared.add(match.group(1).strip())
+        for sid, _ in iter_id_declarations(content):
+            declared.add(sid)
 
     for filepath in all_template_files():
         content = read(filepath)
@@ -471,7 +488,6 @@ def check_tpl_06():
         return ["  PyYAML not installed — run: pip install pyyaml"]
 
     core_ids, entries, _ = _load_manifest()
-    id_pattern = re.compile(r'\[ID:\s*([^\]]+)\]')
     ref_pattern = re.compile(r'\[(EXTEND|OVERRIDE):\s*([^\]]+)\]')
     failures = []
 
@@ -486,8 +502,8 @@ def check_tpl_06():
         chain_ids = set()
         for f in chain_files:
             content = read(os.path.join(ROOT, f))
-            for match in id_pattern.finditer(content):
-                chain_ids.add(match.group(1).strip())
+            for chain_sid, _ in iter_id_declarations(content):
+                chain_ids.add(chain_sid)
 
         # Check EXTEND/OVERRIDE targets in chain files
         for f in chain_files:
@@ -542,7 +558,6 @@ def check_tpl_07():
     if not HAS_YAML:
         return ["  PyYAML not installed — run: pip install pyyaml"]
 
-    id_pattern = re.compile(r'\[ID:\s*([^\]]+)\]')
     extend_pattern = re.compile(r'^\[EXTEND:\s*([^\]]+)\]', re.MULTILINE)
     failures = []
 
@@ -550,8 +565,8 @@ def check_tpl_07():
     id_to_file = {}
     for filepath in all_template_files():
         content = read(filepath)
-        for match in id_pattern.finditer(content):
-            id_to_file[match.group(1).strip()] = filepath
+        for sid, _ in iter_id_declarations(content):
+            id_to_file[sid] = filepath
 
     # For each EXTEND, compare child bullets against parent bullets
     for filepath in all_template_files():
@@ -722,7 +737,6 @@ CORE_DIRS = [
 
 def check_tpl_08():
     failures = []
-    id_pattern = re.compile(r'\[ID:\s*[^\]]+\]')
 
     for d in CORE_DIRS:
         dirpath = os.path.join(ROOT, d)
@@ -733,7 +747,7 @@ def check_tpl_08():
                 continue
             filepath = os.path.join(dirpath, name)
             content = read(filepath)
-            if not id_pattern.search(content):
+            if not any(True for _ in iter_id_declarations(content)):
                 rel = os.path.relpath(filepath, ROOT).replace(os.sep, "/")
                 failures.append(f"  {rel}: missing [ID:] tag")
 
@@ -746,20 +760,21 @@ def check_tpl_08():
 
 def check_tpl_09():
     failures = []
-    id_pattern = re.compile(r'\[ID:\s*([^\]]+)\]')
     meta_pattern = re.compile(r'^\[(DEPENDS ON|EXTEND|OVERRIDE):')
-    next_id_pattern = re.compile(r'^\[ID:')
+    next_id_pattern = re.compile(r'^\s*\[ID:')
 
     for filepath in all_template_files():
         content = read(filepath)
         rel = os.path.relpath(filepath, ROOT).replace(os.sep, "/")
         lines = content.splitlines()
 
+        # Map declaration line numbers → section IDs (sole-line only).
+        decls = {lineno: sid for sid, lineno in iter_id_declarations(content)}
+
         for i, line in enumerate(lines):
-            match = id_pattern.search(line)
-            if not match:
+            section_id = decls.get(i + 1)
+            if not section_id:
                 continue
-            section_id = match.group(1).strip()
 
             # Check for any non-blank content before the next [ID:]
             # tag. Skip metadata lines ([DEPENDS ON:], [EXTEND:],
