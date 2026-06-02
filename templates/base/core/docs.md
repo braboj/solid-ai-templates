@@ -151,6 +151,48 @@ Before every commit, update all relevant documentation:
   architectural decision — write the ADR **at the moment of the decision**,
   before creating the files
 
+### Findings docs
+
+When a threshold, parameter, or constant is picked from data rather
+than from first principles, document the run that produced the
+number in a **findings doc** co-located with the data it describes.
+
+Findings docs are not ADRs. ADRs record *decisions*; findings docs
+record the *observations* that load-bearing constants depend on.
+Findings docs are not dev journal entries either — the dev journal
+captures session history, while a findings doc is an accumulating
+reference for a specific subsystem's empirical numbers.
+
+- A findings doc lives next to the data/source it describes — e.g.
+  `referenceset/scoring.md` alongside `referenceset/charts.py`, not
+  in a project-level `docs/` directory
+- Format: a short header, a "How to reproduce" section naming the
+  command that produced the numbers, then one section per dated
+  run — each with raw output (or a verbatim summary) and numbered
+  findings interpreting it
+- Every PR that materially changes the numbers MUST update the
+  findings doc in the same PR — the threshold in code and the
+  observation backing it land together
+- Reference the findings doc from the source where the constant is
+  defined (a one-line comment naming the file is enough) so a
+  future reader can trace why the constant has the value it does
+
+Example skeleton:
+
+```markdown
+# Scoring thresholds — findings
+
+## How to reproduce
+`py -m mymodule.scoring --replay-all`
+
+## 2026-05-12 — initial pass (24 charts)
+<raw output snippet>
+
+1. Precision peaks at 0.80; jumps to 0.92 at 0.85 but recall drops
+   from 0.78 to 0.61 — keep PRECISION_THRESHOLD at 0.80
+2. ...
+```
+
 ## Development journal
 
 - Projects using agent-assisted development MUST maintain a
