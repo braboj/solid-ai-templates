@@ -126,6 +126,21 @@
 - Debug tooling (profilers, REPL helpers, verbose loggers) MUST be
   gated behind a flag or environment variable, never on by default
 
+### Probe scripts
+
+- Probe scripts are throwaway tooling: a small file that measures or
+  inspects something (data shape, file structure, runtime behaviour)
+  and prints findings to inform a source change
+- Name them so they are obviously temporary: `probe_*.py`, `_probe.sh`,
+  `scratch_*.ts`, or equivalent
+- A probe script MUST be deleted before the commit that uses its
+  findings — the script itself never lands on `main`
+- Findings worth keeping go into source comments, ADRs, or docs —
+  not the probe script
+- Probe scripts are the antidote to guessing: prefer writing one
+  over inferring data shape or runtime behaviour from incomplete
+  evidence
+
 ## Automated enforcement
 
 - Quality conventions in this document are enforced automatically via
