@@ -77,6 +77,44 @@ composition model.
 
 ---
 
+## Author a new ADR
+
+ADRs live in `docs/decisions/` and follow the schema defined in
+`docs/decisions/010-adr-governance.md` (ADR-010). Use this workflow
+for any significant architectural decision (new layer, naming
+convention change, override model change, governance rule, etc.).
+
+1. Copy the template:
+   ```bash
+   NNN=$(printf "%03d" $(($(ls docs/decisions/[0-9]*.md | wc -l) + 1)))
+   cp docs/decisions/TEMPLATE.md docs/decisions/${NNN}-<slug>.md
+   ```
+   Slug is kebab-case, sentence-meaningful (e.g. `011-provenance-principle`).
+2. Fill in the frontmatter — `id` (quoted string matching `NNN`),
+   `status: Proposed` (or `Accepted` if the decision is already
+   ratified), `date` (today, `YYYY-MM-DD`), `category` from the
+   closed set in ADR-010, and `supersedes` / `superseded_by` lists.
+3. Replace `# ADR-NNN: Title in sentence case` with the real title
+   (colon form, sentence case).
+4. Write the four sections in order — **Context** (why this
+   decision is needed), **Decision** (what was decided, with
+   RFC 2119 keywords), **Alternatives considered** (what was
+   rejected and why), **Consequences** (downstream effects).
+   Non-trivial decisions SHOULD include an inline ASCII diagram
+   in the Decision section.
+5. If this ADR supersedes an existing one: update the old ADR's
+   frontmatter in the same PR — set its `status: Superseded`,
+   refresh `date`, and add this ADR's id to its `superseded_by`
+   list. This metadata-only update is the ONE allowed exception
+   to ADR immutability; the prose body of the superseded ADR
+   stays untouched.
+6. Run `py tests/run_smoke.py ADR-01` to validate the frontmatter
+   schema before opening the PR.
+7. Open the PR. After merge, the ADR is immutable except for
+   future supersession metadata updates.
+
+---
+
 ## Generate a context file for a project
 
 ### Interview path

@@ -238,7 +238,16 @@ base/ ──┬── frontend/ ──┐
 - Each ADR documents: context, decision, alternatives considered,
   consequences
 - ADRs are immutable once merged — create a new ADR to supersede
-  an old one
+  an old one. The ONE exception: `superseded_by` / `status` /
+  `date` frontmatter fields on a previously-merged ADR MAY be
+  updated when a new ADR supersedes it
+- ADR schema is governed by ADR-010 — YAML frontmatter required
+  (`id` as quoted string, `status` in {Proposed, Accepted,
+  Superseded}, `date` YYYY-MM-DD, `category` in {composition,
+  templates, tooling, process, release}, reciprocal `supersedes` /
+  `superseded_by` links). Copy `docs/decisions/TEMPLATE.md` when
+  authoring a new ADR; `py tests/run_smoke.py ADR-01` enforces
+  the schema
 
 #### Rule language
 
