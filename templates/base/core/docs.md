@@ -129,6 +129,24 @@ Before every commit, update all relevant documentation:
 - Implementation details (phrase tables, templates, worked examples) belong
   in the ADR itself, not in separate spec files — external specs create
   maintenance burden and go stale
+- Non-trivial ADRs SHOULD include at least one inline ASCII diagram or
+  mockup in the Decision section — a pipeline flow, layout sketch,
+  state transition, or similar — so the concept is scannable without
+  parsing dense prose. Use plain ASCII (`+`, `-`, `|`), not Unicode
+  box-drawing characters, to stay consistent with the ASCII-only
+  source-content rule and keep diffs clean. Example:
+
+  ```
+  +---------------------+---------------------+
+  |   original input    |    rendered output  |
+  +---------------------+---------------------+
+  |        overlay: rendered on original      |
+  +-------------------------------------------+
+  ```
+
+  Use the project's preferred rendered-diagram format (Mermaid,
+  Draw.io) for diagrams that need to be standalone artifacts; inline
+  ASCII is for the quick concept aid that lives inside the ADR
 - Creating a new directory or moving content between documents is an
   architectural decision — write the ADR **at the moment of the decision**,
   before creating the files
