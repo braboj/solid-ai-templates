@@ -1,8 +1,13 @@
-# ADR-008: Issue and PR Naming Conventions
+---
+id: 008
+status: Accepted
+date: 2026-05-06
+category: process
+supersedes: []
+superseded_by: []
+---
 
-## Status
-
-Accepted
+# ADR-008: Issue and PR naming conventions
 
 ## Context
 

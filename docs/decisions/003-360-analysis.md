@@ -1,7 +1,13 @@
-# ADR-003: 360-degree analysis as a reusable template
+---
+id: 003
+status: Accepted
+date: 2026-04-28
+category: process
+supersedes: []
+superseded_by: []
+---
 
-**Status:** Accepted
-**Date:** 2026-04-28
+# ADR-003: 360-degree analysis as a reusable template
 
 ## Context
 

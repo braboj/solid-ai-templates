@@ -1,7 +1,13 @@
-# ADR-005: Apply Miller's law to repository structure
+---
+id: 005
+status: Accepted
+date: 2026-05-04
+category: templates
+supersedes: []
+superseded_by: []
+---
 
-**Status:** Accepted
-**Date:** 2026-05-04
+# ADR-005: Apply Miller's law to repository structure
 
 ## Context
 

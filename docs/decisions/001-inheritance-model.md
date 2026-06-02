@@ -1,7 +1,13 @@
-# ADR-001: Inheritance model for template composition
+---
+id: 001
+status: Accepted
+date: 2025-03-01
+category: composition
+supersedes: []
+superseded_by: []
+---
 
-**Status:** Accepted
-**Date:** 2025-03-01
+# ADR-001: Inheritance model for template composition
 
 ## Context
 

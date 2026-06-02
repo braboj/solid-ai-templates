@@ -1,7 +1,13 @@
-# ADR-004: Composition over inheritance in dependency model
+---
+id: 004
+status: Accepted
+date: 2026-05-04
+category: composition
+supersedes: []
+superseded_by: []
+---
 
-**Status:** Accepted
-**Date:** 2026-05-04
+# ADR-004: Composition over inheritance in dependency model
 
 ## Context
 
