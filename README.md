@@ -10,6 +10,14 @@ fall out of sync.
 This repo gives you composable, SOLID-inspired templates for building
 consistent context files for any stack and any agent.
 
+**Forged in real work, not theorized.** Every rule here came from a
+concrete failure or pattern in a real AI-assisted project — wuseria
+(image-processing pipeline), me-fuji (git-skills tutorial), and others
+to follow. The receipt is in the issue tracker: every rule cites the
+incident, PR, or session that surfaced it. See
+[ADR-011](docs/decisions/011-provenance-principle.md) for the
+provenance principle.
+
 ## What it does
 
 - Build `CLAUDE.md` or `AGENTS.md` from reusable layers — base, backend/frontend, stack
