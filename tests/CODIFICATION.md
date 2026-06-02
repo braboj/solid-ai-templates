@@ -52,6 +52,7 @@ Follows the Imbra Procedure Specification Standard
 | `FMT` | Format | Output format rendering — AGENTS.md, Cursor .mdc, Copilot, generic |
 | `ITV` | Interview | Interview flow — required questions, defaults, answer precedence |
 | `DPL` | Deployment | Deployment target scenarios — cloud, hybrid, offline |
+| `ADR` | ADR governance | ADR file conventions — frontmatter schema, supersession links, status discipline |
 
 ---
 
@@ -141,6 +142,12 @@ reused for a different component within the same area.
 | `01` | Cloud — public cloud deployment target output |
 | `02` | Hybrid — on-premises + cloud deployment target output |
 | `03` | Offline — air-gapped deployment target output |
+
+### ADR - ADR governance
+
+| Number | Component |
+|--------|-----------|
+| `01` | Frontmatter schema — id, status, date, category, supersedes/superseded_by validity and reciprocal links |
 
 ---
 

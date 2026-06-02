@@ -1,5 +1,5 @@
 ---
-id: NNN
+id: "NNN"
 status: Proposed
 date: YYYY-MM-DD
 category: process

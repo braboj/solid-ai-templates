@@ -1,5 +1,5 @@
 ---
-id: 006
+id: "006"
 status: Accepted
 date: 2026-05-04
 category: release
