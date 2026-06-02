@@ -1,5 +1,32 @@
 # Dev Journal
 
+## 2026-06-02 — README clarify + dogfood generated-file convention
+
+**Tool:** Claude Code (Opus 4.7, 1M context)
+
+**Key changes:**
+- README "How to use" section reworked: section 1 is now the
+  fastest path (clone + tell the agent to read
+  `templates/manifest.yaml`, agent picks the stack and follows
+  `[DEPENDS ON]` itself). Sections 1 and 2 lead with a one-line
+  "fastest / guided" contrast; stale "attaching a single file"
+  comparison reworded; prerequisites narrowed to local coding
+  agents; orphaned pre-resolved-file bullet dropped from Model
+  limitations (PR #406)
+- Dogfooded the generated-file banner + `--check` convention from
+  PR #386: `tools/resolve.py` now prepends an identifying banner
+  to every emitted file (banner names producing tool, refresh
+  command, check command per `docs.md`). Wired both
+  `py tools/sync.py --check` and `py tools/resolve.py --check`
+  into `.github/workflows/smoke.yml`. Regenerating revealed weeks
+  of silent drift in `generated/` (lines per file +200–300
+  from earlier template additions never re-cached) — the new CI
+  check would have caught it (#387, PR #407)
+
+**PRs merged:** #406, #407
+
+**Issues closed:** #387
+
 ## 2026-06-02 — v2.6 agent discipline & ADR governance
 
 **Tool:** Claude Code (Opus 4.7, 1M context)
