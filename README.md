@@ -1,5 +1,9 @@
 # SOLID-AI Templates
 
+*Forged in real work, not theorized — every rule here came from a real
+AI-assisted project. See
+[ADR-011](docs/decisions/011-provenance-principle.md).*
+
 Five developers with five agents produce five coding styles — unless they
 share the same context file.
 
@@ -10,35 +14,14 @@ fall out of sync.
 This repo gives you composable, SOLID-inspired templates for building
 consistent context files for any stack and any agent.
 
-**Forged in real work, not theorized.** Every rule here came from a
-concrete failure or pattern in a real AI-assisted project — wuseria
-(image-processing pipeline), me-fuji (git-skills tutorial), and others
-to follow. The receipt is in the issue tracker: every rule cites the
-incident, PR, or session that surfaced it. See
-[ADR-011](docs/decisions/011-provenance-principle.md) for the
-provenance principle.
-
 ## What it does
 
 - Build `CLAUDE.md` or `AGENTS.md` from reusable layers — base, backend/frontend, stack
 - Cover Python, Go, Java, Node, Rust, mobile, and DevOps stacks
 - Output `CLAUDE.md` for Claude Code or `AGENTS.md` for Cursor, Copilot, Codex CLI
+- Codify industry standards — 12-factor app, OWASP, SOLID, SemVer, conventional commits
 - Run a 360-degree project assessment across four perspectives
 - Enforce standardized issue labels, quality gates, and review processes
-
-## Overview
-
-This repository provides a reusable template system — structured like
-object-oriented design — where base rules are defined once and composed
-with stack-specific extensions to build a context file for any project
-type. Templates codify industry standards (12-factor app, OWASP, SOLID,
-SemVer, conventional commits) into actionable rules your agent can follow.
-
-Works for new projects and refactoring alike — the context file
-describes how code *should be written*, giving your agent a consistent
-target whether starting from scratch or improving existing code.
-Review and adjust the output before adopting it — results vary by
-model and prompt size.
 
 ## How to use
 
@@ -47,7 +30,12 @@ Cursor, Codex CLI), web portal (Claude.ai, ChatGPT, Gemini), or
 REST API (Anthropic, OpenAI).
 
 **Output:** a `CLAUDE.md` or `AGENTS.md` file placed at your project
-root, containing coding conventions tailored to your stack.
+root, containing coding conventions tailored to your stack. Works
+for new projects and refactoring alike — the context file describes
+how code *should be written*, giving your agent a consistent target
+whether starting from scratch or improving existing code. Review and
+adjust the output before adopting it — results vary by model and
+prompt size.
 
 ### Try it — attach one file
 
