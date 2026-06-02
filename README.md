@@ -17,7 +17,7 @@ consistent context files for any stack and any agent.
 ## What it does
 
 - Build `CLAUDE.md` or `AGENTS.md` from reusable layers — base, backend/frontend, stack
-- Cover Python, Go, Java, Node, Rust, mobile, and DevOps stacks
+- Fork and extend — layer your team's conventions on top of the base without modifying it
 - Output `CLAUDE.md` for Claude Code or `AGENTS.md` for Cursor, Copilot, Codex CLI
 - Codify industry standards — 12-factor app, OWASP, SOLID, SemVer, conventional commits
 - Run a 360-degree project assessment across four perspectives
