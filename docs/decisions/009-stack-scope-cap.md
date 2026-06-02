@@ -1,5 +1,5 @@
 ---
-id: 009
+id: "009"
 status: Accepted
 date: 2026-05-31
 category: templates

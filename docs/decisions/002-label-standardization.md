@@ -1,5 +1,5 @@
 ---
-id: 002
+id: "002"
 status: Accepted
 date: 2026-04-28
 category: process

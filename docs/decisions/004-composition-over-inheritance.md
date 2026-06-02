@@ -1,5 +1,5 @@
 ---
-id: 004
+id: "004"
 status: Accepted
 date: 2026-05-04
 category: composition
