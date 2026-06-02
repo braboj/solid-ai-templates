@@ -1,7 +1,13 @@
-# ADR-002: Standardized issue labels across repositories
+---
+id: 002
+status: Accepted
+date: 2026-04-28
+category: process
+supersedes: []
+superseded_by: []
+---
 
-**Status:** Accepted
-**Date:** 2026-04-28
+# ADR-002: Standardized issue labels across repositories
 
 ## Context
 

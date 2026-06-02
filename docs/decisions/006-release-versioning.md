@@ -1,8 +1,13 @@
-# ADR 006 — Release Versioning and Process
+---
+id: 006
+status: Accepted
+date: 2026-05-04
+category: release
+supersedes: []
+superseded_by: []
+---
 
-## Status
-
-Accepted
+# ADR-006: Release versioning and process
 
 ## Context
 

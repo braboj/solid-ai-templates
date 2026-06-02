@@ -1,8 +1,13 @@
-# ADR 009 — Stack Scope Cap
+---
+id: 009
+status: Accepted
+date: 2026-05-31
+category: templates
+supersedes: []
+superseded_by: []
+---
 
-## Status
-
-Proposed
+# ADR-009: Stack scope cap
 
 ## Context
 

@@ -1,8 +1,13 @@
-# ADR 007 — Generation Is Out of Scope
+---
+id: 007
+status: Accepted
+date: 2026-05-06
+category: tooling
+supersedes: []
+superseded_by: []
+---
 
-## Status
-
-Accepted
+# ADR-007: Generation is out of scope
 
 ## Context
 
