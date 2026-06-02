@@ -69,6 +69,29 @@ force-push, which is forbidden.
 This keeps remote history intact and yields a clean,
 dependency-free diff.
 
+### Close-and-resubmit when framing drifts
+
+When a PR's framing turns out to be wrong mid-review — the rule it
+amends should be superseded, the feature it adds belongs on a
+different layer, the bug it fixes is a symptom of a deeper issue —
+the title, branch name, body, and commit messages no longer match
+the actual decision.
+
+- SHOULD close the PR and open a new one with the correct framing,
+  rather than rewriting title, body, and commit history in place
+- The closed PR remains as the record of the rejected framing —
+  leave a comment pointing at the replacement
+- The new PR is internally consistent end-to-end: title, branch,
+  commits, and body all describe the actual decision
+- Indicator that close-and-resubmit is the right move: the branch
+  name is no longer accurate
+
+When NOT to close-and-resubmit:
+- Trivial title/body wording fixes — just amend
+- Scope additions during review that align with the original
+  framing — push more commits to the same branch
+- Renamed-but-equivalent decisions — just amend
+
 ## README
 - Every repository MUST contain a `README.md`
 - The README MUST conform to the structure and rules defined in `templates/base/core/readme.md`
