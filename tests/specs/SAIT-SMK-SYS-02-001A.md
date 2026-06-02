@@ -18,15 +18,19 @@ tags: [structure, ids, uniqueness]
 ## Short description
 
 > **Given** the repository is cloned and all template files are present
-> **When** all `[ID: ...]` tags across every template file are collected
-> **Then** no two tags share the same ID value
+> **When** all `[ID: ...]` declarations across every template file are
+> collected — a declaration is an `[ID: ...]` tag that is the entire
+> content of its line (whitespace-only surroundings allowed); inline
+> occurrences in prose, code spans, or table cells are references, not
+> declarations
+> **Then** no two declarations share the same ID value
 
 ## Results
 
 | Result | Condition |
 |--------|-----------|
-| PASSED | Every `[ID: ...]` value is unique across all files in `base/`, `backend/`, `frontend/`, and `stack/` |
-| FAILED | Two or more templates declare the same `[ID: ...]` value |
+| PASSED | Every sole-line `[ID: ...]` declaration is unique across all files in `base/`, `backend/`, `frontend/`, and `stack/` |
+| FAILED | Two or more templates declare the same `[ID: ...]` value on a sole line |
 | SKIPPED | Repository cannot be cloned or accessed |
 | BLOCKED | — |
 | ERROR | File system is inaccessible; `grep` or equivalent tool fails |
@@ -44,14 +48,22 @@ tags: [structure, ids, uniqueness]
 
 ### Execution
 
-1. Extract all `[ID: ...]` values from all template files:
+1. Extract all sole-line `[ID: ...]` declarations from every template
+   file — a line matches when stripping leading/trailing whitespace
+   leaves only the `[ID: ...]` tag:
    ```bash
-   grep -rh "\[ID:" base/ backend/ frontend/ stack/ | sort
+   grep -rhE "^[[:space:]]*\[ID:[^]]+\][[:space:]]*$" \
+     base/ backend/ frontend/ stack/ | sort
    ```
 2. Identify duplicates:
    ```bash
-   grep -rh "\[ID:" base/ backend/ frontend/ stack/ | sort | uniq -d
+   grep -rhE "^[[:space:]]*\[ID:[^]]+\][[:space:]]*$" \
+     base/ backend/ frontend/ stack/ | sort | uniq -d
    ```
+
+Inline references to existing IDs in prose (e.g. "see the
+`[ID: base-ai-workflow]` section") are not declarations and MUST NOT
+appear in the duplicate set.
 
 ### Assertions
 
