@@ -216,6 +216,12 @@ remaining commits are silently lost.
   deleting a branch — compare the squash diff against the branch diff
 - SHOULD enable "automatically delete head branches" in repository
   settings to prevent stale branches from accumulating
+- SHOULD use one focused commit per scope-slice on the branch
+  rather than per-folder atomic commits. The squash collapses
+  them on merge, so the per-folder narrative is wasted effort —
+  only the squash commit lands on main. Document the per-folder
+  breakdown in the PR description, where it stays after merge.
+  Use path globs in `git add` for staging hygiene when needed.
 
 ### De-stacking a dependent branch
 
