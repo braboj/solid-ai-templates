@@ -1,5 +1,50 @@
 # Dev Journal
 
+## 2026-06-03 (afternoon) — Expedite lane + milestone hygiene
+
+**Tool:** Claude Code (Opus 4.7, 1M context)
+
+**Key changes:**
+- Created **Expedite** milestone (#15) — rolling fast-track lane for
+  bugs, incidents, and small tasks shipping between versioned
+  releases. Never closes; issues move in when expedited and out when
+  shipped
+- Codified Expedite in `templates/platform/github.md` Issue labels
+  section (PR #420, closes #419), and extended the milestone-required
+  rule from "every issue" to "every issue and pull request" with
+  guidance that PRs SHOULD inherit the milestone of the issue they
+  close
+- Added per-folder-commit guidance to `base/core/git.md` Squash-merge
+  safety section (PR #417, closes #409): prefer one focused commit
+  per scope-slice over per-folder atomic commits — the squash
+  collapses them, document the breakdown in the PR description
+- Created **v2.9** milestone (#14) — "Data discoverability & gap
+  fixes". Holds #418 (wire `base/data/data-quality.md` into stack
+  DEPENDS ON chains — addresses gap flagged in v2.8) plus #403
+  (README hook→problem→solution micro-structure) which shipped
+  this session
+- Codified hook → problem → solution micro-structure in
+  `base/core/readme.md` §1 (PR #421, closes #403): three paragraph
+  beats with sentence counts, optional italic differentiator
+  subtitle, coexists with the four-content-fields rule
+- Reassigned three closed issues from Backlog to their actual
+  release milestones: #327 → v2.6, #138 → v2.5, #133 → v2.5. Five
+  triage-only closures (1 duplicate, 4 wontdo) left in Backlog
+  since no work shipped
+
+**Lesson:** missed assigning PRs #417 and #420 to the Expedite
+milestone at creation — rule said "every issue" but didn't cover
+PRs. Caught and codified in the same PR (#420) that documents
+Expedite, so the rule now self-applies
+
+**PRs merged:** #417, #420, #421
+
+**Issues closed:** #403, #409, #419
+
+**Issues filed:** #418 (v2.9), #419 (Expedite)
+
+**Milestones created:** v2.9 (#14), Expedite (#15)
+
 ## 2026-06-03 — v2.8 data discipline & calibration
 
 **Tool:** Claude Code (Opus 4.7, 1M context)
