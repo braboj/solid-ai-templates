@@ -167,6 +167,56 @@ sometimes doesn't run.
 
 ---
 
+## Gate scope agreement
+
+[ID: quality-gates-scope-agreement]
+
+In a polyglot repo where a secondary toolchain lives in a subdirectory
+(e.g. a Python `tools/` directory inside a TypeScript static site), or
+where captured test fixtures (scraped HTML/JSON representing real
+external byte sequences) live in-tree, three failure modes silently
+break the gate: the formatter walks files it should not touch, the
+PR gate skips work the deploy gate runs unconditionally, and an
+aggregated `gate` job reports success on skipped checks. The rules
+below close those gaps.
+
+### Ignore lists and CI path-filter MUST agree
+
+- The formatter/linter ignore lists and the CI path-filter that
+  triggers the gate MUST cover the same set of paths — a directory
+  excluded from one MUST be excluded from the other
+- A secondary toolchain with its own test runner is verified by that
+  runner, not the primary stack's gate. Document the split in an ADR
+- Captured test fixtures (scraped HTML/JSON representing real external
+  byte sequences) MUST be excluded from the formatter — they must
+  stay byte-for-byte, and reformatting them changes the test input
+
+### Skipped is not passed
+
+- When a code-touching change would skip the build job via a
+  path-filter, the aggregation / `gate` job MUST NOT report success
+  by default
+- Distinguish "skipped because out of scope" from "skipped
+  erroneously" — the former is a pass equivalent, the latter is a
+  gap. An aggregator that treats them identically is the
+  gate-by-omission anti-pattern
+- A passing-because-skipped check looks identical to a passing
+  check in the GitHub UI; the difference MUST be encoded in the
+  workflow, not left to reviewer attention
+
+### PR gate MUST mirror the deploy gate
+
+- Any check the deploy/release workflow runs unconditionally MUST
+  also run on the PR that could break it
+- A gate that runs only post-merge is not a gate — it is a failure
+  notification. By the time it fires, the broken code is already on
+  the main branch
+- When the deploy workflow runs `validate` (or equivalent) on every
+  push to main, the PR workflow MUST run the same `validate` on
+  every PR, regardless of which paths changed
+
+---
+
 ## What NOT to gate
 
 [ID: quality-gates-exclusions]
