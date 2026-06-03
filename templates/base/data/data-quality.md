@@ -119,6 +119,50 @@ that runs the tool. The rules below address each.
 
 ---
 
+## Cross-validation and tool trust
+[ID: data-quality-cross-validation]
+
+When stored data is cross-validated against an external source (vendor
+page, API, spec sheet, scrape), two distinct failure modes produce
+misleading divergence reports: a buggy validation tool that misreads
+the source, and a semantic mismatch between *stored default* and
+*source silence*. Both look like "the data is wrong" and waste
+maintainer time on phantom fixes.
+
+### Verify the tool before trusting its output
+
+- When a validation, scraping, or migration tool drives a bulk data
+  change, confirm the tool is correct BEFORE acting on its output
+- A systematic tool bug masquerades as data divergence — applying
+  the tool's values blindly corrupts correct stored data
+- Treat a physically implausible output value as a tool defect:
+  fix, re-run, then apply
+- When the external source itself looks wrong (stale page, wrong
+  record served), cross-check an independent source before
+  overwriting stored data
+- Applies to scrapers, importers, schema-migration verifiers, and
+  lint-driven codemods — any automated diff that drives a bulk
+  change
+
+### Distinguish source-silent from source-says-false
+
+- A stored default (e.g. `absent boolean = false`) and source
+  silence (the source did not mention the field) are NOT the same
+  thing — treating them as equivalent produces a flood of
+  false-positive mismatches that bury real errors
+- The extractor MUST return a field ONLY when the source
+  affirmatively states it
+- The differ MUST compare a field ONLY when present on both the
+  stored and source sides — source-silence skips comparison, never
+  becomes a confirmed value
+- This keeps stored-default conventions (`absent = false`,
+  `null = unknown`) intact while making cross-validation meaningful
+- The trap is non-obvious: the stored-default convention and the
+  verification semantics pull in opposite directions, and the naive
+  implementation looks correct until run against real data
+
+---
+
 ## Scoring and derived fields
 [ID: data-quality-scoring]
 
