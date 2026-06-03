@@ -288,6 +288,7 @@ stacks:
       - backend-messaging
       - base-cicd
       - base-devsecops
+      - base-data-quality
       - stack-python-lib
 
   - id: stack-flask
