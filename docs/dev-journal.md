@@ -1,5 +1,46 @@
 # Dev Journal
 
+## 2026-06-03 — v2.8 data discipline & calibration
+
+**Tool:** Claude Code (Opus 4.7, 1M context)
+
+**Key changes:**
+- Shipped v2.8 milestone (8 issues) — three new sections in
+  `templates/base/data/data-quality.md` plus one in
+  `templates/base/workflow/quality-gates.md`
+- Calibration discipline triad (PR #410, closes #344 / #346 / #381):
+  ground truth from raw artifacts, thresholds move not the
+  measurement, reference data provenance (`source: agent|user|external`
+  + `verified: true|false` + coverage caveat in metrics).
+  #381 redrafted from prohibition to provenance approach after
+  discussion — preserves agent-eye-read speed while keeping user
+  as judge
+- Cross-validation and tool trust pair (PR #411, closes #333 / #335):
+  verify the tool before trusting its output; distinguish source-
+  silent from source-says-false
+- Data research workflow pair (PR #412, closes #331 / #339):
+  source-conflict resolution (authority + poison-pill), full-record
+  audit, content-aware figure cropping, content-based cache validity
+  (no blind TTL)
+- Gate scope agreement (PR #413, closes #334): ignore lists and CI
+  path-filter must agree, skipped is not passed, PR gate mirrors
+  deploy gate. Closes the gate-by-omission anti-pattern
+- Filed two backlog spikes: #414 (skills as UX layer on top of
+  templates) and #415 (name-collision strategy for skills + slash
+  commands). Sellability discussed and deferred — skills land free
+  first, paid layer only after adoption data justifies it
+
+**Gap flagged for follow-up:** `base/data/data-quality.md` is not
+in any stack's `[DEPENDS ON]` chain, so the new data rules are
+discoverable in the base layer but don't reach any
+`generated/<stack>.md`. Candidate for v2.9.
+
+**PRs merged:** #410, #411, #412, #413
+
+**Issues closed:** #331, #333, #334, #335, #339, #344, #346, #381
+
+**Issues filed:** #414 (spike), #415 (spike)
+
 ## 2026-06-02 — README clarify + dogfood generated-file convention
 
 **Tool:** Claude Code (Opus 4.7, 1M context)
