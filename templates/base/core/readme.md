@@ -15,6 +15,21 @@ Every README MUST contain the following sections, in this order:
 - 2–4 sentences MUST follow the title: what the project does, for whom,
   what problem it solves, and why this solution exists — no preamble, no
   marketing language
+- The summary block SHOULD follow a hook → problem → solution
+  micro-structure:
+  - **Hook paragraph** — 1–2 sentences naming a problem the reader
+    already recognizes, before introducing the product
+  - **Problem paragraph** — 1–3 sentences identifying the specific
+    gap this project fills
+  - **Solution paragraph** — 1–2 sentences describing what the
+    project is
+  - The four content fields (what, for whom, problem, why) MAY be
+    distributed across these paragraphs in any way that reads
+    cleanly. The hook is framing, not marketing — the existing
+    no-marketing rule still applies
+- An italic differentiator subtitle MAY appear directly under the
+  H1, above the hook, when the project has a one-line claim worth
+  elevating
 - A capability list MUST follow the summary — bullet points stating
   what the product can do, written as capabilities not counts (e.g.
   "browse and filter lenses by specs" not "240+ lenses"); this list
