@@ -61,6 +61,64 @@ first-class concern.
 
 ---
 
+## Calibration discipline
+[ID: data-quality-calibration]
+
+When a tool is calibrated against reference data (test fixtures with
+known-correct outputs, benchmark expected results, eval data, decision
+thresholds), three failure modes silently invalidate the calibration:
+suspect data treated as ground truth, the threshold tuned to mask a
+broken measurement, and reference values produced by the same actor
+that runs the tool. The rules below address each.
+
+### Ground truth comes from raw artifacts, not suspect data
+
+- When calibrating a pipeline against existing committed data, verify
+  the data was not produced by an earlier version of the same pipeline
+- If it was, and the pipeline has known or suspected bugs, the
+  committed data is NOT ground truth — calibrating against it bakes
+  the existing bugs into the new gate
+- Build the calibration set from raw artifacts (source images, raw
+  exports, captured fixtures), recording the verified value alongside
+  each entry
+- A small hand-built reference set from raw artifacts beats a large
+  set carried over from a suspect pipeline
+
+### Thresholds move, not the measurement
+
+- When a measurement and a threshold disagree, the threshold is the
+  cheaper thing to change — but ONLY after the measurement is verified
+  sound
+- Order of operations on disagreement: (1) verify the measurement
+  against an independent check, (2) tune the threshold if the
+  measurement is sound, (3) change the measurement implementation
+  ONLY when steps 1 and 2 fail to resolve the disagreement
+- A threshold picked from theory and never validated against data is
+  not a calibrated threshold — it is a guess; tuning it against the
+  data on first disagreement just hides the original guess
+- This rule applies wherever measurements meet thresholds: CI quality
+  gates, performance budgets, ML decision boundaries, extractor
+  agreement scores
+
+### Reference data MUST carry provenance
+
+- Each entry in a reference set MUST record `source: agent | user |
+  external` (who produced the value) and `verified: true | false`
+  (whether a human has reviewed it)
+- An agent MAY produce reference values to speed calibration, but
+  MUST set `source: agent` and `verified: false` until the user
+  reviews — the user MAY veto, replace, or accept; accepting flips
+  `verified: true`
+- Calibration metrics computed against the reference set MUST report
+  a coverage caveat alongside the headline numbers (e.g.
+  "verified: 12/40"), so unverified reference data cannot silently
+  dominate the metric
+- Synthetic test inputs (faker-style data, generated fixtures) are
+  out of scope — this rule covers reference *outputs* compared
+  against tool *outputs*, not test inputs
+
+---
+
 ## Scoring and derived fields
 [ID: data-quality-scoring]
 
