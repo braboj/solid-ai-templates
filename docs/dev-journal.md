@@ -1,5 +1,39 @@
 # Dev Journal
 
+## 2026-06-03 (evening) — v2.9.0 cut
+
+**Tool:** Claude Code (Opus 4.7, 1M context)
+
+**Key changes:**
+- Closed v2.9's only open issue (#418): wired `base-data-quality`
+  into `stack-python-service`, propagating transitively to Flask,
+  FastAPI, and Django generated chains. Resolves the v2.8
+  discoverability gap (`data-quality.md` rules now reach
+  `generated/<stack>.md` for Python service stacks)
+- Wrote ADR-012 bounding scope to python-service only; other
+  backend stacks (Go, Node, Java, Celery) remain unwired pending
+  the file-split decision
+- Filed #424 as follow-up: audit `data-quality.md` and separate
+  agent-behavior rules (calibration, cross-validation, research)
+  from true data-heavy schema rules. The file's name overstates
+  the data framing — three of four sections apply to any
+  investigative work
+- Cut v2.9.0: tag pushed, GitHub Release created, milestone closed
+
+**Lesson:** when a base/ file's content is broader than its layer
+suggests, wiring it forces a choice between leaving rules
+unreachable or pulling unrelated dependencies. Better to question
+the file's home (split or rename) than to over-wire — captured
+as #424 follow-up
+
+**PRs merged:** #425
+
+**Issues closed:** #418
+
+**Release:** v2.9.0 (https://github.com/braboj/solid-ai-templates/releases/tag/v2.9.0)
+
+---
+
 ## 2026-06-03 (afternoon) — Expedite lane + milestone hygiene
 
 **Tool:** Claude Code (Opus 4.7, 1M context)
