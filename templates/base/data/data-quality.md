@@ -163,6 +163,79 @@ maintainer time on phantom fixes.
 
 ---
 
+## Data research workflow
+[ID: data-quality-research]
+
+When data enters the system from external sources (official pages,
+lab reviews, retailers, scraped documents, public APIs), the
+research workflow itself can introduce systematic errors that
+later validation cannot detect. The rules below cover gathering
+facts from multiple sources of differing authority, auditing whole
+records rather than spot fields, extracting figures from composite
+images, and caching fetched content.
+
+### Source-conflict resolution
+
+- The most-authoritative source (official publisher, manufacturer
+  spec sheet, primary documentation) wins on any contested field
+- If a secondary source is provably wrong on one verifiable field,
+  treat ALL its unverified fields for that record as suspect — it
+  is likely mis-cataloged or mismatched. Do NOT cherry-pick its
+  other figures
+- Prefer leaving a field unresolved-and-flagged over overwriting it
+  with a contradicted source — a known gap is more useful than a
+  confidently-wrong value
+- When two sources of equivalent authority disagree, record the
+  conflict, the chosen value, and the rationale alongside the
+  entry (see [ID: data-quality-sourcing])
+
+### Full-record audit, not target-field audit
+
+- When verifying a record against a source, cross-check EVERY
+  field — not only the fields that prompted the verification
+- Copy-derived records frequently inherit stale values in fields
+  nobody re-checked (e.g. a "v2" entry retaining the v1 release
+  date or dimensions)
+- A spot-fix audit confirms the target field while leaving silent
+  drift in the rest of the record; a full-record audit catches
+  the drift
+
+### Content-aware figure cropping
+
+- When extracting a figure from a composite image (marketing
+  layout, manual page, dashboard screenshot), detect the content
+  bounding box programmatically — e.g. corner-median background
+  subtraction — rather than hand-guessing crop coordinates
+- Hand-picked coordinates silently truncate or off-center the
+  artifact; the error is caught only by a human eyeballing the
+  output
+- Keep automated edge-touch checks advisory (a tight axis box or
+  wide subject legitimately reaches the margin) and always have
+  a human review the crop before publishing
+
+### Cache validity: content checks, not blind TTL
+
+- For a research-time fetch/scrape cache (NOT the live request
+  path), decide cache validity by the content of a cached
+  response, not its age
+- Never cache non-content responses — bot/throttle interstitials,
+  4xx/gone error pages, implausibly short stubs. Detect and skip
+  them on write
+- Self-heal on read: if a cached body is recognizably junk
+  (bot/404/empty), ignore and re-fetch rather than re-serving the
+  bad cache
+- Refresh deliberately via an explicit `--no-cache` / force flag,
+  NOT on a timer
+- Add a time-based TTL only when there is evidence that content
+  goes stale in a way the content checks do not catch — a timer
+  cannot distinguish a value change from a resource removal (the
+  latter surfaces as 4xx and is handled above), and it slows every
+  session re-fetching unchanged data
+- Live request-path caches (Cache-Control, CDN, browser cache)
+  are out of scope — those have their own TTL semantics
+
+---
+
 ## Scoring and derived fields
 [ID: data-quality-scoring]
 
