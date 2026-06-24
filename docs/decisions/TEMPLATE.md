@@ -31,6 +31,8 @@ MAY) for the rule statements. Number multi-part decisions:
 
 1. **Short label** — the rule
 2. **Short label** — the next rule
+
+One concern per ADR; multi-part decisions are allowed within it.
 -->
 
 ## Alternatives considered

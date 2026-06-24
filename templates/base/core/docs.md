@@ -92,9 +92,20 @@ Before every commit, update all relevant documentation:
 - Significant architectural decisions MUST be recorded as Architecture Decision
   Records (ADR) in `docs/decisions/`
 - Each ADR documents: context, decision, alternatives considered, consequences
+- Each ADR MUST address exactly one concern — a separate concern gets its
+  own ADR. One concern is not one rule: a single ADR MAY number multiple
+  related decisions (1., 2., …) within its one concern
 - Render "Alternatives considered" and "Consequences" as tables where the
   content fits — they scan faster than prose lists
 - ADRs are immutable once merged — create a new ADR to supersede an old one
+- When an ADR's premise is refuted shortly after it merges (typically by
+  data that should have informed it), prefer a same-day or same-week
+  supersession ADR documenting the post-mortem over silently closing the
+  follow-up issues — an `Accepted` ADR describing code that does not exist
+  is documentation-vs-code drift. The supersession ADR records the refuting
+  evidence and a post-mortem (Symptom / Root cause / Why missed / Fix /
+  Prevention) if the original shipped any change; the superseded ADR's
+  status flips to `Superseded by ADR-NNN` in the same PR
 - File naming: `NNN-slug.md` — zero-padded sequence number + kebab-case slug
   (e.g. `001-data-storage.md`, `002-hosting.md`)
 - ADR file format:
