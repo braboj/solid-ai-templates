@@ -320,6 +320,18 @@ maintainer time on phantom fixes.
 ## Pull requests
 - PRs should be small and focused — one concern per PR
 - Always test locally before committing
+- **Regenerate derived artifacts in the same PR** — when a change
+  affects generated or derived files committed to the repo (extractor
+  outputs, snapshot fixtures, generated docs), regenerate them in the
+  fixing PR, not a follow-up. A stale artifact is indistinguishable
+  from a regression to the next reviewer. Include a before/after
+  summary (verdict matrix, delta table, screenshot diff) in the PR
+  body so reviewers see the user-visible impact without re-running
+  the pipeline.
+  - When regeneration is too expensive to bundle (e.g. >30s in CI or
+    >100 files), the PR MUST open a tracked follow-up issue AND state
+    the STALE accounting explicitly (N files affected, named or
+    globbed) — silent staleness is the failure mode
 - **Before merging**, review the diff against the base branch. Follow
   `templates/base/core/review.md` priority order: security → correctness → clarity →
   conventions. Check CI passes. Only merge after the review passes.
@@ -749,6 +761,11 @@ it as stale.
   paths — otherwise the formatter reformats the file at commit time
   and `--check` then reports a confusing stale-file failure on the
   next run
+- When a generated file's inputs change (a rename, move, or schema
+  bump), re-run the generator rather than string-editing the artifact
+  — the banner's "do not edit" header is a contract, and the next
+  `--check` run flags a hand-edited file as stale against freshly
+  generated content
 
 ## Output file by agent
 
@@ -2214,6 +2231,27 @@ below close those gaps.
 - When the deploy workflow runs `validate` (or equivalent) on every
   push to main, the PR workflow MUST run the same `validate` on
   every PR, regardless of which paths changed
+
+---
+
+## Generated-file staleness gate
+
+[ID: quality-gates-staleness]
+
+When a project commits generated artifacts (rendered docs, generated
+configs, resolved template chains, code-from-schema output) AND uses
+the `--check` convention from `base-docs`, the `--check` invocation
+MUST be wired into CI as a required status check on the relevant
+paths.
+
+- A banner naming the regenerate command is decorative without the
+  gate — a stale file looks identical to a fresh one, and the
+  regenerator can silently break for months unnoticed
+- A staleness gate that is never run on the relevant paths is the
+  gate-by-omission anti-pattern named in `quality-gates-scope-agreement`
+  — passing-because-skipped is not passing
+- The gate MUST fail when the committed artifact differs from a fresh
+  render, exactly as it fails on lint or type errors
 
 ---
 
