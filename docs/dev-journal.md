@@ -1,5 +1,50 @@
 # Dev Journal
 
+## 2026-06-24 — v2.10 data-quality finish & generator discipline
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Closed v2.10 — Data-quality finish (8/8 issues) across four
+  theme PRs
+- #424 split: moved **calibration discipline** and
+  **cross-validation / tool-trust** out of `base-data-quality` into
+  core `base-quality` so they reach all 30 stacks; the
+  **data-research workflow** and data-schema rules stay in
+  `base-data-quality` (opt-in via #298). ADR-013 records the split
+  and supersedes ADR-012
+- #431 + #443: added **diagnose-before-tuning** and **calibration
+  aids must not depict the system's own output** as subsections of
+  the now-core Calibration discipline section in `base-quality`
+- #434 + #435: **coverage-by-cohort** data-validation pattern in
+  `base-testing`; **fail-loud over auto-derivation** near Fail Fast
+  in `base-quality`
+- #437 + #444 + #445: generator-discipline trio — regenerate on
+  input change (`base-docs`), regenerate derived artifacts in the
+  fixing PR (`base-git`), and a new **Generated-file staleness
+  gate** section in `base-quality-gates` making the `--check`
+  invocation a required CI check
+- Triaged the 72 then-unmilestoned issues into Backlog at the start
+  of the session (Backlog 30 → 102)
+
+**Lesson:** #424's stated premise — "agent-behavior rules reach all
+stacks via `base-ai-workflow`" — was refuted on inspection:
+`base-ai-workflow` is not in the core tier and no stack declares it,
+so it reaches zero generated chains. Moving the rules there would
+have *regressed* reach (they currently reach the Python-service
+chain via ADR-012). Verify a rule's actual reach (core tier vs
+opt-in) before choosing its home; core `base-quality` was the only
+placement that satisfies "reach all stacks." The same correction
+applied to #431's suggested `ai-workflow.md` home.
+
+**PRs merged:** #534, #535, #536, #537
+
+**Issues closed:** #424, #431, #434, #435, #437, #443, #444, #445
+
+**Milestone:** v2.10 — Data-quality finish (8/8 closed)
+
+---
+
 ## 2026-06-03 (evening) — v2.9.0 cut
 
 **Tool:** Claude Code (Opus 4.7, 1M context)
