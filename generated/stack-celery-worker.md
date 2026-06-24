@@ -1505,6 +1505,11 @@ Apply SOLID at the class, module, and service level:
   types
 - Keep class hierarchies shallow — more than two levels of inheritance is a
   signal to refactor towards composition
+- **Internal identifiers must align with their layer** — a module or class
+  whose name implies a role it does not hold (an `endpoints.py` with no
+  routes, a `*RestApi` class that is not the REST API) misleads readers and
+  forces clarifying asides; when the layering and the name disagree, rename
+  to match the layer
 
 ## Design patterns
 

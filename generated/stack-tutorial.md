@@ -2444,11 +2444,14 @@ summarize — visible sequential execution prevents missed steps.
 10. **Submodules** — check if upstream submodules need updates
     (`git submodule update --remote`); commit the pointer bump if needed
 11. **Template feedback** — for each new pattern or convention
-    introduced, explicitly state whether it is project-specific or
-    reusable; if reusable, name the upstream template file it would
-    go in
-12. **Flag gaps** — if any of the above cannot be completed, flag it
-    to the user before closing
+    introduced, state whether it is project-specific or reusable. If
+    reusable, name the upstream template file and file an issue on the
+    upstream repo (not a downstream note) — naming a candidate is not
+    contributing it
+12. **Flag gaps** — if any item cannot be completed this session, report
+    it as pending (never as done) before closing — including deferred
+    cross-repo work, such as an upstream contribution that was flagged
+    but not yet landed
 13. **Summary** — summarize what was done and what's next
 
 
