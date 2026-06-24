@@ -740,6 +740,56 @@ is incomplete.
 - In Mermaid notes, avoid `;` (a statement separator) and a bare `<` (opens a
   tag inside `<br/>` notes) — both silently break rendering
 
+## arc42 architecture documentation (if applicable)
+
+[ID: docs-arc42]
+
+For projects documenting architecture with arc42, these conventions keep
+chapters consistent and prevent the common cross-section leaks. The
+general writing-style and diagram rules above still apply.
+
+### Chapter boundaries
+
+- **§2 Constraints vs §4 Solution Strategy** — §2 holds only *givens*
+  (language, OS/platform, environment and resource limits, licensing,
+  process and tooling). Technology *selections* (frameworks, libraries,
+  servers, algorithms, protocols, patterns) are §4 decisions, not §2
+  constraints. Tell: a "constraint" carrying a justification ("…because
+  X is hard") is a decision
+- §2 constraints are forward-stated — never reverse-engineered from
+  code; no file/line citations and no "source" column
+- §3 Context stays high-level — no source-file paths, tool names, or
+  registry/platform names (those live in §7/§9). §3.2 technical-context
+  channels are external partners only — an in-process library is not a
+  channel. §3.3 "In scope" lists project deliverables, not a re-list of
+  the §1 functional requirements
+- §3 diagrams are black-box — use the arc42 partner / input / output
+  table and distinguish human actors from systems
+- Chapters cite no ADRs — keep inline `AD-N` citations and generic
+  "ADR" / "decision record" mentions out of chapter bodies; §9 is the
+  single ADR index
+
+### IDs and register
+
+- Functional requirements use `FR01…` in shall-form (IEEE 29148);
+  quality goals use `QG01…` with ISO 25010 names (Correctness,
+  Reliability, Maintainability, Portability, Compatibility, Usability) —
+  distinct from the `Q1…` quality scenarios in §10
+- Requirements use "shall"; constraints and other givens stay
+  declarative — avoid all-caps RFC 2119 keywords in arc42 prose
+- A per-section purpose line only where it adds meaning (define a term
+  or draw a distinction such as FR vs NFR) — never restate the heading
+- No forward cross-references to later-numbered sections (a section is
+  authored before they exist); back-references are fine
+
+### Concept sections
+
+- Describe the idea in prose, then give a `Concept | Implementation`
+  table mapping it to concrete identifiers — rather than inlining
+  identifiers throughout the prose
+- A glossary entry is a **bold term** followed by plain text — no
+  inline-code monospacing of the term
+
 ## Docs-as-code
 
 - Technical documentation lives in the repository alongside the code
