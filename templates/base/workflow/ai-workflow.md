@@ -340,6 +340,18 @@ Probe the artifact, not your reading of it. When the claim rests on a dense sour
 
 Skipping the probe has two visible failure modes: a well-reasoned fix built against a wrong premise, and a premature ADR that needs same-day supersession. When the probe inverts the framing, the original text is a useful negative result — record it in the PR description or the ADR's "approaches ruled out." If the project exposes no cheap probe for the claim, surfacing that gap is itself the first output. Probes are throwaway: name them for the issue, delete them before the commit that uses their findings, and keep the findings in the issue, ADR, or PR.
 
+### Verify external state before a visible action
+
+Some actions land on someone else's surface — filing an issue or opening a PR on a third-party repo, taking on a dependency, pulling a vendored fixture. Before one of these, confirm the external state is what you assume. The check is cheap (a single API call or page load); the cost of skipping it is acting on stale or wrong information publicly, under the maintainer's identity.
+
+Confirm, before acting:
+
+- **The target is the real project** — search ranking and name collisions lie. Verify against the README, the canonical source, or the site the dependency claims to be.
+- **The repo is live** — not archived, read-only, or migrated. An archived repo silently rejects new issues; a moved one routes your action to a dead fork.
+- **The channel is open** — issues are enabled, the branch accepts PRs, the package version still exists.
+
+When a check fails, treat it as a signal about your own source of truth, not just a one-off filing problem. A repo that turns out archived, renamed, or wrong means the ADR, README, or memory that pointed there is stale — fix the pointer (or drop the dead trigger) in the same task, rather than working around the single blocked action.
+
 ### Scope creep within sessions
 
 A productive session can cover a lot of ground. But jumping between unrelated topics (feature work, data fixes, epic triage, domain decisions) leads to:
