@@ -279,6 +279,11 @@ it as stale.
   paths — otherwise the formatter reformats the file at commit time
   and `--check` then reports a confusing stale-file failure on the
   next run
+- When a generated file's inputs change (a rename, move, or schema
+  bump), re-run the generator rather than string-editing the artifact
+  — the banner's "do not edit" header is a contract, and the next
+  `--check` run flags a hand-edited file as stale against freshly
+  generated content
 
 ## Output file by agent
 

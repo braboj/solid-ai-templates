@@ -20,6 +20,18 @@
 ## Pull requests
 - PRs should be small and focused — one concern per PR
 - Always test locally before committing
+- **Regenerate derived artifacts in the same PR** — when a change
+  affects generated or derived files committed to the repo (extractor
+  outputs, snapshot fixtures, generated docs), regenerate them in the
+  fixing PR, not a follow-up. A stale artifact is indistinguishable
+  from a regression to the next reviewer. Include a before/after
+  summary (verdict matrix, delta table, screenshot diff) in the PR
+  body so reviewers see the user-visible impact without re-running
+  the pipeline.
+  - When regeneration is too expensive to bundle (e.g. >30s in CI or
+    >100 files), the PR MUST open a tracked follow-up issue AND state
+    the STALE accounting explicitly (N files affected, named or
+    globbed) — silent staleness is the failure mode
 - **Before merging**, review the diff against the base branch. Follow
   `templates/base/core/review.md` priority order: security → correctness → clarity →
   conventions. Check CI passes. Only merge after the review passes.
