@@ -109,6 +109,106 @@
 - If code is hard to test, treat it as a design problem, not a
   testing problem
 
+## Calibration discipline
+
+[ID: quality-calibration]
+
+When a tool is calibrated against reference data (test fixtures with
+known-correct outputs, benchmark expected results, eval data, decision
+thresholds), three failure modes silently invalidate the calibration:
+suspect data treated as ground truth, the threshold tuned to mask a
+broken measurement, and reference values produced by the same actor
+that runs the tool. The rules below address each.
+
+### Ground truth comes from raw artifacts, not suspect data
+
+- When calibrating a pipeline against existing committed data, verify
+  the data was not produced by an earlier version of the same pipeline
+- If it was, and the pipeline has known or suspected bugs, the
+  committed data is NOT ground truth — calibrating against it bakes
+  the existing bugs into the new gate
+- Build the calibration set from raw artifacts (source images, raw
+  exports, captured fixtures), recording the verified value alongside
+  each entry
+- A small hand-built reference set from raw artifacts beats a large
+  set carried over from a suspect pipeline
+
+### Thresholds move, not the measurement
+
+- When a measurement and a threshold disagree, the threshold is the
+  cheaper thing to change — but ONLY after the measurement is verified
+  sound
+- Order of operations on disagreement: (1) verify the measurement
+  against an independent check, (2) tune the threshold if the
+  measurement is sound, (3) change the measurement implementation
+  ONLY when steps 1 and 2 fail to resolve the disagreement
+- A threshold picked from theory and never validated against data is
+  not a calibrated threshold — it is a guess; tuning it against the
+  data on first disagreement just hides the original guess
+- This rule applies wherever measurements meet thresholds: CI quality
+  gates, performance budgets, ML decision boundaries, extractor
+  agreement scores
+
+### Reference data MUST carry provenance
+
+- Each entry in a reference set MUST record `source: agent | user |
+  external` (who produced the value) and `verified: true | false`
+  (whether a human has reviewed it)
+- An agent MAY produce reference values to speed calibration, but
+  MUST set `source: agent` and `verified: false` until the user
+  reviews — the user MAY veto, replace, or accept; accepting flips
+  `verified: true`
+- Calibration metrics computed against the reference set MUST report
+  a coverage caveat alongside the headline numbers (e.g.
+  "verified: 12/40"), so unverified reference data cannot silently
+  dominate the metric
+- Synthetic test inputs (faker-style data, generated fixtures) are
+  out of scope — this rule covers reference *outputs* compared
+  against tool *outputs*, not test inputs
+
+## Cross-validation and tool trust
+
+[ID: quality-cross-validation]
+
+When output is cross-validated against an external source (vendor
+page, API, spec sheet, scrape), two distinct failure modes produce
+misleading divergence reports: a buggy validation tool that misreads
+the source, and a semantic mismatch between *stored default* and
+*source silence*. Both look like "the data is wrong" and waste
+maintainer time on phantom fixes.
+
+### Verify the tool before trusting its output
+
+- When a validation, scraping, or migration tool drives a bulk
+  change, confirm the tool is correct BEFORE acting on its output
+- A systematic tool bug masquerades as data divergence — applying
+  the tool's values blindly corrupts correct stored data
+- Treat a physically implausible output value as a tool defect:
+  fix, re-run, then apply
+- When the external source itself looks wrong (stale page, wrong
+  record served), cross-check an independent source before
+  overwriting stored data
+- Applies to scrapers, importers, schema-migration verifiers, and
+  lint-driven codemods — any automated diff that drives a bulk
+  change
+
+### Distinguish source-silent from source-says-false
+
+- A stored default (e.g. `absent boolean = false`) and source
+  silence (the source did not mention the field) are NOT the same
+  thing — treating them as equivalent produces a flood of
+  false-positive mismatches that bury real errors
+- The extractor MUST return a field ONLY when the source
+  affirmatively states it
+- The differ MUST compare a field ONLY when present on both the
+  stored and source sides — source-silence skips comparison, never
+  becomes a confirmed value
+- This keeps stored-default conventions (`absent = false`,
+  `null = unknown`) intact while making cross-validation meaningful
+- The trap is non-obvious: the stored-default convention and the
+  verification semantics pull in opposite directions, and the naive
+  implementation looks correct until run against real data
+
 ## Code style
 
 - Encode all source files in UTF-8; content MUST be restricted to ASCII
@@ -2250,108 +2350,6 @@ first-class concern.
   `weightEstimated: true` or `~` prefix in display)
 - Default to realistic/pessimistic estimates — never optimistic
 - Document the estimation method when not obvious
-
----
-
-## Calibration discipline
-[ID: data-quality-calibration]
-
-When a tool is calibrated against reference data (test fixtures with
-known-correct outputs, benchmark expected results, eval data, decision
-thresholds), three failure modes silently invalidate the calibration:
-suspect data treated as ground truth, the threshold tuned to mask a
-broken measurement, and reference values produced by the same actor
-that runs the tool. The rules below address each.
-
-### Ground truth comes from raw artifacts, not suspect data
-
-- When calibrating a pipeline against existing committed data, verify
-  the data was not produced by an earlier version of the same pipeline
-- If it was, and the pipeline has known or suspected bugs, the
-  committed data is NOT ground truth — calibrating against it bakes
-  the existing bugs into the new gate
-- Build the calibration set from raw artifacts (source images, raw
-  exports, captured fixtures), recording the verified value alongside
-  each entry
-- A small hand-built reference set from raw artifacts beats a large
-  set carried over from a suspect pipeline
-
-### Thresholds move, not the measurement
-
-- When a measurement and a threshold disagree, the threshold is the
-  cheaper thing to change — but ONLY after the measurement is verified
-  sound
-- Order of operations on disagreement: (1) verify the measurement
-  against an independent check, (2) tune the threshold if the
-  measurement is sound, (3) change the measurement implementation
-  ONLY when steps 1 and 2 fail to resolve the disagreement
-- A threshold picked from theory and never validated against data is
-  not a calibrated threshold — it is a guess; tuning it against the
-  data on first disagreement just hides the original guess
-- This rule applies wherever measurements meet thresholds: CI quality
-  gates, performance budgets, ML decision boundaries, extractor
-  agreement scores
-
-### Reference data MUST carry provenance
-
-- Each entry in a reference set MUST record `source: agent | user |
-  external` (who produced the value) and `verified: true | false`
-  (whether a human has reviewed it)
-- An agent MAY produce reference values to speed calibration, but
-  MUST set `source: agent` and `verified: false` until the user
-  reviews — the user MAY veto, replace, or accept; accepting flips
-  `verified: true`
-- Calibration metrics computed against the reference set MUST report
-  a coverage caveat alongside the headline numbers (e.g.
-  "verified: 12/40"), so unverified reference data cannot silently
-  dominate the metric
-- Synthetic test inputs (faker-style data, generated fixtures) are
-  out of scope — this rule covers reference *outputs* compared
-  against tool *outputs*, not test inputs
-
----
-
-## Cross-validation and tool trust
-[ID: data-quality-cross-validation]
-
-When stored data is cross-validated against an external source (vendor
-page, API, spec sheet, scrape), two distinct failure modes produce
-misleading divergence reports: a buggy validation tool that misreads
-the source, and a semantic mismatch between *stored default* and
-*source silence*. Both look like "the data is wrong" and waste
-maintainer time on phantom fixes.
-
-### Verify the tool before trusting its output
-
-- When a validation, scraping, or migration tool drives a bulk data
-  change, confirm the tool is correct BEFORE acting on its output
-- A systematic tool bug masquerades as data divergence — applying
-  the tool's values blindly corrupts correct stored data
-- Treat a physically implausible output value as a tool defect:
-  fix, re-run, then apply
-- When the external source itself looks wrong (stale page, wrong
-  record served), cross-check an independent source before
-  overwriting stored data
-- Applies to scrapers, importers, schema-migration verifiers, and
-  lint-driven codemods — any automated diff that drives a bulk
-  change
-
-### Distinguish source-silent from source-says-false
-
-- A stored default (e.g. `absent boolean = false`) and source
-  silence (the source did not mention the field) are NOT the same
-  thing — treating them as equivalent produces a flood of
-  false-positive mismatches that bury real errors
-- The extractor MUST return a field ONLY when the source
-  affirmatively states it
-- The differ MUST compare a field ONLY when present on both the
-  stored and source sides — source-silence skips comparison, never
-  becomes a confirmed value
-- This keeps stored-default conventions (`absent = false`,
-  `null = unknown`) intact while making cross-validation meaningful
-- The trap is non-obvious: the stored-default convention and the
-  verification semantics pull in opposite directions, and the naive
-  implementation looks correct until run against real data
 
 ---
 
