@@ -160,6 +160,36 @@ that runs the tool. The rules below address each.
   out of scope — this rule covers reference *outputs* compared
   against tool *outputs*, not test inputs
 
+### Diagnose before tuning
+
+- Before changing a parameter whose value was set by a calibration
+  step or carries a tuning rationale, first PROBE to confirm the
+  parameter is the actual constraint — do not tune-and-see
+- Trace the value where it is computed and read the real intermediate
+  inputs from a real sample (a probe script, or a trace-not-propose
+  investigation), never a synthetic case
+- Tuning is valid once the probe shows the parameter is genuinely the
+  constraint; the wasteful move is changing code on "this might help"
+  without probing, which burns time and risks regressing unrelated
+  calibrated anchors
+
+### Calibration aids MUST NOT depict the system's own output
+
+- Any artifact that informs a human-verifies-machine signal (eye-read
+  against a chart, code review against a generated patch, audit grading
+  against a candidate report) MUST render only the reference data plus
+  the maintainer's reading guides
+- The candidate output goes in a separate artifact, opened only after
+  the independent reading is captured — surfacing it alongside the
+  reading task biases the reading toward the candidate and turns the
+  calibration into a self-confirming loop
+- Name the candidate-output artifact distinctly (`*-overlay.png`,
+  `*-trace.svg`, `*-prediction.md`) so it cannot be confused with the
+  reading aid
+- Comparison views opened AFTER the independent reading is captured
+  (diff viewers, side-by-side dispute resolution) are out of scope —
+  they are downstream of the signal and do not bias it
+
 ## Cross-validation and tool trust
 
 [ID: quality-cross-validation]
