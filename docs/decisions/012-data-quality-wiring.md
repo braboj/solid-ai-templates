@@ -1,10 +1,10 @@
 ---
 id: "012"
-status: Accepted
+status: Superseded
 date: 2026-06-03
 category: composition
 supersedes: []
-superseded_by: []
+superseded_by: ["013"]
 ---
 
 # ADR-012: Wire base-data-quality into stack-python-service only

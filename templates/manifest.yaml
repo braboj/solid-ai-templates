@@ -24,7 +24,7 @@ base:
     description: Rule language, documentation standards, ADR, diagrams, docs-as-code
   - id: base-quality
     file: templates/base/core/quality.md
-    description: Architecture, code style, security, testing
+    description: Architecture, code style, calibration, tool trust, testing
   - id: base-review
     file: templates/base/core/review.md
     description: Peer review priority, MUST/SHOULD checklists, deviation rules
@@ -61,7 +61,7 @@ base:
     depends_on: [base-quality]
   - id: base-data-quality
     file: templates/base/data/data-quality.md
-    description: Data sourcing, completeness, freshness, scoring — data-heavy projects
+    description: Data sourcing, completeness, freshness, research, scoring — data-heavy projects
     depends_on: [base-data-modeling]
   - id: base-data-modeling
     file: templates/base/data/data-modeling.md
