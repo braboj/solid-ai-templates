@@ -150,6 +150,14 @@ and out when shipped. Use `Expedite` instead of `Backlog` when the
 work is small, urgent, or out-of-cycle and does not fit the current
 versioned milestone's theme.
 
+Milestones are forward-looking planning; GitHub Releases are the
+backward-looking shipped record. Create a versioned milestone (e.g.
+`v1.0.0`) only for a deliberately planned, scoped release. Routine or
+emergent releases cut from `Backlog` / `Expedite` get no versioned
+milestone — the Release is their shipped record. Do NOT backfill empty
+per-version milestones after the fact; a planning artifact created
+retroactively carries no information.
+
 Colors follow the Atlassian design system palette. Type labels use
 saturated hues; priority labels use a warm-to-cool gradient to
 remain visually distinct when displayed side by side.
