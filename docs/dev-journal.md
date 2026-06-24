@@ -41,6 +41,12 @@ the #500 schema it documents.
 
 **Milestone:** v2.11 — Docs & ADR conventions (8/8 closed)
 
+**Release:** v2.11.0 (https://github.com/braboj/solid-ai-templates/releases/tag/v2.11.0)
+
+**Next:** planned v2.12 — Probe-first workflow lessons (#18, 9 issues) —
+ai-workflow probe/verify-before-acting sweep I; #482 closed as a
+duplicate of #477. Not yet started.
+
 ---
 
 ## 2026-06-24 — v2.10 data-quality finish & generator discipline
@@ -85,6 +91,8 @@ applied to #431's suggested `ai-workflow.md` home.
 **Issues closed:** #424, #431, #434, #435, #437, #443, #444, #445
 
 **Milestone:** v2.10 — Data-quality finish (8/8 closed)
+
+**Release:** v2.10.0 (https://github.com/braboj/solid-ai-templates/releases/tag/v2.10.0)
 
 ---
 
