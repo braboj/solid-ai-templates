@@ -324,6 +324,34 @@ AI agents can do mental math — and get it wrong. When the agent computes a sco
 
 The build is the source of truth. `npm run build` then check the output. Don't trust "I calculated 7.9" — check what the page actually renders.
 
+### Probe before acting on a hypothesis
+
+A bug ticket, a spike, or a prior-session note often arrives with a hypothesized mechanism, a proposed fix, or an inherited diagnosis. Treat it as a claim to disprove, not a foundation to build on. Before acting, run the cheapest probe — a throwaway script, a data dump, a single query — that would confirm or refute it. One run answers two questions: is the hypothesis correct, and where is the real signal? The frequent outcome is that the probe inverts the framing and the real cause sits in a different region than the text predicted.
+
+Run the probe at whichever decision point comes first:
+
+- **Before coding a fix the issue proposes** — when the body names a specific code surface and a predicted cause, the fix often belongs somewhere the text did not point.
+- **Before drafting an ADR** — when the investigation prompts are cheap to answer against real data, the measurement frequently flips the recommendation an estimate would have reached.
+- **At spike intake** — before treating a spike that asserts a specific failure ("X happens because Y") as actionable, confirm the assertion against the cheapest data dump that would refute it.
+- **At the start of a follow-up session** — re-verify any load-bearing diagnosis inherited from a prior session's memory; a coarse earlier conclusion may not survive a direct probe, and the proposed solution set may be unnecessary.
+- **Before filing a bug** — when a short probe (under ~30 min) costs less than the next agent's cost to orient, it turns a reproduction-only ticket into a root-cause brief with fix options.
+
+Probe the artifact, not your reading of it. When the claim rests on a dense source-of-truth artifact — an overlay image, a generated SVG, a log, a chart, a database row — dump its raw representation (pixel scan, JSON dump, AST walk, `SELECT`) instead of re-interpreting the rendered view. Repeated reading is slower and can yield mutually inconsistent conclusions; one raw dump settles the question.
+
+Skipping the probe has two visible failure modes: a well-reasoned fix built against a wrong premise, and a premature ADR that needs same-day supersession. When the probe inverts the framing, the original text is a useful negative result — record it in the PR description or the ADR's "approaches ruled out." If the project exposes no cheap probe for the claim, surfacing that gap is itself the first output. Probes are throwaway: name them for the issue, delete them before the commit that uses their findings, and keep the findings in the issue, ADR, or PR.
+
+### Verify external state before a visible action
+
+Some actions land on someone else's surface — filing an issue or opening a PR on a third-party repo, taking on a dependency, pulling a vendored fixture. Before one of these, confirm the external state is what you assume. The check is cheap (a single API call or page load); the cost of skipping it is acting on stale or wrong information publicly, under the maintainer's identity.
+
+Confirm, before acting:
+
+- **The target is the real project** — search ranking and name collisions lie. Verify against the README, the canonical source, or the site the dependency claims to be.
+- **The repo is live** — not archived, read-only, or migrated. An archived repo silently rejects new issues; a moved one routes your action to a dead fork.
+- **The channel is open** — issues are enabled, the branch accepts PRs, the package version still exists.
+
+When a check fails, treat it as a signal about your own source of truth, not just a one-off filing problem. A repo that turns out archived, renamed, or wrong means the ADR, README, or memory that pointed there is stale — fix the pointer (or drop the dead trigger) in the same task, rather than working around the single blocked action.
+
 ### Scope creep within sessions
 
 A productive session can cover a lot of ground. But jumping between unrelated topics (feature work, data fixes, epic triage, domain decisions) leads to:

@@ -217,6 +217,27 @@ below close those gaps.
 
 ---
 
+## Generated-file staleness gate
+
+[ID: quality-gates-staleness]
+
+When a project commits generated artifacts (rendered docs, generated
+configs, resolved template chains, code-from-schema output) AND uses
+the `--check` convention from `base-docs`, the `--check` invocation
+MUST be wired into CI as a required status check on the relevant
+paths.
+
+- A banner naming the regenerate command is decorative without the
+  gate — a stale file looks identical to a fresh one, and the
+  regenerator can silently break for months unnoticed
+- A staleness gate that is never run on the relevant paths is the
+  gate-by-omission anti-pattern named in `quality-gates-scope-agreement`
+  — passing-because-skipped is not passing
+- The gate MUST fail when the committed artifact differs from a fresh
+  render, exactly as it fails on lint or type errors
+
+---
+
 ## What NOT to gate
 
 [ID: quality-gates-exclusions]

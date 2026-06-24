@@ -52,7 +52,7 @@ base/
 ├── core/
 │   ├── git.md          # Committer identity, commits, branching, PR workflow, versioning
 │   ├── docs.md         # Rule language, documentation standards, ADR, diagrams, docs-as-code
-│   ├── quality.md      # Architecture, code style, security, testing
+│   ├── quality.md      # Architecture, code style, calibration, tool trust, testing
 │   ├── review.md       # Peer review priority, MUST/SHOULD checklists, deviation rules
 │   ├── testing.md      # Test pyramid, coverage thresholds, naming conventions
 │   ├── agents.md       # Output structure, models (inline/reference/hybrid), formatting rules
@@ -75,7 +75,7 @@ base/
 ├── language/
 │   └── typescript.md   # Type design, naming, strictness — applies to all TypeScript projects
 └── data/
-    ├── data-quality.md # Data sourcing, completeness, freshness, scoring — data-heavy projects
+    ├── data-quality.md # Data sourcing, completeness, freshness, research, scoring — data-heavy projects
     ├── data-modeling.md # Schema design, naming, normalization, relationships, data types
     ├── data-governance.md # Classification, PII handling, retention, ownership, audit trail
     └── data-migration.md # Versioned migrations, zero-downtime, rollback strategies

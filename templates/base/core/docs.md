@@ -32,6 +32,11 @@ levels. Every rule MUST use one of these words:
 | `docs/dev-journal.md` | Development history and session log (MUST for agent-assisted projects) |
 | `docs/SPEC.md`        | System design, architecture rules, composition model (SHOULD for complex projects) |
 
+Guide-doc filenames follow a deliberate casing split: single-word guide
+docs use SHOUT-case (`README.md`, `CLAUDE.md`, `ONBOARDING.md`,
+`PLAYBOOK.md`, `SPEC.md`); multi-word descriptive docs use lower
+kebab-case (`dev-journal.md`). This is intentional, not drift.
+
 ## Numbering
 
 - Use numbered headings (1, 1.1, 1.2, 2, 2.1, etc.) in PLAYBOOK and
@@ -92,7 +97,20 @@ Before every commit, update all relevant documentation:
 - Significant architectural decisions MUST be recorded as Architecture Decision
   Records (ADR) in `docs/decisions/`
 - Each ADR documents: context, decision, alternatives considered, consequences
+- Each ADR MUST address exactly one concern — a separate concern gets its
+  own ADR. One concern is not one rule: a single ADR MAY number multiple
+  related decisions (1., 2., …) within its one concern
+- Render "Alternatives considered" and "Consequences" as tables where the
+  content fits — they scan faster than prose lists
 - ADRs are immutable once merged — create a new ADR to supersede an old one
+- When an ADR's premise is refuted shortly after it merges (typically by
+  data that should have informed it), prefer a same-day or same-week
+  supersession ADR documenting the post-mortem over silently closing the
+  follow-up issues — an `Accepted` ADR describing code that does not exist
+  is documentation-vs-code drift. The supersession ADR records the refuting
+  evidence and a post-mortem (Symptom / Root cause / Why missed / Fix /
+  Prevention) if the original shipped any change; the superseded ADR's
+  status flips to `Superseded by ADR-NNN` in the same PR
 - File naming: `NNN-slug.md` — zero-padded sequence number + kebab-case slug
   (e.g. `001-data-storage.md`, `002-hosting.md`)
 - ADR file format:
@@ -199,12 +217,17 @@ Example skeleton:
   `docs/dev-journal.md`
 - Agents have no persistent memory across sessions — the journal provides
   continuity by recording what was done, what changed, and why
-- Structure: architecture overview at the top, then chronological session
-  entries (newest last)
-- Each session entry records: date, tool used, key changes, decisions made
-- Session entry heading format: `### Session N — Short Theme Description`
-  (3-6 words describing what was done; no dates or tool names in the
+- Structure: architecture overview at the top, then session entries in
+  reverse-chronological order (newest first, directly under the top
   heading)
+- Session entry heading format: `## YYYY-MM-DD — Short theme` (3-6 word
+  theme; a parenthetical qualifier such as `(evening)` is allowed when a
+  single day has multiple sessions)
+- Each session entry MUST record, as bold-labelled fields: **Tool** used,
+  **Key changes**, **PRs merged**, **Issues closed/created**, and
+  **Lesson** or decisions made (linking ADRs for any decision); the date
+  lives in the heading. Add a **post-mortem** when the session shipped a
+  P0/P1 fix or handled an incident (see below)
 - When milestones or phases are renamed or renumbered in the issue tracker,
   the dev journal architecture overview MUST be updated in the same PR
 - Do not duplicate content that belongs elsewhere — link to ADRs for
@@ -237,6 +260,12 @@ is incomplete.
   out of sync is worse than no documentation
 - Remove redundant, inconsistent, or outdated documentation promptly
 - Use full, grammatically correct sentences — enumerations are exempt
+- Use bold and italic sparingly — never bold inline code or a whole sentence,
+  and use at most one short bold label per list item
+- Code-format only identifiers (file names, paths, env vars); summarize whole
+  commands and flags in prose rather than transcribing them as inline code
+- Summarize intent and link to the source — do not transcribe methods,
+  constants, or flags into prose
 
 ## Diagrams and assets
 
@@ -245,6 +274,60 @@ is incomplete.
 - Commit all raw editable sources alongside rendered outputs
 - Do not use proprietary formats (Word, Illustrator, Affinity Designer)
 - Diagrams MUST be version-controlled — binary-only diagrams are not acceptable
+- Use uniform node shapes; split a diagram that serves two purposes (e.g.
+  happy path vs error path, or build vs runtime)
+- In Mermaid notes, avoid `;` (a statement separator) and a bare `<` (opens a
+  tag inside `<br/>` notes) — both silently break rendering
+
+## arc42 architecture documentation (if applicable)
+
+[ID: docs-arc42]
+
+For projects documenting architecture with arc42, these conventions keep
+chapters consistent and prevent the common cross-section leaks. The
+general writing-style and diagram rules above still apply.
+
+### Chapter boundaries
+
+- **§2 Constraints vs §4 Solution Strategy** — §2 holds only *givens*
+  (language, OS/platform, environment and resource limits, licensing,
+  process and tooling). Technology *selections* (frameworks, libraries,
+  servers, algorithms, protocols, patterns) are §4 decisions, not §2
+  constraints. Tell: a "constraint" carrying a justification ("…because
+  X is hard") is a decision
+- §2 constraints are forward-stated — never reverse-engineered from
+  code; no file/line citations and no "source" column
+- §3 Context stays high-level — no source-file paths, tool names, or
+  registry/platform names (those live in §7/§9). §3.2 technical-context
+  channels are external partners only — an in-process library is not a
+  channel. §3.3 "In scope" lists project deliverables, not a re-list of
+  the §1 functional requirements
+- §3 diagrams are black-box — use the arc42 partner / input / output
+  table and distinguish human actors from systems
+- Chapters cite no ADRs — keep inline `AD-N` citations and generic
+  "ADR" / "decision record" mentions out of chapter bodies; §9 is the
+  single ADR index
+
+### IDs and register
+
+- Functional requirements use `FR01…` in shall-form (IEEE 29148);
+  quality goals use `QG01…` with ISO 25010 names (Correctness,
+  Reliability, Maintainability, Portability, Compatibility, Usability) —
+  distinct from the `Q1…` quality scenarios in §10
+- Requirements use "shall"; constraints and other givens stay
+  declarative — avoid all-caps RFC 2119 keywords in arc42 prose
+- A per-section purpose line only where it adds meaning (define a term
+  or draw a distinction such as FR vs NFR) — never restate the heading
+- No forward cross-references to later-numbered sections (a section is
+  authored before they exist); back-references are fine
+
+### Concept sections
+
+- Describe the idea in prose, then give a `Concept | Implementation`
+  table mapping it to concrete identifiers — rather than inlining
+  identifiers throughout the prose
+- A glossary entry is a **bold term** followed by plain text — no
+  inline-code monospacing of the term
 
 ## Docs-as-code
 
@@ -279,6 +362,11 @@ it as stale.
   paths — otherwise the formatter reformats the file at commit time
   and `--check` then reports a confusing stale-file failure on the
   next run
+- When a generated file's inputs change (a rename, move, or schema
+  bump), re-run the generator rather than string-editing the artifact
+  — the banner's "do not edit" header is a contract, and the next
+  `--check` run flags a hand-edited file as stale against freshly
+  generated content
 
 ## Output file by agent
 

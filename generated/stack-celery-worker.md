@@ -95,6 +95,13 @@
   duplicated logic
 - **Fail Fast**: validate inputs at boundaries and throw immediately on
   invalid state; do not propagate bad data through the system
+- **Fail loud, not silent on auto-derivation**: when a value can be
+  either derived algorithmically (from a slug, name, hash) or read from
+  a source-of-truth field, prefer the read; when the field is missing,
+  raise/error rather than fall back to the derived value. A
+  wrong-but-plausible derived value (a 404 URL, a mismatched ID) emitted
+  without warning is worse than a script that refuses to run until the
+  data is correct
 - **Law of Demeter**: a module should only talk to its direct
   dependencies; chaining through objects (`a.b.c.d`) signals missing
   abstraction
@@ -108,6 +115,136 @@
   code first and struggle to test later
 - If code is hard to test, treat it as a design problem, not a
   testing problem
+
+## Calibration discipline
+
+[ID: quality-calibration]
+
+When a tool is calibrated against reference data (test fixtures with
+known-correct outputs, benchmark expected results, eval data, decision
+thresholds), three failure modes silently invalidate the calibration:
+suspect data treated as ground truth, the threshold tuned to mask a
+broken measurement, and reference values produced by the same actor
+that runs the tool. The rules below address each.
+
+### Ground truth comes from raw artifacts, not suspect data
+
+- When calibrating a pipeline against existing committed data, verify
+  the data was not produced by an earlier version of the same pipeline
+- If it was, and the pipeline has known or suspected bugs, the
+  committed data is NOT ground truth — calibrating against it bakes
+  the existing bugs into the new gate
+- Build the calibration set from raw artifacts (source images, raw
+  exports, captured fixtures), recording the verified value alongside
+  each entry
+- A small hand-built reference set from raw artifacts beats a large
+  set carried over from a suspect pipeline
+
+### Thresholds move, not the measurement
+
+- When a measurement and a threshold disagree, the threshold is the
+  cheaper thing to change — but ONLY after the measurement is verified
+  sound
+- Order of operations on disagreement: (1) verify the measurement
+  against an independent check, (2) tune the threshold if the
+  measurement is sound, (3) change the measurement implementation
+  ONLY when steps 1 and 2 fail to resolve the disagreement
+- A threshold picked from theory and never validated against data is
+  not a calibrated threshold — it is a guess; tuning it against the
+  data on first disagreement just hides the original guess
+- This rule applies wherever measurements meet thresholds: CI quality
+  gates, performance budgets, ML decision boundaries, extractor
+  agreement scores
+
+### Reference data MUST carry provenance
+
+- Each entry in a reference set MUST record `source: agent | user |
+  external` (who produced the value) and `verified: true | false`
+  (whether a human has reviewed it)
+- An agent MAY produce reference values to speed calibration, but
+  MUST set `source: agent` and `verified: false` until the user
+  reviews — the user MAY veto, replace, or accept; accepting flips
+  `verified: true`
+- Calibration metrics computed against the reference set MUST report
+  a coverage caveat alongside the headline numbers (e.g.
+  "verified: 12/40"), so unverified reference data cannot silently
+  dominate the metric
+- Synthetic test inputs (faker-style data, generated fixtures) are
+  out of scope — this rule covers reference *outputs* compared
+  against tool *outputs*, not test inputs
+
+### Diagnose before tuning
+
+- Before changing a parameter whose value was set by a calibration
+  step or carries a tuning rationale, first PROBE to confirm the
+  parameter is the actual constraint — do not tune-and-see
+- Trace the value where it is computed and read the real intermediate
+  inputs from a real sample (a probe script, or a trace-not-propose
+  investigation), never a synthetic case
+- Tuning is valid once the probe shows the parameter is genuinely the
+  constraint; the wasteful move is changing code on "this might help"
+  without probing, which burns time and risks regressing unrelated
+  calibrated anchors
+
+### Calibration aids MUST NOT depict the system's own output
+
+- Any artifact that informs a human-verifies-machine signal (eye-read
+  against a chart, code review against a generated patch, audit grading
+  against a candidate report) MUST render only the reference data plus
+  the maintainer's reading guides
+- The candidate output goes in a separate artifact, opened only after
+  the independent reading is captured — surfacing it alongside the
+  reading task biases the reading toward the candidate and turns the
+  calibration into a self-confirming loop
+- Name the candidate-output artifact distinctly (`*-overlay.png`,
+  `*-trace.svg`, `*-prediction.md`) so it cannot be confused with the
+  reading aid
+- Comparison views opened AFTER the independent reading is captured
+  (diff viewers, side-by-side dispute resolution) are out of scope —
+  they are downstream of the signal and do not bias it
+
+## Cross-validation and tool trust
+
+[ID: quality-cross-validation]
+
+When output is cross-validated against an external source (vendor
+page, API, spec sheet, scrape), two distinct failure modes produce
+misleading divergence reports: a buggy validation tool that misreads
+the source, and a semantic mismatch between *stored default* and
+*source silence*. Both look like "the data is wrong" and waste
+maintainer time on phantom fixes.
+
+### Verify the tool before trusting its output
+
+- When a validation, scraping, or migration tool drives a bulk
+  change, confirm the tool is correct BEFORE acting on its output
+- A systematic tool bug masquerades as data divergence — applying
+  the tool's values blindly corrupts correct stored data
+- Treat a physically implausible output value as a tool defect:
+  fix, re-run, then apply
+- When the external source itself looks wrong (stale page, wrong
+  record served), cross-check an independent source before
+  overwriting stored data
+- Applies to scrapers, importers, schema-migration verifiers, and
+  lint-driven codemods — any automated diff that drives a bulk
+  change
+
+### Distinguish source-silent from source-says-false
+
+- A stored default (e.g. `absent boolean = false`) and source
+  silence (the source did not mention the field) are NOT the same
+  thing — treating them as equivalent produces a flood of
+  false-positive mismatches that bury real errors
+- The extractor MUST return a field ONLY when the source
+  affirmatively states it
+- The differ MUST compare a field ONLY when present on both the
+  stored and source sides — source-silence skips comparison, never
+  becomes a confirmed value
+- This keeps stored-default conventions (`absent = false`,
+  `null = unknown`) intact while making cross-validation meaningful
+- The trap is non-obvious: the stored-default convention and the
+  verification semantics pull in opposite directions, and the naive
+  implementation looks correct until run against real data
 
 ## Code style
 
@@ -183,6 +320,18 @@
 ## Pull requests
 - PRs should be small and focused — one concern per PR
 - Always test locally before committing
+- **Regenerate derived artifacts in the same PR** — when a change
+  affects generated or derived files committed to the repo (extractor
+  outputs, snapshot fixtures, generated docs), regenerate them in the
+  fixing PR, not a follow-up. A stale artifact is indistinguishable
+  from a regression to the next reviewer. Include a before/after
+  summary (verdict matrix, delta table, screenshot diff) in the PR
+  body so reviewers see the user-visible impact without re-running
+  the pipeline.
+  - When regeneration is too expensive to bundle (e.g. >30s in CI or
+    >100 files), the PR MUST open a tracked follow-up issue AND state
+    the STALE accounting explicitly (N files affected, named or
+    globbed) — silent staleness is the failure mode
 - **Before merging**, review the diff against the base branch. Follow
   `templates/base/core/review.md` priority order: security → correctness → clarity →
   conventions. Check CI passes. Only merge after the review passes.
@@ -365,6 +514,11 @@ levels. Every rule MUST use one of these words:
 | `docs/dev-journal.md` | Development history and session log (MUST for agent-assisted projects) |
 | `docs/SPEC.md`        | System design, architecture rules, composition model (SHOULD for complex projects) |
 
+Guide-doc filenames follow a deliberate casing split: single-word guide
+docs use SHOUT-case (`README.md`, `CLAUDE.md`, `ONBOARDING.md`,
+`PLAYBOOK.md`, `SPEC.md`); multi-word descriptive docs use lower
+kebab-case (`dev-journal.md`). This is intentional, not drift.
+
 ## Numbering
 
 - Use numbered headings (1, 1.1, 1.2, 2, 2.1, etc.) in PLAYBOOK and
@@ -425,7 +579,20 @@ Before every commit, update all relevant documentation:
 - Significant architectural decisions MUST be recorded as Architecture Decision
   Records (ADR) in `docs/decisions/`
 - Each ADR documents: context, decision, alternatives considered, consequences
+- Each ADR MUST address exactly one concern — a separate concern gets its
+  own ADR. One concern is not one rule: a single ADR MAY number multiple
+  related decisions (1., 2., …) within its one concern
+- Render "Alternatives considered" and "Consequences" as tables where the
+  content fits — they scan faster than prose lists
 - ADRs are immutable once merged — create a new ADR to supersede an old one
+- When an ADR's premise is refuted shortly after it merges (typically by
+  data that should have informed it), prefer a same-day or same-week
+  supersession ADR documenting the post-mortem over silently closing the
+  follow-up issues — an `Accepted` ADR describing code that does not exist
+  is documentation-vs-code drift. The supersession ADR records the refuting
+  evidence and a post-mortem (Symptom / Root cause / Why missed / Fix /
+  Prevention) if the original shipped any change; the superseded ADR's
+  status flips to `Superseded by ADR-NNN` in the same PR
 - File naming: `NNN-slug.md` — zero-padded sequence number + kebab-case slug
   (e.g. `001-data-storage.md`, `002-hosting.md`)
 - ADR file format:
@@ -532,12 +699,17 @@ Example skeleton:
   `docs/dev-journal.md`
 - Agents have no persistent memory across sessions — the journal provides
   continuity by recording what was done, what changed, and why
-- Structure: architecture overview at the top, then chronological session
-  entries (newest last)
-- Each session entry records: date, tool used, key changes, decisions made
-- Session entry heading format: `### Session N — Short Theme Description`
-  (3-6 words describing what was done; no dates or tool names in the
+- Structure: architecture overview at the top, then session entries in
+  reverse-chronological order (newest first, directly under the top
   heading)
+- Session entry heading format: `## YYYY-MM-DD — Short theme` (3-6 word
+  theme; a parenthetical qualifier such as `(evening)` is allowed when a
+  single day has multiple sessions)
+- Each session entry MUST record, as bold-labelled fields: **Tool** used,
+  **Key changes**, **PRs merged**, **Issues closed/created**, and
+  **Lesson** or decisions made (linking ADRs for any decision); the date
+  lives in the heading. Add a **post-mortem** when the session shipped a
+  P0/P1 fix or handled an incident (see below)
 - When milestones or phases are renamed or renumbered in the issue tracker,
   the dev journal architecture overview MUST be updated in the same PR
 - Do not duplicate content that belongs elsewhere — link to ADRs for
@@ -570,6 +742,12 @@ is incomplete.
   out of sync is worse than no documentation
 - Remove redundant, inconsistent, or outdated documentation promptly
 - Use full, grammatically correct sentences — enumerations are exempt
+- Use bold and italic sparingly — never bold inline code or a whole sentence,
+  and use at most one short bold label per list item
+- Code-format only identifiers (file names, paths, env vars); summarize whole
+  commands and flags in prose rather than transcribing them as inline code
+- Summarize intent and link to the source — do not transcribe methods,
+  constants, or flags into prose
 
 ## Diagrams and assets
 
@@ -578,6 +756,60 @@ is incomplete.
 - Commit all raw editable sources alongside rendered outputs
 - Do not use proprietary formats (Word, Illustrator, Affinity Designer)
 - Diagrams MUST be version-controlled — binary-only diagrams are not acceptable
+- Use uniform node shapes; split a diagram that serves two purposes (e.g.
+  happy path vs error path, or build vs runtime)
+- In Mermaid notes, avoid `;` (a statement separator) and a bare `<` (opens a
+  tag inside `<br/>` notes) — both silently break rendering
+
+## arc42 architecture documentation (if applicable)
+
+[ID: docs-arc42]
+
+For projects documenting architecture with arc42, these conventions keep
+chapters consistent and prevent the common cross-section leaks. The
+general writing-style and diagram rules above still apply.
+
+### Chapter boundaries
+
+- **§2 Constraints vs §4 Solution Strategy** — §2 holds only *givens*
+  (language, OS/platform, environment and resource limits, licensing,
+  process and tooling). Technology *selections* (frameworks, libraries,
+  servers, algorithms, protocols, patterns) are §4 decisions, not §2
+  constraints. Tell: a "constraint" carrying a justification ("…because
+  X is hard") is a decision
+- §2 constraints are forward-stated — never reverse-engineered from
+  code; no file/line citations and no "source" column
+- §3 Context stays high-level — no source-file paths, tool names, or
+  registry/platform names (those live in §7/§9). §3.2 technical-context
+  channels are external partners only — an in-process library is not a
+  channel. §3.3 "In scope" lists project deliverables, not a re-list of
+  the §1 functional requirements
+- §3 diagrams are black-box — use the arc42 partner / input / output
+  table and distinguish human actors from systems
+- Chapters cite no ADRs — keep inline `AD-N` citations and generic
+  "ADR" / "decision record" mentions out of chapter bodies; §9 is the
+  single ADR index
+
+### IDs and register
+
+- Functional requirements use `FR01…` in shall-form (IEEE 29148);
+  quality goals use `QG01…` with ISO 25010 names (Correctness,
+  Reliability, Maintainability, Portability, Compatibility, Usability) —
+  distinct from the `Q1…` quality scenarios in §10
+- Requirements use "shall"; constraints and other givens stay
+  declarative — avoid all-caps RFC 2119 keywords in arc42 prose
+- A per-section purpose line only where it adds meaning (define a term
+  or draw a distinction such as FR vs NFR) — never restate the heading
+- No forward cross-references to later-numbered sections (a section is
+  authored before they exist); back-references are fine
+
+### Concept sections
+
+- Describe the idea in prose, then give a `Concept | Implementation`
+  table mapping it to concrete identifiers — rather than inlining
+  identifiers throughout the prose
+- A glossary entry is a **bold term** followed by plain text — no
+  inline-code monospacing of the term
 
 ## Docs-as-code
 
@@ -612,6 +844,11 @@ it as stale.
   paths — otherwise the formatter reformats the file at commit time
   and `--check` then reports a confusing stale-file failure on the
   next run
+- When a generated file's inputs change (a rename, move, or schema
+  bump), re-run the generator rather than string-editing the artifact
+  — the banner's "do not edit" header is a contract, and the next
+  `--check` run flags a hand-edited file as stale against freshly
+  generated content
 
 ## Output file by agent
 
@@ -950,6 +1187,25 @@ fixing the design fixes the testability.
 - Integration tests MUST use real dependencies for the boundary under test —
   not hand-written mocks
 
+---
+
+## Data validation tests
+[ID: base-testing-data-validation]
+
+Per-record validation (no duplicates, required fields present, range
+and enum checks) confirms each entry is well-formed but cannot see a
+partial migration — orphan keys and missing entries are individually
+valid. A cohort-level assertion catches what per-record checks miss.
+
+- **Coverage-by-cohort** — when a bulk migration writes N records keyed
+  by a derived slug, assert that the set of written keys equals the set
+  of expected slugs derived independently from the source-of-truth.
+  Catches orphan entries (key with no consumer) and missing entries
+  (consumer with no key); one assertion replaces ad-hoc post-merge
+  spot-checks
+- The pattern generalizes to any bulk migration where producer and
+  consumer derive keys independently from a shared concept
+
 
 <!-- templates/base/core/config.md -->
 # Base — Configuration
@@ -1259,6 +1515,11 @@ Apply SOLID at the class, module, and service level:
   types
 - Keep class hierarchies shallow — more than two levels of inheritance is a
   signal to refactor towards composition
+- **Internal identifiers must align with their layer** — a module or class
+  whose name implies a role it does not hold (an `endpoints.py` with no
+  routes, a `*RestApi` class that is not the REST API) misleads readers and
+  forces clarifying asides; when the layering and the name disagree, rename
+  to match the layer
 
 ## Design patterns
 
@@ -2058,6 +2319,27 @@ below close those gaps.
 - When the deploy workflow runs `validate` (or equivalent) on every
   push to main, the PR workflow MUST run the same `validate` on
   every PR, regardless of which paths changed
+
+---
+
+## Generated-file staleness gate
+
+[ID: quality-gates-staleness]
+
+When a project commits generated artifacts (rendered docs, generated
+configs, resolved template chains, code-from-schema output) AND uses
+the `--check` convention from `base-docs`, the `--check` invocation
+MUST be wired into CI as a required status check on the relevant
+paths.
+
+- A banner naming the regenerate command is decorative without the
+  gate — a stale file looks identical to a fresh one, and the
+  regenerator can silently break for months unnoticed
+- A staleness gate that is never run on the relevant paths is the
+  gate-by-omission anti-pattern named in `quality-gates-scope-agreement`
+  — passing-because-skipped is not passing
+- The gate MUST fail when the committed artifact differs from a fresh
+  render, exactly as it fails on lint or type errors
 
 ---
 
