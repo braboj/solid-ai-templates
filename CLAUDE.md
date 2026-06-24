@@ -237,6 +237,8 @@ base/ ──┬── frontend/ ──┐
   `docs/decisions/`
 - Each ADR documents: context, decision, alternatives considered,
   consequences
+- Each ADR addresses exactly one concern — a separate concern gets
+  its own ADR (multi-part decisions allowed within one concern)
 - ADRs are immutable once merged — create a new ADR to supersede
   an old one. The ONE exception: `superseded_by` / `status` /
   `date` frontmatter fields on a previously-merged ADR MAY be
