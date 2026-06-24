@@ -92,6 +92,8 @@ Before every commit, update all relevant documentation:
 - Significant architectural decisions MUST be recorded as Architecture Decision
   Records (ADR) in `docs/decisions/`
 - Each ADR documents: context, decision, alternatives considered, consequences
+- Render "Alternatives considered" and "Consequences" as tables where the
+  content fits — they scan faster than prose lists
 - ADRs are immutable once merged — create a new ADR to supersede an old one
 - File naming: `NNN-slug.md` — zero-padded sequence number + kebab-case slug
   (e.g. `001-data-storage.md`, `002-hosting.md`)
@@ -237,6 +239,12 @@ is incomplete.
   out of sync is worse than no documentation
 - Remove redundant, inconsistent, or outdated documentation promptly
 - Use full, grammatically correct sentences — enumerations are exempt
+- Use bold and italic sparingly — never bold inline code or a whole sentence,
+  and use at most one short bold label per list item
+- Code-format only identifiers (file names, paths, env vars); summarize whole
+  commands and flags in prose rather than transcribing them as inline code
+- Summarize intent and link to the source — do not transcribe methods,
+  constants, or flags into prose
 
 ## Diagrams and assets
 
@@ -245,6 +253,10 @@ is incomplete.
 - Commit all raw editable sources alongside rendered outputs
 - Do not use proprietary formats (Word, Illustrator, Affinity Designer)
 - Diagrams MUST be version-controlled — binary-only diagrams are not acceptable
+- Use uniform node shapes; split a diagram that serves two purposes (e.g.
+  happy path vs error path, or build vs runtime)
+- In Mermaid notes, avoid `;` (a statement separator) and a bare `<` (opens a
+  tag inside `<br/>` notes) — both silently break rendering
 
 ## Docs-as-code
 
