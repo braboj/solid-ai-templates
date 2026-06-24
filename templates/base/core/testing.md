@@ -209,3 +209,22 @@ fixing the design fixes the testability.
   concluding the code under test is at fault
 - Integration tests MUST use real dependencies for the boundary under test —
   not hand-written mocks
+
+---
+
+## Data validation tests
+[ID: base-testing-data-validation]
+
+Per-record validation (no duplicates, required fields present, range
+and enum checks) confirms each entry is well-formed but cannot see a
+partial migration — orphan keys and missing entries are individually
+valid. A cohort-level assertion catches what per-record checks miss.
+
+- **Coverage-by-cohort** — when a bulk migration writes N records keyed
+  by a derived slug, assert that the set of written keys equals the set
+  of expected slugs derived independently from the source-of-truth.
+  Catches orphan entries (key with no consumer) and missing entries
+  (consumer with no key); one assertion replaces ad-hoc post-merge
+  spot-checks
+- The pattern generalizes to any bulk migration where producer and
+  consumer derive keys independently from a shared concept

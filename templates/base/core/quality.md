@@ -89,6 +89,13 @@
   duplicated logic
 - **Fail Fast**: validate inputs at boundaries and throw immediately on
   invalid state; do not propagate bad data through the system
+- **Fail loud, not silent on auto-derivation**: when a value can be
+  either derived algorithmically (from a slug, name, hash) or read from
+  a source-of-truth field, prefer the read; when the field is missing,
+  raise/error rather than fall back to the derived value. A
+  wrong-but-plausible derived value (a 404 URL, a mismatched ID) emitted
+  without warning is worse than a script that refuses to run until the
+  data is correct
 - **Law of Demeter**: a module should only talk to its direct
   dependencies; chaining through objects (`a.b.c.d`) signals missing
   abstraction

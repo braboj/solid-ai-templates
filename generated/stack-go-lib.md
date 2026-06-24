@@ -95,6 +95,13 @@
   duplicated logic
 - **Fail Fast**: validate inputs at boundaries and throw immediately on
   invalid state; do not propagate bad data through the system
+- **Fail loud, not silent on auto-derivation**: when a value can be
+  either derived algorithmically (from a slug, name, hash) or read from
+  a source-of-truth field, prefer the read; when the field is missing,
+  raise/error rather than fall back to the derived value. A
+  wrong-but-plausible derived value (a 404 URL, a mismatched ID) emitted
+  without warning is worse than a script that refuses to run until the
+  data is correct
 - **Law of Demeter**: a module should only talk to its direct
   dependencies; chaining through objects (`a.b.c.d`) signals missing
   abstraction
@@ -1079,6 +1086,25 @@ fixing the design fixes the testability.
   concluding the code under test is at fault
 - Integration tests MUST use real dependencies for the boundary under test —
   not hand-written mocks
+
+---
+
+## Data validation tests
+[ID: base-testing-data-validation]
+
+Per-record validation (no duplicates, required fields present, range
+and enum checks) confirms each entry is well-formed but cannot see a
+partial migration — orphan keys and missing entries are individually
+valid. A cohort-level assertion catches what per-record checks miss.
+
+- **Coverage-by-cohort** — when a bulk migration writes N records keyed
+  by a derived slug, assert that the set of written keys equals the set
+  of expected slugs derived independently from the source-of-truth.
+  Catches orphan entries (key with no consumer) and missing entries
+  (consumer with no key); one assertion replaces ad-hoc post-merge
+  spot-checks
+- The pattern generalizes to any bulk migration where producer and
+  consumer derive keys independently from a shared concept
 
 
 <!-- templates/base/core/config.md -->
