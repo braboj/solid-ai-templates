@@ -1,5 +1,48 @@
 # Dev Journal
 
+## 2026-06-24 — v2.11 docs & ADR conventions
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Planned and shipped v2.11 — Docs & ADR conventions (8 issues, 5
+  theme PRs)
+- Before starting: brought 23 backlog issues into `github.md`
+  compliance (added missing `task` type and `P3` priority labels) —
+  0 type/priority/milestone violations remain
+- #505 (PR #539): general Markdown/docs style rules in
+  `base/core/docs.md` — ADR tables, visual restraint, diagram + Mermaid
+  gotchas. Re-applied from the stale `docs/markdown-style-rules` branch
+- #513 (PR #540): arc42 authoring conventions — chapter boundaries
+  (§2 vs §4, §3 black-box, §9 ADR index), ID schemes (FR01/QG01),
+  concept-section tables; folded in #503's arc42 points
+- #489 + #533 (PR #541): one concern per ADR (recorded as ADR-014,
+  with CLAUDE.md §2.9 + TEMPLATE.md pointers) and same-day
+  supersession-when-premise-refuted guidance
+- #529 + #507 + #515 (PR #542): milestone-on-purpose (`github.md`),
+  upstream-flag end-of-session steps (`scope.md`, re-applied from the
+  stale branch), layer-aligned identifiers (`oop.md`)
+- #500 (PR #543): kept `dev-journal.md` (rename to SESSIONS.md deferred
+  to v3.0), documented the SHOUT-vs-kebab casing split, added a
+  required-contents entry schema, and reconciled `docs.md` to the
+  journal's actual newest-first / `## YYYY-MM-DD — Theme` format
+
+**Lesson:** two pairs of issues overlapped and were deduped at plan
+time rather than landing conflicting edits — #503 folded into #513
+(arc42), and #505's general style rules landed first so #513 could be
+trimmed to arc42-specifics. #489 is self-referential: by its own
+"one concern per ADR" rule it split from #533 into ADR-014, leaving the
+supersession guidance docs-only. This entry is the first written under
+the #500 schema it documents.
+
+**PRs merged:** #539, #540, #541, #542, #543
+
+**Issues closed:** #489, #500, #505, #507, #513, #515, #529, #533
+
+**Milestone:** v2.11 — Docs & ADR conventions (8/8 closed)
+
+---
+
 ## 2026-06-24 — v2.10 data-quality finish & generator discipline
 
 **Tool:** Claude Code (Opus 4.8, 1M context)
