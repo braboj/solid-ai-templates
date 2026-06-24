@@ -1,5 +1,52 @@
 # Dev Journal
 
+## 2026-06-24 — v2.12 probe-first workflow lessons
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Planned and shipped v2.12 — Probe-first workflow lessons (9 issues,
+  2 theme PRs) — all 9 were the same lesson at different decision
+  points, consolidated into 2 Lessons Learned subsections in
+  `base/workflow/ai-workflow.md` rather than 9 fragments
+- #468 + #471 + #450 + #459 + #532 + #477 + #481 + #474 (PR #546):
+  "Probe before acting on a hypothesis" — run the cheapest probe that
+  would refute a hypothesized mechanism / proposed fix / inherited
+  diagnosis before acting; enumerates the decision points (before
+  coding a proposed fix, before drafting an ADR, at spike intake, on a
+  diagnosis inherited from prior-session memory, before filing a bug),
+  the "probe the artifact, not your reading of it" corollary, and the
+  record-the-inversion / throwaway-probe discipline
+- #496 (PR #547): "Verify external state before a visible action" —
+  before filing an issue/PR on a third-party repo, taking a
+  dependency, or pulling a vendored fixture, confirm the target is the
+  real project, the repo is live (not archived/migrated), and the
+  channel is open; a failed check feeds back to the stale ADR / README
+  / memory pointer, not just the blocked action
+
+**Lesson:** the nine issues overlapped almost entirely, so they were
+deduped at plan time into two cohesive subsections — the issues
+themselves flagged the overlap (#474 suggested one combined section,
+and #471/#450 carried forward from #468). No ADR was written: it is
+template content, not a structural/system decision. No inline `.md`
+cross-reference was added either — several issues requested a pointer
+to `quality.md` §Probe scripts, but this layer expresses relationships
+via `[DEPENDS ON]` headers only, so the throwaway-probe point was
+stated self-contained instead.
+
+**PRs merged:** #546, #547
+
+**Issues closed:** #450, #459, #468, #471, #474, #477, #481, #496, #532
+
+**Milestone:** v2.12 — Probe-first workflow lessons (9/9 closed)
+
+**Release:** v2.12.0 (https://github.com/braboj/solid-ai-templates/releases/tag/v2.12.0)
+
+**Next:** v3.0 — Restructure (13 issues) — inline-to-reference eval,
+slim stacks.
+
+---
+
 ## 2026-06-24 — v2.11 docs & ADR conventions
 
 **Tool:** Claude Code (Opus 4.8, 1M context)
