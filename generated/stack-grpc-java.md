@@ -514,6 +514,11 @@ levels. Every rule MUST use one of these words:
 | `docs/dev-journal.md` | Development history and session log (MUST for agent-assisted projects) |
 | `docs/SPEC.md`        | System design, architecture rules, composition model (SHOULD for complex projects) |
 
+Guide-doc filenames follow a deliberate casing split: single-word guide
+docs use SHOUT-case (`README.md`, `CLAUDE.md`, `ONBOARDING.md`,
+`PLAYBOOK.md`, `SPEC.md`); multi-word descriptive docs use lower
+kebab-case (`dev-journal.md`). This is intentional, not drift.
+
 ## Numbering
 
 - Use numbered headings (1, 1.1, 1.2, 2, 2.1, etc.) in PLAYBOOK and
@@ -694,12 +699,17 @@ Example skeleton:
   `docs/dev-journal.md`
 - Agents have no persistent memory across sessions — the journal provides
   continuity by recording what was done, what changed, and why
-- Structure: architecture overview at the top, then chronological session
-  entries (newest last)
-- Each session entry records: date, tool used, key changes, decisions made
-- Session entry heading format: `### Session N — Short Theme Description`
-  (3-6 words describing what was done; no dates or tool names in the
+- Structure: architecture overview at the top, then session entries in
+  reverse-chronological order (newest first, directly under the top
   heading)
+- Session entry heading format: `## YYYY-MM-DD — Short theme` (3-6 word
+  theme; a parenthetical qualifier such as `(evening)` is allowed when a
+  single day has multiple sessions)
+- Each session entry MUST record, as bold-labelled fields: **Tool** used,
+  **Key changes**, **PRs merged**, **Issues closed/created**, and
+  **Lesson** or decisions made (linking ADRs for any decision); the date
+  lives in the heading. Add a **post-mortem** when the session shipped a
+  P0/P1 fix or handled an incident (see below)
 - When milestones or phases are renamed or renumbered in the issue tracker,
   the dev journal architecture overview MUST be updated in the same PR
 - Do not duplicate content that belongs elsewhere — link to ADRs for
