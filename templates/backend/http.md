@@ -49,6 +49,11 @@
   - Currency codes: ISO 4217
 - Any integer that exceeds 2^53 − 1 (9007199254740991) MUST be serialised
   as a string — JavaScript cannot represent larger integers precisely
+- Endpoints that serialise computed floats MUST reject non-finite values:
+  `NaN`/`Infinity` are not valid RFC 8259 JSON. Configure the encoder to
+  fail loud (a 500 at the serialisation boundary) instead of emitting a
+  bare `NaN` token that strict parsers reject; represent an undefined
+  value as `null` and document the field as nullable in the contract
 - Responses MUST contain only the fields needed by the caller — do not pad
   payloads with fields that are not consumed
 

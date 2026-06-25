@@ -1857,6 +1857,11 @@ staticcheck ./...     # additional static analysis
   - Currency codes: ISO 4217
 - Any integer that exceeds 2^53 − 1 (9007199254740991) MUST be serialised
   as a string — JavaScript cannot represent larger integers precisely
+- Endpoints that serialise computed floats MUST reject non-finite values:
+  `NaN`/`Infinity` are not valid RFC 8259 JSON. Configure the encoder to
+  fail loud (a 500 at the serialisation boundary) instead of emitting a
+  bare `NaN` token that strict parsers reject; represent an undefined
+  value as `null` and document the field as nullable in the contract
 - Responses MUST contain only the fields needed by the caller — do not pad
   payloads with fields that are not consumed
 
@@ -2023,6 +2028,10 @@ every project regardless of language or framework.
   - `Strict-Transport-Security` (see Transport security)
   - `Referrer-Policy: strict-origin-when-cross-origin`
   - `Permissions-Policy` — disable unused browser APIs
+- When enabling `nosniff`, pin static asset MIME types in code — the
+  OS registry resolves `.js` to `text/plain` on some platforms, so the
+  browser refuses to run the script and CI on Linux will not catch it;
+  verify script/style execution in a real browser, not just status codes
 - Never use `unsafe-inline` or `unsafe-eval` in CSP without a
   written justification
 - Do not expose server version or technology stack in headers —
