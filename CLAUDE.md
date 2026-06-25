@@ -188,6 +188,9 @@ base/ ──┬── frontend/ ──┐
 - Optional sections are marked `(if applicable)` in the heading
 - Keep line length under 80 characters
 - No HTML — Markdown only
+- A mechanically-checkable output constraint MUST name its
+  agent-runnable check (command + pass condition); subjective
+  constraints stay declarative (see `quality-gates-pair-check`)
 
 ### 2.8 manifest.yaml
 
