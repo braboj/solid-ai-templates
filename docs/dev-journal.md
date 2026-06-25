@@ -1,5 +1,47 @@
 # Dev Journal
 
+## 2026-06-25 — v2.17 Workflow lessons: bulk & shared-path fix discipline
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Planned v2.17 (milestone #23) as a lessons-drain over the Backlog's
+  bulk / shared-path fix fragments (me-fuji probe-and-fix sessions),
+  deferring the v3.0 restructure spikes (#350/#179/#180). 9 issues
+  consolidated into 5 generic rules across 5 PRs
+- Ran a genericity pass before implementing each rule — the "generic,
+  not one-stack" bar demoted two issues to folded examples rather than
+  standalone content: #458 (byte-hash cohort dup → data-stack-specific)
+  and #472 (dispatch-surface sweep → me-fuji-shaped)
+- #442 (PR #584): bulk-operations skip-list-then-unblock in `git.md` —
+  split a bulk op that hits a per-item bug into two stacked PRs
+  (skip-list + tracking issue, then fix + re-run + unblock)
+- #465/#466/#470 (PR #585): "Verifying regenerated artifacts" in
+  `git.md` — filter CRLF/whitespace noise, visually spot-check binary
+  artifacts, and at scale pair a representative spot-check with a global
+  metric instead of inspecting all N
+- #456/#458 (PR #586): probe cohort breadth before scoping a fix —
+  folded into `ai-workflow.md`'s existing "Probe before acting" rather
+  than a parallel subsection (avoids the redundancy #350 flags)
+- #478/#472 (PR #587): "Shared-path fixes verify every call site" in
+  `testing.md` (`testing-shared-path-breadth`) — exercise every call
+  site against ground truth ("expected unchanged" is the bug case) and
+  re-run every downstream consumer that emits a committed artifact
+- #563 (PR #588): "Tooling-produced scope creep is silent" in
+  `scope.md` — revert a generator/formatter's unrequested side effects
+  before committing, file the drift separately
+
+**Lesson:** for a lessons-drain sourced from one downstream project, the
+genericity pass is the load-bearing step, not the wording. Two of nine
+fragments only survived as examples inside a generic rule; shipping them
+verbatim would have put one-stack content into the core templates every
+stack loads — exactly the attention-dilution #350 warns against. Folding
+related fragments into an existing rule beat adding parallel subsections.
+
+**PRs merged:** #584, #585, #586, #587, #588
+
+**Issues closed:** #442, #465, #466, #470, #456, #458, #478, #472, #563
+
 ## 2026-06-25 — v2.16 Generation fidelity & mechanical checks
 
 **Tool:** Claude Code (Opus 4.8, 1M context)
