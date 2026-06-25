@@ -1,5 +1,45 @@
 # Dev Journal
 
+## 2026-06-25 — v2.15 Backend & resilience + repo hygiene
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Added a labels-at-creation rule to CLAUDE.md §2.2 (#566, PR #567),
+  fast-tracked via Expedite — labels applied at creation, never an
+  unlabeled ticket
+- Planned and shipped v2.15 — Backend & resilience (milestone #21,
+  7 issues + 1 spawned, 6 PRs). Chose a concrete theme over a third
+  consecutive lessons-drain; triaged #498 (generation-fidelity bug) →
+  Expedite, closed #457 wontdo, assigned #560/#561/#563 → Backlog
+- Spike #564 (decision, no ADR): generic async-resilience rules extend
+  existing `messaging.md` (route C — generic home + thin webhook
+  surface, no new file/layer). Corrected the issue's gap analysis (DLQ
+  was already covered in messaging.md + jobs.md); spawned impl #568
+- #568 (PR #569): `messaging.md` "Load & backpressure" — decouple under
+  load, debounce/coalesce, backpressure on saturation, per-key fairness
+- #521 + #522 (PR #570): reject non-finite JSON floats (`http.md`) +
+  nosniff cross-platform MIME caveat (`security.md` Security headers,
+  not devsecops.md)
+- #446 + #439 (PR #571): import-cycle → shared third module, and
+  return-type back-compat shim (`quality.md` Maintainability)
+- #447 (PR #572): opt-in DiagnosticSink pipeline pattern →
+  `observability.md` (moved off the planned quality-gates.md — a gate
+  verifies, a sink instruments for debugging)
+- #565 (PR #573): new `backend/webhooks.md`, register-only (composition
+  over inheritance, ADR-004) — composes the resilience substrate via
+  `[DEPENDS ON]`, adds only the webhook-specific surface; 0 chains wired
+- Repo hygiene: gitignored `.claude/` (PR #574); removed `docs/drafts/`
+  (obsolete) and `docs/spikes/` (findings for open spikes #350/#479
+  archived to those issues first, then deleted)
+
+**Lesson:** plan-time placements need verification against real file
+contents before writing. Two of this milestone's planned homes were
+wrong on inspection. The "missing DLQ" in #564 was already covered;
+the DiagnosticSink home in #447 (quality-gates.md) conflated a gate
+(which verifies) with an instrument (which debugs), and belongs in
+observability.md. Verify the gap or the home, then write.
+
 ## 2026-06-25 — v2.14 Workflow & quality lessons
 
 **Tool:** Claude Code (Opus 4.8, 1M context)
