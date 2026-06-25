@@ -2615,17 +2615,26 @@ Before starting any work, the agent MUST:
 3. Check which branch you are on — if not `main`, ask why before
    proceeding
 4. Check `git status` — if uncommitted changes exist, resolve before
-   starting new work
+   starting new work. Uncommitted changes at session start usually mean
+   the previous session's wrap (journal entry, memory pointer) was
+   written but never shipped: branch, commit, push, and merge it as the
+   FIRST action, before any new work. "Resolve" means ship the previous
+   wrap — not stash or delete. If the change is something else, ask what
+   it is and whether it should ship before the new scope.
 5. Clean up stale branches: `git fetch --prune` to remove stale
    remote-tracking refs, then `git branch --merged main | grep -v
    main | xargs -r git branch -d` to delete local branches whose
    PRs have squash-merged
-6. Confirm the scope with the user before making changes
-7. If the task is ambiguous, ask: "What is the specific deliverable for
+6. Check deploy health — verify the latest CI/CD deploy on `main`
+   completed successfully; flag if stuck, failed, or pending. A deploy
+   can sit broken for hours unnoticed when startup checks only cover
+   branch and status. Concrete commands belong in the platform template.
+7. Confirm the scope with the user before making changes
+8. If the task is ambiguous, ask: "What is the specific deliverable for
    this session?"
-8. Write down the agreed scope — refer back to it when the session
+9. Write down the agreed scope — refer back to it when the session
    drifts
-9. Review open issues related to the agreed scope before writing code
+10. Review open issues related to the agreed scope before writing code
 
 ## Mandatory startup block
 
