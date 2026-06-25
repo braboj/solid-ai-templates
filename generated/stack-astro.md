@@ -1939,6 +1939,29 @@ A rule states intent; its paired check is what makes the intent hold.
 
 ---
 
+## Convention-as-test
+
+[ID: quality-gates-convention-as-test]
+
+A specific shape of `quality-gates-pair-check`: when a convention takes
+the form "every record satisfying property X MUST share derived
+artifact Y", its check is a test that enumerates the X-satisfying
+records and asserts Y-equality across them.
+
+- A written-down "if X then Y" invariant MUST be encoded as a test when
+  Y is mechanically comparable. The test enumerates every record
+  satisfying X and asserts they share Y. Examples: entries sharing a
+  canonical product URL MUST share their generated chart file; build
+  outputs in one locale MUST share a glossary file
+- The test gates the invariant at commit time. A prose convention is
+  forgotten and the next divergent record lands undetected; the test
+  fails loud, naming the pair that broke it
+- This applies only to mechanically checkable invariants. Conventions
+  that genuinely cannot be tested (subjective code style, prose tone)
+  stay declarative (see `quality-gates-exclusions`)
+
+---
+
 ## What NOT to gate
 
 [ID: quality-gates-exclusions]
