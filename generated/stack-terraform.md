@@ -1293,6 +1293,29 @@ valid. A cohort-level assertion catches what per-record checks miss.
 - The pattern generalizes to any bulk migration where producer and
   consumer derive keys independently from a shared concept
 
+---
+
+## Shared-path fixes verify every call site
+[ID: testing-shared-path-breadth]
+
+A fix that changes a shared code path may surface latent bugs at other
+call sites that were silent before. Verification MUST exercise every
+call site sharing the changed code, not only the case from the bug
+report.
+
+- Run the project's ground-truth comparison (golden tests, reference
+  data, recorded fixtures, snapshot suite) on every entity exercising
+  the path — "expected unchanged" is the bug case, so verify it rather
+  than assume it
+- Enumerate every downstream consumer of the changed surface — each
+  tool or report that derives a committed artifact from it — and re-run
+  it, so a stale artifact does not misread as the fix not working.
+  Document the consumer list alongside the surface so the sweep stays
+  cheap to repeat
+- A silent prior bug at a sibling call site surfaces only in the
+  broader benchmark — the breadth of verification bounds the fix's
+  value
+
 
 <!-- templates/base/infra/cicd.md -->
 # Base — CI/CD and Delivery
