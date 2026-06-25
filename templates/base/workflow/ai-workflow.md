@@ -282,6 +282,52 @@ During investigative work where the conclusion depends on a
 negative result, SHOULD use absolute paths for path-based queries
 to remove ambient-directory dependence entirely.
 
+### Survey prior art before inventing domain logic
+[ID: ai-workflow-survey-prior-art]
+
+When designing a new rule, scoring formula, aggregation method, or any
+domain logic that crosses into territory another field has already
+explored, dispatch parallel research agents to canvas what reputable
+sources actually do BEFORE writing ADR text or code. First-principles
+reasoning produces rules that read defensible but have no external
+grounding — and the agent often picks an option with zero prior art
+among trusted sources. Findings inform the rule; the absence of prior
+art is also data, so document it either way. A five-minute research
+dispatch is trivial against shipping a half-fix that needs later
+amendment.
+
+### Triage prototype cost before building
+[ID: ai-workflow-prototype-cost]
+
+Spend prototype budget on the cheapest path to the answer, not the first
+path offered.
+
+- **Read the dependency manifest before starting an install time-box.**
+  A cheap inspection of `environment.yml` / `requirements.txt` /
+  `Cargo.toml` / `go.mod` often shows the budget is already infeasible —
+  a pinned old runtime, OS-locked dependencies, or external checkpoint
+  downloads — before the timer starts. Reject on cost without the futile
+  install attempt.
+- **Order multi-option spikes cheapest-first, not in body order.** A
+  spike body lists candidates in narrative order, which optimises for
+  explaining the problem, not measuring the answer. Re-sort by smallest
+  code surface and cleanest probe rationale, and start there. When a
+  candidate fails, record its root cause — the next-cheapest candidate
+  often shares it and can be rejected on the same probe data without a
+  full reprototype. Revert rejected prototypes cleanly to preserve the
+  comparison data for the ADR.
+
+### Spike findings home
+[ID: ai-workflow-spike-findings]
+
+Interim findings from a multi-AC spike sliced across sessions (a partial
+deliverable that does not yet conclude the spike) belong in a comment on
+the spike issue — durable, queryable, bidirectionally linked, and
+needing no new directory. Do NOT create a `docs/spikes/` directory for
+one-off findings: a new directory is itself an architectural decision
+that needs its own ADR. The durable artifact is the eventual ADR per the
+decision-log rule, citing the interim comment(s).
+
 ### Decide before delegating
 
 The agent will build whatever you ask. The expensive mistake is building the wrong thing fast. Spend time on:
