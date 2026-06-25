@@ -16,6 +16,14 @@
   is extracted to its own repo," "when a second call site appears").
   A deferral without a trigger gets re-argued every time it comes up
   or quietly forgotten; a deferral with a trigger is a decision.
+- **Delete dead-code paths discovered during implementation**: when a
+  probe against real data invalidates a path you wrote earlier in the
+  same session, delete it in the same commit. "In case it's useful
+  later" is sunk-cost reasoning — what you already wrote feels valuable,
+  but code with no real test case to anchor it rots fast and confuses
+  the next maintainer about which path actually fires. If a future case
+  needs it, git history has it. Distinct from YAGNI: YAGNI says do not
+  build speculative code; this says retract what probing made speculative.
 
 ## Architecture
 
@@ -110,6 +118,15 @@
   wrong-but-plausible derived value (a 404 URL, a mismatched ID) emitted
   without warning is worse than a script that refuses to run until the
   data is correct
+- **A caller-side input filter is not a precondition**: when a runner
+  filters its inputs by a caller-side criterion (data availability,
+  ground-truth presence, a feature flag) that is tighter than the inner
+  function's actual preconditions, the function silently rots whenever an
+  unrelated change breaks it on the excluded inputs — no test exercises
+  them. Either widen the filter so the function runs over its full input
+  domain, or push the precondition into the function as an assertion so
+  it fails loud. A filter that "happens to" exclude broken inputs is a
+  buried defect waiting for someone to lift it
 - **Law of Demeter**: a module should only talk to its direct
   dependencies; chaining through objects (`a.b.c.d`) signals missing
   abstraction
