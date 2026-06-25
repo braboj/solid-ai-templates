@@ -253,6 +253,11 @@ maintainer time on phantom fixes.
 - Prefer self-documenting code — if a comment feels necessary, treat it as a
   signal that the code needs restructuring before the comment is added
 - Add comments only where the intent cannot be expressed in code
+- A comment that explains *why* something is safe ("X holds because Y") is a
+  load-bearing claim, not documentation — re-verify it against current data the
+  next time the code is read, never rely on it as-is. Reasoning comments rot
+  faster than the code they annotate: the code stays correct while the predicate
+  the comment cites silently goes false
 
 ## Debug code
 

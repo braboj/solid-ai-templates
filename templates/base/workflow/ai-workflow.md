@@ -324,6 +324,14 @@ AI agents can do mental math — and get it wrong. When the agent computes a sco
 
 The build is the source of truth. `npm run build` then check the output. Don't trust "I calculated 7.9" — check what the page actually renders.
 
+### Verify before relying on a claim
+
+A claim about current state — a count in a memory note, a changelog's list of breaking changes, the assumption that one fix refreshed every view — is accurate when written and decays after. Before you scope work or declare a fix shipped on the strength of such a claim, re-measure the thing itself. The check is usually one command, and it replaces a guess with proof.
+
+- **Counts in handoff notes decay fast.** A memory note, prior PR body, or journal "follow-ups" line that quantifies backlog ("33 stale logs", "5 open Dependabot PRs") was true at write time; sweep tasks then complete silently as side effects of other work. Re-run the underlying check (`--check`, `gh pr list`, `git log --since=`) before estimating effort, and note any large drift in the session entry — it is signal about which sweeps are finishing on their own. Treat the count as a question, not an answer.
+- **A dependency bump is verified by the gate, not the changelog.** Scanning a major bump's changelog sizes the question; running the project's lint/test/build against the new version answers it. If the local gate passes, the bump is safe regardless of changelog content; if it fails, the changelog names which breaking change fired. Patch and minor bumps may skip the run when the changelog shows no breaking changes.
+- **When the truth source changes, audit every downstream render.** When one source of truth feeds multiple rendered artifacts (design tokens → CSS + Storybook + docs; OpenAPI → SDKs + mocks + docs), updating the source does not refresh the renders. Before declaring the fix shipped, list every artifact derived from the changed truth and verify each — build-time caches, hand-tweaked files, and provenance artifacts that intentionally show the pre-fix state each behave differently; call out which.
+
 ### Probe before acting on a hypothesis
 
 A bug ticket, a spike, or a prior-session note often arrives with a hypothesized mechanism, a proposed fix, or an inherited diagnosis. Treat it as a claim to disprove, not a foundation to build on. Before acting, run the cheapest probe — a throwaway script, a data dump, a single query — that would confirm or refute it. One run answers two questions: is the hypothesis correct, and where is the real signal? The frequent outcome is that the probe inverts the framing and the real cause sits in a different region than the text predicted.

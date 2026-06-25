@@ -225,6 +225,25 @@ below close those gaps.
   push to main, the PR workflow MUST run the same `validate` on
   every PR, regardless of which paths changed
 
+### Green CI does not prove environment independence
+
+CI runs on a clean checkout in one controlled environment. A passing
+gate is NOT "no bugs" when the check's input or behavior depends on the
+developer environment:
+
+- The test reads the working-tree filesystem (`readdirSync`, `glob`)
+  rather than tracked files (`git ls-tree`, explicit imports), so local
+  scratch or gitignored artifacts change its input — CI never sees them
+- The test depends on line endings, locale, timezone, filesystem case
+  sensitivity, or available binaries
+- The CI matrix omits the OS or runtime contributors use locally
+
+For such tests: prefer tracked-files enumeration over filesystem walks;
+gate a directory on an explicit anchor file so local-only artifacts are
+filtered out; document the dependency in a comment at the test; and run
+the gate locally on the dev OS at least once per session — local-first
+catches what a clean-room CI cannot.
+
 ---
 
 ## Generated-file staleness gate
