@@ -2061,6 +2061,10 @@ CLAUDE.md
 - Do not pin exact versions in `dependencies` — use ranges (`>=`, `<`)
 - Dev/test dependencies in `[project.optional-dependencies]` or `[dependency-groups]`
 - Lock file for reproducibility: `requirements-dev.lock` or equivalent
+- If `__version__` derives from `importlib.metadata.version(...)`, an
+  editable install reports a stale version after a `[project].version`
+  bump until `pip install -e .` is rerun. Built artifacts (wheel, image)
+  install fresh and are unaffected
 
 ---
 
@@ -2080,6 +2084,7 @@ mypy src/ --strict        # type check
 ruff check src/ tests/    # lint
 ruff format src/ tests/   # format
 python -m build           # build distribution
+twine check dist/*        # validate wheel/sdist metadata
 ```
 ---
 
@@ -2096,6 +2101,7 @@ python -m build           # build distribution
 | Secrets | — | gitleaks | gitleaks | `.pre-commit-config.yaml` |
 | Tests | — | — | pytest | `pyproject.toml` |
 | Coverage | — | — | pytest-cov ≥ 80% | `pyproject.toml` |
+| Build | — | — | `python -m build` + `twine check dist/*` | `pyproject.toml` |
 
 - Hook framework: `pre-commit` — config in `.pre-commit-config.yaml`
 - Docstring convention: Google — enforced via Ruff `D` rules with
