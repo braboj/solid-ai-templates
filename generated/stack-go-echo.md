@@ -1194,6 +1194,30 @@ fixing the design fixes the testability.
 
 ---
 
+## Tests should name what they pin
+[ID: testing-name-what-pinned]
+
+A test that asserts a numeric threshold (precision ≥ 0.85, latency
+< 100ms, IoU ≥ 0.20) MUST document what about the system the threshold
+pins — otherwise an intended improvement that legitimately moves the
+number produces a failure indistinguishable from a real regression, and
+nobody can tell whether to lower the bar, update the test, or revert.
+
+State, in the docstring or assertion message:
+
+- the relationship under test (the property the threshold gates)
+- the conditions it was calibrated under (pipeline state, reference data)
+- the expected response if a future improvement legitimately moves it
+
+Flag in review a single-number assertion whose failure message names
+only the observed value ("Expected ≥ 0.85, got 0.81") — make it
+actionable ("Expected ≥ 0.85 polyline-on-skeleton precision, a
+self-consistency check calibrated post-#953; got 0.81 — verify the
+skeleton is still the dense per-curve trace the threshold assumed").
+This applies to threshold-asserting tests specifically, not every test.
+
+---
+
 ## Data validation tests
 [ID: base-testing-data-validation]
 
@@ -1512,6 +1536,42 @@ Document the skip rule in an ADR alongside the workflow change —
 the reasoning ("this gate cannot produce signal on these PRs")
 should be discoverable later when someone wonders why the gate
 sometimes doesn't run.
+
+---
+
+## Reading a gate verdict honestly
+
+[ID: quality-gates-verdict-reading]
+
+A gate verdict is a signal to interpret, not a conclusion to act on
+blindly. Two failure modes sit on either side of the pass/fail line.
+
+### Disaggregate verdict, plausibility, and accuracy
+
+When a gate fires, its single verdict often conflates three judgments:
+
+- **Verdict** — what the gate says (pass / fail / LOW)
+- **Plausibility** — is the output *shape* consistent with priors,
+  sanity checks, and schema invariants?
+- **Accuracy** — does the output match ground truth where it exists?
+
+A "LOW" can mean the output is inaccurate, the plausibility check is
+unsound for this input class, or both — and each implies a different
+fix (fix the producer / tune the check per-class / both). Separate them
+before acting. Worked example: a digitization gate fired
+`prior_failed` on a chart whose output was within ±0.05 of ground
+truth on 41 of 43 points — the ground truth itself violated the prior,
+so the fix was a per-family prior whitelist, not a producer change. The
+verdict alone pointed the wrong way.
+
+### Lenient gates need a human residual check
+
+The complement to a noisy gate is a lenient one: it passes, but a human
+glance catches a defect the gate cannot. A single-sample dip in a curve
+can pass a tolerance averaged across samples. Tightening the threshold
+to catch it would mis-flag legitimate runs; instead keep the gate AND
+document that the artifact type requires a maintainer-eye review before
+commit. A passing gate is necessary, not sufficient.
 
 ---
 

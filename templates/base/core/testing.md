@@ -212,6 +212,30 @@ fixing the design fixes the testability.
 
 ---
 
+## Tests should name what they pin
+[ID: testing-name-what-pinned]
+
+A test that asserts a numeric threshold (precision ≥ 0.85, latency
+< 100ms, IoU ≥ 0.20) MUST document what about the system the threshold
+pins — otherwise an intended improvement that legitimately moves the
+number produces a failure indistinguishable from a real regression, and
+nobody can tell whether to lower the bar, update the test, or revert.
+
+State, in the docstring or assertion message:
+
+- the relationship under test (the property the threshold gates)
+- the conditions it was calibrated under (pipeline state, reference data)
+- the expected response if a future improvement legitimately moves it
+
+Flag in review a single-number assertion whose failure message names
+only the observed value ("Expected ≥ 0.85, got 0.81") — make it
+actionable ("Expected ≥ 0.85 polyline-on-skeleton precision, a
+self-consistency check calibrated post-#953; got 0.81 — verify the
+skeleton is still the dense per-curve trace the threshold assumed").
+This applies to threshold-asserting tests specifically, not every test.
+
+---
+
 ## Data validation tests
 [ID: base-testing-data-validation]
 
