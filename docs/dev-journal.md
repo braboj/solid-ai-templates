@@ -1,5 +1,40 @@
 # Dev Journal
 
+## 2026-06-25 — v2.13 CI/CD & release hardening
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Planned and shipped v2.13 — CI/CD & release hardening (7 issues, 5
+  theme PRs), chosen as a concrete intermediate milestone before the
+  v3.0 restructure, from a CI/CD cluster in the Backlog
+- #499 (PR #550, P2): CI workflow authoring rules from a real gitleaks
+  outage — authenticate `api.github.com` calls (shared-runner rate
+  limit), fail loud on shell-pipeline-resolved values, and verify a
+  tool's pricing/license before adopting it (added to ai-workflow's
+  "Verify external state" section, not the issue's suggested home)
+- #510 (PR #551): pin third-party GitHub Actions to commit SHAs, with
+  the version in a trailing comment so Dependabot still bumps them
+- #509 + #438 (PR #552): Dependabot weekly-batch triage —
+  lockfile-conflict cascade, auto-supersede, aggregator-timing, fix-PR-
+  first for lint-rule bumps, and co-dependent caret-range rebase
+- #528 + #531 (PR #553): per-tag GitHub Release as the durable record
+  (tag-gated, idempotent, deploy-independent) + SBOM uploaded to it,
+  guarded and continue-on-error so a scan hiccup never erases it
+- #497 (PR #554): distinguish CI infra failures from diff failures when
+  judging PR readiness (new CI-signals section in review.md)
+
+**Lesson:** `git add -A` swept the untracked `.claude/` and
+`docs/drafts`+`docs/spikes` working dirs into PR B's commit. Caught it
+before opening the PR, undid via `git reset --mixed HEAD~1`, deleted the
+just-pushed remote branch (not a force-push — no PR, no collaborators),
+and re-pushed staging explicit paths. Use explicit `git add <paths>`,
+never `-A`, while those dirs sit untracked.
+
+**PRs merged:** #550, #551, #552, #553, #554
+
+**Issues closed:** #499, #510, #509, #438, #528, #531, #497
+
 ## 2026-06-25 — Maintenance: dependency bump + branch prune
 
 **Tool:** Claude Code (Opus 4.8, 1M context)
