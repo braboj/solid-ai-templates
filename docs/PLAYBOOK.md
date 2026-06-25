@@ -55,6 +55,28 @@ composition model.
 
 ---
 
+## Drain a downstream lesson into a template
+
+A lesson sourced from one downstream project (a bug write-up, a session
+retro) carries that project's domain in its framing. Vet it for
+genericity before it becomes template content:
+
+1. Extract the generic kernel — the rule that holds regardless of stack
+   or domain. Strip project-specific nouns (entity, tool, and metric
+   names)
+2. If the kernel is genuinely cross-cutting, add it to the relevant
+   `base/` or layer template per "Add a new base or layer template"
+3. If a fragment only applies to one stack or domain, fold it as an
+   *example* inside a generic rule — do not add it as standalone base
+   content. Standalone one-stack content in a core-tier template loads
+   into every chain and dilutes attention
+4. Prefer extending an existing related rule over adding a parallel
+   section — duplicate rules restated across templates are the same
+   attention-dilution failure
+5. Validate per "Validate a template change"
+
+---
+
 ## Rename a template file
 
 1. `git mv <old-path> <new-path>`
