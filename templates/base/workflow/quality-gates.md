@@ -88,6 +88,16 @@ quality scoring for web projects, docstring enforcement for Python).
   branches, identical expressions, and other code smells that standard
   ESLint rules miss; SHOULD be added to any TypeScript/JavaScript project
 
+### Lint-rule bumps: fix the source on its own PR first
+
+When a dependency bump adds a lint rule that flags existing source:
+
+- Write the fix in the older rule's API (usually forward-compatible)
+  on its own branch, and merge that fix-PR to `main` first
+- Then `@dependabot rebase` the bump PR so it lands clean on green
+- Do NOT push the fix onto Dependabot's branch — keep the bump as
+  Dependabot's own commit so it stays recreatable on future runs
+
 ---
 
 ## Thresholds

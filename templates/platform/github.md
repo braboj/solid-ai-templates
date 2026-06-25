@@ -129,6 +129,17 @@ gate categories to GitHub Actions workflows and GitHub-native features.
 - Group related dependencies to reduce PR noise
 - Combine with auto-merge for patch and minor updates: a GitHub
   Actions workflow that merges passing `dependabot/` branches
+- **Weekly-batch triage** — when a scheduled run opens several PRs at
+  once:
+  - Scan the queue without opening run pages:
+    `for pr in <ids>; do gh pr checks $pr; done`
+  - Expect a **lockfile-conflict cascade**: each squash-merge bumps the
+    lockfile and conflicts every open sibling PR. Merge in small
+    parallel batches (expect 1–2 race-losers), `@dependabot rebase` the
+    losers, repeat. Generic to any lockfile ecosystem (npm, pnpm,
+    cargo, poetry)
+  - Dependabot **auto-supersedes** — it closes a PR once its target is
+    reached transitively via sibling merges; do not manually reopen
 
 ---
 
@@ -166,6 +177,11 @@ paths. Without it, links like `/about` produce false errors:
   with:
     args: --offline --no-progress --root-dir dist dist/
 ```
+
+**Aggregator timing:** when branch protection requires an aggregator
+`gate` job that runs after its sub-checks, a merge issued in the gap
+returns `the base branch policy prohibits the merge`. Merge waiters
+MUST target the aggregator job by name, not the individual sub-checks.
 
 ---
 

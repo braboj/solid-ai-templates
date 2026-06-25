@@ -2061,6 +2061,12 @@ Sources override in this order (highest wins):
 - Never rely on system-wide packages — the app MUST run with only
   its declared dependencies installed
 - Separate production dependencies from dev/test dependencies
+- When an updater splits interlocked packages (caret-ranged pairs like
+  `react`/`react-dom` or an ESLint plugin/parser) into separate PRs,
+  rebase the co-dependent PRs against current `main` before merging the
+  second — or group them in `.github/dependabot.yml` (`groups`) so they
+  ship as one PR. Each passes CI alone, yet a lone merge can leave the
+  lockfile with mismatched pins
 
 ## Port binding
 

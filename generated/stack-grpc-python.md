@@ -1300,6 +1300,12 @@ Sources override in this order (highest wins):
 - Never rely on system-wide packages — the app MUST run with only
   its declared dependencies installed
 - Separate production dependencies from dev/test dependencies
+- When an updater splits interlocked packages (caret-ranged pairs like
+  `react`/`react-dom` or an ESLint plugin/parser) into separate PRs,
+  rebase the co-dependent PRs against current `main` before merging the
+  second — or group them in `.github/dependabot.yml` (`groups`) so they
+  ship as one PR. Each passes CI alone, yet a lone merge can leave the
+  lockfile with mismatched pins
 
 ## Port binding
 
@@ -2135,6 +2141,16 @@ quality scoring for web projects, docstring enforcement for Python).
 - **eslint-plugin-sonarjs** — detects cognitive complexity, duplicate
   branches, identical expressions, and other code smells that standard
   ESLint rules miss; SHOULD be added to any TypeScript/JavaScript project
+
+### Lint-rule bumps: fix the source on its own PR first
+
+When a dependency bump adds a lint rule that flags existing source:
+
+- Write the fix in the older rule's API (usually forward-compatible)
+  on its own branch, and merge that fix-PR to `main` first
+- Then `@dependabot rebase` the bump PR so it lands clean on green
+- Do NOT push the fix onto Dependabot's branch — keep the bump as
+  Dependabot's own commit so it stays recreatable on future runs
 
 ---
 
