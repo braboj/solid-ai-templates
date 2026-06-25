@@ -67,7 +67,8 @@ base/
 │   ├── scope.md        # Scope guard, session protocol, drift prevention
 │   ├── quality-gates.md # Three-layer gate model (editor, pre-commit, CI), thresholds
 │   ├── ai-workflow.md  # AI-assisted development lifecycle, work item hierarchy
-│   └── 360.md          # 360-degree project analysis — four stakeholder perspectives, grading
+│   ├── 360.md          # 360-degree project analysis — four stakeholder perspectives, grading
+│   └── communication.md # Communication preferences — concise output, shorthand verbs, scope-asking
 ├── infra/
 │   ├── cicd.md         # Pipeline stages, triggers, environments, IaC, deployment
 │   ├── containers.md   # Dockerfile, runtime security, resource limits, Kubernetes
