@@ -3572,6 +3572,31 @@ Covers conventions that are shared regardless of framework choice.
 
 ---
 
+## Runtime version pinning
+[ID: python-service-version-pinning]
+
+The Python version is declared in several places that MUST agree, or a
+change to one silently diverges and ships an untested runtime:
+
+- the Docker base image (`FROM python:X.Y.Z-...`) — the shipped runtime
+- the CI gate's `setup-python` version — the tested runtime
+- `mypy`'s `python_version` and `requires-python` — the declared runtime
+
+Rules:
+
+- Pin the Python version identically across all four and bump them in
+  lockstep — a base-image major/minor jump is a deliberate, coordinated
+  PR, never a dependency-bot auto-merge. A base-image bump alone passes
+  CI green (the gate tests its own `setup-python`, not the image's) while
+  shipping an untested runtime
+- Pin CI's `setup-python` to the exact version the image ships, so every
+  gate validates the production runtime, not a trailing patch
+- Hold `ruff`'s `target-version` as a style floor — it MAY deliberately
+  trail the runtime by one minor to avoid the formatter rewriting code to
+  brand-new syntax that is less readable or visually ambiguous
+
+---
+
 ## Layered architecture
 [ID: python-service-layers]
 [EXTEND: backend-quality]
