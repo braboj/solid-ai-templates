@@ -3758,6 +3758,14 @@ CLAUDE.md
 - Blueprint registered with a URL prefix (`/api/v1`, `/auth`, etc.)
 - No cross-blueprint imports — shared logic goes in a service module
 - Routes thin — business logic delegated to service functions, not in route handlers
+- For multiple API versions that share one contract (same params,
+  validation, and response — differing only in implementation), use a
+  version registry (`{"v1": ImplV1, "v2": ImplV2}`) plus a blueprint
+  factory (`make_api_blueprint(version, impl)` mounted at
+  `url_prefix=f"/api/{version}"`). Adding a version is then a one-line
+  registry edit with no per-version route duplication. Reserve a
+  dedicated per-version module for when a version's contract actually
+  diverges — let the divergence earn the split rather than starting there
 
 ---
 
