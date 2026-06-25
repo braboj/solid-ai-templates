@@ -349,6 +349,7 @@ Confirm, before acting:
 - **The target is the real project** — search ranking and name collisions lie. Verify against the README, the canonical source, or the site the dependency claims to be.
 - **The repo is live** — not archived, read-only, or migrated. An archived repo silently rejects new issues; a moved one routes your action to a dead fork.
 - **The channel is open** — issues are enabled, the branch accepts PRs, the package version still exists.
+- **The terms fit your repo** — an "official" or "recommended" action/tool's pricing and license model fits your repo's org type. "Official" is not always "drop-in": `gitleaks/gitleaks-action` is free on personal repos but requires a paid license secret on organization repos. Verify the pricing model before switching, not on the first failing run.
 
 When a check fails, treat it as a signal about your own source of truth, not just a one-off filing problem. A repo that turns out archived, renamed, or wrong means the ADR, README, or memory that pointed there is stale — fix the pointer (or drop the dead trigger) in the same task, rather than working around the single blocked action.
 
