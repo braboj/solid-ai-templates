@@ -1896,6 +1896,39 @@ paths.
 
 ---
 
+## Pair a checkable constraint with its check
+
+[ID: quality-gates-pair-check]
+
+`quality-gates-staleness` is one case of a general rule: a stated
+constraint without its check is decorative. It looks enforced and
+decays silently, because a violating artifact looks identical to a
+clean one. A constraint that travels into a generated project (a
+template output constraint inherited by a generated `CLAUDE.md`) carries
+this risk furthest — the project inherits the rule with no protocol to
+self-check it.
+
+- An output constraint that is mechanically checkable MUST name its
+  agent-runnable check — the command to run and the pass condition.
+  Examples: "line length < 80" -> `awk 'length > 80' FILE`, output MUST
+  be empty; "no raw HTML" -> `grep -nE '<[a-z]+>' FILE`, output MUST be
+  empty
+- State the check next to the rule it verifies — not in a separate
+  tooling file the generated project never receives. The rule and its
+  check MUST travel together, so every artifact generated from the
+  template inherits both
+- A constraint that is inherently subjective (imperative tone, "no
+  explanatory prose", heading-case judgment) stays declarative and
+  relies on review. Do NOT invent a brittle check to satisfy this rule
+  (see `quality-gates-exclusions`)
+- When the constraint guards a committed generated artifact, wire its
+  check into CI as a required status check (see
+  `quality-gates-staleness`)
+
+A rule states intent; its paired check is what makes the intent hold.
+
+---
+
 ## What NOT to gate
 
 [ID: quality-gates-exclusions]
