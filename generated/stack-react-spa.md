@@ -1925,6 +1925,17 @@ A feature is not complete until:
   self-contained components; avoid monolithic views
 - New components SHOULD be documented with usage examples before shipping
 
+## Graded variant bake-off
+[ID: frontend-ux-bakeoff]
+
+When several UX approaches are plausible, do not pick by fiat:
+
+1. Build N minimal variants (e.g. three editor designs).
+2. Grade each on weighted criteria — at least implementation effort and
+   UX quality — by exercising them on a dev server, not on paper.
+3. Pick the best score-per-effort; record the runners-up and why they
+   lost, so the discarded variants document the design space.
+
 ## Browser support
 
 [ID: frontend-ux-browsers]
