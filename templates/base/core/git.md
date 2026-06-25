@@ -20,6 +20,10 @@
 ## Pull requests
 - PRs should be small and focused — one concern per PR
 - Always test locally before committing
+- **Repeat the closing keyword before each issue number** when a PR
+  closes more than one issue: `Closes #a, closes #b, closes #c` closes
+  all three. `Closes #a, #b, #c` closes only `#a` — a bare `#b`/`#c` is
+  a plain reference, not a closing one, and stays open after merge.
 - **Regenerate derived artifacts in the same PR** — when a change
   affects generated or derived files committed to the repo (extractor
   outputs, snapshot fixtures, generated docs), regenerate them in the
