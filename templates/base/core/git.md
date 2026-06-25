@@ -87,6 +87,25 @@ force-push, which is forbidden.
 This keeps remote history intact and yields a clean,
 dependency-free diff.
 
+### Bulk operations
+
+When a bulk operation (cohort emit, codebase-wide migration, mass
+rename, dependency bump) hits a per-item bug mid-run, do not stall
+the whole batch on one broken item — split it into two stacked PRs.
+
+- PR A ships the bulk operation with the broken items in an explicit
+  skip-list and a tracking issue filed for the bug
+- PR B, stacked on A, fixes the bug, re-runs the operation on the
+  skipped items, and removes the skip-list
+- The skip-list MUST live in the operation's input filter, not in the
+  target data; each entry MUST reference the tracking issue
+- Merge A first, then refresh B onto updated main per "De-stacking a
+  dependent branch" before merging it
+
+Two surgical PRs beat one stalled PR: PR A ships the work that is
+done, PR B ships the work that was blocked, and each is reviewed on
+its own scope.
+
 ### Close-and-resubmit when framing drifts
 
 When a PR's framing turns out to be wrong mid-review — the rule it
