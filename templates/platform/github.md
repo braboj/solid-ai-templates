@@ -15,6 +15,33 @@ gate categories to GitHub Actions workflows and GitHub-native features.
 - Pipeline definitions: `.github/workflows/*.yml`
 - Trigger: `on: pull_request` for validation, `on: push` for main branch
 - Actions marketplace for reusable steps
+- **Authenticate GitHub API calls**, even for public-data reads. Any
+  `api.github.com` call in a workflow MUST send
+  `Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}`. Unauthenticated
+  calls are rate-limited to 60/hour per source IP, and Actions runners
+  share IP pools — so an innocent `curl .../releases/latest` for
+  version resolution can return an empty body under load, with no
+  curl error.
+- **Fail loud on resolved shell values.** Any step that resolves a
+  value via a pipeline (`curl | grep | cut`, `jq`, etc.) MUST
+  `set -euo pipefail` AND check the result before use. Pipelines exit
+  0 on empty intermediates, so `v${VERSION}_linux_x64.tar.gz` silently
+  becomes `v_linux_x64.tar.gz` → 404, far from the real failure.
+
+  ```yaml
+  - name: Resolve version
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    run: |
+      set -euo pipefail
+      VERSION=$(curl -sSf -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+        https://api.github.com/repos/owner/foo/releases/latest \
+        | grep tag_name | cut -d '"' -f 4 | sed 's/v//')
+      if [ -z "${VERSION}" ]; then
+        echo "Failed to resolve VERSION" >&2
+        exit 1
+      fi
+  ```
 
 ---
 
@@ -63,7 +90,11 @@ gate categories to GitHub Actions workflows and GitHub-native features.
 
 - **GitHub push protection** — native, blocks pushes containing known
   secret patterns; enable via Settings → Code security
-- **gitleaks** — `gitleaks/gitleaks-action` in CI for additional coverage
+- **gitleaks** — `gitleaks/gitleaks-action` in CI for additional
+  coverage. Free on personal repos; on **organization** repos it
+  requires a paid `GITLEAKS_LICENSE` secret. For org repos, consider
+  the authenticated curl-install pattern instead (see CI section,
+  workflow authoring rules) to avoid the paywall.
 - Both SHOULD be enabled — push protection catches on push, gitleaks
   catches in PR validation
 
