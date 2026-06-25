@@ -93,6 +93,9 @@ base:
   - id: base-360
     file: templates/base/workflow/360.md
     description: 360-degree project analysis — four stakeholder perspectives, grading
+  - id: base-communication
+    file: templates/base/workflow/communication.md
+    description: Communication preferences — concise output, shorthand verbs, scope-asking
 
 platform:
   - id: platform-github
