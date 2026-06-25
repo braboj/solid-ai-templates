@@ -1,5 +1,53 @@
 # Dev Journal
 
+## 2026-06-25 — v2.19 Quality, testing & maintainability lessons
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Drained v2.19 in 9 PRs / 21 issues. `quality.md` (core, 30 chains)
+  landed in 3 PRs: measurement & generation discipline — thresholds from
+  distributions, mechanical-migration probe, emit-clean-at-source (#605:
+  #469 #464 #428); maintainability — per-config opt-in, byte-equivalent
+  ports, mega-script decomposition, extraction-ready modules (#606: #451
+  #436 #345 #332); fail-loud + retract-dead-code (#607: #452 #476).
+- `testing.md` (#608): verify-the-fix-fires-on-real-data, identical-
+  metrics-smoking-gun, in-process UI e2e, production-data unit smoke
+  (#475 #455 #523 #592). `360.md` (#609): headless-product perspective
+  projection + audit-storage choice (#519 #337). `quality-gates.md`
+  (#610): promote-a-resistant-case-to-a-gated-tier (#491).
+  `data-quality.md` (#611): explicit-absence-over-invented-values +
+  agent-assisted GT validation (#473 #432). `ai-workflow.md` (#612):
+  folded schema-vs-ingestion split into the existing Middle-scope lesson
+  (#440).
+- Capstone #591 (#613): the *outbound* genericity sweep complementing
+  the v2.17 inbound drain convention — neutralized optical/MTF domain
+  nouns that predated it in core-tier + multi-chain templates
+  (quality-gates worked example, quality/readme/docs examples).
+- Released v2.18.0 mid-session (8 PRs / 19 issues) and flagged the stale
+  PLAYBOOK release section vs ADR-006 → filed #604.
+
+**Decisions:**
+- **#493** (moved in from v2.18): part 4 (tiered-fixture promotion)
+  landed merged with #491; part 3 (dual-path audit) already covered by
+  existing audit-every-downstream-render + shared-path-breadth rules;
+  parts 1–2 (probe-stopping, narrow-override) DEMOTED as single-use
+  me-fuji-shaped — below the genericity bar.
+- **#592**'s smoke-check AC declined: prose guidance is not a
+  mechanically-checkable output constraint per `quality-gates-pair-check`;
+  a section-presence check would be brittle.
+- **#440** folded into #463's Middle-scope lesson rather than templated
+  as a parallel rule.
+
+**Lesson:** the genericity bar cut both ways this milestone — inbound
+(#493 parts 1–2 demoted as single-use) and outbound (#591 neutralized
+domain nouns that predated the convention). Same bar, two directions;
+the capstone closes the loop the v2.17 PLAYBOOK convention opened.
+
+**PRs merged:** #605, #606, #607, #608, #609, #610, #611, #612, #613
+
+**Issues closed:** #469, #464, #428, #451, #436, #345, #332, #452, #476, #475, #455, #523, #592, #519, #337, #491, #493, #473, #432, #440, #591. Filed #600, #601, #604 (Backlog).
+
 ## 2026-06-25 — v2.18 Process & workflow lessons
 
 **Tool:** Claude Code (Opus 4.8, 1M context)
