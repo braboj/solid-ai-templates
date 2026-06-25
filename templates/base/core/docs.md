@@ -367,6 +367,16 @@ it as stale.
   — the banner's "do not edit" header is a contract, and the next
   `--check` run flags a hand-edited file as stale against freshly
   generated content
+- The `--check` rule applies whether the script renders one file or
+  rewrites many entries inside one source-of-truth file. A bulk-emit
+  script that mutates multiple slugs / entries / records in a single
+  file MUST support `--check` and be wired into CI as a required gate
+  — otherwise extractor drift accumulates silently and surfaces as a
+  multi-hundred-line diff during an unrelated, narrow PR
+- A bulk-emit `--check` failure MUST report the count of stale entries,
+  not just the file path. "19 of 19 entries stale" tells the maintainer
+  the extractor itself drifted; a bare filename reads like a one-line
+  edit and hides the scale
 
 ## Output file by agent
 
