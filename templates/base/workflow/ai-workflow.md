@@ -232,6 +232,28 @@ convention.
 If the prior format is genuinely problematic and worth changing,
 raise it explicitly — never silently deviate.
 
+### Read in-source audit comments at the edit site
+[ID: ai-workflow-read-edit-site]
+
+Before the first change to a file, read the code around the target
+lines and scan for in-source comments that record prior audits,
+experiments, or rejected approaches. Audited code carries comments
+stating WHAT WAS TESTED and WHAT THE OUTCOME WAS — written precisely
+so the next reader does not re-attempt a known-bad fix. Look for:
+
+- comments dated by session or PR (e.g. "Per-hue audit (S155): ...")
+- lists of tested-and-rejected approaches, or "known limitation"
+  callouts
+- a named regression metric (e.g. "p95 0.024 -> 0.146")
+
+When such a comment bears on the proposed change, the agent MUST
+either state its finding and ask whether the change overrides it, or
+re-scope from the finding. Reading the comment costs seconds; skipping
+it costs multi-session work on an approach the file already records as
+broken. This is distinct from matching document convention (that rule
+is about form; this is about substance) — a file can match convention
+perfectly and still carry a load-bearing audit comment.
+
 ### Verify working directory before concluding on a negative
 [ID: ai-workflow-pwd-on-negative]
 
@@ -370,6 +392,10 @@ A productive session can cover a lot of ground. But jumping between unrelated to
 - Context switching that reduces quality
 
 **Recommendation:** Commit to a theme per session. When an unrelated topic surfaces, create an issue and return to it in the next session. If you do switch topics mid-session, commit and push the current work first.
+
+### Constraints can invalidate a plan mid-execution
+
+When an architectural constraint surfaces mid-execution that makes the agreed plan unreachable as stated, pause, name the constraint, and re-surface the option set — each option with its blast radius — for the user to re-decide. Do NOT scope-creep the fix to absorb the constraint silently: rewriting a fixed parameter, re-deriving anchor data, or otherwise expanding the blast radius ships a half-done architectural change. Re-surfacing is cheap; recovering from a half-done architectural change is not. When the constraint hits, the move is always stop and re-decide, not plough on.
 
 ### Data quality is the real bottleneck
 
