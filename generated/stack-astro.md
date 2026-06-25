@@ -2067,6 +2067,26 @@ catches what a clean-room CI cannot.
 
 ---
 
+## Promote a resistant case to a gated tier
+[ID: base-quality-gates-tier-promotion]
+
+Projects with a tiered test/fixture system separate gated cases (a
+golden-output or ground-truth regression that fails the build) from
+ungated ones (spot-checked CI runs, confidence priors, informally
+verified internal calls). When a bug surfaces in an ungated case and the
+quick-fix candidates all probe-falsify against the existing gated
+anchors, promote the affected case into the next-strictest tier before
+attempting the deep fix. Promotion converts a silent failure into a
+measurable metric, so the eventual fix lands against a regression target
+instead of working blind.
+
+The shape generalizes: promote a flaky integration test to a contract
+test with a stronger oracle; promote a tutorial example to a CI-verified
+example the first time doc-rot slips through; promote a manual smoke test
+to an automated regression the first time a regression escapes. When a
+fix does not fit one session, measure first by elevating the case a tier;
+the deep fix follows with the metric as the gating signal.
+
 ## Generated-file staleness gate
 
 [ID: quality-gates-staleness]
