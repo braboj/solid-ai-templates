@@ -42,6 +42,15 @@ gate categories to GitHub Actions workflows and GitHub-native features.
         exit 1
       fi
   ```
+- **Pin third-party actions to a full commit SHA**, with the
+  human-readable version in a trailing comment so Dependabot still
+  bumps them. A tag can be moved to point at different code; a commit
+  SHA cannot — SHA-pinning is the standard supply-chain control for
+  third-party actions.
+
+  ```yaml
+  - uses: actions/checkout@<commit-sha>  # v4
+  ```
 
 ---
 
@@ -73,7 +82,7 @@ gate categories to GitHub Actions workflows and GitHub-native features.
 
   ```yaml
   # .github/workflows/codeql.yml
-  - uses: github/codeql-action/init@v4
+  - uses: github/codeql-action/init@<commit-sha>  # v4
     with:
       languages: javascript-typescript
       config-file: ./.github/codeql-config.yml
@@ -153,7 +162,7 @@ output, MUST use `--root-dir <build-dir>` to resolve root-relative
 paths. Without it, links like `/about` produce false errors:
 
 ```yaml
-- uses: lycheeverse/lychee-action@v2
+- uses: lycheeverse/lychee-action@<commit-sha>  # v2
   with:
     args: --offline --no-progress --root-dir dist dist/
 ```

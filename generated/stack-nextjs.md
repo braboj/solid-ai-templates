@@ -2656,6 +2656,9 @@ not after deployment.
 - Keep dependencies up to date — unpatched dependencies are a security risk
 - Remove unused dependencies promptly
 - Prefer dependencies that are actively maintained and widely adopted
+- Pin third-party GitHub Actions to a full commit SHA, not a mutable
+  tag, with the version in a trailing comment so Dependabot still bumps
+  them — a moved tag is a supply-chain attack vector
 
 
 <!-- templates/stack/full-nextjs.md -->
