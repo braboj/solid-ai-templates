@@ -1,5 +1,47 @@
 # Dev Journal
 
+## 2026-06-25 — v2.16 Generation fidelity & mechanical checks
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Planned v2.16 (milestone #22) from the two Expedite items and two
+  Backlog siblings — theme: a derived/generated artifact faithfully
+  carries its constraints, each backed by an agent-runnable check.
+  Drained Expedite to empty; #563 left in Backlog (off-theme)
+- Branch hygiene: confirmed `origin` auto-deletes on merge — the 18
+  "stale" branches were already gone remotely; only local tracking refs
+  were stale (`git remote prune origin`, not `push --delete`)
+- #479 (PR #578): pair-the-check convention — a mechanically-checkable
+  output constraint MUST name its agent-runnable check; subjective ones
+  stay declarative. Landed as `quality-gates-pair-check` (generalizes
+  `quality-gates-staleness`) + CLAUDE.md §2.7. Spike decision, no ADR
+- #560 (PR #579): bulk-emit scripts MUST expose `--check` and report the
+  stale-entry *count*, not just the path (`base-docs` Generated files)
+- #561 (PR #580): convention-as-test — an "if X then Y" derived-artifact
+  invariant MUST be a test, not a written convention
+  (`quality-gates-convention-as-test`)
+- #498 (PR #582): the end-of-session audit was paraphrased into lossy
+  bullets in hybrid generation. `agents.md` §6.3 (all 3 output models) +
+  hybrid what-to-inline now mandate inline-verbatim or hard-delegation
+  ("execute each item; do not summarize"), never paraphrase; new smoke
+  check **SYS-05** gates the enforcement phrase in the output spec and
+  every example session-protocol section. Fixed `hybrid-astro`; spawned
+  #581 (refresh the 7 stale §6-less examples)
+
+**Lesson:** ground a check's target against the real artifacts before
+building it. #498's literal ask — "smoke-check the generated CLAUDE.md
+§6.3" — did not map: 7 of 8 in-repo examples have no §6 at all, and the
+one that did only soft-referenced. The check had to target the output
+spec (`agents.md`) plus the single compliant example, and the staleness
+became its own ticket (#581). The whole milestone dogfooded #479: each
+issue shipped its rule *with* its check, so the convention did not decay
+the way the §2.7 constraints had.
+
+**PRs merged:** #578, #579, #580, #582
+
+**Issues closed:** #479, #560, #561, #498
+
 ## 2026-06-25 — v2.15 Backend & resilience + repo hygiene
 
 **Tool:** Claude Code (Opus 4.8, 1M context)
