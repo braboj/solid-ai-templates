@@ -2434,6 +2434,27 @@ always loaded into context automatically.
 - Build after every change — do not accumulate multiple changes without
   verifying the build still passes
 
+## Reconcile candidates against scope before planning
+
+A suggestion for what to do next — an audit's feature recommendation, a
+session-handoff or memory breadcrumb, a "showcase value" idea — is a
+candidate, not a decision. Reconcile it against the authoritative record
+before it becomes planned work:
+
+- An audit or feature recommendation MUST be checked against the
+  documented scope (the in/out-of-scope list — e.g. arc42 §3.3 — and the
+  requirements). A candidate that falls in "Out of scope" is dropped, or
+  promoted by a deliberate scope-changing ADR — never slipped in because
+  it sounds valuable. "Best practice" does not override a written
+  boundary; a planned item not traceable to an in-scope requirement or a
+  scope-changing ADR is scope creep.
+- A handoff breadcrumb names continuity, not priority. A
+  "next: continue on X" pointer marks the cheapest resumption of the last
+  thread, not the highest-priority move. Before acting, re-check X's
+  milestone and priority against the project's current milestone — if
+  they differ, ask first. The wrap-up writer SHOULD record each pointer's
+  milestone and priority inline so the next session sees the mismatch.
+
 ## Default scope boundaries
 
 - One logical unit of work per session (one feature, one chapter, one
