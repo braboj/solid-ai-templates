@@ -1,5 +1,43 @@
 # Dev Journal
 
+## 2026-06-25 — v2.18 Process & workflow lessons
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Planned three pre-restructure milestones to drain the lessons-learned
+  backlog before v3.0: v2.18 (process/workflow), v2.19 (quality/testing/
+  maintainability), v2.20 (concrete Python/frontend). 48 issues drained
+  from Backlog, batched into PRs by target file.
+- Drained v2.18 in 8 PRs / 19 issues. The `ai-workflow.md` cluster (14
+  issues; reference-only, so no chain restale) landed in 4 PRs:
+  probe-with-production-harness + Debugging-multi-stage (#593);
+  survey-prior-art, Triage-prototype-cost, Spike-findings-home (#594);
+  measure-before-revert, host-maintenance, manual-workaround (#595);
+  verify-plan-time-placement, Triage-by-fan-out, Middle-scope (#596).
+- `issues.md`: labels-at-creation + Deferred-work-with-named-trigger
+  (#597). `git.md`: repeat the closing keyword before each issue number
+  (#598, regen 30 chains). `scope.md`: wrap-shipped + deploy-health
+  startup checks (#599).
+- New register-only `communication.md` [base-communication] — comms
+  defaults + shorthand verbs, framed as override-friendly, 0 chains
+  (#602, closes #467).
+- Genericity pass moved #493 to v2.19 (quality-gates-shaped, me-fuji-
+  specific) and collapsed the 14 ai-workflow issues into 11 rules by
+  merging pairs (#448+#483, #487+#488) and extending existing sections
+  rather than adding parallel ones.
+
+**Lesson:** dogfooding the lessons paid off mid-drain. #503 (arc42
+authoring conventions) closed as already-covered once I opened `docs.md`
+and found the `docs-arc42` section already held every proposed rule —
+exactly the "verify a plan-time placement against the real file" rule
+(#576) that landed in the same milestone. Its two genuinely-uncovered
+side-patterns were preserved as #600/#601 rather than lost on close.
+
+**PRs merged:** #593, #594, #595, #596, #597, #598, #599, #602
+
+**Issues closed:** #454, #448, #483, #427, #488, #504, #487, #495, #520, #453, #576, #463, #449, #575, #461, #517, #462, #325, #467. Also: #503 closed as already-covered; #493 moved to v2.19; #600/#601 filed.
+
 ## 2026-06-25 — v2.17 Workflow lessons: bulk & shared-path fix discipline
 
 **Tool:** Claude Code (Opus 4.8, 1M context)
