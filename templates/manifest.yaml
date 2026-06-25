@@ -159,6 +159,10 @@ backend:
   - id: backend-messaging
     file: templates/backend/messaging.md
     description: Brokers, producers, consumers, schema, DLQ, observability
+  - id: backend-webhooks
+    file: templates/backend/webhooks.md
+    description: Inbound webhook intake, edge signature verification, fast-ack, retry amplification
+    depends_on: [backend-http, backend-messaging, base-security, backend-observability]
   - id: backend-grpc
     file: templates/backend/grpc.md
     description: Proto design, status codes, interceptors, health check
