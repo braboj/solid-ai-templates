@@ -53,6 +53,28 @@
   git checkout main && git pull
   ```
 
+### Verifying regenerated artifacts
+
+After regenerating derived artifacts and before staging them, verify
+the diff is real and the output is correct.
+
+- Filter line-ending and whitespace noise first: `git diff
+  --ignore-all-space <file>` with no output means the change is
+  CRLF/whitespace-only — `git checkout -- <file>` to drop it so the
+  PR stays scoped to genuine content (and the noise does not reappear
+  as a fake regression on another OS)
+- Binary artifacts (images, diagrams, screenshots, plots) diff as
+  "Binary files differ" — opaque to git and often uncovered by the
+  test suite. Open each in a viewer (or an image-read tool for agent
+  workflows) and confirm it tracks its source data with no corruption
+- When a fix regenerates many artifacts, pair a spot-check of 3-5
+  representative cases (the fix's primary target, the most complex
+  case, a clean baseline) with a global metric that aggregates across
+  the population (test pass rate, link check, accessibility score,
+  calibration result). The spot-check catches broken regeneration;
+  the metric catches population-wide drift — together they match full
+  per-artifact review at a fraction of the cost
+
 ### Squash-merge safety
 
 When using squash merge, the branch commits become orphaned after
