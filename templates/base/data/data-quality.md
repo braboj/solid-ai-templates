@@ -61,6 +61,21 @@ first-class concern.
 
 ---
 
+## Explicit absence over invented values
+[ID: data-quality-explicit-absence]
+
+When a source genuinely shows no value at the point being recorded, mark
+explicit absence (`null` / `None` / `?` / unread) — never extrapolate one
+from neighbouring values. The fail-safe "return absence when there is no
+signal" rule applies to every artifact a verification process consumes:
+extractor and sensor output, maintainer-curated ground truth, test
+fixtures, and mock data. An extrapolated value looks like data but is not
+— a verification step treats it as a real target, so a fabricated value
+can cost far more (mis-tuned thresholds, false verdicts) than the single
+missing comparison that marking absence costs.
+
+---
+
 ## Data research workflow
 [ID: data-quality-research]
 
@@ -188,3 +203,24 @@ images, and caching fetched content.
 - Enum checks for constrained fields (e.g. mount type, category)
 - Build-time validation is acceptable for static sites — runtime
   validation for APIs
+
+---
+
+## Agent-assisted ground-truth validation
+[ID: data-quality-hitl]
+
+When a project rule requires a human to validate each ground-truth value
+but the volume makes pure manual entry a bottleneck, do NOT let the agent
+write the authoritative values directly — that makes verification
+self-confirming (the agent grades its own output). Instead:
+
+- The agent runs the extractor or model and emits a prediction file with
+  every value clearly labelled NOT GROUND TRUTH
+- The human scans each value against the source, accepts what is right,
+  and overwrites what is not
+- The agent transcribes only the human-validated values into the
+  ground-truth structure
+
+This keeps the human as the source of truth for every value while cutting
+the manual effort to a scan-and-correct pass, and it prevents the
+calibration set from silently becoming the agent's own predictions.
