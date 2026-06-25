@@ -1,5 +1,47 @@
 # Dev Journal
 
+## 2026-06-25 — v2.14 Workflow & quality lessons
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Assessed the 77-issue Backlog (dominated by ~50 lesson fragments;
+  only Python-stack (7) and Frontend (6) remain as concrete clusters)
+- Transferred 3 Backlog issues into v3.0 — Restructure per the
+  "big / requires real restructuring → v3.0, else do it earlier"
+  rule: #492 (extract abstract frontend-content layer), #414 + #415
+  (skills-as-UX-layer initiative). #369 (cold-start measurement) kept
+  in Backlog — small, pairs with v3.0's #368 when that work runs
+- Planned and shipped v2.14 — Workflow & quality lessons (13 issues,
+  3 theme PRs), a consolidation round folding lesson fragments into
+  existing sections rather than fragmenting
+- #485 + #484 + #486 + #526 + #494 (PR #556): "Verify before relying" —
+  routed to correct homes, not one section: handoff-note counts decay
+  (ai-workflow.md), a dep bump is verified by the gate not the changelog
+  (ai-workflow.md), audit downstream renders when truth changes
+  (ai-workflow.md), reasoning comments rot (quality.md), green CI ≠
+  environment-independent (quality-gates.md)
+- #501 + #527 + #516 + #430 (PR #557): "Plan & scope discipline" —
+  read in-source audit comments at the edit site (new ai-workflow
+  Practices section, P2), constraints invalidate plans mid-execution
+  (ai-workflow Lessons), reconcile recommendations/breadcrumbs against
+  documented scope + current milestone before planning (scope.md)
+- #460 + #480 + #525 + #502 (PR #558): "Gate & test honesty" —
+  disaggregate verdict/plausibility/accuracy + lenient gates need a
+  human residual check (quality-gates.md), numerical gates lock
+  magnitudes not contours (review.md), tests should name what they pin
+  (testing.md)
+
+**Lesson:** when consolidating a lesson family, route each item to its
+*semantically correct* file rather than the milestone's headline file —
+forcing #526 (reading code comments) or #486 (gate scope) into
+ai-workflow.md would have mis-placed them. One concern can span files
+(ADR-014); the headline theme is not the mandatory home.
+
+**PRs merged:** #556, #557, #558
+
+**Issues closed:** #485, #484, #486, #526, #494, #501, #527, #516, #430, #460, #480, #525, #502
+
 ## 2026-06-25 — v2.13 CI/CD & release hardening
 
 **Tool:** Claude Code (Opus 4.8, 1M context)
