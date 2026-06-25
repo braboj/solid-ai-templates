@@ -47,6 +47,25 @@ Use `templates/base/core/quality.md` (and any language-specific quality template
       must not silently change edge-case behavior (null handling, sort
       direction, boundary values)
 
+## CI signals
+
+- [ ] When CI fails, separate **infra failures** (the action could not
+      run — network, missing release, broken pinning, runner OOM) from
+      **diff failures** (the check ran and produced a negative signal on
+      the diff). An infra failure is a signal about the workflow, not
+      the PR — surface it honestly in the merge decision rather than
+      retrying or ignoring it
+
+Practical guidance:
+
+- On a red check, read the log before calling the PR green or red
+- If the failure is infra (`curl 404`, `docker pull` timeout, package
+  not found), file a separate task to fix the workflow and note it in
+  the merge call
+- Do NOT retry-until-green silently — that masks the infra problem
+- Do NOT push past it with `--no-verify` or an admin merge unless the
+  maintainer explicitly accepts the risk
+
 ## SHOULD checklist
 
 - [ ] Non-trivial functions have a unit test for each relevant variant
