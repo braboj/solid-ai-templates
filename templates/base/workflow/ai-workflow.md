@@ -370,7 +370,32 @@ Probe the breadth before scoping the fix. When a quality gate flags an issue by 
 
 Probe the artifact, not your reading of it. When the claim rests on a dense source-of-truth artifact — an overlay image, a generated SVG, a log, a chart, a database row — dump its raw representation (pixel scan, JSON dump, AST walk, `SELECT`) instead of re-interpreting the rendered view. Repeated reading is slower and can yield mutually inconsistent conclusions; one raw dump settles the question.
 
+Prefer the production harness over a throwaway probe when it already emits the classification. When the question is only "does the failure framing reproduce?" and the project ships a tool that already produces per-case verdicts — a test runner, a CI gate, a linter, an auto-triage runner — run that tool first. Its output is the authoritative classification, not a one-off recomputation; it needs no script to author or delete; and it re-runs next session without rebuilding the probe environment. A throwaway probe is justified only when the production tool cannot answer the question. Signs the harness is the right call: the issue cites a count from a manual triage you would be recomputing, its reason codes match the failure classes the issue lists, or its output is queryable. Thirty seconds of `<tool> --help` is cheaper than writing a probe to discover the tool already does the job.
+
 Skipping the probe has two visible failure modes: a well-reasoned fix built against a wrong premise, and a premature ADR that needs same-day supersession. When the probe inverts the framing, the original text is a useful negative result — record it in the PR description or the ADR's "approaches ruled out." If the project exposes no cheap probe for the claim, surfacing that gap is itself the first output. Probes are throwaway: name them for the issue, delete them before the commit that uses their findings, and keep the findings in the issue, ADR, or PR.
+
+### Debugging multi-stage systems
+
+A bug report on a multi-stage system (extract → transform → render →
+verify; build pipeline, ETL, compiler, agent-orchestrated workflow)
+names a symptom, not a stage — "the output is wrong" says nothing about
+where reality first diverged from expectation. Resist probing each stage
+in sequence on every report; that scales with stages × reports.
+
+- **Probe the suspected stage directly, not the whole pipeline.** Call
+  the stage's helper functions with the smallest input that reproduces
+  the bug instead of re-running the production entry point each
+  iteration. Direct probes are typically 5–10× faster per iteration and
+  surface intermediate state the end-to-end artifact hides. Default to
+  end-to-end only when the bug is integration-shaped (works in
+  isolation, fails when composed), the stage boundary is unclear from
+  the symptom, or fixture setup is expensive.
+- **Invest in per-stage diagnostics once the loop repeats.** If you have
+  spent more than ~30 min probing the same stage across consecutive
+  reports, the next session's deliverable is per-stage diagnostic output
+  (a `--debug` dump after each stage), not another probe. Then every
+  future report becomes "scan the per-stage artifacts in order, find the
+  first divergence" — paid once, saved on every report after.
 
 ### Verify external state before a visible action
 
