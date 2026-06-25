@@ -249,10 +249,10 @@ that runs the tool. The rules below address each.
 
 ### Calibration aids MUST NOT depict the system's own output
 
-- Any artifact that informs a human-verifies-machine signal (eye-read
-  against a chart, code review against a generated patch, audit grading
-  against a candidate report) MUST render only the reference data plus
-  the maintainer's reading guides
+- Any artifact that informs a human-verifies-machine signal (a human
+  reading values from a source document, code review against a generated
+  patch, audit grading against a candidate report) MUST render only the
+  reference data plus the maintainer's reading guides
 - The candidate output goes in a separate artifact, opened only after
   the independent reading is captured — surfacing it alongside the
   reading task biases the reading toward the candidate and turns the
@@ -672,7 +672,7 @@ kebab-case (`dev-journal.md`). This is intentional, not drift.
 
 1. **Git workflow** — branch, commit, PR, merge, issues
 2. **Domain operations** — how to add/modify the project's core data or
-   entities (project-specific — e.g. "add a new lens", "add a migration")
+   entities (project-specific — e.g. "add a catalog entry", "add a migration")
 3. **Quality** — testing, CI checks, linting, link checking, secret
    scanning, and other quality verification workflows; manual verification
    tools (analytics, search indexing, SEO crawls, performance field data)
@@ -789,7 +789,7 @@ captures session history, while a findings doc is an accumulating
 reference for a specific subsystem's empirical numbers.
 
 - A findings doc lives next to the data/source it describes — e.g.
-  `referenceset/scoring.md` alongside `referenceset/charts.py`, not
+  `metrics/latency.md` alongside `metrics/latency.py`, not
   in a project-level `docs/` directory
 - Format: a short header, a "How to reproduce" section naming the
   command that produced the numbers, then one section per dated
@@ -805,16 +805,16 @@ reference for a specific subsystem's empirical numbers.
 Example skeleton:
 
 ```markdown
-# Scoring thresholds — findings
+# Cache TTL — findings
 
 ## How to reproduce
-`py -m mymodule.scoring --replay-all`
+`py -m mymodule.cache --measure-staleness`
 
-## 2026-05-12 — initial pass (24 charts)
+## 2026-05-12 — initial pass (1,200 keys)
 <raw output snippet>
 
-1. Precision peaks at 0.80; jumps to 0.92 at 0.85 but recall drops
-   from 0.78 to 0.61 — keep PRECISION_THRESHOLD at 0.80
+1. 99% of keys are unchanged past 300s; staleness cost climbs sharply
+   after 600s — keep CACHE_TTL_SECONDS at 300
 2. ...
 ```
 
@@ -1031,7 +1031,7 @@ Every README MUST contain the following sections, in this order:
   elevating
 - A capability list MUST follow the summary — bullet points stating
   what the product can do, written as capabilities not counts (e.g.
-  "browse and filter lenses by specs" not "240+ lenses"); this list
+  "browse and filter products by spec" not "240+ products"); this list
   is the product's contract and the primary input for value evaluation
 - A badges line SHOULD follow: build status, latest version, license
 
@@ -2508,10 +2508,10 @@ When a gate fires, its single verdict often conflates three judgments:
 A "LOW" can mean the output is inaccurate, the plausibility check is
 unsound for this input class, or both — and each implies a different
 fix (fix the producer / tune the check per-class / both). Separate them
-before acting. Worked example: a digitization gate fired
-`prior_failed` on a chart whose output was within ±0.05 of ground
-truth on 41 of 43 points — the ground truth itself violated the prior,
-so the fix was a per-family prior whitelist, not a producer change. The
+before acting. Worked example: a gate's plausibility check flagged a
+record whose output matched the reference on nearly every field — the
+check's assumption was unsound for that input class, so the fix was a
+per-class exception to the check, not a change to the producer. The
 verdict alone pointed the wrong way.
 
 ### Lenient gates need a human residual check
@@ -2680,7 +2680,7 @@ records and asserts Y-equality across them.
 - A written-down "if X then Y" invariant MUST be encoded as a test when
   Y is mechanically comparable. The test enumerates every record
   satisfying X and asserts they share Y. Examples: entries sharing a
-  canonical product URL MUST share their generated chart file; build
+  canonical product URL MUST share their generated image file; build
   outputs in one locale MUST share a glossary file
 - The test gates the invariant at commit time. A prose convention is
   forgotten and the next divergent record lands undetected; the test

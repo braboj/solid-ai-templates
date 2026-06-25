@@ -65,7 +65,7 @@ kebab-case (`dev-journal.md`). This is intentional, not drift.
 
 1. **Git workflow** — branch, commit, PR, merge, issues
 2. **Domain operations** — how to add/modify the project's core data or
-   entities (project-specific — e.g. "add a new lens", "add a migration")
+   entities (project-specific — e.g. "add a catalog entry", "add a migration")
 3. **Quality** — testing, CI checks, linting, link checking, secret
    scanning, and other quality verification workflows; manual verification
    tools (analytics, search indexing, SEO crawls, performance field data)
@@ -182,7 +182,7 @@ captures session history, while a findings doc is an accumulating
 reference for a specific subsystem's empirical numbers.
 
 - A findings doc lives next to the data/source it describes — e.g.
-  `referenceset/scoring.md` alongside `referenceset/charts.py`, not
+  `metrics/latency.md` alongside `metrics/latency.py`, not
   in a project-level `docs/` directory
 - Format: a short header, a "How to reproduce" section naming the
   command that produced the numbers, then one section per dated
@@ -198,16 +198,16 @@ reference for a specific subsystem's empirical numbers.
 Example skeleton:
 
 ```markdown
-# Scoring thresholds — findings
+# Cache TTL — findings
 
 ## How to reproduce
-`py -m mymodule.scoring --replay-all`
+`py -m mymodule.cache --measure-staleness`
 
-## 2026-05-12 — initial pass (24 charts)
+## 2026-05-12 — initial pass (1,200 keys)
 <raw output snippet>
 
-1. Precision peaks at 0.80; jumps to 0.92 at 0.85 but recall drops
-   from 0.78 to 0.61 — keep PRECISION_THRESHOLD at 0.80
+1. 99% of keys are unchanged past 300s; staleness cost climbs sharply
+   after 600s — keep CACHE_TTL_SECONDS at 300
 2. ...
 ```
 

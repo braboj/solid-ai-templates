@@ -32,7 +32,7 @@ Every README MUST contain the following sections, in this order:
   elevating
 - A capability list MUST follow the summary — bullet points stating
   what the product can do, written as capabilities not counts (e.g.
-  "browse and filter lenses by specs" not "240+ lenses"); this list
+  "browse and filter products by spec" not "240+ products"); this list
   is the product's contract and the primary input for value evaluation
 - A badges line SHOULD follow: build status, latest version, license
 
