@@ -156,6 +156,11 @@ to change.
 - JSON-LD structured data SHOULD be present on content pages (Article,
   Course, or appropriate schema type)
 - Privacy-friendly analytics only (no consent banner required)
+- `robots.txt` MUST allow answer-engine crawlers (OAI-SearchBot,
+  ChatGPT-User, PerplexityBot, Claude-SearchBot/Claude-User, Applebot)
+- Behind Cloudflare, AI-crawler access MUST be verified in AI Crawl
+  Control — new domains block AI bots by default (since 2025-07-01),
+  which overrides `robots.txt`
 
 ### SEO strategy (structure audit)
 
