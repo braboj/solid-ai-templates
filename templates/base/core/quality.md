@@ -69,12 +69,19 @@
 
 - No circular dependencies between modules or packages — dependency graphs
   must be acyclic; restructure or introduce an interface to break cycles
+- When an import cycle would block sharing logic between two modules, move
+  the shared logic to a third module — never code a divergent local copy
+  in one caller; a silent copy drifts from the canonical version (e.g.
+  skipping an upstream filter step) and breaks later, invisibly
 - Keep the dependency graph shallow — if changing module A requires reading
   modules B, C, and D to understand the impact, the coupling is too high
 - Changes to one module's internals must not require changes in unrelated
   modules — if they do, the abstraction boundary is wrong
 - Before removing or renaming a public symbol, mark it deprecated with a
   comment referencing the replacement; remove it in a follow-up change
+- When extending a function's return type (value → list, scalar → tuple),
+  keep a one-line shim under the old name returning the first/scalar
+  element so existing callers and tests survive; remove it in a follow-up
 - Magic numbers and magic strings must be named constants — unnamed literals
   scattered across the codebase are a maintenance hazard
 - No substantial duplication across sibling modules — if the same code
