@@ -2379,7 +2379,9 @@ a title convention, and a body template.
 ## Issue types
 [ID: base-issues-types]
 
-Every issue MUST have exactly one type and one priority.
+Every issue MUST have exactly one type and one priority, applied at
+creation — never create a ticket unlabeled. The label taxonomy is
+project-specific; the at-creation discipline is not.
 
 | Type | When to use |
 |------|-------------|
@@ -2399,6 +2401,29 @@ Every issue MUST have exactly one type and one priority.
 
 Platform-specific label implementation (names, colors) is defined in
 the platform template (e.g. `platform/github.md`).
+
+---
+
+## Deferred work
+[ID: base-issues-defer]
+
+When work is genuinely valuable but intentionally deferred — not in the
+next milestone, perhaps not the next several — the right home is a
+Backlog-milestoned issue with explicitly named trigger conditions, not a
+TODO line in an ADR or a code comment. This is distinct from a P4
+"someday" issue: the deferral is deliberate, the trigger is named, and
+the work is sized.
+
+- Open the body with the deferral note: "Do not pick up before one of
+  the trigger conditions fires."
+- State trigger conditions as concrete, observable events ("a second
+  component exhibits pattern X", "badged data runs four weeks without
+  pushback") — natural language is fine; naming them is the discipline.
+- Carry acceptance criteria as usual, so the work is sized when picked up.
+- Reference the issue from the decision that deferred it (e.g. the ADR's
+  Decision section), so the decision stays discoverable from the tracker
+  rather than buried where it will be re-litigated or quietly done
+  unnecessarily.
 
 ---
 
