@@ -1,5 +1,28 @@
 # Dev Journal
 
+## 2026-06-25 — Maintenance: dependency bump + branch prune
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Merged Dependabot PR #524 — `actions/checkout` 6→7 in
+  `.github/workflows/smoke.yml`; branch was BEHIND `main` under strict
+  checks, so ran `gh pr update-branch` (not force-push) and waited for
+  the smoke re-run to go green before squash-merging
+- Pruned stale remote-tracking refs (4 already-merged docs branches +
+  the merged dependabot branch) via `git remote prune origin`
+
+**Lesson:** the "stale remote branches" in `git branch -a` were only
+stale local tracking refs — server-side auto-delete-on-merge had
+already removed them, and `git ls-remote` confirmed the live remote
+held just `main`. Verify against the remote before attempting a
+server-side delete (the same verify-external-state discipline #547
+codified the day before).
+
+**PRs merged:** #524
+
+**Issues closed:** none
+
 ## 2026-06-24 — v2.12 probe-first workflow lessons
 
 **Tool:** Claude Code (Opus 4.8, 1M context)
