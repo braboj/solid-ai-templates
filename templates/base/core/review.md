@@ -74,6 +74,11 @@ Practical guidance:
 - [ ] Third-party dependencies are necessary, understood, and well-maintained
 - [ ] Code is simple — no new abstraction without two or more call sites,
       no new dependency without a documented reason
+- [ ] Numerical comparison gates (render-match scoring, calibration
+      tolerances, visual-regression diffs) lock the values they sample,
+      not the shape between samples — on render-producing pipelines
+      (charts, diagrams, illustrations) pair them with manual visual
+      review; a passing numerical gate is necessary, not sufficient
 
 ## Structure audit
 
