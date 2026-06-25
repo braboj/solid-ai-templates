@@ -65,6 +65,26 @@ Each stage MUST fail fast — a failed stage stops the pipeline immediately.
   new instance
 - Deploy small and often — large infrequent deployments increase risk
 
+## Release record
+
+On a release tag, the pipeline MUST create a durable release record
+(e.g. a GitHub Release), not only publish artifacts — this gives a
+per-version changelog page at near-zero cost. The release job:
+
+- runs only on tag pushes
+  (`if: startsWith(github.ref, 'refs/tags/v')`), so a manual run on a
+  branch is skipped
+- is **independent** of the publish/deploy jobs — the record captures
+  the source at the tag; an artifact hiccup MUST NOT erase it
+- is **idempotent** — skip if the record already exists, so a re-run
+  is safe
+- holds write permission (`contents: write`) at **job** scope only
+- uses the preinstalled CLI, no third-party action:
+  `gh release create "$TAG" --generate-notes`
+
+Backfill an existing repo by running `gh release create` over each
+historical tag with `--notes-start-tag`.
+
 ## Pipeline as code
 
 - Pipeline definitions MUST live in the repository alongside the application code
