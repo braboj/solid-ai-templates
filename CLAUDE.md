@@ -78,8 +78,9 @@ py tools/resolve.py --generate               # regenerate all cached files
 
 ### 2.2 Issue labels
 
-Every issue MUST have exactly one type label and one priority label.
-Triage labels are terminal — applied when closing without action.
+Every issue MUST have exactly one type label and one priority label,
+applied at creation — never create a ticket unlabeled. Triage labels
+are terminal — applied when closing without action.
 
 #### Type labels (pick one)
 
