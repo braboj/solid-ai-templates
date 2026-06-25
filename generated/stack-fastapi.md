@@ -2200,6 +2200,27 @@ Applies regardless of message broker (Kafka, RabbitMQ, SQS, or equivalent).
 
 ---
 
+## Load and backpressure
+
+- Decouple receive from process under load: acknowledge or enqueue the
+  message fast, then do the work in a worker you pace — never run heavy
+  processing inline on the receive path
+- Coalesce bursts: debounce repeated events for the same resource into a
+  single unit of work after a short quiet period, instead of processing
+  every duplicate
+- Apply backpressure when the queue saturates: bound the queue and slow
+  or shed intake so the system degrades gracefully — an unbounded intake
+  amplifies a downstream slowdown into an outage
+- Enforce per-key or per-tenant fairness: cap in-flight work per source
+  so one noisy producer cannot starve the rest (head-of-line blocking)
+- Load-test the consumer at volume: watch queue depth and consumer lag,
+  not the receive endpoint's latency, to find the real saturation point
+- For bounded worker concurrency see `templates/backend/concurrency.md`;
+  idempotency, retry/backoff, and the DLQ are covered in Consumer rules
+  above
+
+---
+
 ## Schema and contracts
 
 - Define message schemas explicitly — JSON Schema, Avro, or Protobuf
