@@ -65,6 +65,23 @@ always loaded into context automatically.
 - Build after every change — do not accumulate multiple changes without
   verifying the build still passes
 
+## Tooling-produced scope creep is silent — revert and file
+
+Scope creep from a new user request is loud and easy to catch. Scope
+creep from tooling is silent: a script run as part of a focused change
+produces more output than the scope requires, and the extra changes
+look like part of the work.
+
+- When a bulk regenerator rewrites N unrelated entries, a formatter
+  touches unrelated files, or a code generator updates unaffected
+  modules, revert the unintended changes from the working tree before
+  committing
+- File the drift as a separate issue and address it under its own
+  scope — bundling it ships a multi-X change disguised as a single-X
+  change and hides the drift behind the PR title
+- This does not apply to intentional bulk operations — a "refresh all
+  logs" PR is correctly bulk by intent
+
 ## Reconcile candidates against scope before planning
 
 A suggestion for what to do next — an audit's feature recommendation, a
