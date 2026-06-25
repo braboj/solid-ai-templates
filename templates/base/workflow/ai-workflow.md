@@ -386,6 +386,8 @@ AI agents make changes cheap, which creates a temptation to keep iterating on a 
 
 The signal: if you're on the third round of fixes for the same feature and it still doesn't feel right, the approach is wrong. Revert cleanly, document why it failed (in the issue or an ADR), and try a different approach. Don't let sunk cost drive technical decisions.
 
+A special case: when a new bug looks like a previously-fixed pattern, the instinct is to extend the existing fix mechanism. Try it — but measure the result against a concrete metric, not against "does it look right." If the metric regresses, revert immediately and document the rejected attempt inline (a code comment or PR note) so future sessions see the dead end. The framework-extension attempt is not waste: it falsifies the "same fix applies" hypothesis cheaply, which is information.
+
 ### Verify agent calculations against the system
 
 AI agents can do mental math — and get it wrong. When the agent computes a score, estimate, or comparison, **always verify against the actual build output.** The agent may use stale values, wrong field names, or misremember data from earlier in the conversation.
@@ -479,3 +481,38 @@ Plan for this asymmetry:
 - **Code tasks** — delegate freely, review the output
 - **Data tasks** — the agent can research and propose, but the human must validate against primary sources
 - **Judgment calls** — "Is this bokeh score 0.5 or 1.0?" requires domain knowledge the agent doesn't have. Expect these decisions to take time. They're the most valuable part of the process.
+
+### A local failure CI doesn't reproduce is host maintenance, not a code change
+
+When a local dev or e2e run fails but CI is green on the same revision,
+the delta is the environment, not the code. The pull to "fix" it by
+changing the app — a production bind, port, or config tweak to satisfy a
+local backend quirk — contorts production code for a problem CI already
+proves does not exist.
+
+- **Confirm CI parity first.** Same revision green in CI means the code
+  is fine; establish that before touching the app.
+- **Bisect with a known-good control.** Run a minimal known-working
+  container or command (e.g. a stock `nginx`) beside the failing one to
+  localize the fault to the specific service versus the whole backend.
+- **Verify real capability over startup warnings.** Test the actual
+  behaviour (a ping or healthcheck) rather than trusting a scary
+  "X not available" log line — such warnings are often benign.
+- **Do not modify the app to accommodate a local-only quirk.** Fix the
+  environment, switch backends, or rely on CI — and record the finding
+  in an issue or the journal instead of changing code.
+
+### Manual workaround for an unmaintained automated path
+
+When a process — human or multi-agent — replicates work that an
+automated tool was once meant to do, the highest-leverage move is
+usually to investigate the tool, not to scale the manual process. AI
+agents amplify this trap because they make manual work feel cheap: a
+parallel-agent triage looks like a free lunch until its error rate burns
+the savings. Whenever you find yourself architecting a multi-session
+manual process for something that "feels like it should be automated
+already," check whether an automated path exists and is silently
+broken — fixing it is almost always cheaper than scaling the manual one.
+The tell: the manual process produces low-quality output (a high
+misframe or false-positive rate) AND its outputs are nominally also
+produced by a tool somewhere in the stack.
