@@ -1152,6 +1152,13 @@ driver is TDD — tests are written alongside or before the code.
   SHOULD be chosen freely, provided the name alone communicates the unit under
   test, the input condition, and the expected outcome; each stack template
   defines its own naming convention
+- When the unit operates on a structured external artifact (a config file,
+  a code-generated file, a captured fixture), run it against real
+  production data once during development before declaring the unit suite
+  sufficient. Fabricated-input tests cover the cases the author imagined;
+  production data exposes the structural holes nobody fabricated. The run
+  does not replace unit tests — it surfaces gaps to close with a dedicated
+  regression test per invariant
 
 ---
 
@@ -1197,6 +1204,11 @@ through the full product stack.
 - MUST cover the critical user journeys defined in the product requirements
 - SHOULD cover non-happy paths and system-level edge cases
 - MAY provide data-agnostic scenarios to reduce environment coupling
+- SHOULD run browser-driven UI journeys against an in-process app server
+  (WSGI/ASGI/Node) on an ephemeral port, kept separate from the container
+  e2e tier — so a CSP, JS, or MIME regression stays catchable locally even
+  when the container runtime is unavailable; the two tiers are
+  independently runnable
 
 ### Acceptance tests (subset of system)
 
@@ -1387,6 +1399,40 @@ report.
 - A silent prior bug at a sibling call site surfaces only in the
   broader benchmark — the breadth of verification bounds the fix's
   value
+
+---
+
+## Verify the fix fires on real data
+[ID: testing-fix-fires-on-real-data]
+
+When a fix targets a specific in-the-wild case, run the actual pipeline
+on that input and compare its output to the committed or expected values.
+Indirect green signals each lie independently: unit tests pass (the
+synthetic input took the new branch), the full suite passes (no
+regression), and staleness checks pass (no committed artifact changed) —
+while the new code never fires on the real case because the real input
+lacks the shape the fix assumed. The test that matters is
+`run-pipeline <bug-input> | diff - <expected>`: it confirms the code both
+reached the bug site AND took the new branch.
+
+---
+
+## Identical metrics across distinct inputs are a smoking gun
+[ID: testing-identical-metrics]
+
+When diagnostic output (test verdicts, IoU or coverage scores, lint
+counts) reports identical values across two distinct inputs, treat it as
+a shared root cause first and coincidence second — it usually means both
+inputs route to the same asset (a path-resolution bug), hit the same
+fallback or sentinel branch, or map to the same config row. This is more
+actionable than "both inputs fail": matching values point at one bug, not
+two.
+
+- Diff the two inputs' upstream resolution (asset path, profile binding,
+  config row) before diffing their downstream outputs
+- File as one issue, not two — a fix on the shared code resolves both
+- If the inputs are genuinely independent with no shared upstream, the
+  collision itself is the bug worth flagging
 
 
 <!-- templates/base/core/oop.md -->
