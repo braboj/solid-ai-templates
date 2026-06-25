@@ -1,5 +1,43 @@
 # Dev Journal
 
+## 2026-06-25 — v2.20 Concrete Python & frontend
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Drained v2.20 — the third and last pre-restructure milestone — in 5 PRs
+  / 7 issues. These were concrete stack patterns, not lessons.
+- Python: `python-lib.md` editable-install version-staleness gotcha + a
+  build gate (`twine check dist/*`) (#518 #511, PR #619 — regen 7 Python
+  chains, python-lib being their base); `python-service.md` runtime-version
+  pinning across image/CI/mypy/`requires-python` (#530, #620);
+  `python-flask.md` versioned-API registry + factory over per-version
+  duplication (#512, #621).
+- Frontend: `ux.md` graded-variant bake-off (#514, #622); frontend SEO —
+  AEO rules (passage-first content, citation-frequency measurement,
+  answer-engine crawler allowlist, FAQPage) plus #311's social-meta /
+  heading-coherence / favicon rules, landed in the already-wired
+  `quality.md` + `static-site.md` SEO sections (#490 #311, #623).
+
+**Decision:** #311 asked for a new `frontend/seo.md` template. Landed its
+rules now in the existing wired SEO sections (so they reach frontend
+projects) and deferred the dedicated-file consolidation to the v3.0
+frontend restructure — filed #624, pairs with #492. Creating a new
+frontend file days before that restructure would only be moved again.
+
+**Lesson:** stack-specific patterns belong in stack templates, not core.
+The v2.17/#591 genericity bar guards the inverse direction (no one-stack
+content in core), so concrete Python/frontend patterns landing in
+`python-*.md` / `frontend/*.md` is exactly right — no demotion needed.
+
+**Milestone arc:** v2.18 → v2.19 → v2.20 complete. The three-milestone
+pre-restructure backlog drain is done; Backlog is down to single digits;
+v3.0 — Restructure is the clear next milestone.
+
+**PRs merged:** #619, #620, #621, #622, #623
+
+**Issues closed:** #518, #511, #530, #512, #514, #490, #311. Filed #624 (v3.0 frontend/seo.md consolidation).
+
 ## 2026-06-25 — v2.19 Quality, testing & maintainability lessons
 
 **Tool:** Claude Code (Opus 4.8, 1M context)
