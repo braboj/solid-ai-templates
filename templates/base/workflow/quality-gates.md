@@ -196,10 +196,10 @@ When a gate fires, its single verdict often conflates three judgments:
 A "LOW" can mean the output is inaccurate, the plausibility check is
 unsound for this input class, or both — and each implies a different
 fix (fix the producer / tune the check per-class / both). Separate them
-before acting. Worked example: a digitization gate fired
-`prior_failed` on a chart whose output was within ±0.05 of ground
-truth on 41 of 43 points — the ground truth itself violated the prior,
-so the fix was a per-family prior whitelist, not a producer change. The
+before acting. Worked example: a gate's plausibility check flagged a
+record whose output matched the reference on nearly every field — the
+check's assumption was unsound for that input class, so the fix was a
+per-class exception to the check, not a change to the producer. The
 verdict alone pointed the wrong way.
 
 ### Lenient gates need a human residual check
@@ -368,7 +368,7 @@ records and asserts Y-equality across them.
 - A written-down "if X then Y" invariant MUST be encoded as a test when
   Y is mechanically comparable. The test enumerates every record
   satisfying X and asserts they share Y. Examples: entries sharing a
-  canonical product URL MUST share their generated chart file; build
+  canonical product URL MUST share their generated image file; build
   outputs in one locale MUST share a glossary file
 - The test gates the invariant at commit time. A prose convention is
   forgotten and the next divergent record lands undetected; the test

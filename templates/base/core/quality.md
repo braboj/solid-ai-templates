@@ -243,10 +243,10 @@ that runs the tool. The rules below address each.
 
 ### Calibration aids MUST NOT depict the system's own output
 
-- Any artifact that informs a human-verifies-machine signal (eye-read
-  against a chart, code review against a generated patch, audit grading
-  against a candidate report) MUST render only the reference data plus
-  the maintainer's reading guides
+- Any artifact that informs a human-verifies-machine signal (a human
+  reading values from a source document, code review against a generated
+  patch, audit grading against a candidate report) MUST render only the
+  reference data plus the maintainer's reading guides
 - The candidate output goes in a separate artifact, opened only after
   the independent reading is captured — surfacing it alongside the
   reading task biases the reading toward the candidate and turns the
