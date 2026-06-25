@@ -2041,6 +2041,21 @@ Rules:
 - Verify the chosen convention matches the hosting platform's behavior
 - Privacy-friendly analytics only — no consent banner required
 - No third-party tracking scripts without explicit user consent
+- If `og:image` is present, `twitter:image` MUST also be present —
+  Twitter/X does not reliably fall back to `og:image`. Include
+  `og:image:width`/`og:image:height` (recommended 1200×630) to avoid
+  render delays on social platforms
+- H1 keywords SHOULD appear in the page body — search and answer engines
+  use heading/body coherence as a relevance signal; H1 SHOULD be unique
+  per page and reflect its content
+- Provide a complete favicon set: an SVG favicon
+  (`<link rel="icon" type="image/svg+xml">`) and a 180×180
+  `apple-touch-icon` for iOS home-screen bookmarks
+- Answer engines retrieve passages, not whole pages — lead each section
+  with a direct answer and keep paragraphs self-contained
+- Measure answer-engine (AEO) visibility as citation frequency across a
+  fixed prompt set over time, not as a single rank — generative output is
+  non-deterministic
 
 ## Structured data (if applicable)
 
@@ -2050,6 +2065,9 @@ Rules:
   implies commerce, `priceValidUntil` implies a store)
 - Review schema choice when site role differs from template examples —
   e-commerce examples applied to editorial sites produce misleading markup
+- `FAQPage` markup SHOULD NOT be expected to render a Google rich result
+  (gov/health only since 2023) — it still aids machine parsing for answer
+  engines
 
 
 <!-- templates/stack/spa-vue.md -->
