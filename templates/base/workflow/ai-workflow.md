@@ -487,6 +487,14 @@ free-form, two- vs three-state); the second focuses entirely on UX
 without dragging schema review into it, and without redesign risk if the
 first shape turns out wrong.
 
+The same split applies when a feature needs both a schema change and data
+ingestion: ship the schema in its own PR with synthetic tests proving the
+new code path is reachable, then ship the real data against the
+now-stable schema. Schema changes need review for second-order effects
+(back-compat, dispatch, coverage); data ingestion needs review for
+source-of-truth and format correctness — reviewers focus differently on
+each, so combining them in one PR forces a context switch.
+
 Skip this when the data layer is trivial (one field, obvious shape) or
 when the UI will inform the data shape — there a vertical slice forces
 both decisions together, which is what you want.
