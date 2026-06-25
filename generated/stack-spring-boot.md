@@ -90,6 +90,13 @@
   element so existing callers and tests survive; remove it in a follow-up
 - Magic numbers and magic strings must be named constants — unnamed literals
   scattered across the codebase are a maintenance hazard
+- Size numeric thresholds (a filter, cutoff, bound, or tolerance) from the
+  actual distribution of the relevant quantity in the working data set
+  (p95, p99, max-legitimate) — not from first principles or intuition. A
+  threshold chosen by feel is too loose (masks bugs) or too tight (breaks
+  edge cases) with no record of why. Document the data source in the
+  constant's docstring so a future maintainer can rerun the analysis
+  against fresh data and re-validate
 - No substantial duplication across sibling modules — if the same code
   appears in two or more places, extract a shared module; the third
   copy is a bug
@@ -295,11 +302,25 @@ maintainer time on phantom fixes.
 - Probe scripts are the antidote to guessing: prefer writing one
   over inferring data shape or runtime behaviour from incomplete
   evidence
+- A throwaway probe also fits a uniform mechanical migration: when one
+  edit repeats across hundreds of identical call sites (e.g. inserting a
+  new required field at a fixed anchor in a large data file), a small
+  `probe_*` script that performs the insertion is faster and safer than
+  hand-editing or an opaque `sed` one-liner. The diff is the audit trail,
+  not the script — review the diff, then delete the probe before the
+  commit
 
 ## Automated enforcement
 
 - Quality conventions in this document are enforced automatically via
   quality gates (editor → pre-commit → CI)
+- A code or data generator MUST emit output that passes the project's
+  linters and formatters natively — never rely on `lint --fix` as a
+  post-process step. A fix pass at the consumer end hides the generator's
+  responsibility, makes every re-emit a noisy diff, and confuses
+  contributors who regenerate and see unexplained changes. Any time
+  `lint --fix` is needed to clean generated output, treat it as a
+  generator bug to fix at the source
 
 ## Testing
 
