@@ -1002,6 +1002,83 @@ def check_e2e_01():
 
 
 # ---------------------------------------------------------------------------
+# SYS-05 — end-of-session audit rendered faithfully (inline or delegated)
+# ---------------------------------------------------------------------------
+# A procedural checklist (the scope.md End of session audit) loses steps and
+# its enforcement header when a generator condenses it into bullets. The two
+# compliant renderings — inline-verbatim and hard-delegation — both keep the
+# load-bearing phrase ("execute each item ... do not summarize"); a paraphrase
+# drops it. This check asserts that phrase survives in the output spec
+# (agents.md §6.3 directive, every output model) and in every example
+# CLAUDE.md that declares a session-protocol section. Examples with no such
+# section are out of scope (skipped), not failures.
+
+ENFORCE_RE = re.compile(
+    r"execute each item|do not summari[sz]e|do not paraphrase",
+    re.IGNORECASE,
+)
+
+
+def _section_block(lines, start_index, stop_pattern):
+    """Return text from start_index+1 until a line matching stop_pattern."""
+    body = []
+    for line in lines[start_index + 1:]:
+        if stop_pattern.match(line):
+            break
+        body.append(line)
+    return "\n".join(body)
+
+
+def check_sys_05():
+    failures = []
+
+    # 1) Output spec — every §6.3 directive in agents.md carries the rule.
+    agents_path = os.path.join(ROOT, "templates", "base", "core", "agents.md")
+    a_lines = read(agents_path).splitlines()
+    h63 = re.compile(r"^###\s+6\.3\b")
+    stop_spec = re.compile(r"^(#{1,3}\s|```)")
+    found = False
+    for i, line in enumerate(a_lines):
+        if h63.match(line):
+            found = True
+            block = _section_block(a_lines, i, stop_spec)
+            if not ENFORCE_RE.search(block):
+                failures.append(
+                    f"  agents.md:{i + 1}: §6.3 directive must require "
+                    f"inline-verbatim or hard-delegation (missing 'execute "
+                    f"each item' / 'do not summarize')"
+                )
+    if not found:
+        failures.append("  agents.md: no '### 6.3' directive found")
+
+    # 2) Examples — any CLAUDE.md with a session-protocol section must render
+    #    the audit faithfully; examples without one are out of scope.
+    examples_dir = os.path.join(ROOT, "examples")
+    head = re.compile(r"^#{2,3}\s.*([Ss]ession protocol|[Ee]nd of session)")
+    stop_top = re.compile(r"^##\s")
+    if os.path.isdir(examples_dir):
+        for name in sorted(os.listdir(examples_dir)):
+            cm = os.path.join(examples_dir, name, "CLAUDE.md")
+            if not os.path.isfile(cm):
+                continue
+            e_lines = read(cm).splitlines()
+            start = next((i for i, l in enumerate(e_lines) if head.match(l)),
+                         None)
+            if start is None:
+                continue
+            block = _section_block(e_lines, start, stop_top)
+            if not ENFORCE_RE.search(block):
+                failures.append(
+                    f"  examples/{name}/CLAUDE.md: session-protocol section "
+                    f"neither inlines the audit verbatim nor hard-delegates "
+                    f"(missing 'execute each item' / 'do not summarize') — a "
+                    f"soft reference or paraphrase drops the wrap-up steps"
+                )
+
+    return failures
+
+
+# ---------------------------------------------------------------------------
 # Test registry
 # ---------------------------------------------------------------------------
 
@@ -1034,6 +1111,8 @@ CHECKS = [
      "title": "Every template file has a manifest entry", "fn": check_sys_03},
     {"id": "SYS-04", "spec": "SAIT-SMK-SYS-04-001A",
      "title": "DEPENDS ON headers match manifest depends_on", "fn": check_sys_04},
+    {"id": "SYS-05", "spec": "SAIT-SMK-SYS-05-001A",
+     "title": "End-of-session audit inlined verbatim or hard-delegated", "fn": check_sys_05},
     {"id": "TPL-08", "spec": "SAIT-SMK-TPL-08-001A",
      "title": "Every base template has at least one [ID:] tag", "fn": check_tpl_08},
     {"id": "TPL-09", "spec": "SAIT-SMK-TPL-09-001A",

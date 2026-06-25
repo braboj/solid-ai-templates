@@ -69,6 +69,7 @@ reused for a different component within the same area.
 | `02` | ID uniqueness — section IDs across all templates |
 | `03` | Manifest coverage — every template file has a manifest entry |
 | `04` | Header–manifest sync — DEPENDS ON headers match manifest depends_on |
+| `05` | Generation fidelity — end-of-session audit inlined verbatim or hard-delegated, never paraphrased |
 
 ### TPL - Template
 

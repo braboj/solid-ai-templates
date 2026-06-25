@@ -116,6 +116,9 @@ templates for the rest. Follow the hybrid model structure in
    safety rules, and content rules
 4. References quality framework, review process, testing, a11y,
    SEO, and CI/CD from the templates
+5. Renders §6.3 (end-of-session audit) by inlining `scope.md`'s
+   checklist verbatim or hard-delegating ("execute each item; do not
+   summarize") — never paraphrased into bullets (see `agents.md` §6.3)
 
 End the file with: `<!-- Generated with solid-ai-templates (github.com/braboj/solid-ai-templates) -->`
 

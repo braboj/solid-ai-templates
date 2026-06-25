@@ -103,7 +103,12 @@ Follow `templates/base/workflow/scope.md` for scope guard and end-of-session aud
 ### 6.2 During the session
 [templates/base/workflow/scope.md — During work]
 ### 6.3 End of session
-[templates/base/workflow/scope.md — End of session audit (full checklist)]
+[templates/base/workflow/scope.md — End of session audit. Render this
+ONE of two ways: inline the full checklist VERBATIM, or hard-delegate
+with an imperative — "Read scope.md (End of session audit) and execute
+each item sequentially; do not summarize or skip." NEVER paraphrase the
+checklist into a short bullet list: that silently drops steps and the
+"print and execute sequentially" enforcement, producing a thin wrap-up.]
 ```
 
 Omit sections that are not applicable to the project (e.g. omit section 4
@@ -172,7 +177,12 @@ Follow `templates/base/workflow/scope.md` for scope guard and end-of-session aud
 ### 6.2 During the session
 [templates/base/workflow/scope.md — During work]
 ### 6.3 End of session
-[templates/base/workflow/scope.md — End of session audit (full checklist)]
+[templates/base/workflow/scope.md — End of session audit. Render this
+ONE of two ways: inline the full checklist VERBATIM, or hard-delegate
+with an imperative — "Read scope.md (End of session audit) and execute
+each item sequentially; do not summarize or skip." NEVER paraphrase the
+checklist into a short bullet list: that silently drops steps and the
+"print and execute sequentially" enforcement, producing a thin wrap-up.]
 ```
 
 ---
@@ -193,6 +203,9 @@ than inline but safer than pure reference.
   no raw SQL — violations introduce security or correctness bugs
 - **Content rules** — formatting, writing style, and structure that
   define the project's voice (if applicable)
+- **Session protocol / end-of-session audit** — a procedural checklist
+  is skipped silently when condensed; it belongs in the active tier,
+  not "reference the rest" (see §6.3)
 
 ### What to reference
 
@@ -259,7 +272,12 @@ Follow `templates/base/workflow/scope.md` for scope guard and end-of-session aud
 ### 6.2 During the session
 [templates/base/workflow/scope.md — During work]
 ### 6.3 End of session
-[templates/base/workflow/scope.md — End of session audit (full checklist)]
+[templates/base/workflow/scope.md — End of session audit. Render this
+ONE of two ways: inline the full checklist VERBATIM, or hard-delegate
+with an imperative — "Read scope.md (End of session audit) and execute
+each item sequentially; do not summarize or skip." NEVER paraphrase the
+checklist into a short bullet list: that silently drops steps and the
+"print and execute sequentially" enforcement, producing a thin wrap-up.]
 ```
 
 ---
