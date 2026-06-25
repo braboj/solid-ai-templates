@@ -1,4 +1,5 @@
 .idea/
+.claude/
 tests/reports/
 temp/
 __pycache__/
