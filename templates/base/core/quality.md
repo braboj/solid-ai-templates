@@ -115,6 +115,36 @@
   abstraction
 - **High Cohesion**: modules that change together should live together;
   a module whose parts serve unrelated concerns should be split
+- **Per-config opt-in over global auto-detect**: when an algorithm
+  variant helps one input class and hurts another, prefer a per-config
+  flag with a safe default over a global threshold that auto-detects
+  which class an input belongs to. Auto-detect works only when the input
+  cleanly partitions on a measurable signal; when it does not, it
+  misclassifies silently — often for the worst input. Per-config opt-in
+  captures the human-known classification directly
+- **Cross-language function ports must be byte-equivalent**: when a
+  function exists in one language and is consumed by code in another,
+  port it exactly — same operation order, character classes, and edge
+  cases (empty input, leading/trailing separators). Reference the
+  original in the port's docstring so the invariant is discoverable.
+  Never re-implement from the name or description alone — that produces
+  close-but-diverging siblings that surface as silent data corruption
+- **Decompose a ported mega-script into a strategy-dispatched
+  pipeline**: when porting a procedural script (one file, branching
+  control flow per case) into a typed library, split it into small
+  single-responsibility modules with the orchestrator dispatching on a
+  declared type-axis (enum / Literal / tagged union). Adding a case
+  becomes "add a dispatch arm," not "sprinkle if-this-case throughout,"
+  and each stage becomes testable in isolation — this composes the
+  existing strategy and composition patterns, not a new one
+- **Build extraction-ready internal modules**: structure an internal
+  module today so it can become a standalone repo or submodule tomorrow
+  without a rewrite. Host-specific values (cache dirs, config) MUST be
+  injected as constructor parameters with portable defaults, never read
+  from host globals; the module MUST own its public API (`__init__`
+  re-exports), README, tests, and requirements; a thin CLI wraps the
+  library rather than being the product. Extraction stays deferred, but
+  the module is ready the moment it is wanted
 
 ## Testability
 
