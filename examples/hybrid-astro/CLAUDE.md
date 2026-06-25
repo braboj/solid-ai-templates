@@ -142,4 +142,18 @@ Verify MUSTs from `base/docs.md`, `base/readme.md`, `base/git.md`,
 
 ## 6. Session protocol
 
-Follow `base/scope.md` for scope guard and end-of-session audit.
+Follow `base/scope.md` for the scope guard and end-of-session audit.
+
+### 6.1 Start of session
+
+Read `base/scope.md` (Session startup) and the mandatory startup block.
+
+### 6.2 During the session
+
+Follow `base/scope.md` (During work) — stay within the agreed scope.
+
+### 6.3 End of session
+
+On "wrap up" / "close out", read `base/scope.md` (End of session audit)
+and execute each item sequentially; do not summarize or skip. Print the
+checklist and mark each item done before moving to the next.
