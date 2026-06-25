@@ -328,6 +328,23 @@ one-off findings: a new directory is itself an architectural decision
 that needs its own ADR. The durable artifact is the eventual ADR per the
 decision-log rule, citing the interim comment(s).
 
+### Triage by fan-out
+[ID: ai-workflow-triage-fanout]
+
+For classification, audit, or triage workloads that apply the same
+judgment to N inputs, fan out across agents instead of looping:
+
+- Seed a shared taxonomy by hand-classifying 2–3 representative inputs
+  first, so agents don't each invent a slightly different vocabulary.
+- Spawn agents in batches (~5), each running the same prompt on one
+  input and returning a structured classification (category, severity,
+  justification, recommended next step).
+- Aggregate the returns into a matrix.
+- **Stop fanning out once the taxonomy saturates.** When new runs stop
+  producing new categories, the marginal classification adds nothing —
+  spend the remaining budget on root-cause analysis and fixes, not on
+  running the rest of the population "for completeness."
+
 ### Decide before delegating
 
 The agent will build whatever you ask. The expensive mistake is building the wrong thing fast. Spend time on:
@@ -401,6 +418,7 @@ A claim about current state — a count in a memory note, a changelog's list of 
 - **Counts in handoff notes decay fast.** A memory note, prior PR body, or journal "follow-ups" line that quantifies backlog ("33 stale logs", "5 open Dependabot PRs") was true at write time; sweep tasks then complete silently as side effects of other work. Re-run the underlying check (`--check`, `gh pr list`, `git log --since=`) before estimating effort, and note any large drift in the session entry — it is signal about which sweeps are finishing on their own. Treat the count as a question, not an answer.
 - **A dependency bump is verified by the gate, not the changelog.** Scanning a major bump's changelog sizes the question; running the project's lint/test/build against the new version answers it. If the local gate passes, the bump is safe regardless of changelog content; if it fails, the changelog names which breaking change fired. Patch and minor bumps may skip the run when the changelog shows no breaking changes.
 - **When the truth source changes, audit every downstream render.** When one source of truth feeds multiple rendered artifacts (design tokens → CSS + Storybook + docs; OpenAPI → SDKs + mocks + docs), updating the source does not refresh the renders. Before declaring the fix shipped, list every artifact derived from the changed truth and verify each — build-time caches, hand-tweaked files, and provenance artifacts that intentionally show the pre-fix state each behave differently; call out which.
+- **A plan-time placement is a hypothesis, not a fact.** Before writing a rule or fix to a planned target file or section, open it and confirm the gap is real and the home is semantically correct. Milestone plans routinely mis-place: the "missing" rule is already covered two files over, or the planned home conflates two concerns (a gate that *verifies* vs a diagnostic that *instruments*). The check is one read, and it replaces a guess with the file's actual contents.
 
 ### Probe before acting on a hypothesis
 
@@ -457,6 +475,21 @@ Confirm, before acting:
 - **The terms fit your repo** — an "official" or "recommended" action/tool's pricing and license model fits your repo's org type. "Official" is not always "drop-in": `gitleaks/gitleaks-action` is free on personal repos but requires a paid license secret on organization repos. Verify the pricing model before switching, not on the first failing run.
 
 When a check fails, treat it as a signal about your own source of truth, not just a one-off filing problem. A repo that turns out archived, renamed, or wrong means the ADR, README, or memory that pointed there is stale — fix the pointer (or drop the dead trigger) in the same task, rather than working around the single blocked action.
+
+### Middle scope: ship a novel data shape before the UI
+
+A user-facing feature decomposes into a data layer (types + emit +
+tests) and a presentation layer (rendering, accessibility, UX details).
+When the data layer is novel — new schema decisions, several viable
+shapes — ship it in its own PR before the UI. The first PR gets the
+shape reviewed in isolation (required vs optional fields, enum vs
+free-form, two- vs three-state); the second focuses entirely on UX
+without dragging schema review into it, and without redesign risk if the
+first shape turns out wrong.
+
+Skip this when the data layer is trivial (one field, obvious shape) or
+when the UI will inform the data shape — there a vertical slice forces
+both decisions together, which is what you want.
 
 ### Scope creep within sessions
 
