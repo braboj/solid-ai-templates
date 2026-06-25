@@ -32,6 +32,14 @@ not after deployment.
 - All dependencies MUST be tracked for known vulnerabilities and license risks
 - SCA MUST run on every deployment to QA, staging, and production
 - A SBOM (Software Bill of Materials) MUST be generated per release
+- Attach the SBOM to the per-tag release record as a durable,
+  per-version asset — a CI build artifact expires with run retention.
+  Once the pipeline creates a release record on a tag, upload the SBOM
+  from the advisory scan job (`gh release upload "$TAG" <sbom>
+  --clobber`). Guard the upload (missing release or SBOM → exit 0) and
+  mark the job `continue-on-error` so a scan hiccup never blocks or
+  erases the release — the scan job reaches forward to the release,
+  never the reverse. Needs `contents: write` at job scope
 - Dependencies with unacceptable licenses MUST NOT be merged
 
 ## Secret detection
