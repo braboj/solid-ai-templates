@@ -2337,6 +2337,27 @@ Use the correct level — do not elevate debug information to INFO:
 - Include correlation/request IDs in error responses to enable log tracing
 - Never expose internal state, stack traces, or file paths in error responses
 
+## Pipeline diagnosability
+
+Multi-stage pipelines (ETL, data/image extraction, compiler passes, build
+tools) hide their failures: when a stage produces wrong output, the only
+visible artifacts are the input and the final result, so every "this
+looks wrong" becomes a probe session reconstructing intermediate state.
+
+- Accept an optional diagnostic sink (a `DiagnosticSink` Protocol or
+  interface) as a pipeline parameter; each stage calls
+  `sink.record_<stage>(artifact)` only when a sink is supplied
+- Provide a `FileDiagnosticSink` that writes one named artifact per stage
+  (image, mask, table, AST, JSON) to a known directory for inspection
+- Contract: pipeline output MUST be byte-identical with or without a sink
+  — the diagnostic concern lives outside the core path, never alters it
+- Diagnostic artifacts are gitignored — on-demand debugging output, not
+  committed state
+- Reach for this when stages have named, inspectable intermediate
+  artifacts, failure reports describe symptoms rather than stages, and a
+  change can break one stage silently while the final output still looks
+  plausible
+
 <!-- templates/backend/grpc.md -->
 # Backend — gRPC
 [ID: backend-grpc]
