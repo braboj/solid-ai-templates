@@ -284,8 +284,8 @@ recorded in ADR-004.
 **Issues closed:** #168, #169, #170, #171, #172, #173
 
 **Key changes:**
-- First 360-degree audit (`docs/360-audit.md`) — grades: Value B+,
-  Quality C+, Viability A-, Discovery D+
+- First 360-degree audit (`docs/audits/2026-05-04-360.md`) — grades:
+  Value B+, Quality C+, Viability A-, Discovery D+
 - Recovered lost agents.md move from orphaned branch
   `fix/claude-md-review` (formats/ → base/core/)
 - Fixed E2E test paths broken after ADR-005 restructuring (27/30
