@@ -339,6 +339,67 @@ STK_TESTS = [
         # HTMX is server-rendered hypermedia — SPA patterns must not appear
         "forbidden": ["JSON API", "SPA routing"],
     },
+    {
+        "id": "STK-21",
+        "spec": "SAIT-E2E-STK-21-001A",
+        "stack": "templates/stack/node-nestjs.md",
+        "answers": {
+            "Project name": "PaymentsAPI",
+            "Language": "TypeScript",
+            "HTTP adapter": "Express",
+            "ORM": "Prisma",
+            "Auth": "JWT",
+            "Output format": "CLAUDE.md (inline model)",
+        },
+        "required": [
+            "1. Project", "Project structure", "Commands",
+            "Git", "Code conventions", "Testing",
+            "NestJS", "TypeScript",
+            "class-validator",
+            "Jest",
+            "feat:",
+        ],
+        "forbidden": ["[your project]", "[owner]", "[repo]"],
+    },
+    {
+        "id": "STK-22",
+        "spec": "SAIT-E2E-STK-22-001A",
+        "stack": "templates/stack/c-embedded.md",
+        "answers": {
+            "Project name": "SensorFirmware",
+            "Target": "STM32 (ARM Cortex-M4)",
+            "Toolchain": "arm-none-eabi-gcc",
+            "Test runner": "Unity (host build)",
+            "Output format": "CLAUDE.md (inline model)",
+        },
+        "required": [
+            "1. Project", "Project structure", "Commands",
+            "C conventions",
+            "C17", "CMake",
+            "Unity", "cppcheck",
+            "feat:",
+        ],
+        "forbidden": ["[your project]", "[owner]", "[repo]"],
+    },
+    {
+        "id": "STK-23",
+        "spec": "SAIT-E2E-STK-23-001A",
+        "stack": "templates/stack/static-site-tutorial.md",
+        "answers": {
+            "Project name": "LearnAstro",
+            "Content": "Multi-chapter Markdown in chapters/",
+            "Diagrams": "Mermaid",
+            "Output format": "CLAUDE.md (inline model)",
+        },
+        "required": [
+            "1. Project", "Commands",
+            "Astro",
+            "chapters/",
+            "Exercises", "Quiz",
+            "feat:",
+        ],
+        "forbidden": ["[your project]", "[owner]", "[repo]"],
+    },
 ]
 
 # -------------------------------------------------------------------------

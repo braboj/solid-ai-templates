@@ -50,6 +50,9 @@ Spec files live in `tests/specs/`. See `CODIFICATION.md` for the ID scheme, area
 | `SAIT-E2E-STK-16-001A` | E2E | P2 | Full interview → CLAUDE.md for a generic Go service |
 | `SAIT-E2E-STK-18-001A` | E2E | P1 | Full interview → CLAUDE.md for a Node.js library project |
 | `SAIT-E2E-STK-20-001A` | E2E | P1 | Full interview → CLAUDE.md for an HTMX project |
+| `SAIT-E2E-STK-21-001A` | E2E | P1 | Full interview → CLAUDE.md for a NestJS project |
+| `SAIT-E2E-STK-22-001A` | E2E | P1 | Full interview → CLAUDE.md for a C embedded project |
+| `SAIT-E2E-STK-23-001A` | E2E | P1 | Full interview → CLAUDE.md for a tutorial site project |
 | `SAIT-E2E-DPL-01-001A` | E2E | P1 | Cloud deployment target produces correct deployment rules |
 | `SAIT-E2E-DPL-02-001A` | E2E | P1 | Hybrid deployment target produces correct deployment rules |
 | `SAIT-E2E-DPL-03-001A` | E2E | P1 | Offline deployment target produces correct deployment rules |
