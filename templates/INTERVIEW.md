@@ -74,10 +74,12 @@ DEPENDS ON chain. If you have shell access, run
 `py tools/resolve.py <stack-id> --concat` to get the full resolved
 content. Otherwise, read the pre-resolved file from `generated/<stack-id>.md`.
 Apply any adjustments from Phase 3.
-Generate the output file using the format rules in `templates/base/core/agents.md`.
+Generate the output file using the format rules in
+`templates/base/core/agents.md`.
 All rules are inlined — the output file is self-contained.
 The user should review and adjust the output before adopting it.
-End the file with: `<!-- Generated with solid-ai-templates (github.com/braboj/solid-ai-templates) -->`
+End the file with: `<!-- Generated with solid-ai-templates
+(github.com/braboj/solid-ai-templates) -->`
 
 Also generate `docs/ONBOARDING.md` and `docs/PLAYBOOK.md` following the
 required structures in `templates/base/core/docs.md`.
@@ -94,7 +96,8 @@ inlining them. The output file:
    read for each)
 4. Contains only project-specific overrides and additions inline
 
-End the file with: `<!-- Generated with solid-ai-templates (github.com/braboj/solid-ai-templates) -->`
+End the file with: `<!-- Generated with solid-ai-templates
+(github.com/braboj/solid-ai-templates) -->`
 
 Tell the user to add the submodule:
 ```
@@ -120,7 +123,8 @@ templates for the rest. Follow the hybrid model structure in
    checklist verbatim or hard-delegating ("execute each item; do not
    summarize") — never paraphrased into bullets (see `agents.md` §6.3)
 
-End the file with: `<!-- Generated with solid-ai-templates (github.com/braboj/solid-ai-templates) -->`
+End the file with: `<!-- Generated with solid-ai-templates
+(github.com/braboj/solid-ai-templates) -->`
 
 Tell the user to add the submodule:
 ```

@@ -13,7 +13,8 @@ Applies regardless of technology (Celery, asynq, Sidekiq, BullMQ, etc.).
   webhook fanout, long-running data imports
 - Do NOT use jobs for work that the caller needs the result of immediately —
   use async/await or streaming instead
-- Do NOT use jobs to paper over a slow synchronous path — fix the root cause first
+- Do NOT use jobs to paper over a slow synchronous path — fix the root cause
+  first
 
 ---
 

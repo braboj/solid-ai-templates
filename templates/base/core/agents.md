@@ -305,9 +305,11 @@ extend the root.
 ## Companion documents
 
 All three models MUST also generate:
-- `docs/ONBOARDING.md` — following the structure in `templates/base/core/docs.md`
+- `docs/ONBOARDING.md` — following the structure in
+  `templates/base/core/docs.md`
 - `docs/PLAYBOOK.md` — following the structure in `templates/base/core/docs.md`
-- `docs/dev-journal.md` — following the structure in `templates/base/core/docs.md`
+- `docs/dev-journal.md` — following the structure in
+  `templates/base/core/docs.md`
 
 ---
 

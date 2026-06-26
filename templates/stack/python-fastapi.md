@@ -75,8 +75,10 @@ CLAUDE.md
 - One `APIRouter` per feature domain with a prefix and tags
 - Routes thin — delegate business logic to service functions
 - Shared logic (auth, DB session, current user) via `Depends()`
-- Use `Annotated` for dependency injection — avoid bare `= Depends()` in signatures
-- Return type annotations on all route functions (FastAPI uses these for OpenAPI)
+- Use `Annotated` for dependency injection — avoid bare `= Depends()` in
+  signatures
+- Return type annotations on all route functions (FastAPI uses these for
+  OpenAPI)
 
 ---
 
@@ -96,7 +98,8 @@ CLAUDE.md
 
 - All route handlers and service functions `async def`
 - Blocking I/O (file reads, sync DB calls) must run in `asyncio.to_thread()`
-- Never `await` inside a list comprehension — use `asyncio.gather()` for concurrency
+- Never `await` inside a list comprehension — use `asyncio.gather()` for
+  concurrency
 - Use `asyncpg` or `aiosqlite` for async database drivers
 
 ---
@@ -122,7 +125,8 @@ CLAUDE.md
 ## Testing
 [EXTEND: python-service-testing]
 
-- `httpx.AsyncClient` with `ASGITransport` for route tests — no `TestClient` (sync)
+- `httpx.AsyncClient` with `ASGITransport` for route tests — no `TestClient`
+  (sync)
 - One async `client` fixture in `conftest.py`
 - Override dependencies with `app.dependency_overrides` in tests
 

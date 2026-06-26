@@ -63,7 +63,8 @@ not after deployment.
 - Never run DAST against production
 - Automated DAST scans MUST complete before any production release
 - Critical findings MUST block the release and be treated as incidents
-- Lower-severity findings MUST be tracked and resolved within a defined timeframe
+- Lower-severity findings MUST be tracked and resolved within a defined
+  timeframe
 
 ## IaC scanning (Infrastructure-as-Code)
 

@@ -23,15 +23,18 @@
 | Messaging | Async, fire-and-forget, event-driven                                                                        |
 
 - Start with REST — only deviate with a stated reason in an ADR
-- REST + gRPC is valid: REST for external/ops endpoints, gRPC for internal hot paths
+- REST + gRPC is valid: REST for external/ops endpoints, gRPC for internal hot
+  paths
 - Never use gRPC as the primary interface for browser clients
-- GraphQL and REST in the same service require strong justification — dual surfaces double the maintenance burden
+- GraphQL and REST in the same service require strong justification — dual
+  surfaces double the maintenance burden
 - SOAP and other legacy protocols require a per-case ADR
 
 ## OpenAPI specification
 - Every API MUST have an OpenAPI specification
 - The spec MUST be kept up to date — a stale spec is worse than no spec
-- Include: all resources, methods, parameters, response schemas, error responses,
+- Include: all resources, methods, parameters, response schemas, error
+  responses,
   and authentication requirements
 - Provide a changelog documenting API changes across versions
 - Prefer design-first: hand-author the spec as the single source of
@@ -86,7 +89,8 @@ Sunset: <HTTP-date>
 
 ## Statelessness
 [ID: backend-api-statelessness]
-- APIs MUST be stateless — no client context stored on the server between requests
+- APIs MUST be stateless — no client context stored on the server between
+  requests
 - All information needed to process a request MUST be in the request itself
 - Session state belongs in the client or a dedicated session store, not in the
   API service

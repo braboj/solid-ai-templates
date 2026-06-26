@@ -181,7 +181,9 @@ base/ ──┬── frontend/ ──┐
 - Use `[ID: ...]` on every section that another template might
   EXTEND or OVERRIDE
 - Optional sections are marked `(if applicable)` in the heading
-- Keep line length under 80 characters
+- Keep line length under 80 characters — exempt: table rows, fenced
+  code, single-line `[DEPENDS ON: ...]` directives, and unbreakable
+  tokens (long URLs / Markdown link targets)
 - No HTML — Markdown only
 - A mechanically-checkable output constraint MUST name its
   agent-runnable check (command + pass condition); subjective

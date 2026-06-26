@@ -107,7 +107,8 @@ CLAUDE.md
 - Use `router.register()` to wire ViewSets — do not hardcode URL patterns
 - Pagination: use `PageNumberPagination` or `LimitOffsetPagination` globally;
   never return unbounded lists
-- Versioning: URI prefix (`/api/v1/`, `/api/v2/`) — set `DEFAULT_VERSIONING_CLASS`
+- Versioning: URI prefix (`/api/v1/`, `/api/v2/`) — set
+  `DEFAULT_VERSIONING_CLASS`
 
 ---
 

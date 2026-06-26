@@ -2,7 +2,8 @@
 [ID: backend-concurrency]
 
 Universal rules for multi-threading, multi-processing, and async I/O.
-Language-specific rules belong in the stack template via [EXTEND: backend-concurrency].
+Language-specific rules belong in the stack template via [EXTEND:
+backend-concurrency].
 
 ---
 

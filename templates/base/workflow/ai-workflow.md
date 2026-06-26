@@ -1,13 +1,16 @@
 # AI-Assisted Development Workflow
 [ID: base-ai-workflow]
 
-How to structure work when collaborating with AI coding agents. Covers the project lifecycle, work item hierarchy, and practices that maximize agent effectiveness.
+How to structure work when collaborating with AI coding agents. Covers the
+project lifecycle, work item hierarchy, and practices that maximize agent
+effectiveness.
 
 ## Lifecycle Phases
 
 ### 1. Spike (Explore)
 
-Conversational research to understand the problem space and generate recommendations.
+Conversational research to understand the problem space and generate
+recommendations.
 
 **What the human does:**
 - Defines the question or area to explore
@@ -19,9 +22,11 @@ Conversational research to understand the problem space and generate recommendat
 - Compares alternatives with tradeoffs
 - Produces a recommendation with rationale
 
-**Output:** A decision or ADR (Architecture Decision Record) documenting the choice and why.
+**Output:** A decision or ADR (Architecture Decision Record) documenting the
+choice and why.
 
-**Anti-pattern:** Skipping the spike and jumping to code. The agent will build whatever you ask — the question is whether it's the right thing to build.
+**Anti-pattern:** Skipping the spike and jumping to code. The agent will build
+whatever you ask — the question is whether it's the right thing to build.
 
 ### 2. Prototype
 
@@ -29,12 +34,16 @@ A throwaway implementation to validate feasibility and UX direction.
 
 **What changes with AI:**
 - Prototypes are nearly free — an agent can build one in a single session
-- The bottleneck shifts from building to deciding. Have the conversation about what you want before generating code
-- Prototype code should be disposable. Don't polish it — test the concept, then rebuild properly
+- The bottleneck shifts from building to deciding. Have the conversation about
+  what you want before generating code
+- Prototype code should be disposable. Don't polish it — test the concept, then
+  rebuild properly
 
-**Output:** A working demo the stakeholder can interact with. Keep or discard based on feedback.
+**Output:** A working demo the stakeholder can interact with. Keep or discard
+based on feedback.
 
-**Anti-pattern:** Polishing the prototype into the product. Prototype code carries technical debt from speed-first decisions.
+**Anti-pattern:** Polishing the prototype into the product. Prototype code
+carries technical debt from speed-first decisions.
 
 ### 3. Design
 
@@ -44,9 +53,12 @@ Define the MVP scope, data model, architecture, and conventions.
 - Architecture Decision Records for non-obvious choices
 - Data model (types/interfaces)
 - Page/component structure
-- Convention file (CLAUDE.md or equivalent) so the agent follows project rules across sessions
+- Convention file (CLAUDE.md or equivalent) so the agent follows project rules
+  across sessions
 
-**Key principle:** The convention file is the agent's long-term memory. Anything not written down will be forgotten between sessions. Invest time in CLAUDE.md — it pays back on every future conversation.
+**Key principle:** The convention file is the agent's long-term memory. Anything
+not written down will be forgotten between sessions. Invest time in CLAUDE.md —
+it pays back on every future conversation.
 
 ### 4. Development
 
@@ -74,15 +86,18 @@ Iterative implementation using epics, stories, and tasks.
 
 Set up CI/CD, configure hosting, verify in production.
 
-**Agent role:** Write the workflow files, configure build steps, troubleshoot deployment failures.
+**Agent role:** Write the workflow files, configure build steps, troubleshoot
+deployment failures.
 
-**Human role:** DNS, domain registration, secrets, access tokens — things that require account access.
+**Human role:** DNS, domain registration, secrets, access tokens — things that
+require account access.
 
 ### 6. Monitor
 
 Track errors, performance, and user feedback.
 
-**Agent role:** Set up monitoring config, analyze logs, investigate reported issues.
+**Agent role:** Set up monitoring config, analyze logs, investigate reported
+issues.
 
 **Human role:** Watch dashboards, collect user feedback, prioritize fixes.
 
@@ -94,7 +109,8 @@ Track errors, performance, and user feedback.
 
 A large initiative spanning multiple sessions. Too big for one task.
 
-**Good epic:** "Genre Scoring System" — clear goal, multiple components, measurable completion.
+**Good epic:** "Genre Scoring System" — clear goal, multiple components,
+measurable completion.
 
 **Bad epic:** "Make the site better" — no clear scope or completion criteria.
 
@@ -106,21 +122,27 @@ A large initiative spanning multiple sessions. Too big for one task.
 
 ### User Story
 
-Describes a capability from the user's perspective. Guides the agent toward the right outcome.
+Describes a capability from the user's perspective. Guides the agent toward the
+right outcome.
 
 **Format:** "As a [user type], I want [capability] so that [benefit]."
 
 **Examples:**
-- "As a budget photographer, I want to sort lenses by optical quality and price so that I can find the best value."
-- "As a nightscape shooter, I want to filter lenses by coma score so that I only see lenses suitable for astrophotography."
+- "As a budget photographer, I want to sort lenses by optical quality and price
+  so that I can find the best value."
+- "As a nightscape shooter, I want to filter lenses by coma score so that I only
+  see lenses suitable for astrophotography."
 
-**Why stories matter for AI agents:** Agents take instructions literally. A user story gives the agent the user's perspective, not just a technical specification. This produces better UX decisions when the agent has latitude.
+**Why stories matter for AI agents:** Agents take instructions literally. A user
+story gives the agent the user's perspective, not just a technical
+specification. This produces better UX decisions when the agent has latitude.
 
 ### Task
 
 An atomic, implementable unit of work. One task = one branch = one PR.
 
-**Good task:** "Add OQ column to Lens Explorer table and mobile cards, computed from weighted optical field average."
+**Good task:** "Add OQ column to Lens Explorer table and mobile cards, computed
+from weighted optical field average."
 
 **Bad task:** "Improve the lens explorer."
 
@@ -149,7 +171,9 @@ A defect in existing functionality.
 - Screenshots or error messages if available
 - Browser/environment if relevant
 
-**Why context matters for AI agents:** "The page broke" forces the agent to guess. "The wiki filter shows 0 entries on preview after the Content Collections migration" lets the agent diagnose immediately.
+**Why context matters for AI agents:** "The page broke" forces the agent to
+guess. "The wiki filter shows 0 entries on preview after the Content Collections
+migration" lets the agent diagnose immediately.
 
 ---
 
@@ -368,7 +392,8 @@ judgment to N inputs, fan out across agents instead of looping:
 
 ### Decide before delegating
 
-The agent will build whatever you ask. The expensive mistake is building the wrong thing fast. Spend time on:
+The agent will build whatever you ask. The expensive mistake is building the
+wrong thing fast. Spend time on:
 - Which option to pursue (spike first)
 - What the acceptance criteria are
 - What's in scope and what's not
@@ -383,9 +408,12 @@ Don't queue up 10 tasks and review at the end. Review after each task:
 
 ### Use feedback loops
 
-When the agent does something wrong, say so explicitly — it corrects immediately. When it does something right in a non-obvious way, confirm it — the agent learns what to repeat.
+When the agent does something wrong, say so explicitly — it corrects
+immediately. When it does something right in a non-obvious way, confirm it — the
+agent learns what to repeat.
 
-Corrections: "Don't mock the database in tests — we got burned when mocked tests passed but prod failed."
+Corrections: "Don't mock the database in tests — we got burned when mocked tests
+passed but prod failed."
 
 Confirmations: "Yes, the single bundled PR was the right call here."
 
@@ -409,7 +437,8 @@ A productive session with an AI agent follows this rhythm:
 5. **Merge** — commit, PR, merge to main
 6. **Repeat or stop** — pick another task or end the session
 
-Keep sessions focused. One theme per session (e.g., "wiki migration" or "lens detail pages") produces better results than jumping between unrelated topics.
+Keep sessions focused. One theme per session (e.g., "wiki migration" or "lens
+detail pages") produces better results than jumping between unrelated topics.
 
 ---
 
@@ -417,49 +446,141 @@ Keep sessions focused. One theme per session (e.g., "wiki migration" or "lens de
 
 ### When to revert vs when to iterate
 
-AI agents make changes cheap, which creates a temptation to keep iterating on a failing approach. Recognize the difference:
+AI agents make changes cheap, which creates a temptation to keep iterating on a
+failing approach. Recognize the difference:
 
-- **Iterate** when the approach is right but the details need adjustment — styling tweaks, field mapping errors, off-by-one bugs.
-- **Revert** when the approach itself is wrong — the architecture doesn't fit, performance got worse, or the complexity isn't justified.
+- **Iterate** when the approach is right but the details need adjustment —
+  styling tweaks, field mapping errors, off-by-one bugs.
+- **Revert** when the approach itself is wrong — the architecture doesn't fit,
+  performance got worse, or the complexity isn't justified.
 
-The signal: if you're on the third round of fixes for the same feature and it still doesn't feel right, the approach is wrong. Revert cleanly, document why it failed (in the issue or an ADR), and try a different approach. Don't let sunk cost drive technical decisions.
+The signal: if you're on the third round of fixes for the same feature and it
+still doesn't feel right, the approach is wrong. Revert cleanly, document why it
+failed (in the issue or an ADR), and try a different approach. Don't let sunk
+cost drive technical decisions.
 
-A special case: when a new bug looks like a previously-fixed pattern, the instinct is to extend the existing fix mechanism. Try it — but measure the result against a concrete metric, not against "does it look right." If the metric regresses, revert immediately and document the rejected attempt inline (a code comment or PR note) so future sessions see the dead end. The framework-extension attempt is not waste: it falsifies the "same fix applies" hypothesis cheaply, which is information.
+A special case: when a new bug looks like a previously-fixed pattern, the
+instinct is to extend the existing fix mechanism. Try it — but measure the
+result against a concrete metric, not against "does it look right." If the
+metric regresses, revert immediately and document the rejected attempt inline (a
+code comment or PR note) so future sessions see the dead end. The
+framework-extension attempt is not waste: it falsifies the "same fix applies"
+hypothesis cheaply, which is information.
 
 ### Verify agent calculations against the system
 
-AI agents can do mental math — and get it wrong. When the agent computes a score, estimate, or comparison, **always verify against the actual build output.** The agent may use stale values, wrong field names, or misremember data from earlier in the conversation.
+AI agents can do mental math — and get it wrong. When the agent computes a
+score, estimate, or comparison, **always verify against the actual build
+output.** The agent may use stale values, wrong field names, or misremember data
+from earlier in the conversation.
 
-The build is the source of truth. `npm run build` then check the output. Don't trust "I calculated 7.9" — check what the page actually renders.
+The build is the source of truth. `npm run build` then check the output. Don't
+trust "I calculated 7.9" — check what the page actually renders.
 
 ### Verify before relying on a claim
 
-A claim about current state — a count in a memory note, a changelog's list of breaking changes, the assumption that one fix refreshed every view — is accurate when written and decays after. Before you scope work or declare a fix shipped on the strength of such a claim, re-measure the thing itself. The check is usually one command, and it replaces a guess with proof.
+A claim about current state — a count in a memory note, a changelog's list of
+breaking changes, the assumption that one fix refreshed every view — is accurate
+when written and decays after. Before you scope work or declare a fix shipped on
+the strength of such a claim, re-measure the thing itself. The check is usually
+one command, and it replaces a guess with proof.
 
-- **Counts in handoff notes decay fast.** A memory note, prior PR body, or journal "follow-ups" line that quantifies backlog ("33 stale logs", "5 open Dependabot PRs") was true at write time; sweep tasks then complete silently as side effects of other work. Re-run the underlying check (`--check`, `gh pr list`, `git log --since=`) before estimating effort, and note any large drift in the session entry — it is signal about which sweeps are finishing on their own. Treat the count as a question, not an answer.
-- **A dependency bump is verified by the gate, not the changelog.** Scanning a major bump's changelog sizes the question; running the project's lint/test/build against the new version answers it. If the local gate passes, the bump is safe regardless of changelog content; if it fails, the changelog names which breaking change fired. Patch and minor bumps may skip the run when the changelog shows no breaking changes.
-- **When the truth source changes, audit every downstream render.** When one source of truth feeds multiple rendered artifacts (design tokens → CSS + Storybook + docs; OpenAPI → SDKs + mocks + docs), updating the source does not refresh the renders. Before declaring the fix shipped, list every artifact derived from the changed truth and verify each — build-time caches, hand-tweaked files, and provenance artifacts that intentionally show the pre-fix state each behave differently; call out which.
-- **A plan-time placement is a hypothesis, not a fact.** Before writing a rule or fix to a planned target file or section, open it and confirm the gap is real and the home is semantically correct. Milestone plans routinely mis-place: the "missing" rule is already covered two files over, or the planned home conflates two concerns (a gate that *verifies* vs a diagnostic that *instruments*). The check is one read, and it replaces a guess with the file's actual contents.
+- **Counts in handoff notes decay fast.** A memory note, prior PR body, or
+  journal "follow-ups" line that quantifies backlog ("33 stale logs", "5 open
+  Dependabot PRs") was true at write time; sweep tasks then complete silently as
+  side effects of other work. Re-run the underlying check (`--check`, `gh pr
+  list`, `git log --since=`) before estimating effort, and note any large drift
+  in the session entry — it is signal about which sweeps are finishing on their
+  own. Treat the count as a question, not an answer.
+- **A dependency bump is verified by the gate, not the changelog.** Scanning a
+  major bump's changelog sizes the question; running the project's
+  lint/test/build against the new version answers it. If the local gate passes,
+  the bump is safe regardless of changelog content; if it fails, the changelog
+  names which breaking change fired. Patch and minor bumps may skip the run when
+  the changelog shows no breaking changes.
+- **When the truth source changes, audit every downstream render.** When one
+  source of truth feeds multiple rendered artifacts (design tokens → CSS +
+  Storybook + docs; OpenAPI → SDKs + mocks + docs), updating the source does not
+  refresh the renders. Before declaring the fix shipped, list every artifact
+  derived from the changed truth and verify each — build-time caches,
+  hand-tweaked files, and provenance artifacts that intentionally show the
+  pre-fix state each behave differently; call out which.
+- **A plan-time placement is a hypothesis, not a fact.** Before writing a rule
+  or fix to a planned target file or section, open it and confirm the gap is
+  real and the home is semantically correct. Milestone plans routinely
+  mis-place: the "missing" rule is already covered two files over, or the
+  planned home conflates two concerns (a gate that *verifies* vs a diagnostic
+  that *instruments*). The check is one read, and it replaces a guess with the
+  file's actual contents.
 
 ### Probe before acting on a hypothesis
 
-A bug ticket, a spike, or a prior-session note often arrives with a hypothesized mechanism, a proposed fix, or an inherited diagnosis. Treat it as a claim to disprove, not a foundation to build on. Before acting, run the cheapest probe — a throwaway script, a data dump, a single query — that would confirm or refute it. One run answers two questions: is the hypothesis correct, and where is the real signal? The frequent outcome is that the probe inverts the framing and the real cause sits in a different region than the text predicted.
+A bug ticket, a spike, or a prior-session note often arrives with a hypothesized
+mechanism, a proposed fix, or an inherited diagnosis. Treat it as a claim to
+disprove, not a foundation to build on. Before acting, run the cheapest probe —
+a throwaway script, a data dump, a single query — that would confirm or refute
+it. One run answers two questions: is the hypothesis correct, and where is the
+real signal? The frequent outcome is that the probe inverts the framing and the
+real cause sits in a different region than the text predicted.
 
 Run the probe at whichever decision point comes first:
 
-- **Before coding a fix the issue proposes** — when the body names a specific code surface and a predicted cause, the fix often belongs somewhere the text did not point.
-- **Before drafting an ADR** — when the investigation prompts are cheap to answer against real data, the measurement frequently flips the recommendation an estimate would have reached.
-- **At spike intake** — before treating a spike that asserts a specific failure ("X happens because Y") as actionable, confirm the assertion against the cheapest data dump that would refute it.
-- **At the start of a follow-up session** — re-verify any load-bearing diagnosis inherited from a prior session's memory; a coarse earlier conclusion may not survive a direct probe, and the proposed solution set may be unnecessary.
-- **Before filing a bug** — when a short probe (under ~30 min) costs less than the next agent's cost to orient, it turns a reproduction-only ticket into a root-cause brief with fix options.
+- **Before coding a fix the issue proposes** — when the body names a specific
+  code surface and a predicted cause, the fix often belongs somewhere the text
+  did not point.
+- **Before drafting an ADR** — when the investigation prompts are cheap to
+  answer against real data, the measurement frequently flips the recommendation
+  an estimate would have reached.
+- **At spike intake** — before treating a spike that asserts a specific failure
+  ("X happens because Y") as actionable, confirm the assertion against the
+  cheapest data dump that would refute it.
+- **At the start of a follow-up session** — re-verify any load-bearing diagnosis
+  inherited from a prior session's memory; a coarse earlier conclusion may not
+  survive a direct probe, and the proposed solution set may be unnecessary.
+- **Before filing a bug** — when a short probe (under ~30 min) costs less than
+  the next agent's cost to orient, it turns a reproduction-only ticket into a
+  root-cause brief with fix options.
 
-Probe the breadth before scoping the fix. When a quality gate flags an issue by reason code, or two items look like a duplicate, the first probe is how many items share the symptom — `grep -c <reason_code>` over the gate output, or a cohort-wide content hash. The breadth changes the category of work: an isolated 1/N case is one fix; a systemic pattern is a different effort and often resolves to wontdo-and-document an upstream cause (e.g. identical bytes served from distinct URLs). Designing the fix before measuring breadth risks an implementation spike on a non-systemic issue, or a small-fix framing on a cohort-wide one. The probe costs seconds; the misframing costs a wasted spike. The mechanism generalizes to any cohort with byte-identifiable artifacts — scraped assets, generated files, captured fixtures, computed reports.
+Probe the breadth before scoping the fix. When a quality gate flags an issue by
+reason code, or two items look like a duplicate, the first probe is how many
+items share the symptom — `grep -c <reason_code>` over the gate output, or a
+cohort-wide content hash. The breadth changes the category of work: an isolated
+1/N case is one fix; a systemic pattern is a different effort and often resolves
+to wontdo-and-document an upstream cause (e.g. identical bytes served from
+distinct URLs). Designing the fix before measuring breadth risks an
+implementation spike on a non-systemic issue, or a small-fix framing on a
+cohort-wide one. The probe costs seconds; the misframing costs a wasted spike.
+The mechanism generalizes to any cohort with byte-identifiable artifacts —
+scraped assets, generated files, captured fixtures, computed reports.
 
-Probe the artifact, not your reading of it. When the claim rests on a dense source-of-truth artifact — an overlay image, a generated SVG, a log, a chart, a database row — dump its raw representation (pixel scan, JSON dump, AST walk, `SELECT`) instead of re-interpreting the rendered view. Repeated reading is slower and can yield mutually inconsistent conclusions; one raw dump settles the question.
+Probe the artifact, not your reading of it. When the claim rests on a dense
+source-of-truth artifact — an overlay image, a generated SVG, a log, a chart, a
+database row — dump its raw representation (pixel scan, JSON dump, AST walk,
+`SELECT`) instead of re-interpreting the rendered view. Repeated reading is
+slower and can yield mutually inconsistent conclusions; one raw dump settles the
+question.
 
-Prefer the production harness over a throwaway probe when it already emits the classification. When the question is only "does the failure framing reproduce?" and the project ships a tool that already produces per-case verdicts — a test runner, a CI gate, a linter, an auto-triage runner — run that tool first. Its output is the authoritative classification, not a one-off recomputation; it needs no script to author or delete; and it re-runs next session without rebuilding the probe environment. A throwaway probe is justified only when the production tool cannot answer the question. Signs the harness is the right call: the issue cites a count from a manual triage you would be recomputing, its reason codes match the failure classes the issue lists, or its output is queryable. Thirty seconds of `<tool> --help` is cheaper than writing a probe to discover the tool already does the job.
+Prefer the production harness over a throwaway probe when it already emits the
+classification. When the question is only "does the failure framing reproduce?"
+and the project ships a tool that already produces per-case verdicts — a test
+runner, a CI gate, a linter, an auto-triage runner — run that tool first. Its
+output is the authoritative classification, not a one-off recomputation; it
+needs no script to author or delete; and it re-runs next session without
+rebuilding the probe environment. A throwaway probe is justified only when the
+production tool cannot answer the question. Signs the harness is the right call:
+the issue cites a count from a manual triage you would be recomputing, its
+reason codes match the failure classes the issue lists, or its output is
+queryable. Thirty seconds of `<tool> --help` is cheaper than writing a probe to
+discover the tool already does the job.
 
-Skipping the probe has two visible failure modes: a well-reasoned fix built against a wrong premise, and a premature ADR that needs same-day supersession. When the probe inverts the framing, the original text is a useful negative result — record it in the PR description or the ADR's "approaches ruled out." If the project exposes no cheap probe for the claim, surfacing that gap is itself the first output. Probes are throwaway: name them for the issue, delete them before the commit that uses their findings, and keep the findings in the issue, ADR, or PR.
+Skipping the probe has two visible failure modes: a well-reasoned fix built
+against a wrong premise, and a premature ADR that needs same-day supersession.
+When the probe inverts the framing, the original text is a useful negative
+result — record it in the PR description or the ADR's "approaches ruled out." If
+the project exposes no cheap probe for the claim, surfacing that gap is itself
+the first output. Probes are throwaway: name them for the issue, delete them
+before the commit that uses their findings, and keep the findings in the issue,
+ADR, or PR.
 
 ### Debugging multi-stage systems
 
@@ -486,16 +607,32 @@ in sequence on every report; that scales with stages × reports.
 
 ### Verify external state before a visible action
 
-Some actions land on someone else's surface — filing an issue or opening a PR on a third-party repo, taking on a dependency, pulling a vendored fixture. Before one of these, confirm the external state is what you assume. The check is cheap (a single API call or page load); the cost of skipping it is acting on stale or wrong information publicly, under the maintainer's identity.
+Some actions land on someone else's surface — filing an issue or opening a PR on
+a third-party repo, taking on a dependency, pulling a vendored fixture. Before
+one of these, confirm the external state is what you assume. The check is cheap
+(a single API call or page load); the cost of skipping it is acting on stale or
+wrong information publicly, under the maintainer's identity.
 
 Confirm, before acting:
 
-- **The target is the real project** — search ranking and name collisions lie. Verify against the README, the canonical source, or the site the dependency claims to be.
-- **The repo is live** — not archived, read-only, or migrated. An archived repo silently rejects new issues; a moved one routes your action to a dead fork.
-- **The channel is open** — issues are enabled, the branch accepts PRs, the package version still exists.
-- **The terms fit your repo** — an "official" or "recommended" action/tool's pricing and license model fits your repo's org type. "Official" is not always "drop-in": `gitleaks/gitleaks-action` is free on personal repos but requires a paid license secret on organization repos. Verify the pricing model before switching, not on the first failing run.
+- **The target is the real project** — search ranking and name collisions lie.
+  Verify against the README, the canonical source, or the site the dependency
+  claims to be.
+- **The repo is live** — not archived, read-only, or migrated. An archived repo
+  silently rejects new issues; a moved one routes your action to a dead fork.
+- **The channel is open** — issues are enabled, the branch accepts PRs, the
+  package version still exists.
+- **The terms fit your repo** — an "official" or "recommended" action/tool's
+  pricing and license model fits your repo's org type. "Official" is not always
+  "drop-in": `gitleaks/gitleaks-action` is free on personal repos but requires a
+  paid license secret on organization repos. Verify the pricing model before
+  switching, not on the first failing run.
 
-When a check fails, treat it as a signal about your own source of truth, not just a one-off filing problem. A repo that turns out archived, renamed, or wrong means the ADR, README, or memory that pointed there is stale — fix the pointer (or drop the dead trigger) in the same task, rather than working around the single blocked action.
+When a check fails, treat it as a signal about your own source of truth, not
+just a one-off filing problem. A repo that turns out archived, renamed, or wrong
+means the ADR, README, or memory that pointed there is stale — fix the pointer
+(or drop the dead trigger) in the same task, rather than working around the
+single blocked action.
 
 ### Middle scope: ship a novel data shape before the UI
 
@@ -522,27 +659,43 @@ both decisions together, which is what you want.
 
 ### Scope creep within sessions
 
-A productive session can cover a lot of ground. But jumping between unrelated topics (feature work, data fixes, epic triage, domain decisions) leads to:
+A productive session can cover a lot of ground. But jumping between unrelated
+topics (feature work, data fixes, epic triage, domain decisions) leads to:
 
 - Commits directly to main instead of feature branches
 - Incomplete work left uncommitted
 - Context switching that reduces quality
 
-**Recommendation:** Commit to a theme per session. When an unrelated topic surfaces, create an issue and return to it in the next session. If you do switch topics mid-session, commit and push the current work first.
+**Recommendation:** Commit to a theme per session. When an unrelated topic
+surfaces, create an issue and return to it in the next session. If you do switch
+topics mid-session, commit and push the current work first.
 
 ### Constraints can invalidate a plan mid-execution
 
-When an architectural constraint surfaces mid-execution that makes the agreed plan unreachable as stated, pause, name the constraint, and re-surface the option set — each option with its blast radius — for the user to re-decide. Do NOT scope-creep the fix to absorb the constraint silently: rewriting a fixed parameter, re-deriving anchor data, or otherwise expanding the blast radius ships a half-done architectural change. Re-surfacing is cheap; recovering from a half-done architectural change is not. When the constraint hits, the move is always stop and re-decide, not plough on.
+When an architectural constraint surfaces mid-execution that makes the agreed
+plan unreachable as stated, pause, name the constraint, and re-surface the
+option set — each option with its blast radius — for the user to re-decide. Do
+NOT scope-creep the fix to absorb the constraint silently: rewriting a fixed
+parameter, re-deriving anchor data, or otherwise expanding the blast radius
+ships a half-done architectural change. Re-surfacing is cheap; recovering from a
+half-done architectural change is not. When the constraint hits, the move is
+always stop and re-decide, not plough on.
 
 ### Data quality is the real bottleneck
 
-With AI agents, code changes take minutes. But the inputs to those changes — optical quality scores, prices, field validations — require human judgment and research. A single lens review can take longer to evaluate than the entire scoring engine took to build.
+With AI agents, code changes take minutes. But the inputs to those changes —
+optical quality scores, prices, field validations — require human judgment and
+research. A single lens review can take longer to evaluate than the entire
+scoring engine took to build.
 
 Plan for this asymmetry:
 
 - **Code tasks** — delegate freely, review the output
-- **Data tasks** — the agent can research and propose, but the human must validate against primary sources
-- **Judgment calls** — "Is this bokeh score 0.5 or 1.0?" requires domain knowledge the agent doesn't have. Expect these decisions to take time. They're the most valuable part of the process.
+- **Data tasks** — the agent can research and propose, but the human must
+  validate against primary sources
+- **Judgment calls** — "Is this bokeh score 0.5 or 1.0?" requires domain
+  knowledge the agent doesn't have. Expect these decisions to take time. They're
+  the most valuable part of the process.
 
 ### A local failure CI doesn't reproduce is host maintenance, not a code change
 

@@ -10,7 +10,8 @@ merged PR and a deployed artifact — humans approve, machines execute.
 ## Quality gates
 
 - Stages 2–4 (lint, test, security scan) are defined in detail in
-  `templates/base/workflow/quality-gates.md` — categories, thresholds, and tool constraints
+  `templates/base/workflow/quality-gates.md` — categories, thresholds, and tool
+  constraints
 - Platform-specific CI integration is in `platform/github.md` or
   `platform/gitlab.md`
 
@@ -28,7 +29,8 @@ A pipeline MUST include, in order:
 2. **Lint / format check** — fail on style violations
 3. **Test** — run unit and integration tests; fail on any failure
 4. **Security scan** — SAST, secret detection, SCA
-5. **Package** — build the deployable artifact (container image, binary, package)
+5. **Package** — build the deployable artifact (container image, binary,
+   package)
 6. **Deploy to staging** — automated deployment to a staging/QA environment
 7. **DAST** — automated security scan against the running staging environment
 8. **Deploy to production** — triggered manually or on a release tag
@@ -93,7 +95,8 @@ historical tag with `--notes-start-tag`.
 
 ## Pipeline as code
 
-- Pipeline definitions MUST live in the repository alongside the application code
+- Pipeline definitions MUST live in the repository alongside the application
+  code
 - Pipeline changes follow the same review process as application code
 - Shared pipeline logic MUST be extracted into reusable templates — never
   copy-paste pipeline stages across repositories

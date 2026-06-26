@@ -356,7 +356,8 @@ maintainer time on phantom fixes.
 - No debug statements in committed code: no `print()`, `console.log()`,
   `fmt.Println()`, or equivalent used for debugging
 - No hardcoded breakpoints (`debugger`, `pdb.set_trace()`) in committed code
-- No commented-out code blocks — delete dead code; version control is the history
+- No commented-out code blocks — delete dead code; version control is the
+  history
 - Debug tooling (profilers, REPL helpers, verbose loggers) MUST be
   gated behind a flag or environment variable, never on by default
 
@@ -409,7 +410,8 @@ maintainer time on phantom fixes.
 ## Committer identity
 - Configure git with your full name and a consistent, professional email address
 - Do not use private or personal email addresses for work repositories
-- Identity must not change — git history and tooling depend on consistent authorship
+- Identity must not change — git history and tooling depend on consistent
+  authorship
 
 ## Commit messages
 - Use conventional commit prefixes:
@@ -442,7 +444,8 @@ maintainer time on phantom fixes.
     the STALE accounting explicitly (N files affected, named or
     globbed) — silent staleness is the failure mode
 - **Before merging**, review the diff against the base branch. Follow
-  `templates/base/core/review.md` priority order: security → correctness → clarity →
+  `templates/base/core/review.md` priority order: security → correctness →
+  clarity →
   conventions. Check CI passes. Only merge after the review passes.
 - **Before pushing or creating a PR**, check `git status` and list open PRs.
   If the previous PR is closed or merged, create a new branch rather than
@@ -562,7 +565,8 @@ When NOT to close-and-resubmit:
 
 ## README
 - Every repository MUST contain a `README.md`
-- The README MUST conform to the structure and rules defined in `templates/base/core/readme.md`
+- The README MUST conform to the structure and rules defined in
+  `templates/base/core/readme.md`
 
 ## Versioning
 - Use [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH`
@@ -606,7 +610,8 @@ When NOT to close-and-resubmit:
   5. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
   6. `git push origin vX.Y.Z`
   7. Create a GitHub Release with auto-generated notes:
-     `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>" --generate-notes`
+     `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>"
+     --generate-notes`
 
 ## General
 - Do not commit build output, secrets, or dependency directories
@@ -719,9 +724,11 @@ of tool changes.
 
 Before every commit, update all relevant documentation:
 
-- **`CLAUDE.md`** — update if architecture, stack, design rules, or conventions change
+- **`CLAUDE.md`** — update if architecture, stack, design rules, or conventions
+  change
 - **`README.md`** — update if project structure, stack, or setup steps change
-- **`docs/PLAYBOOK.md`** — update if commands, workflow, or release process change
+- **`docs/PLAYBOOK.md`** — update if commands, workflow, or release process
+  change
 - **`docs/ONBOARDING.md`** — update if the contributor workflow changes
 
 ## Decision logs
@@ -886,7 +893,8 @@ is incomplete.
 
 ## Writing style
 
-- Write in present tense — past or future tense indicates out-of-sync documentation
+- Write in present tense — past or future tense indicates out-of-sync
+  documentation
 - Write as little as necessary but as much as needed — documentation that goes
   out of sync is worse than no documentation
 - Remove redundant, inconsistent, or outdated documentation promptly
@@ -1168,7 +1176,8 @@ driver is TDD — tests are written alongside or before the code.
 - MUST achieve 90% coverage of new code before merging
 - SHOULD cover negative scenarios and edge cases
 - The total codebase SHOULD maintain 80% unit test coverage — see
-  `templates/base/workflow/quality-gates.md` for the coverage policy (80% for new projects,
+  `templates/base/workflow/quality-gates.md` for the coverage policy (80% for
+  new projects,
   warn-only for legacy)
 - Coverage MUST NOT regress between releases
 - MUST be runnable from CI without human intervention
@@ -1996,7 +2005,8 @@ records and asserts Y-equality across them.
 [DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/core/testing.md, templates/base/workflow/quality-gates.md]
 
 Base Go conventions for any Go module — library, CLI tool, or service.
-Never used directly for services — always extended by `templates/stack/go-service.md`.
+Never used directly for services — always extended by
+`templates/stack/go-service.md`.
 Can be used directly for pure Go libraries or standalone CLI tools with
 no HTTP layer.
 

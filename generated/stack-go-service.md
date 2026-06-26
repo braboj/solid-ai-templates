@@ -356,7 +356,8 @@ maintainer time on phantom fixes.
 - No debug statements in committed code: no `print()`, `console.log()`,
   `fmt.Println()`, or equivalent used for debugging
 - No hardcoded breakpoints (`debugger`, `pdb.set_trace()`) in committed code
-- No commented-out code blocks — delete dead code; version control is the history
+- No commented-out code blocks — delete dead code; version control is the
+  history
 - Debug tooling (profilers, REPL helpers, verbose loggers) MUST be
   gated behind a flag or environment variable, never on by default
 
@@ -409,7 +410,8 @@ maintainer time on phantom fixes.
 ## Committer identity
 - Configure git with your full name and a consistent, professional email address
 - Do not use private or personal email addresses for work repositories
-- Identity must not change — git history and tooling depend on consistent authorship
+- Identity must not change — git history and tooling depend on consistent
+  authorship
 
 ## Commit messages
 - Use conventional commit prefixes:
@@ -442,7 +444,8 @@ maintainer time on phantom fixes.
     the STALE accounting explicitly (N files affected, named or
     globbed) — silent staleness is the failure mode
 - **Before merging**, review the diff against the base branch. Follow
-  `templates/base/core/review.md` priority order: security → correctness → clarity →
+  `templates/base/core/review.md` priority order: security → correctness →
+  clarity →
   conventions. Check CI passes. Only merge after the review passes.
 - **Before pushing or creating a PR**, check `git status` and list open PRs.
   If the previous PR is closed or merged, create a new branch rather than
@@ -562,7 +565,8 @@ When NOT to close-and-resubmit:
 
 ## README
 - Every repository MUST contain a `README.md`
-- The README MUST conform to the structure and rules defined in `templates/base/core/readme.md`
+- The README MUST conform to the structure and rules defined in
+  `templates/base/core/readme.md`
 
 ## Versioning
 - Use [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH`
@@ -606,7 +610,8 @@ When NOT to close-and-resubmit:
   5. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
   6. `git push origin vX.Y.Z`
   7. Create a GitHub Release with auto-generated notes:
-     `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>" --generate-notes`
+     `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>"
+     --generate-notes`
 
 ## General
 - Do not commit build output, secrets, or dependency directories
@@ -719,9 +724,11 @@ of tool changes.
 
 Before every commit, update all relevant documentation:
 
-- **`CLAUDE.md`** — update if architecture, stack, design rules, or conventions change
+- **`CLAUDE.md`** — update if architecture, stack, design rules, or conventions
+  change
 - **`README.md`** — update if project structure, stack, or setup steps change
-- **`docs/PLAYBOOK.md`** — update if commands, workflow, or release process change
+- **`docs/PLAYBOOK.md`** — update if commands, workflow, or release process
+  change
 - **`docs/ONBOARDING.md`** — update if the contributor workflow changes
 
 ## Decision logs
@@ -886,7 +893,8 @@ is incomplete.
 
 ## Writing style
 
-- Write in present tense — past or future tense indicates out-of-sync documentation
+- Write in present tense — past or future tense indicates out-of-sync
+  documentation
 - Write as little as necessary but as much as needed — documentation that goes
   out of sync is worse than no documentation
 - Remove redundant, inconsistent, or outdated documentation promptly
@@ -1168,7 +1176,8 @@ driver is TDD — tests are written alongside or before the code.
 - MUST achieve 90% coverage of new code before merging
 - SHOULD cover negative scenarios and edge cases
 - The total codebase SHOULD maintain 80% unit test coverage — see
-  `templates/base/workflow/quality-gates.md` for the coverage policy (80% for new projects,
+  `templates/base/workflow/quality-gates.md` for the coverage policy (80% for
+  new projects,
   warn-only for legacy)
 - Coverage MUST NOT regress between releases
 - MUST be runnable from CI without human intervention
@@ -1996,7 +2005,8 @@ records and asserts Y-equality across them.
 [DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/core/testing.md, templates/base/workflow/quality-gates.md]
 
 Base Go conventions for any Go module — library, CLI tool, or service.
-Never used directly for services — always extended by `templates/stack/go-service.md`.
+Never used directly for services — always extended by
+`templates/stack/go-service.md`.
 Can be used directly for pure Go libraries or standalone CLI tools with
 no HTTP layer.
 
@@ -2183,7 +2193,8 @@ staticcheck ./...     # additional static analysis
 - Use consistent error response shape across all endpoints
 - Follow RFC 9457 (`application/problem+json`) for error format
 - Use 4xx for client errors, 5xx for server errors — never use 200 for errors
-- Never return stack traces, internal paths, or implementation details to the client
+- Never return stack traces, internal paths, or implementation details to the
+  client
 - Set explicit `Content-Type: application/json` on all JSON responses
 
 ## Authentication and authorisation
@@ -2365,8 +2376,10 @@ looks wrong" becomes a probe session reconstructing intermediate state.
 [ID: backend-errors]
 [DEPENDS ON: templates/backend/http.md, templates/backend/observability.md]
 
-Error response format and logging rules are defined in `templates/backend/http.md` and
-`templates/backend/observability.md`. This template covers classification, propagation,
+Error response format and logging rules are defined in
+`templates/backend/http.md` and
+`templates/backend/observability.md`. This template covers classification,
+propagation,
 and recovery.
 
 ---
@@ -2900,13 +2913,15 @@ Prefer these patterns for backend concerns:
 
 ## Performance
 - Prefer async I/O for network-bound operations
-- Cache only when there is a measured need — document cache invalidation strategy
+- Cache only when there is a measured need — document cache invalidation
+  strategy
 - Avoid N+1 queries — use eager loading or batch fetching
 - Set timeouts on all outbound calls (HTTP clients, DB queries)
 
 ## API stability
 - Never remove or rename a field in a response without a deprecation period
-- Increment the API version (`/v2/`) for breaking changes — keep the old version alive
+- Increment the API version (`/v2/`) for breaking changes — keep the old version
+  alive
 - Document deprecated endpoints; set a removal date before retiring them
 
 <!-- templates/backend/concurrency.md -->
@@ -2914,7 +2929,8 @@ Prefer these patterns for backend concerns:
 [ID: backend-concurrency]
 
 Universal rules for multi-threading, multi-processing, and async I/O.
-Language-specific rules belong in the stack template via [EXTEND: backend-concurrency].
+Language-specific rules belong in the stack template via [EXTEND:
+backend-concurrency].
 
 ---
 
@@ -3094,7 +3110,8 @@ Applies regardless of message broker (Kafka, RabbitMQ, SQS, or equivalent).
 ## When to use async messaging
 
 - Use messaging when the producer does not need an immediate response
-- Use messaging for workloads that must survive producer restarts — fire-and-forget
+- Use messaging for workloads that must survive producer restarts —
+  fire-and-forget
   with durability
 - Use messaging to decouple services that scale independently
 - Do NOT use messaging when the caller needs a synchronous result — use HTTP or
@@ -3179,7 +3196,8 @@ Applies regardless of message broker (Kafka, RabbitMQ, SQS, or equivalent).
 
 ## Observability
 
-- Log at consumer entry: message ID, topic/queue name, correlation ID, consumer group
+- Log at consumer entry: message ID, topic/queue name, correlation ID, consumer
+  group
 - Log at consumer exit: processing duration, outcome (success / retry / DLQ)
 - Track per topic/queue:
   - Consumer lag (Kafka) or queue depth (RabbitMQ / SQS)
@@ -3215,7 +3233,8 @@ merged PR and a deployed artifact — humans approve, machines execute.
 ## Quality gates
 
 - Stages 2–4 (lint, test, security scan) are defined in detail in
-  `templates/base/workflow/quality-gates.md` — categories, thresholds, and tool constraints
+  `templates/base/workflow/quality-gates.md` — categories, thresholds, and tool
+  constraints
 - Platform-specific CI integration is in `platform/github.md` or
   `platform/gitlab.md`
 
@@ -3233,7 +3252,8 @@ A pipeline MUST include, in order:
 2. **Lint / format check** — fail on style violations
 3. **Test** — run unit and integration tests; fail on any failure
 4. **Security scan** — SAST, secret detection, SCA
-5. **Package** — build the deployable artifact (container image, binary, package)
+5. **Package** — build the deployable artifact (container image, binary,
+   package)
 6. **Deploy to staging** — automated deployment to a staging/QA environment
 7. **DAST** — automated security scan against the running staging environment
 8. **Deploy to production** — triggered manually or on a release tag
@@ -3298,7 +3318,8 @@ historical tag with `--notes-start-tag`.
 
 ## Pipeline as code
 
-- Pipeline definitions MUST live in the repository alongside the application code
+- Pipeline definitions MUST live in the repository alongside the application
+  code
 - Pipeline changes follow the same review process as application code
 - Shared pipeline logic MUST be extracted into reusable templates — never
   copy-paste pipeline stages across repositories
@@ -3370,7 +3391,8 @@ not after deployment.
 - Never run DAST against production
 - Automated DAST scans MUST complete before any production release
 - Critical findings MUST block the release and be treated as incidents
-- Lower-severity findings MUST be tracked and resolved within a defined timeframe
+- Lower-severity findings MUST be tracked and resolved within a defined
+  timeframe
 
 ## IaC scanning (Infrastructure-as-Code)
 

@@ -76,7 +76,8 @@
 - Use consistent error response shape across all endpoints
 - Follow RFC 9457 (`application/problem+json`) for error format
 - Use 4xx for client errors, 5xx for server errors — never use 200 for errors
-- Never return stack traces, internal paths, or implementation details to the client
+- Never return stack traces, internal paths, or implementation details to the
+  client
 - Set explicit `Content-Type: application/json` on all JSON responses
 
 ## Authentication and authorisation

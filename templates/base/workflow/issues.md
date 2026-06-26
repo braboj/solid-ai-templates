@@ -59,7 +59,8 @@ the work is sized.
 
 ## Epic
 
-A large initiative too big for one task. Tracks progress via child issue checklist.
+A large initiative too big for one task. Tracks progress via child issue
+checklist.
 
 **Title:** descriptive goal (no prefix — the `epic` label identifies the type)
 
@@ -112,7 +113,8 @@ As a [user type], I want [capability] so that [benefit].
 - Scoped to a single concern — do not mix refactoring with features
 - The agent SHOULD be able to complete it in one conversation turn
 - If a task needs multiple sub-tasks, it is an epic
-- Acceptance criteria MUST be verifiable (build passes, page renders, score matches)
+- Acceptance criteria MUST be verifiable (build passes, page renders, score
+  matches)
 
 ---
 

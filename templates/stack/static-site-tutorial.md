@@ -70,7 +70,7 @@ and Quiz sections.
   `[Section Name](#section-name)`
 - The Astro build rewrites chapter cross-references automatically
   via a remark plugin (see
-  [Single-source content pattern](static-site-astro.md#single-source-content-pattern))
+  [Single-source pattern](static-site-astro.md#single-source-content-pattern))
 
 ---
 

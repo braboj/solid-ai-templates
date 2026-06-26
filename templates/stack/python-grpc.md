@@ -66,7 +66,8 @@ CLAUDE.md
 - Inject dependencies via `__init__` — never import service singletons
   at module level
 - Access request metadata with `context.invocation_metadata()`
-- Set response status codes with `await context.abort(grpc.StatusCode.NOT_FOUND, "detail")`
+- Set response status codes with `await context.abort(grpc.StatusCode.NOT_FOUND,
+  "detail")`
 
 ---
 

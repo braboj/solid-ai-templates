@@ -101,7 +101,8 @@ Choose the communication style based on the interaction type:
 - Use a service registry or platform-native discovery (Kubernetes DNS,
   Consul, AWS Cloud Map) — never hardcode service URLs in configuration
 - Health checks MUST be implemented on every service (see
-  `templates/backend/observability.md`) — the registry uses them to route traffic only
+  `templates/backend/observability.md`) — the registry uses them to route
+  traffic only
   to healthy instances
 
 ---

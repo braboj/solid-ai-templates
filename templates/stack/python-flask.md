@@ -57,7 +57,8 @@ CLAUDE.md
 - Always use the application factory pattern (`create_app(config=None)`)
 - Never use the global `app` object outside of `create_app`
 - Register all blueprints and extensions inside `create_app`
-- Extensions instantiated in `extensions.py`, initialised with `ext.init_app(app)`
+- Extensions instantiated in `extensions.py`, initialised with
+  `ext.init_app(app)`
 
 ---
 
@@ -75,7 +76,8 @@ CLAUDE.md
 - One blueprint per feature domain (e.g. `auth`, `api`, `admin`)
 - Blueprint registered with a URL prefix (`/api/v1`, `/auth`, etc.)
 - No cross-blueprint imports — shared logic goes in a service module
-- Routes thin — business logic delegated to service functions, not in route handlers
+- Routes thin — business logic delegated to service functions, not in route
+  handlers
 - For multiple API versions that share one contract (same params,
   validation, and response — differing only in implementation), use a
   version registry (`{"v1": ImplV1, "v2": ImplV2}`) plus a blueprint

@@ -24,7 +24,8 @@ file with runtime conventions, project structure, and tooling.
 
 - Package all protos under a versioned namespace: `package [org].[service].v1`
 - One proto file per service — do not mix unrelated services in one file
-- Field names in `snake_case` — generated code adapts to each language's conventions
+- Field names in `snake_case` — generated code adapts to each language's
+  conventions
 - Use `google.protobuf.Timestamp` for all timestamps — never raw integers
 - Use `google.protobuf.FieldMask` for partial update (patch) operations
 - Never remove or renumber existing fields — mark deprecated fields with
@@ -75,7 +76,8 @@ file with runtime conventions, project structure, and tooling.
 ## Authentication
 [EXTEND: backend-auth]
 
-- Pass credentials via gRPC metadata: key `authorization`, value `Bearer <token>`
+- Pass credentials via gRPC metadata: key `authorization`, value `Bearer
+  <token>`
 - Validate in the auth interceptor — not in service handlers
 - Mutual TLS (mTLS) for service-to-service calls in production — certificate
   rotation managed at the infrastructure layer (cert-manager, Vault)

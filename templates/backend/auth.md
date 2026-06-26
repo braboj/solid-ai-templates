@@ -52,7 +52,8 @@ security template with backend-specific depth.
 - For fine-grained needs, layer attribute-based access control (ABAC) on top
   of RBAC — do not replace RBAC entirely
 - Authorise at the service layer, not only at the route layer:
-  a route that passes auth may call a service that operates on another user's data
+  a route that passes auth may call a service that operates on another user's
+  data
 - Never trust client-supplied IDs for ownership checks — always verify that
   the authenticated user owns or has access to the requested resource
 

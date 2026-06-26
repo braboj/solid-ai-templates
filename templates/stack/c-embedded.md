@@ -116,7 +116,8 @@ CLAUDE.md
 - Use Unity macros: `TEST_ASSERT_EQUAL`, `TEST_ASSERT_NULL`, etc.
 - Test naming: `test_<module>_<state>_<expected>`
   e.g. `test_uart_buffer_full_returns_error`
-- Run before every commit: `cmake --build build/tests && ctest --test-dir build/tests`
+- Run before every commit: `cmake --build build/tests && ctest --test-dir
+  build/tests`
 
 ---
 

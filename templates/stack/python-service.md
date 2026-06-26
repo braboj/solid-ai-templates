@@ -120,7 +120,8 @@ Overridden by each framework stack. The common principle:
 [EXTEND: backend-observability]
 
 - `/health` — liveness check
-- `/ready` — readiness check (verifies DB and any required external dependencies)
+- `/ready` — readiness check (verifies DB and any required external
+  dependencies)
 
 ---
 

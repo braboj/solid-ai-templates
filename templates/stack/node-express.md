@@ -113,7 +113,8 @@ CLAUDE.md
 
 - All config in `src/config/index.ts` as a typed object parsed from env vars
   using Zod or `envalid` — fail fast if required vars are missing
-- Import the config object; never read `process.env` directly in application code
+- Import the config object; never read `process.env` directly in application
+  code
 
 ---
 
@@ -149,10 +150,12 @@ CLAUDE.md
 ## Testing
 [EXTEND: base-testing]
 
-- Supertest for HTTP-level tests — import `app` directly, no server listen needed
+- Supertest for HTTP-level tests — import `app` directly, no server listen
+  needed
 - Vitest for unit tests on services, repositories, and utilities
 - No mocking of the database in integration tests — use a real test database
-- Test each route for: success (2xx), validation error (400), auth error (401/403)
+- Test each route for: success (2xx), validation error (400), auth error
+  (401/403)
 - Component test naming: `<METHOD> <path> <state> returns <status>`
   e.g. `POST /users with duplicate email returns 409`
 - Run before every commit: `npm test && tsc --noEmit`

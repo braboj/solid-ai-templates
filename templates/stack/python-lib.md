@@ -35,7 +35,8 @@ README.md
 CLAUDE.md
 ```
 
-- Source layout (`src/`) — prevents accidental imports of the uninstalled package
+- Source layout (`src/`) — prevents accidental imports of the uninstalled
+  package
 - All public API exported from `__init__.py`
 - No `setup.py` — use `pyproject.toml` only
 
@@ -89,7 +90,8 @@ CLAUDE.md
 - All metadata in `pyproject.toml` — no `setup.cfg`, no `setup.py`
 - Pin minimum Python version in `requires-python`
 - Do not pin exact versions in `dependencies` — use ranges (`>=`, `<`)
-- Dev/test dependencies in `[project.optional-dependencies]` or `[dependency-groups]`
+- Dev/test dependencies in `[project.optional-dependencies]` or
+  `[dependency-groups]`
 - Lock file for reproducibility: `requirements-dev.lock` or equivalent
 - If `__version__` derives from `importlib.metadata.version(...)`, an
   editable install reports a stale version after a `[project].version`
