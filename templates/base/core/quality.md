@@ -319,6 +319,15 @@ maintainer time on phantom fixes.
   next time the code is read, never rely on it as-is. Reasoning comments rot
   faster than the code they annotate: the code stays correct while the predicate
   the comment cites silently goes false
+- A comment or doc note that cites an issue, PR, or ADR by number inherits
+  that reference's lifecycle: when the cited item is closed without action,
+  superseded, or replaced by a different fix, the citation is a defect even
+  when the annotated code still works — a future reader tracing the stale
+  number lands on a dead thread and misses the live follow-up. Fix it in a
+  small change. When closing or superseding an item that comments may cite,
+  audit the references in the same change — `rg "#<number>"` (or the tracker
+  URL) over the repo lists them, and the audit is done when none point at the
+  stale item
 
 ## Debug code
 
