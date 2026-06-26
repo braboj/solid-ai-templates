@@ -117,15 +117,12 @@ Stack files follow a `<prefix>-<name>.md` pattern:
 |--------|---------|
 | `python-` | python-flask, python-fastapi, python-django, python-grpc, python-celery-worker |
 | `go-` | go-lib, go-service, go-echo, go-grpc |
-| `java-` | java-spring-boot, java-grpc |
 | `node-` | node-express, node-nestjs |
 | `nodejs-` | nodejs-lib |
 | `spa-` | spa-react, spa-vue, spa-svelte |
 | `full-` | full-nextjs, full-sveltekit |
 | `mobile-` | mobile-flutter, mobile-react-native |
 | `static-site-` | static-site-astro, static-site-hugo, static-site-tutorial |
-| `iac-` | iac-terraform |
-| `rust-` | rust-lib |
 | `c-` | c-embedded |
 
 Stacks without a variant use a bare name (e.g. `htmx.md`).

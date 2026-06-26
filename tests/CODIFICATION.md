@@ -116,7 +116,7 @@ reused for a different component within the same area.
 | `16` | Go service — go-service base stack |
 | `17` | Hugo — static-site-hugo stack interview flow |
 | `18` | Node.js lib — nodejs-lib stack interview flow |
-| `19` | Rust lib — rust-lib stack interview flow |
+| `19` | — retired (rust-lib stack removed, v2.25) |
 | `20` | HTMX — htmx stack interview flow |
 
 ### FMT - Output Format

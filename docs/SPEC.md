@@ -138,16 +138,12 @@ stack/
 ├── static-site-hugo.md         # Go templates, archetypes, content structure
 ├── node-express.md             # Minimal REST API, Zod validation, Supertest
 ├── node-nestjs.md              # Modules, controllers, providers, guards, pipes, DI
-├── java-spring-boot.md         # REST API, JPA, Spring Security, Flyway
 ├── python-celery-worker.md     # Background tasks, retry/backoff, Beat scheduling
 ├── go-grpc.md                  # gRPC service, bufconn, errgroup
 ├── python-grpc.md              # gRPC service, grpcio-aio, proto design
-├── java-grpc.md                # gRPC service, grpc-java lifecycle
 ├── mobile-react-native.md      # iOS/Android, Expo, file-based routing, Maestro
 ├── mobile-flutter.md           # iOS/Android, Riverpod, go_router, freezed
-├── iac-terraform.md            # Infrastructure as code, modules, remote state
 ├── nodejs-lib.md               # TypeScript npm package or CLI, tsup, Vitest
-├── rust-lib.md                 # Rust crate or CLI, thiserror/anyhow, crates.io
 └── c-embedded.md               # GCC + CMake, Unity tests, HAL, binary + .a
 ```
 <!-- /generated:spec-directories -->

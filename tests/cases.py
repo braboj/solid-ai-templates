@@ -422,28 +422,6 @@ STK_TESTS = [
         "forbidden": ["Dockerfile", "Deployment"],
     },
     {
-        "id": "STK-19",
-        "spec": "SAIT-E2E-STK-19-001A",
-        "stack": "templates/stack/rust-lib.md",
-        "answers": {
-            "Project name": "byteparser",
-            "Language": "Rust",
-            "Distribution": "crates.io",
-            "Output format": "CLAUDE.md (inline model)",
-        },
-        "required": [
-            "1. Project", "Commands",
-            "Git", "Code conventions", "Testing",
-            "Rust",
-            "pub",
-            "doc comment",
-            "cargo test", "cargo clippy",
-            "feat:",
-        ],
-        # rust-lib is a library — web frameworks must not appear
-        "forbidden": ["axum", "actix"],
-    },
-    {
         "id": "STK-20",
         "spec": "SAIT-E2E-STK-20-001A",
         "stack": "templates/stack/htmx.md",
@@ -589,12 +567,12 @@ DPL_TESTS = [
     {
         "id": "DPL-02",
         "spec": "SAIT-E2E-DPL-02-001A",
-        "stack": "templates/stack/java-spring-boot.md",
+        "stack": "templates/stack/go-service.md",
         "extra_files": ["templates/base/infra/deployment.md"],
         "answers": {
             "Project name": "InternalPlatformAPI",
             "Owner": "Platform team",
-            "Language": "Java",
+            "Language": "Go",
             "Deployment target": "hybrid (on-premises + cloud)",
             "Output format": "CLAUDE.md (inline model)",
         },

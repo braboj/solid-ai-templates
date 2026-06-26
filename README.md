@@ -149,16 +149,12 @@ latest rules.
 | `templates/stack/static-site-hugo.md` | static | Go templates, archetypes, content structure |
 | `templates/stack/node-express.md` | backend | Minimal REST API, Zod validation, Supertest |
 | `templates/stack/node-nestjs.md` | backend | Modules, controllers, providers, guards, pipes, DI |
-| `templates/stack/java-spring-boot.md` | backend | REST API, JPA, Spring Security, Flyway |
 | `templates/stack/python-celery-worker.md` | backend | Background tasks, retry/backoff, Beat scheduling |
 | `templates/stack/go-grpc.md` | backend | gRPC service, bufconn, errgroup |
 | `templates/stack/python-grpc.md` | backend | gRPC service, grpcio-aio, proto design |
-| `templates/stack/java-grpc.md` | backend | gRPC service, grpc-java lifecycle |
 | `templates/stack/mobile-react-native.md` | mobile | iOS/Android, Expo, file-based routing, Maestro |
 | `templates/stack/mobile-flutter.md` | mobile | iOS/Android, Riverpod, go_router, freezed |
-| `templates/stack/iac-terraform.md` | DevOps | Infrastructure as code, modules, remote state |
 | `templates/stack/nodejs-lib.md` | library | TypeScript npm package or CLI, tsup, Vitest |
-| `templates/stack/rust-lib.md` | library | Rust crate or CLI, thiserror/anyhow, crates.io |
 | `templates/stack/c-embedded.md` | embedded | GCC + CMake, Unity tests, HAL, binary + .a |
 <!-- /generated:readme-stacks -->
 

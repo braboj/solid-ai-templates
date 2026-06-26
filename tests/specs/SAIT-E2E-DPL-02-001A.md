@@ -42,10 +42,10 @@ tags: [e2e, deployment, hybrid, private-ca, pki]
 ### Setup
 
 1. Open Claude Code
-2. Attach `INTERVIEW.md`, `stack/java-spring-boot.md`, `base/deployment.md`, `base/core/agents.md`
+2. Attach `INTERVIEW.md`, `stack/go-service.md`, `base/deployment.md`, `base/core/agents.md`
 3. Interview answers:
    - Project name: InternalPlatformAPI
-   - Language: Java
+   - Language: Go
    - Deployment target: **hybrid** (on-premises + cloud)
    - Output: CLAUDE.md
 
