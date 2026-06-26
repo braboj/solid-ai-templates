@@ -1418,3 +1418,42 @@ empty). v3.0 — Restructure is the clear next milestone, spike-driven
 
 **Issues closed:** #615, #616, #617. Created milestone v2.21; #618 parked in v3.0.
 
+## 2026-06-26 — v2.22 restructure-safe cleanup (release docs, CD & API)
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Cut a clean, restructure-safe v2.22.0 from the Backlog before opening
+  v3.0 — three one-concern PRs, each independent of the inline→reference
+  decisions (#179/#180/#350), so none is invalidated by the restructure.
+- #604 aligned the PLAYBOOK "Release a new version" section with ADR-006:
+  cut a GitHub Release from main with a bare-version title and
+  `--generate-notes`, close the milestone, journal entry via its own
+  no-milestone `docs(journal)` PR (PR #631). Dropped the abandoned
+  `chore/release` branch+PR flow, which only applies to manifest projects.
+- #601 added a build-once/deploy-via-hook CD rule to `cicd.md`: after
+  publishing, trigger the deploy by sending the artifact's immutable
+  reference to the deploy target, never rebuilding at deploy time
+  (PR #632, +16 regenerated chains).
+- #600 extended the `api.md` OpenAPI section with the design-first
+  source-of-truth pattern — hand-authored spec served verbatim, pinned
+  to code, contract-tested (e.g. Schemathesis); fastapi/flask keep their
+  framework-native code-first OpenAPI (PR #633, +5 chains).
+
+**Decision:** held #581 (refresh example CLAUDE.md files) out of v2.22 —
+it depends on the examples-maintenance model (spike #13, in v3.0), and the
+inline→reference flip would change what an example should even look like.
+Refreshing now risks throwaway work.
+
+**Lesson:** a downstream pattern (build-once/deploy-hook, design-first
+OpenAPI) often overlaps an existing template rule — extend the existing
+section and reference the shared principle rather than add a parallel one,
+or the restated rule becomes attention dilution.
+
+**Milestone arc:** v2.22 is the last pre-restructure release — a stable,
+clean v2.x baseline. v3.0 — Restructure is next, spike-driven (#179
+inline→reference, #180 slim stacks, #350 viability audit).
+
+**PRs merged:** #631, #632, #633
+
+**Issues closed:** #604, #601, #600. Created and closed milestone v2.22.0.
