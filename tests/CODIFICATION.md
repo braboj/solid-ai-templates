@@ -70,6 +70,8 @@ reused for a different component within the same area.
 | `03` | Manifest coverage — every template file has a manifest entry |
 | `04` | Header–manifest sync — DEPENDS ON headers match manifest depends_on |
 | `05` | Generation fidelity — end-of-session audit inlined verbatim or hard-delegated, never paraphrased |
+| `06` | Stack structure — every usable stack's resolved chain carries the ADR-017 MUST sections |
+| `07` | Audit storage — 360 audit reports live only under docs/audits/ with dated names |
 
 ### TPL - Template
 

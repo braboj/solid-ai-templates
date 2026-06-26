@@ -1126,6 +1126,46 @@ def check_sys_06():
 
 
 # ---------------------------------------------------------------------------
+# SYS-07 — 360 audit reports live only under docs/audits/
+# ---------------------------------------------------------------------------
+# templates/base/workflow/360.md [ID: 360-tracking] mandates one audit-storage
+# convention: each audit is a dated report at docs/audits/YYYY-MM-DD-360.md,
+# and the single-file docs/360-audit.md form is prohibited. This guards the
+# rule mechanically — no audit report may live outside docs/audits/, and a
+# file inside it MUST use the dated YYYY-MM-DD-360.md name.
+
+_AUDIT_DIR = "docs/audits"
+# An audit report file: the prohibited single-file form (360-audit*.md) or a
+# dated report (*-360.md). The 360.md template itself matches neither.
+_AUDIT_NAME = re.compile(r"(?:360-audit.*|.*-360)\.md$")
+_DATED_AUDIT_NAME = re.compile(r"^\d{4}-\d{2}-\d{2}-360\.md$")
+_SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".idea", ".claude"}
+
+
+def check_sys_07():
+    failures = []
+    for dirpath, dirnames, filenames in os.walk(ROOT):
+        dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
+        for name in filenames:
+            if not _AUDIT_NAME.match(name):
+                continue
+            rel = os.path.relpath(os.path.join(dirpath, name), ROOT)
+            rel = rel.replace(os.sep, "/")
+            if not rel.startswith(_AUDIT_DIR + "/"):
+                failures.append(
+                    f"  {rel}: 360 audit report outside {_AUDIT_DIR}/ — move "
+                    f"it to {_AUDIT_DIR}/YYYY-MM-DD-360.md "
+                    f"(360.md [ID: 360-tracking])"
+                )
+            elif not _DATED_AUDIT_NAME.match(name):
+                failures.append(
+                    f"  {rel}: audit file must use the YYYY-MM-DD-360.md "
+                    f"dated-report name (360.md [ID: 360-tracking])"
+                )
+    return failures
+
+
+# ---------------------------------------------------------------------------
 # Test registry
 # ---------------------------------------------------------------------------
 
@@ -1162,6 +1202,8 @@ CHECKS = [
      "title": "End-of-session audit inlined verbatim or hard-delegated", "fn": check_sys_05},
     {"id": "SYS-06", "spec": "SAIT-SMK-SYS-06-001A",
      "title": "Every usable stack's chain carries the MUST sections", "fn": check_sys_06},
+    {"id": "SYS-07", "spec": "SAIT-SMK-SYS-07-001A",
+     "title": "360 audit reports live only under docs/audits/", "fn": check_sys_07},
     {"id": "TPL-08", "spec": "SAIT-SMK-TPL-08-001A",
      "title": "Every base template has at least one [ID:] tag", "fn": check_tpl_08},
     {"id": "TPL-09", "spec": "SAIT-SMK-TPL-09-001A",
