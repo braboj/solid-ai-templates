@@ -42,8 +42,8 @@ no HTTP layer.
 
 ---
 
-## Code quality
-[ID: go-lib-quality]
+## Go conventions
+[ID: go-lib-conventions]
 [EXTEND: base-quality]
 
 - Follow **Effective Go** (https://go.dev/doc/effective_go) for idioms and
