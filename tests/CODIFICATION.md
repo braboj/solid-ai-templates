@@ -72,6 +72,7 @@ reused for a different component within the same area.
 | `05` | Generation fidelity — end-of-session audit inlined verbatim or hard-delegated, never paraphrased |
 | `06` | Stack structure — every usable stack's resolved chain carries the ADR-017 MUST sections |
 | `07` | Audit storage — 360 audit reports live only under docs/audits/ with dated names |
+| `08` | Example coverage — every showcased stack keeps its example CLAUDE.md |
 
 ### TPL - Template
 

@@ -1216,6 +1216,53 @@ def check_sys_07():
 
 
 # ---------------------------------------------------------------------------
+# SYS-08 — every showcased stack keeps its example CLAUDE.md
+# ---------------------------------------------------------------------------
+# SYS-05 only validates examples that already exist, so a committed example
+# could be removed or renamed without any structural failure. This gate
+# locks in the example->stack mapping (per ADR-016 examples are
+# agent-generated, regenerated on material change): each required example
+# MUST have a non-empty CLAUDE.md, and the stack it demonstrates MUST exist
+# in the manifest. Adding a new example registers it here; two examples may
+# map to the same stack (e.g. astro-portfolio and hybrid-astro).
+
+REQUIRED_EXAMPLES = {
+    "astro-portfolio": "stack-astro",
+    "hybrid-astro": "stack-astro",
+    "fastapi-service": "stack-fastapi",
+    "order-service": "stack-fastapi",
+    "flask-api": "stack-flask",
+    "go-service": "stack-go-service",
+    "metricshub": "stack-go-echo",
+}
+
+
+def check_sys_08():
+    if not HAS_YAML:
+        return ["  PyYAML not installed — run: pip install pyyaml"]
+
+    _, entries, _ = _load_manifest()
+    failures = []
+
+    for example, stack_id in sorted(REQUIRED_EXAMPLES.items()):
+        cm = os.path.join(ROOT, "examples", example, "CLAUDE.md")
+        if not os.path.isfile(cm):
+            failures.append(
+                f"  examples/{example}/CLAUDE.md missing — required "
+                f"example for stack '{stack_id}' (ADR-016: regenerate, "
+                f"do not delete)"
+            )
+        elif os.path.getsize(cm) == 0:
+            failures.append(f"  examples/{example}/CLAUDE.md is empty")
+        if stack_id not in entries:
+            failures.append(
+                f"  {example}: mapped stack '{stack_id}' not in manifest"
+            )
+
+    return failures
+
+
+# ---------------------------------------------------------------------------
 # Test registry
 # ---------------------------------------------------------------------------
 
@@ -1256,6 +1303,8 @@ CHECKS = [
      "title": "Every usable stack's chain carries the MUST sections", "fn": check_sys_06},
     {"id": "SYS-07", "spec": "SAIT-SMK-SYS-07-001A",
      "title": "360 audit reports live only under docs/audits/", "fn": check_sys_07},
+    {"id": "SYS-08", "spec": "SAIT-SMK-SYS-08-001A",
+     "title": "Every showcased stack keeps its example CLAUDE.md", "fn": check_sys_08},
     {"id": "TPL-08", "spec": "SAIT-SMK-TPL-08-001A",
      "title": "Every base template has at least one [ID:] tag", "fn": check_tpl_08},
     {"id": "TPL-09", "spec": "SAIT-SMK-TPL-09-001A",
