@@ -1618,3 +1618,48 @@ conventions — both project-specific, no reusable template change.
 **PRs merged:** #651, #652
 
 **Issues closed:** #649, #650. Created and closed milestone v2.26.0.
+
+## 2026-06-26 — 360 audit + audit-storage convention lock
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Ran a full 360-degree audit using the headless adaptation of
+  `base/workflow/360.md` (§360-headless): seven context-isolated
+  subagents — Value / Viability / Discovery plus Quality re-projected
+  into Architecture, Documentation, Authoring/ADR, and Testing/CI.
+  Overall C+; bottleneck = a shipped resolver defect. Persisted at
+  `docs/audits/2026-06-26-360.md`.
+- Filed 12 actionable tickets (#654–#665) across new milestones v2.27
+  (correctness), v2.28 (hygiene), and v3.0 (launch); milestoned and
+  labelled the previously-orphaned #638.
+- #666: adopted the dated-report audit convention — migrated the
+  single-file `docs/360-audit.md` to `docs/audits/2026-05-04-360.md`,
+  added the new report, fixed the journal pointer.
+- #667: collapsed `360.md` §360-tracking to one convention (docs/audits
+  only) and added a PLAYBOOK "Run a 360-degree audit" section.
+- #668: ADR-018 (docs/audits is the sole audit location) + smoke SYS-07
+  gate (no audit file outside docs/audits/, dated naming) + pair-the-check
+  line in 360.md + spec SAIT-SMK-SYS-07-001A; backfilled the missing
+  SYS-06 in CODIFICATION. Smoke 20 → 21.
+
+**Decision:** lock the audit-storage convention three ways — ADR +
+template/PLAYBOOK docs + a mechanical smoke gate — rather than
+documentation alone, so it cannot drift back to the two-option ambiguity.
+
+**Lesson:** the audit's highest-value finding (resolve.py dropping a
+multi-line `depends_on`) was invisible to the 20-check smoke suite
+because two divergent manifest parsers — PyYAML in smoke, hand-rolled in
+resolve.py — were never reconciled. A green check suite can still ship a
+broken artifact when the check and the tool do not share a code path.
+Reproduce the crux finding directly before grading it.
+
+**Template feedback:** the single-convention audit storage (§360-tracking)
+and the headless 360 adaptation (§360-headless) are reusable — both live
+upstream in `templates/base/workflow/360.md`. The SYS-07 check and
+ADR-018 are project-specific tooling and governance.
+
+**PRs merged:** #666, #667, #668
+
+**Issues closed:** none. Created #654–#665 (+ milestoned #638) and
+milestones v2.27, v2.28.
