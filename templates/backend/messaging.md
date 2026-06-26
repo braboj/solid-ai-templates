@@ -9,7 +9,8 @@ Applies regardless of message broker (Kafka, RabbitMQ, SQS, or equivalent).
 ## When to use async messaging
 
 - Use messaging when the producer does not need an immediate response
-- Use messaging for workloads that must survive producer restarts — fire-and-forget
+- Use messaging for workloads that must survive producer restarts —
+  fire-and-forget
   with durability
 - Use messaging to decouple services that scale independently
 - Do NOT use messaging when the caller needs a synchronous result — use HTTP or
@@ -94,7 +95,8 @@ Applies regardless of message broker (Kafka, RabbitMQ, SQS, or equivalent).
 
 ## Observability
 
-- Log at consumer entry: message ID, topic/queue name, correlation ID, consumer group
+- Log at consumer entry: message ID, topic/queue name, correlation ID, consumer
+  group
 - Log at consumer exit: processing duration, outcome (success / retry / DLQ)
 - Track per topic/queue:
   - Consumer lag (Kafka) or queue depth (RabbitMQ / SQS)

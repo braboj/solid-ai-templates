@@ -9,7 +9,8 @@ Extends the static site stack with Astro-specific rules.
 [OVERRIDE: static-site-stack]
 
 - Framework: Astro (static site generator, output: static / GitHub Pages)
-- Interactive components: [React / Vue / Svelte / plain JS / none] — islands only
+- Interactive components: [React / Vue / Svelte / plain JS / none] — islands
+  only
 - CSS: [plain CSS / Tailwind / CSS modules]
 - Content: [JSON files in `src/data/` / CMS / Markdown / hardcoded]
 - Deployed via GitHub Actions on push to `main`
@@ -339,6 +340,7 @@ Rules:
   ```
 - Layouts MUST render the description as `<meta name="description">`, OG
   description, and Twitter Card description
-- JSON-LD structured data SHOULD be rendered in a `<script type="application/ld+json">`
+- JSON-LD structured data SHOULD be rendered in a `<script
+  type="application/ld+json">`
   tag in the layout — use `JSON.stringify()` with `set:html` (acceptable
   exception to the `set:html` ban since the input is fully server-controlled)

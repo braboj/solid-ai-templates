@@ -356,7 +356,8 @@ maintainer time on phantom fixes.
 - No debug statements in committed code: no `print()`, `console.log()`,
   `fmt.Println()`, or equivalent used for debugging
 - No hardcoded breakpoints (`debugger`, `pdb.set_trace()`) in committed code
-- No commented-out code blocks — delete dead code; version control is the history
+- No commented-out code blocks — delete dead code; version control is the
+  history
 - Debug tooling (profilers, REPL helpers, verbose loggers) MUST be
   gated behind a flag or environment variable, never on by default
 
@@ -409,7 +410,8 @@ maintainer time on phantom fixes.
 ## Committer identity
 - Configure git with your full name and a consistent, professional email address
 - Do not use private or personal email addresses for work repositories
-- Identity must not change — git history and tooling depend on consistent authorship
+- Identity must not change — git history and tooling depend on consistent
+  authorship
 
 ## Commit messages
 - Use conventional commit prefixes:
@@ -442,7 +444,8 @@ maintainer time on phantom fixes.
     the STALE accounting explicitly (N files affected, named or
     globbed) — silent staleness is the failure mode
 - **Before merging**, review the diff against the base branch. Follow
-  `templates/base/core/review.md` priority order: security → correctness → clarity →
+  `templates/base/core/review.md` priority order: security → correctness →
+  clarity →
   conventions. Check CI passes. Only merge after the review passes.
 - **Before pushing or creating a PR**, check `git status` and list open PRs.
   If the previous PR is closed or merged, create a new branch rather than
@@ -562,7 +565,8 @@ When NOT to close-and-resubmit:
 
 ## README
 - Every repository MUST contain a `README.md`
-- The README MUST conform to the structure and rules defined in `templates/base/core/readme.md`
+- The README MUST conform to the structure and rules defined in
+  `templates/base/core/readme.md`
 
 ## Versioning
 - Use [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH`
@@ -606,7 +610,8 @@ When NOT to close-and-resubmit:
   5. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
   6. `git push origin vX.Y.Z`
   7. Create a GitHub Release with auto-generated notes:
-     `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>" --generate-notes`
+     `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>"
+     --generate-notes`
 
 ## General
 - Do not commit build output, secrets, or dependency directories
@@ -719,9 +724,11 @@ of tool changes.
 
 Before every commit, update all relevant documentation:
 
-- **`CLAUDE.md`** — update if architecture, stack, design rules, or conventions change
+- **`CLAUDE.md`** — update if architecture, stack, design rules, or conventions
+  change
 - **`README.md`** — update if project structure, stack, or setup steps change
-- **`docs/PLAYBOOK.md`** — update if commands, workflow, or release process change
+- **`docs/PLAYBOOK.md`** — update if commands, workflow, or release process
+  change
 - **`docs/ONBOARDING.md`** — update if the contributor workflow changes
 
 ## Decision logs
@@ -886,7 +893,8 @@ is incomplete.
 
 ## Writing style
 
-- Write in present tense — past or future tense indicates out-of-sync documentation
+- Write in present tense — past or future tense indicates out-of-sync
+  documentation
 - Write as little as necessary but as much as needed — documentation that goes
   out of sync is worse than no documentation
 - Remove redundant, inconsistent, or outdated documentation promptly
@@ -1168,7 +1176,8 @@ driver is TDD — tests are written alongside or before the code.
 - MUST achieve 90% coverage of new code before merging
 - SHOULD cover negative scenarios and edge cases
 - The total codebase SHOULD maintain 80% unit test coverage — see
-  `templates/base/workflow/quality-gates.md` for the coverage policy (80% for new projects,
+  `templates/base/workflow/quality-gates.md` for the coverage policy (80% for
+  new projects,
   warn-only for legacy)
 - Coverage MUST NOT regress between releases
 - MUST be runnable from CI without human intervention
@@ -1996,7 +2005,8 @@ records and asserts Y-equality across them.
 [DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/core/testing.md, templates/base/workflow/quality-gates.md]
 
 Base Go conventions for any Go module — library, CLI tool, or service.
-Never used directly for services — always extended by `templates/stack/go-service.md`.
+Never used directly for services — always extended by
+`templates/stack/go-service.md`.
 Can be used directly for pure Go libraries or standalone CLI tools with
 no HTTP layer.
 
@@ -2183,7 +2193,8 @@ staticcheck ./...     # additional static analysis
 - Use consistent error response shape across all endpoints
 - Follow RFC 9457 (`application/problem+json`) for error format
 - Use 4xx for client errors, 5xx for server errors — never use 200 for errors
-- Never return stack traces, internal paths, or implementation details to the client
+- Never return stack traces, internal paths, or implementation details to the
+  client
 - Set explicit `Content-Type: application/json` on all JSON responses
 
 ## Authentication and authorisation
@@ -2518,7 +2529,8 @@ security template with backend-specific depth.
 - For fine-grained needs, layer attribute-based access control (ABAC) on top
   of RBAC — do not replace RBAC entirely
 - Authorise at the service layer, not only at the route layer:
-  a route that passes auth may call a service that operates on another user's data
+  a route that passes auth may call a service that operates on another user's
+  data
 - Never trust client-supplied IDs for ownership checks — always verify that
   the authenticated user owns or has access to the requested resource
 
@@ -2677,7 +2689,8 @@ file with runtime conventions, project structure, and tooling.
 
 - Package all protos under a versioned namespace: `package [org].[service].v1`
 - One proto file per service — do not mix unrelated services in one file
-- Field names in `snake_case` — generated code adapts to each language's conventions
+- Field names in `snake_case` — generated code adapts to each language's
+  conventions
 - Use `google.protobuf.Timestamp` for all timestamps — never raw integers
 - Use `google.protobuf.FieldMask` for partial update (patch) operations
 - Never remove or renumber existing fields — mark deprecated fields with
@@ -2728,7 +2741,8 @@ file with runtime conventions, project structure, and tooling.
 ## Authentication
 [EXTEND: backend-auth]
 
-- Pass credentials via gRPC metadata: key `authorization`, value `Bearer <token>`
+- Pass credentials via gRPC metadata: key `authorization`, value `Bearer
+  <token>`
 - Validate in the auth interceptor — not in service handlers
 - Mutual TLS (mTLS) for service-to-service calls in production — certificate
   rotation managed at the infrastructure layer (cert-manager, Vault)
@@ -2777,7 +2791,8 @@ file with runtime conventions, project structure, and tooling.
 [ID: backend-concurrency]
 
 Universal rules for multi-threading, multi-processing, and async I/O.
-Language-specific rules belong in the stack template via [EXTEND: backend-concurrency].
+Language-specific rules belong in the stack template via [EXTEND:
+backend-concurrency].
 
 ---
 
@@ -2868,7 +2883,8 @@ merged PR and a deployed artifact — humans approve, machines execute.
 ## Quality gates
 
 - Stages 2–4 (lint, test, security scan) are defined in detail in
-  `templates/base/workflow/quality-gates.md` — categories, thresholds, and tool constraints
+  `templates/base/workflow/quality-gates.md` — categories, thresholds, and tool
+  constraints
 - Platform-specific CI integration is in `platform/github.md` or
   `platform/gitlab.md`
 
@@ -2886,7 +2902,8 @@ A pipeline MUST include, in order:
 2. **Lint / format check** — fail on style violations
 3. **Test** — run unit and integration tests; fail on any failure
 4. **Security scan** — SAST, secret detection, SCA
-5. **Package** — build the deployable artifact (container image, binary, package)
+5. **Package** — build the deployable artifact (container image, binary,
+   package)
 6. **Deploy to staging** — automated deployment to a staging/QA environment
 7. **DAST** — automated security scan against the running staging environment
 8. **Deploy to production** — triggered manually or on a release tag
@@ -2951,7 +2968,8 @@ historical tag with `--notes-start-tag`.
 
 ## Pipeline as code
 
-- Pipeline definitions MUST live in the repository alongside the application code
+- Pipeline definitions MUST live in the repository alongside the application
+  code
 - Pipeline changes follow the same review process as application code
 - Shared pipeline logic MUST be extracted into reusable templates — never
   copy-paste pipeline stages across repositories
@@ -3023,7 +3041,8 @@ not after deployment.
 - Never run DAST against production
 - Automated DAST scans MUST complete before any production release
 - Critical findings MUST block the release and be treated as incidents
-- Lower-severity findings MUST be tracked and resolved within a defined timeframe
+- Lower-severity findings MUST be tracked and resolved within a defined
+  timeframe
 
 ## IaC scanning (Infrastructure-as-Code)
 

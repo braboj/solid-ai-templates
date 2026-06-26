@@ -350,7 +350,8 @@ maintainer time on phantom fixes.
 - No debug statements in committed code: no `print()`, `console.log()`,
   `fmt.Println()`, or equivalent used for debugging
 - No hardcoded breakpoints (`debugger`, `pdb.set_trace()`) in committed code
-- No commented-out code blocks — delete dead code; version control is the history
+- No commented-out code blocks — delete dead code; version control is the
+  history
 - Debug tooling (profilers, REPL helpers, verbose loggers) MUST be
   gated behind a flag or environment variable, never on by default
 

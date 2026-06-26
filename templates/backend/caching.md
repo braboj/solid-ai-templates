@@ -17,11 +17,13 @@ cache technology (Redis, Memcached, in-process).
 
 ## Patterns
 
-- **Cache-aside (lazy loading)**: read from cache first; on miss, load from source,
+- **Cache-aside (lazy loading)**: read from cache first; on miss, load from
+  source,
   populate cache, return result — default pattern for read-heavy workloads
 - **Write-through**: write to cache and source together on every update —
   use when stale reads are unacceptable and write latency is acceptable
-- **Write-behind**: write to cache immediately, persist to source asynchronously —
+- **Write-behind**: write to cache immediately, persist to source asynchronously
+  —
   avoid unless throughput requirements justify the added complexity and risk
 - Never cache at more than one layer for the same data — multiple caches
   create inconsistency and make invalidation impossible to reason about

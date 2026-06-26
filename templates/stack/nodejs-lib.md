@@ -82,7 +82,8 @@ CLAUDE.md
 [ID: nodejs-lib-cli]
 
 - Entry point in `src/cli.ts` — wired to `bin` in `package.json`
-- Parse arguments with [commander / yargs / citty] — never `process.argv` directly
+- Parse arguments with [commander / yargs / citty] — never `process.argv`
+  directly
 - Exit codes: `0` for success, `1` for user error, `2` for internal error
 - Write output to `stdout`; write errors and logs to `stderr`
 - Support `--help` and `--version` flags — both generated automatically

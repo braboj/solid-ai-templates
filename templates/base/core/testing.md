@@ -32,7 +32,8 @@ driver is TDD — tests are written alongside or before the code.
 - MUST achieve 90% coverage of new code before merging
 - SHOULD cover negative scenarios and edge cases
 - The total codebase SHOULD maintain 80% unit test coverage — see
-  `templates/base/workflow/quality-gates.md` for the coverage policy (80% for new projects,
+  `templates/base/workflow/quality-gates.md` for the coverage policy (80% for
+  new projects,
   warn-only for legacy)
 - Coverage MUST NOT regress between releases
 - MUST be runnable from CI without human intervention

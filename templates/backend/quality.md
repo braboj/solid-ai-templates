@@ -63,11 +63,13 @@ Prefer these patterns for backend concerns:
 
 ## Performance
 - Prefer async I/O for network-bound operations
-- Cache only when there is a measured need — document cache invalidation strategy
+- Cache only when there is a measured need — document cache invalidation
+  strategy
 - Avoid N+1 queries — use eager loading or batch fetching
 - Set timeouts on all outbound calls (HTTP clients, DB queries)
 
 ## API stability
 - Never remove or rename a field in a response without a deprecation period
-- Increment the API version (`/v2/`) for breaking changes — keep the old version alive
+- Increment the API version (`/v2/`) for breaking changes — keep the old version
+  alive
 - Document deprecated endpoints; set a removal date before retiring them

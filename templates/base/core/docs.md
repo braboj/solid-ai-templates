@@ -87,9 +87,11 @@ of tool changes.
 
 Before every commit, update all relevant documentation:
 
-- **`CLAUDE.md`** — update if architecture, stack, design rules, or conventions change
+- **`CLAUDE.md`** — update if architecture, stack, design rules, or conventions
+  change
 - **`README.md`** — update if project structure, stack, or setup steps change
-- **`docs/PLAYBOOK.md`** — update if commands, workflow, or release process change
+- **`docs/PLAYBOOK.md`** — update if commands, workflow, or release process
+  change
 - **`docs/ONBOARDING.md`** — update if the contributor workflow changes
 
 ## Decision logs
@@ -254,7 +256,8 @@ is incomplete.
 
 ## Writing style
 
-- Write in present tense — past or future tense indicates out-of-sync documentation
+- Write in present tense — past or future tense indicates out-of-sync
+  documentation
 - Write as little as necessary but as much as needed — documentation that goes
   out of sync is worse than no documentation
 - Remove redundant, inconsistent, or outdated documentation promptly

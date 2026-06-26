@@ -69,7 +69,8 @@ CLAUDE.md
 ## Modules
 [ID: nestjs-modules]
 
-- One module per feature domain — `@Module({ imports, controllers, providers, exports })`
+- One module per feature domain — `@Module({ imports, controllers, providers,
+  exports })`
 - Modules are self-contained: controller, service, repository, DTOs, and
   entities live inside the feature directory
 - Export only what other modules genuinely need — favour encapsulation
@@ -136,7 +137,8 @@ the module wiring — not hidden AOP proxies.
   never mix authn and authz in one guard
 - Logging interceptor at the global level — logs request ID, method, path,
   duration, and status code
-- Transform interceptor for consistent response envelope (if required by API contract)
+- Transform interceptor for consistent response envelope (if required by API
+  contract)
 
 ---
 
@@ -144,7 +146,8 @@ the module wiring — not hidden AOP proxies.
 [EXTEND: base-config]
 
 - Use `@nestjs/config` with a typed `configuration.ts` factory function
-- Inject `ConfigService` via DI — never read `process.env` directly in application code
+- Inject `ConfigService` via DI — never read `process.env` directly in
+  application code
 - Validate config at startup with Joi or class-validator schema
 
 ---
@@ -162,7 +165,8 @@ the module wiring — not hidden AOP proxies.
 [EXTEND: backend-features]
 
 - Inject the flag client as an `@Injectable()` provider
-- Evaluate flags in the service layer — not deep inside domain logic or repositories
+- Evaluate flags in the service layer — not deep inside domain logic or
+  repositories
 
 ---
 
@@ -171,17 +175,20 @@ the module wiring — not hidden AOP proxies.
 
 - Use `@nestjs/microservices` for broker integration (Kafka, RabbitMQ, Redis)
 - Define message handlers with `@MessagePattern()` or `@EventPattern()`
-- Keep message handlers thin — delegate to the same service layer used by HTTP controllers
+- Keep message handlers thin — delegate to the same service layer used by HTTP
+  controllers
 
 ---
 
 ## Testing
 [EXTEND: base-testing]
 
-- Unit tests with Jest: test each service in isolation using `Test.createTestingModule()`
+- Unit tests with Jest: test each service in isolation using
+  `Test.createTestingModule()`
   with mocked dependencies
 - Integration/e2e tests with Supertest: spin up the full NestJS app against
-  a test database — test each endpoint for success, validation error, and auth error
+  a test database — test each endpoint for success, validation error, and auth
+  error
 - No mocking of the database in e2e tests — use a real test database
 - Component test naming: `<method> <resource> <state> returns <expected>`
   e.g. `POST /users with duplicate email returns 409`

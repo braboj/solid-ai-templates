@@ -22,11 +22,13 @@ Prefer these patterns for frontend concerns:
   implicit state via context (e.g. `<Tabs>`, `<Tab>`, `<TabPanel>`);
   prefer over deeply nested prop drilling
 - **Render Props / Slot** — pass render logic as a prop or slot to invert
-  control over what is rendered; use sparingly — prefer custom hooks where possible
+  control over what is rendered; use sparingly — prefer custom hooks where
+  possible
 - **Observer** — subscribe to external state changes (store, event bus,
   WebSocket) via a single subscription point; unsubscribe on component unmount
 - **Facade** — wrap third-party libraries (analytics, maps, payment SDKs)
-  behind a thin project-owned interface; never scatter SDK calls across components
+  behind a thin project-owned interface; never scatter SDK calls across
+  components
 - **Optimistic Update** — apply the expected result of a mutation immediately
   in the UI and roll back on failure; document the rollback path
 

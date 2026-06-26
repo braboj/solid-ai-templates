@@ -4,7 +4,8 @@
 ## Committer identity
 - Configure git with your full name and a consistent, professional email address
 - Do not use private or personal email addresses for work repositories
-- Identity must not change — git history and tooling depend on consistent authorship
+- Identity must not change — git history and tooling depend on consistent
+  authorship
 
 ## Commit messages
 - Use conventional commit prefixes:
@@ -37,7 +38,8 @@
     the STALE accounting explicitly (N files affected, named or
     globbed) — silent staleness is the failure mode
 - **Before merging**, review the diff against the base branch. Follow
-  `templates/base/core/review.md` priority order: security → correctness → clarity →
+  `templates/base/core/review.md` priority order: security → correctness →
+  clarity →
   conventions. Check CI passes. Only merge after the review passes.
 - **Before pushing or creating a PR**, check `git status` and list open PRs.
   If the previous PR is closed or merged, create a new branch rather than
@@ -157,7 +159,8 @@ When NOT to close-and-resubmit:
 
 ## README
 - Every repository MUST contain a `README.md`
-- The README MUST conform to the structure and rules defined in `templates/base/core/readme.md`
+- The README MUST conform to the structure and rules defined in
+  `templates/base/core/readme.md`
 
 ## Versioning
 - Use [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH`
@@ -201,7 +204,8 @@ When NOT to close-and-resubmit:
   5. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
   6. `git push origin vX.Y.Z`
   7. Create a GitHub Release with auto-generated notes:
-     `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>" --generate-notes`
+     `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>"
+     --generate-notes`
 
 ## General
 - Do not commit build output, secrets, or dependency directories

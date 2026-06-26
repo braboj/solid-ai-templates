@@ -14,7 +14,8 @@ finished.
 Before starting any work, the agent MUST:
 
 1. Read all documents referenced in the project's CLAUDE.md (e.g.
-   `docs/solid-ai-templates/templates/base/core/git.md`, `templates/base/core/docs.md`, etc.)
+   `docs/solid-ai-templates/templates/base/core/git.md`,
+   `templates/base/core/docs.md`, etc.)
 2. These contain binding conventions that CLAUDE.md inherits — do not
    proceed until you have read and understood them
 3. Check which branch you are on — if not `main`, ask why before
@@ -57,7 +58,8 @@ The startup block MUST:
 - State the consequence: "If you respond without reading them, you are
   violating project rules"
 
-This requirement exists because `templates/base/workflow/scope.md` says "read all documents
+This requirement exists because `templates/base/workflow/scope.md` says "read
+all documents
 referenced in CLAUDE.md" — but `scope.md` is one of the files that needs
 to be read first. The startup block breaks this chicken-and-egg problem
 by placing the instruction directly in CLAUDE.md, the one file that is

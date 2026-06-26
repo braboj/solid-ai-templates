@@ -2,8 +2,10 @@
 [ID: backend-errors]
 [DEPENDS ON: templates/backend/http.md, templates/backend/observability.md]
 
-Error response format and logging rules are defined in `templates/backend/http.md` and
-`templates/backend/observability.md`. This template covers classification, propagation,
+Error response format and logging rules are defined in
+`templates/backend/http.md` and
+`templates/backend/observability.md`. This template covers classification,
+propagation,
 and recovery.
 
 ---

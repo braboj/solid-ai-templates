@@ -2,7 +2,8 @@
 [ID: base-release]
 
 ## Versioning
-- All packages and services MUST follow semantic versioning (`MAJOR.MINOR.PATCH`)
+- All packages and services MUST follow semantic versioning
+  (`MAJOR.MINOR.PATCH`)
 - MAJOR — breaking changes
 - MINOR — new backward-compatible functionality
 - PATCH — backward-compatible bug fixes
@@ -26,7 +27,8 @@ at least as far:
 When a breaking change is unavoidable:
 
 1. Deploy the new version alongside the old one
-2. Notify all consumers that the old version is deprecated and set a removal date
+2. Notify all consumers that the old version is deprecated and set a removal
+   date
 3. Allow consumers to migrate at their own pace within the deprecation window
 4. Remove the old version only after the window has closed
 
