@@ -70,4 +70,4 @@ tags: [e2e, output, astro, static-site]
 
 ## Related
 
-- Related procedures: `SAIT-E2E-STK-06-001A`
+- Related procedures: `SAIT-E2E-STK-20-001A`

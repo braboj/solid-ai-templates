@@ -38,9 +38,6 @@ Spec files live in `tests/specs/`. See `CODIFICATION.md` for the ID scheme, area
 | `SAIT-E2E-STK-02-001A` | E2E | P0 | Full interview → CLAUDE.md for a Go Echo project |
 | `SAIT-E2E-FMT-01-001A` | E2E | P1 | Full interview → CLAUDE.md output format (Claude Code) |
 | `SAIT-E2E-FMT-02-001A` | E2E | P1 | Full interview → AGENTS.md output format (Codex CLI) |
-| `SAIT-E2E-FMT-03-001A` | E2E | P1 | Full interview → Cursor .mdc output format |
-| `SAIT-E2E-FMT-04-001A` | E2E | P1 | Full interview → Copilot output format |
-| `SAIT-E2E-FMT-05-001A` | E2E | P1 | Full interview → generic AI_CONTEXT.md output format |
 | `SAIT-E2E-STK-03-001A` | E2E | P1 | Full interview → CLAUDE.md for a Django project |
 | `SAIT-E2E-STK-04-001A` | E2E | P1 | Full interview → CLAUDE.md for a Node Express project |
 | `SAIT-E2E-STK-07-001A` | E2E | P1 | Full interview → CLAUDE.md for an Astro static site project |
