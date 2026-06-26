@@ -6,17 +6,20 @@ content collections and zero client-side JS.
 > Generation inputs (per ADR-016 — examples are agent-generated
 > outputs of the documented pipeline):
 >
-> - Stack source: `stack/static-site-astro.md`
+> - Stack source: `templates/stack/static-site-astro.md`
 > - Resolved chain: `generated/stack-astro.md` (base + frontend +
 >   static-site-astro)
-> - Output format: `base/core/agents.md` (hybrid model)
+> - Output format: `templates/base/core/agents.md` (hybrid model)
 > - Project brief: Starfield Blog — Alex Rivera — astronomy /
 >   astrophotography blog — TypeScript strict / Astro 4 (static) /
 >   Content Collections / plain CSS — npm, Prettier, ESLint, astro
 >   check — GitHub Pages via GitHub Actions
 
-Quality conventions defined in `docs/solid-ai-templates/` (submodule).
-Project-specific overrides and additions follow below.
+Quality conventions live in the `solid-ai-templates` submodule, vendored
+at `docs/solid-ai-templates/`. Template files keep their upstream layout
+under `templates/`, so a rule file referenced below resolves to
+`docs/solid-ai-templates/templates/<layer>/<file>.md`. Project-specific
+overrides and additions follow below.
 
 > **MANDATORY STARTUP — DO THIS BEFORE YOUR FIRST RESPONSE**
 >
@@ -27,19 +30,18 @@ Project-specific overrides and additions follow below.
 > user's first message. No exceptions. Do not summarize, skip, or defer.
 > If you respond without reading them, you are violating project rules.
 >
-> 1. `docs/solid-ai-templates/base/quality.md`
-> 2. `docs/solid-ai-templates/base/typescript.md`
-> 3. `docs/solid-ai-templates/base/review.md`
-> 4. `docs/solid-ai-templates/base/scope.md`
-> 5. `docs/solid-ai-templates/base/git.md`
-> 6. `docs/solid-ai-templates/base/docs.md`
-> 7. `docs/solid-ai-templates/base/readme.md`
-> 8. `docs/solid-ai-templates/base/issues.md`
-> 9. `docs/solid-ai-templates/frontend/quality.md`
-> 10. `docs/solid-ai-templates/frontend/ux.md`
-> 11. `docs/solid-ai-templates/frontend/static-site.md`
-> 12. `docs/solid-ai-templates/stack/static-site-astro.md`
-
+> 1. `docs/solid-ai-templates/templates/base/core/quality.md`
+> 2. `docs/solid-ai-templates/templates/base/language/typescript.md`
+> 3. `docs/solid-ai-templates/templates/base/core/review.md`
+> 4. `docs/solid-ai-templates/templates/base/workflow/scope.md`
+> 5. `docs/solid-ai-templates/templates/base/core/git.md`
+> 6. `docs/solid-ai-templates/templates/base/core/docs.md`
+> 7. `docs/solid-ai-templates/templates/base/core/readme.md`
+> 8. `docs/solid-ai-templates/templates/base/workflow/issues.md`
+> 9. `docs/solid-ai-templates/templates/frontend/quality.md`
+> 10. `docs/solid-ai-templates/templates/frontend/ux.md`
+> 11. `docs/solid-ai-templates/templates/frontend/static-site.md`
+> 12. `docs/solid-ai-templates/templates/stack/static-site-astro.md`
 
 ## 1. Project
 
@@ -89,7 +91,6 @@ npm run lint      # ESLint
 npm run check     # astro check
 ```
 
-
 ## 2. Code conventions
 
 ### 2.1 Git
@@ -116,12 +117,13 @@ npm run check     # astro check
 - Image alt text is required — no decorative images without `alt=""`
 - No inline HTML in Markdown posts — no `set:html` on untrusted input
 
-
 ## 3. Quality
 
-Reference `frontend/quality.md`, `frontend/ux.md`, and
-`frontend/static-site.md` for accessibility, performance, and the
-static-site quality framework. Inline only the SEO targets below.
+Read `docs/solid-ai-templates/templates/frontend/quality.md`,
+`docs/solid-ai-templates/templates/frontend/ux.md`, and
+`docs/solid-ai-templates/templates/frontend/static-site.md` for
+accessibility, performance, and the static-site quality framework.
+Inline only the SEO targets below.
 
 ### 3.1 SEO
 
@@ -129,7 +131,6 @@ static-site quality framework. Inline only the SEO targets below.
 - Open Graph meta tags on all pages
 - Canonical URLs
 - `robots.txt` and auto-generated sitemap
-
 
 ## 4. Identity
 
@@ -148,36 +149,42 @@ static-site quality framework. Inline only the SEO targets below.
 - First person, conversational tone
 - Cite gear, settings, and capture conditions for each astrophoto
 
-
 ## 5. Review process
 
-Follow `base/review.md` priority order. Apply `base/quality.md`,
-`base/typescript.md`, and `frontend/quality.md` as the standard. Verify
-MUSTs from `base/docs.md`, `base/readme.md`, `base/git.md`,
-`frontend/static-site.md`, and `stack/static-site-astro.md`.
-
+Follow `docs/solid-ai-templates/templates/base/core/review.md` priority
+order. Apply `docs/solid-ai-templates/templates/base/core/quality.md`,
+`docs/solid-ai-templates/templates/base/language/typescript.md`, and
+`docs/solid-ai-templates/templates/frontend/quality.md` as the standard.
+Verify MUSTs from `docs/solid-ai-templates/templates/base/core/docs.md`,
+`docs/solid-ai-templates/templates/base/core/readme.md`,
+`docs/solid-ai-templates/templates/base/core/git.md`,
+`docs/solid-ai-templates/templates/frontend/static-site.md`, and
+`docs/solid-ai-templates/templates/stack/static-site-astro.md`.
 
 ## 6. Session protocol
 
-Follow `base/scope.md` for the scope guard and end-of-session audit.
+Follow `docs/solid-ai-templates/templates/base/workflow/scope.md` for the
+scope guard and end-of-session audit.
 
 ### 6.1 Start of session
 
-Read `base/scope.md` (Session startup) and the mandatory startup block
-above. Confirm the scope with the user before making changes.
+Read `docs/solid-ai-templates/templates/base/workflow/scope.md` (Session
+startup) and the mandatory startup block above. Confirm the scope with
+the user before making changes.
 
 ### 6.2 During the session
 
-Follow `base/scope.md` (During work) — stay within the agreed scope.
-Run `npm run check` and `npm run lint` after any change; do not
-accumulate unverified changes.
+Follow `docs/solid-ai-templates/templates/base/workflow/scope.md` (During
+work) — stay within the agreed scope. Run `npm run check` and
+`npm run lint` after any change; do not accumulate unverified changes.
 
 ### 6.3 End of session
 
-On "wrap up" / "close out", read `base/scope.md` (End of session audit)
-and execute each item sequentially; do not summarize or skip. Print the
-checklist and mark each item done (with result) before moving to the
-next. At minimum, confirm in order:
+On "wrap up" / "close out", read
+`docs/solid-ai-templates/templates/base/workflow/scope.md` (End of
+session audit) and execute each item sequentially; do not summarize or
+skip. Print the checklist and mark each item done (with result) before
+moving to the next. At minimum, confirm in order:
 
 1. Commits and push — all changes committed and pushed (via PR if
    branch-protected)
