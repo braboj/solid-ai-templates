@@ -1709,3 +1709,51 @@ rule; left in this journal, not added to a template file.
 
 **Issues closed:** #654, #655, #656, #657, #658. Released v2.27.0 and
 closed milestone v2.27.
+
+## 2026-06-26 — v2.28 Authoring & test hygiene
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- #660 (PR #676): renamed go-lib's idiom section "Code quality" →
+  "Go conventions" (ID go-lib-conventions) per ADR-017 clause 5; all four
+  Go chains inherit it.
+- #659 (PR #677): reflowed 136 prose lines <80 via a content-preserving
+  splitter (one space → newline per break, non-whitespace content
+  asserted unchanged per file); documented the §2.7 exemption for table
+  rows, fenced code, single-line `[DEPENDS ON:]`, and unbreakable
+  URL/link tokens.
+- #638 (PR #678): scope.md handoff-breadcrumb rule now requires the
+  wrap-up writer to validate each candidate against the tracker and drop
+  closed/out-of-milestone ones before listing.
+- #663 (PR #679): regenerated the hybrid-astro example via the ADR-016
+  pipeline — flattened submodule paths corrected to the resolvable
+  `docs/solid-ai-templates/templates/base/core/quality.md` form (all 12
+  resolve).
+- #661 (PR #680): added e2e cases STK-21 (nestjs), STK-22 (c-embedded),
+  STK-23 (tutorial) + specs/INDEX/CODIFICATION; STK coverage 14→17.
+- #662 (PR #681): smoke SYS-08 locks in the 7 example→stack pairs (each
+  example must keep a non-empty CLAUDE.md mapped to a real stack). Smoke
+  22 → 23.
+
+**Decision:** lock the example set at the existing 7 (gate by example→
+stack, two map to astro and two to fastapi) rather than requiring an
+example for every concrete stack — the latter would force ~8 new
+agent-generated examples, its own effort. New examples opt into the gate
+by registering in REQUIRED_EXAMPLES.
+
+**Lesson:** a bulk content reflow over reference docs is safe to automate
+*iff* the transform is whitespace-only and you assert it — comparing the
+non-whitespace content before/after per file turns "did I corrupt a
+rule?" from a manual review into a guarantee. Pair any mechanical sweep
+with that invariant before trusting it.
+
+**Template feedback:** the "Go conventions" rename (#660), the §2.7
+line-length exemptions (#659), and the scope.md handoff-validation rule
+(#638) are reusable and live upstream in `templates/`. The reflow
+splitter, SYS-08 gate, and the three e2e cases are project tooling/tests.
+
+**PRs merged:** #676, #677, #678, #679, #680, #681
+
+**Issues closed:** #659, #660, #661, #662, #663, #638. Released v2.28.0
+and closed milestone v2.28.
