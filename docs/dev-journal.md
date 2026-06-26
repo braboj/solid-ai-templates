@@ -1581,3 +1581,40 @@ not a reusable template rule.
 **PRs merged:** #647
 
 **Issues closed:** #646, #180. Created and closed milestone v2.25.0.
+
+## 2026-06-26 — v2.26 Stack cleanup round 2 + markdownlint config
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Milestone v2.26 — Stack cleanup (round 2), same provenance rationale
+  (ADR-011) as v2.25.
+- #650: added `.markdownlint.json` matching the template house style —
+  disables MD022/031/032/040/060 (heading/list/fence/table-style) and
+  keeps MD013 <80 for prose. markdownlint is not in CI, so it only quiets
+  the editor (PR #651; MD060 added in the removal PR when table-style
+  noise surfaced).
+- #649: removed 9 stacks — full-nextjs, full-sveltekit, mobile-flutter,
+  mobile-react-native, spa-react, spa-vue, spa-svelte, static-site-hugo,
+  python-celery-worker. Also dropped the orphaned mobile/ layer
+  (mobile-auth, mobile-ux), the react-spa example, 5 e2e cases
+  (STK-05/06/09/14/17 retired), and the smoke runner's mobile template
+  dir. Stacks 26 → 17; frontend now = static-site-astro + htmx (PR #652).
+
+**Decision:** cut a new v2.26.0 rather than move the published v2.25.0
+tag. Published releases are immutable (ADR-006); moving a tag rewrites a
+released artifact, the same hazard as a force-push.
+
+**Lesson:** removing stacks orphans their *exclusive* layer templates
+(mobile/) and leaves the smoke runner's `TEMPLATE_DIRS` pointing at a
+deleted directory — sweep both. Check transitive reachability before
+removing a layer template: frontend-ux/quality stayed because astro still
+reaches them via frontend-static-site.
+
+**Template feedback:** the removal is governance (provenance applied to
+whole stacks); the markdownlint config documents the project's markdown
+conventions — both project-specific, no reusable template change.
+
+**PRs merged:** #651, #652
+
+**Issues closed:** #649, #650. Created and closed milestone v2.26.0.
