@@ -1545,3 +1545,39 @@ live in ADR-017, not a template.
 **Issues closed:** #639, #640, #641. Created and closed milestone
 v2.24.0. Next: Milestone B — spike on whether to cut low-value stacks,
 then the removals.
+
+## 2026-06-26 — v2.25 Stack cleanup (remove java, terraform, rust)
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Milestone B — v2.25 — Stack cleanup, realizing #180 (slim the supported
+  stacks). The v2.24 structure baseline made stacks comparable first.
+- Spike (#180): decided to remove the java, terraform, and rust stacks —
+  owner has never used them and does not plan to. All four are leaf stacks
+  with zero dependents, so removal breaks no resolved chain.
+- #646: removed java-spring-boot, java-grpc, iac-terraform, rust-lib
+  (templates + generated chains + manifest entries), the rust-lib e2e case
+  (STK-19 retired), and the java-/iac-/rust- rows from CLAUDE.md §2.3.
+  Repointed the hybrid-deployment test (DPL-02) onto go-service to keep
+  that coverage. sync.py regenerated the README/SPEC/INTERVIEW tables.
+  Stacks 30 → 26 (PR #647).
+
+**Decision:** remove rather than keep — the provenance principle (ADR-011,
+"forged in real work") argues against shipping stacks the owner never used
+or validated. Breadth is not worth carrying unvalidated, maintenance-bearing
+templates.
+
+**Lesson:** scope a removal by checking dependents on the resolved chain,
+not by name — all four were leaves, so the blast radius was just their own
+files plus auto-regenerated tables. Preserve incidental coverage by
+repointing (DPL-02 → go-service), not deleting, when a test merely used a
+removed stack as a carrier.
+
+**Template feedback:** the slimming criterion (keep only stacks actually
+used/validated) is project governance — ADR-011 applied to whole stacks,
+not a reusable template rule.
+
+**PRs merged:** #647
+
+**Issues closed:** #646, #180. Created and closed milestone v2.25.0.
