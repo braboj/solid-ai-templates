@@ -152,15 +152,11 @@ required structures in `templates/base/core/docs.md`.
 | Hugo (static site) | `templates/stack/static-site-hugo.md` | Go templates, archetypes, content structure |
 | Node.js + Express | `templates/stack/node-express.md` | Minimal REST API, Zod validation, Supertest |
 | Node.js + NestJS | `templates/stack/node-nestjs.md` | Modules, controllers, providers, guards, pipes, DI |
-| Java + Spring Boot | `templates/stack/java-spring-boot.md` | REST API, JPA, Spring Security, Flyway |
 | Python + Celery | `templates/stack/python-celery-worker.md` | Background tasks, retry/backoff, Beat scheduling |
 | Go + gRPC | `templates/stack/go-grpc.md` | gRPC service, bufconn, errgroup |
 | Python + gRPC | `templates/stack/python-grpc.md` | gRPC service, grpcio-aio, proto design |
-| Java + gRPC | `templates/stack/java-grpc.md` | gRPC service, grpc-java lifecycle |
 | React Native (mobile) | `templates/stack/mobile-react-native.md` | iOS/Android, Expo, file-based routing, Maestro |
 | Flutter (mobile) | `templates/stack/mobile-flutter.md` | iOS/Android, Riverpod, go_router, freezed |
-| Terraform (IaC) | `templates/stack/iac-terraform.md` | Infrastructure as code, modules, remote state |
 | Node.js library / CLI | `templates/stack/nodejs-lib.md` | TypeScript npm package or CLI, tsup, Vitest |
-| Rust library / CLI / crate | `templates/stack/rust-lib.md` | Rust crate or CLI, thiserror/anyhow, crates.io |
 | Embedded C (bare metal) | `templates/stack/c-embedded.md` | GCC + CMake, Unity tests, HAL, binary + .a |
 <!-- /generated:interview-stacks -->

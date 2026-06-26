@@ -465,27 +465,6 @@ stacks:
       - base-cicd
       - base-devsecops
 
-  - id: stack-spring-boot
-    file: templates/stack/java-spring-boot.md
-    label: Java + Spring Boot
-    layer: backend
-    description: REST API, JPA, Spring Security, Flyway
-    depends_on:
-      - base-git
-      - base-docs
-      - base-quality
-      - base-config
-      - backend-http
-      - backend-api
-      - backend-database
-      - backend-observability
-      - backend-auth
-      - backend-quality
-      - backend-features
-      - backend-messaging
-      - base-cicd
-      - base-devsecops
-
   - id: stack-celery-worker
     file: templates/stack/python-celery-worker.md
     label: Python + Celery
@@ -532,22 +511,6 @@ stacks:
       - base-cicd
       - base-devsecops
 
-  - id: stack-grpc-java
-    file: templates/stack/java-grpc.md
-    label: Java + gRPC
-    layer: backend
-    description: gRPC service, grpc-java lifecycle
-    depends_on:
-      - base-git
-      - base-docs
-      - base-quality
-      - base-testing
-      - base-config
-      - backend-grpc
-      - backend-concurrency
-      - base-cicd
-      - base-devsecops
-
   - id: stack-react-native
     file: templates/stack/mobile-react-native.md
     label: React Native (mobile)
@@ -573,18 +536,6 @@ stacks:
       - mobile-auth
       - mobile-ux
 
-  - id: stack-terraform
-    file: templates/stack/iac-terraform.md
-    label: Terraform (IaC)
-    layer: DevOps
-    description: Infrastructure as code, modules, remote state
-    depends_on:
-      - base-git
-      - base-docs
-      - base-quality
-      - base-cicd
-      - base-devsecops
-
   - id: stack-nodejs-lib
     file: templates/stack/nodejs-lib.md
     label: Node.js library / CLI
@@ -595,16 +546,6 @@ stacks:
       - base-docs
       - base-quality
       - base-typescript
-
-  - id: stack-rust-lib
-    file: templates/stack/rust-lib.md
-    label: Rust library / CLI / crate
-    layer: library
-    description: Rust crate or CLI, thiserror/anyhow, crates.io
-    depends_on:
-      - base-git
-      - base-docs
-      - base-quality
 
   - id: stack-c-embedded
     file: templates/stack/c-embedded.md
