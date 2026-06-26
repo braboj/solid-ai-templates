@@ -201,6 +201,22 @@ that runs the tool. The rules below address each.
 - A small hand-built reference set from raw artifacts beats a large
   set carried over from a suspect pipeline
 
+### Honest absence beats a recovered wrong value
+
+- When a fix flips an extractor from a wrong value to an honest absence
+  (`None`, empty, no-reading) because the source genuinely has no data
+  at that point, the absence is the correct output — not a regression
+  to recover
+- Update the reference / ground-truth framing in the same change: any
+  prior expected value at that point MUST be re-marked as extrapolation
+  past the data, never carried forward as a hit-this target the
+  extractor "should" reach
+- Distinguish the two absences in logs and reference notes: `None`
+  because the extractor failed (a defect to fix) versus `None` because
+  the source carries no value there (the correct answer) — the two
+  demand opposite responses, and conflating them sends a maintainer to
+  "fix" a correct absence
+
 ### Thresholds move, not the measurement
 
 - When a measurement and a threshold disagree, the threshold is the
