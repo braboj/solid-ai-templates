@@ -1500,3 +1500,48 @@ template change.
 
 **Issues closed:** #13, #581. Created and closed milestone v2.23.0;
 moved #90 and #369 to v3.0.
+
+## 2026-06-26 — v2.24 Stack structure (ADR-017 + drift + SYS-06)
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Opened v2.24 — Stack structure as consolidation pre-work before the
+  stack-cleanup spike/removals (Milestone B): a consistent baseline makes
+  stacks comparable before any are cut.
+- #639 → ADR-017: canonical stack-template section structure. MUST (Stack,
+  Commands, Project structure), SHOULD (Testing, `<Language> conventions`,
+  Git, Configuration, Quality gates, Error handling), MAY (domain).
+  Membership judged on the resolved chain (inheritance counts); pure
+  libraries exempt from Project structure; canonical order fixed; names
+  SYS-06 as the gate (PR #642).
+- #640: fixed the drift — added Project structure to htmx and
+  static-site-astro, renamed terraform's "Repository structure" to the
+  canonical name; added Testing to static-site-astro (cross-referencing
+  its Quality gates table) and static-site-hugo (build/link/Lighthouse/
+  a11y); renamed language sections to `<Language> conventions` (python-lib,
+  c-embedded, rust-lib, iac-terraform) (PR #643).
+- #641: SYS-06 smoke gate — resolved-chain MUST sections, library-exempt;
+  spec `SAIT-SMK-SYS-06-001A` + INDEX row; smoke now 20 checks (PR #644).
+
+**Decision:** gate on the RESOLVED CHAIN, not the raw file. A derived
+stack may satisfy a MUST section via its parent, so the gate must not
+force repetition — that keeps the composition model intact.
+
+**Lesson:** audit "drift" against the resolved chain, not file-by-file.
+Several apparent gaps dissolved on inspection — python-service inherits
+Commands from python-lib, terraform had the structure under a different
+heading — and one originally-planned fix (adding python-service Commands)
+would have introduced a duplicate section downstream. Simulate the gate
+before writing the fixes.
+
+**Template feedback:** ADR-017 and SYS-06 are project-specific (they
+govern this repo's stack templates). The MUST/SHOULD/MAY taxonomy and
+`<Language> conventions` naming are reusable authoring conventions but
+live in ADR-017, not a template.
+
+**PRs merged:** #642, #643, #644
+
+**Issues closed:** #639, #640, #641. Created and closed milestone
+v2.24.0. Next: Milestone B — spike on whether to cut low-value stacks,
+then the removals.
