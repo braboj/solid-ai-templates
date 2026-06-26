@@ -1457,3 +1457,46 @@ inline→reference, #180 slim stacks, #350 viability audit).
 **PRs merged:** #631, #632, #633
 
 **Issues closed:** #604, #601, #600. Created and closed milestone v2.22.0.
+
+## 2026-06-26 — v2.23 Examples (ADR-016 + full regeneration)
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Added a v2.23 — Examples milestone before v3.0 to land the examples
+  work as its own point release. Pulled spike #13 in from v3.0 (it gates
+  #581) and pushed #90 (launch) and #369 (cold-start, blocked on #368)
+  into v3.0, emptying the Backlog milestone.
+- #13 → ADR-016: example `CLAUDE.md` files are agent-generated outputs of
+  the documented local-agent path — regenerated on material template
+  change, never hand-patched. `generated/` stays the authoritative
+  deterministic chain reference; structure is gated by smoke (PR #635).
+- #581: regenerated all 8 examples via the pipeline (existing brief +
+  `generated/<stack>.md` + `agents.md`). Seven moved from the stale
+  pre-`agents.md` free-form shape to the six-section inline model, adding
+  §5 Review process and §6 Session protocol with a compliant §6.3;
+  hybrid-astro stayed on the hybrid model with its duplicate §1.3 fixed.
+  Disambiguated the two same-named Go examples: go-service → MetricStream
+  (chi), metricshub kept MetricsHub (Echo). Added a PLAYBOOK "Regenerate
+  an example" procedure and a CLAUDE.md §2.5 pointer (PR #636).
+
+**Decision:** reversed v2.22's deferral of #581. v2.22 held it back
+fearing the inline→reference flip (#179) would make a refresh throwaway.
+This session resolved that: the six-section skeleton is stable across
+inline→reference — only section *bodies* change — so regenerating onto
+the skeleton now is durable. v2.23 is now the last pre-restructure
+release; v3.0 — Restructure is next.
+
+**Lesson:** when a deferral rests on "an upcoming change will redo this,"
+check whether that change touches the *structure* you would produce or
+only its *content*. A stable skeleton means the work is not throwaway,
+and the deferral is unjustified.
+
+**Template feedback:** ADR-016 and the "Regenerate an example" procedure
+are project-specific (they govern this repo's `examples/`). No upstream
+template change.
+
+**PRs merged:** #635, #636
+
+**Issues closed:** #13, #581. Created and closed milestone v2.23.0;
+moved #90 and #369 to v3.0.
