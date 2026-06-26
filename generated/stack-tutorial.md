@@ -1459,6 +1459,519 @@ two.
   collision itself is the bug worth flagging
 
 
+<!-- templates/base/security/security.md -->
+# Base — Application Security
+
+[ID: base-security]
+
+Cross-cutting security rules for application code. Applies to
+every project regardless of language or framework.
+
+
+---
+
+## Input validation
+
+[ID: security-input]
+
+- Validate all external input at the system boundary — the first
+  point where untrusted data enters the application
+- Use schema validation libraries (Zod, Joi, Pydantic, JSON Schema)
+  — never hand-write validation for complex inputs
+- Allowlist, not blocklist — define what is valid, reject everything
+  else
+- Reject invalid input with a clear error — do not silently coerce
+  or strip fields
+- Internal code trusts validated data — do not re-validate in
+  service or repository layers
+
+---
+
+## Output encoding
+
+[ID: security-output]
+
+- Encode dynamic data for its rendering context at the point of
+  output — HTML, URL, JavaScript, SQL, shell
+- Encode on output, not on input — store the raw value, encode
+  when rendering
+- Use framework-provided encoding: React JSX, Jinja2 autoescape,
+  Go `html/template`, Astro `{expression}`
+- Never use `innerHTML`, `set:html`, `dangerouslySetInnerHTML`,
+  or `| safe` with user-supplied data
+- Context matters — HTML encoding does not prevent URL injection
+
+---
+
+## Injection prevention
+
+[ID: security-injection]
+
+- Use parameterized queries for all database access — never
+  concatenate user input into SQL strings
+- Use prepared statements or ORM query builders — raw SQL with
+  string interpolation is a SQL injection vulnerability
+- Escape shell arguments when invoking external commands — or
+  use API alternatives that do not invoke a shell
+- Never pass user input to `eval()`, `exec()`, `Function()`,
+  or equivalent dynamic code execution
+
+---
+
+## Authentication
+
+[ID: security-authn]
+
+- Hash passwords with a modern algorithm: bcrypt, scrypt, or
+  Argon2 — never MD5, SHA-1, or plain SHA-256
+- Enforce minimum password complexity at the boundary
+- Use constant-time comparison for secrets and tokens — timing
+  attacks leak information through response time
+- Support multi-factor authentication for privileged operations
+- Lock accounts or throttle after repeated failed attempts
+
+---
+
+## Session management
+
+[ID: security-sessions]
+
+- Generate session IDs with a cryptographic random generator
+- Regenerate the session ID after login — prevents session fixation
+- Set cookie flags: `HttpOnly`, `Secure`, `SameSite=Lax` (or
+  `Strict` for sensitive applications)
+- Expire sessions after a reasonable idle period — 30 minutes
+  for sensitive applications, configurable otherwise
+- Invalidate sessions on logout — do not rely on cookie expiry
+  alone
+
+---
+
+## Secrets in code
+
+[ID: security-secrets]
+
+- Never hardcode secrets, API keys, tokens, or credentials in
+  source files
+- Never commit secrets to version control — even in test files
+  or example configurations
+- Use `.env` files for local development — add to `.gitignore`
+- Provide `.env.example` with placeholder values — never real
+  secrets
+- If a secret is accidentally committed, rotate it immediately —
+  removing from git history is not sufficient; the secret is
+  compromised
+
+---
+
+## Transport security
+
+[ID: security-transport]
+
+- HTTPS everywhere — no exceptions for production traffic
+- HSTS MUST be enabled on all production sites with
+  `includeSubDomains` and a minimum `max-age` of one year
+- TLS 1.2 is the minimum version — disable TLS 1.0 and 1.1
+- Use strong cipher suites — disable known-weak ciphers
+- Internal service-to-service traffic SHOULD use mTLS via a
+  service mesh or explicit certificate configuration
+
+---
+
+## Security headers
+
+[ID: security-headers]
+
+- Set security headers on every HTTP response at the reverse proxy
+  or middleware level — not per route
+- Required headers:
+  - `Content-Security-Policy` — start strict, relax only as needed
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: DENY` (or CSP `frame-ancestors`)
+  - `Strict-Transport-Security` (see Transport security)
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy` — disable unused browser APIs
+- When enabling `nosniff`, pin static asset MIME types in code — the
+  OS registry resolves `.js` to `text/plain` on some platforms, so the
+  browser refuses to run the script and CI on Linux will not catch it;
+  verify script/style execution in a real browser, not just status codes
+- Never use `unsafe-inline` or `unsafe-eval` in CSP without a
+  written justification
+- Do not expose server version or technology stack in headers —
+  remove `X-Powered-By`, `Server` version strings
+
+---
+
+## Error handling
+
+[ID: security-errors]
+
+- Never expose stack traces, internal paths, or database errors
+  to end users — return generic error messages externally
+- Log full error details server-side for debugging
+- Use consistent error response formats — do not leak internal
+  structure through varying error shapes
+- Return appropriate HTTP status codes — do not use 200 for errors
+- Do not reveal whether a resource exists via error messages —
+  login errors should say "invalid credentials", not "user not
+  found" vs "wrong password"
+
+---
+
+## Logging
+
+[ID: security-logging]
+
+- Never log secrets, tokens, passwords, or personally identifiable
+  information (PII)
+- Sanitize log output — user-supplied data in logs can enable
+  log injection attacks
+- Log security-relevant events: authentication attempts, access
+  denials, privilege changes, configuration changes
+- Include enough context for investigation: timestamp, user ID,
+  IP, action, result
+- Retain security logs for a defined period — compliance may
+  require 90 days to 7 years
+
+---
+
+## CORS
+
+[ID: security-cors]
+
+- Restrict `Access-Control-Allow-Origin` to specific known
+  origins — never use `*` for authenticated endpoints
+- Do not reflect the `Origin` header back as
+  `Access-Control-Allow-Origin` without validation
+- Restrict allowed methods and headers to what the API actually
+  needs
+- Set `Access-Control-Max-Age` to cache preflight responses —
+  reduces latency and server load
+
+---
+
+## Deserialization and data integrity
+
+[ID: security-integrity]
+
+- Never deserialize untrusted data with native serialization
+  formats (Python `pickle`, Java `ObjectInputStream`, PHP
+  `unserialize`) — use safe formats (JSON, Protocol Buffers)
+- Validate the structure and types of deserialized data before
+  use — treat it as untrusted input
+- Verify integrity of downloaded artifacts, updates, and
+  dependencies — use checksums or digital signatures
+- Pin dependency versions and verify checksums in lockfiles —
+  do not trust upstream registries blindly
+- CI/CD pipelines MUST use pinned, verified actions and images —
+  never pull `latest` tags in production pipelines
+
+---
+
+## Server-Side Request Forgery (SSRF)
+
+[ID: security-ssrf]
+
+- Never pass user-supplied URLs directly to server-side HTTP
+  clients — validate and sanitize first
+- Allowlist permitted destination hosts and schemes — reject
+  anything not on the list
+- Block requests to internal networks (`127.0.0.0/8`,
+  `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`,
+  `::1`, `fc00::/7`) — even after DNS resolution
+- Resolve the hostname and validate the IP before making the
+  request — prevents DNS rebinding attacks
+- Disable HTTP redirects in server-side HTTP clients, or
+  re-validate the destination after each redirect
+- Limit response size and timeout for outbound requests to
+  prevent resource exhaustion
+
+---
+
+## File uploads
+
+[ID: security-uploads]
+
+- Validate file type by content (magic bytes), not by extension
+  or MIME type — both are trivially spoofed
+- Enforce maximum file size at the boundary
+- Store uploads outside the web root — never serve user uploads
+  from the same domain without sanitization
+- Generate random filenames — do not use the original filename
+  (path traversal risk)
+- Scan uploaded files for malware if the application serves them
+  to other users
+
+---
+
+## Agent secrets handling
+
+[ID: security-agent-secrets]
+
+- MUST NOT read, print, or cat files that may contain secrets:
+  `.env`, `credentials.json`, `*-key*`, `*.pem`, `*.key`,
+  `serviceaccount.json`, `secrets.yaml`
+- MUST NOT echo, log, or display environment variable values —
+  use `printenv | grep -c KEY` to check presence without
+  revealing the value
+- MUST NOT include secret values in commit messages, PR
+  descriptions, or conversation output
+- MUST warn the user before committing files that commonly
+  contain secrets (`.env`, `credentials.json`, private keys)
+- Use targeted commands to verify secret presence without
+  exposure: `grep -c PATTERN file` (count matches),
+  `test -f .env && echo exists` (check file existence)
+- If secrets are accidentally exposed in a session, immediately
+  flag to the user: name the exposed secret, recommend
+  immediate rotation, and note that session history may be
+  cached or logged
+
+
+<!-- templates/frontend/ux.md -->
+# Frontend — UX Principles
+
+[ID: frontend-ux]
+[DEPENDS ON: templates/base/core/quality.md]
+
+## UX principles
+
+- Mobile-first — design for small screens first, enhance for larger ones
+- Progressive disclosure — show only what the user needs at each step
+- No dark patterns — no misleading UI, no forced actions, no hidden costs
+- Consistency — same interaction patterns throughout the product
+- Performance is UX — slow interfaces are bad user experience
+- **Least Surprise**: components and interactions should behave as users
+  expect; if a pattern looks like a button it must act like a button
+
+## Accessibility — WCAG 2.1 AA
+
+- Target standard: WCAG 2.1 AA
+- Minimum text contrast ratio: 4.5:1 (normal text), 3:1 (large text)
+- All interactive elements reachable and operable by keyboard
+- Any non-focusable element (`<th>`, `<div>`, `<span>`) with `onClick` MUST
+  contain a `<button>` — `onClick` alone does not add the element to the tab
+  order or provide keyboard activation
+- Use `:focus-visible` instead of `:focus` for focus indicators —
+  `:focus` shows outlines on mouse clicks (distracting), `:focus-visible`
+  shows them only for keyboard navigation
+- Focus indicators must be visible at all times during keyboard navigation
+- All `<a>` elements and nav links MUST have a visible `:focus-visible`
+  outline — links often lack focus styles even when buttons have them
+- No content that relies on colour alone to convey meaning
+- Images must have descriptive `alt` text; decorative images use `alt=""`
+- Semantic HTML: correct landmark elements and heading hierarchy
+- `aria-label` on all interactive elements (buttons, icon links, social links)
+- All `<a>` elements with icon-only or ambiguous text must have a descriptive
+  `aria-label`
+- Keyboard navigation: menus must close on Escape and restore focus
+
+## Accessibility testing
+
+Meeting WCAG 2.1 AA requires both automated and manual testing — automated
+tools catch ~30–40% of issues; the rest require human judgment.
+
+### Automated (run in CI)
+
+- **axe-core** — integrate via the framework adapter (`@axe-core/react`,
+  `@axe-core/vue`, `axe-playwright`, or `jest-axe`); zero violations
+  allowed before merge
+- **Lighthouse** — accessibility score ≥ 90 on all key pages; run in CI
+  via `lighthouse-ci`
+- **Linter a11y plugin** — catches missing `alt`, incorrect ARIA roles, and
+  missing form labels at write time; use the plugin for your framework
+  (`eslint-plugin-jsx-a11y` for React, `eslint-plugin-vuejs-accessibility`
+  for Vue; Svelte has built-in a11y warnings)
+
+### Manual (run before shipping new interactive components)
+
+- **Keyboard-only navigation** — tab through the entire feature; every
+  action reachable without a mouse; focus order is logical; no focus traps
+  except intentional modal dialogs
+- **Screen reader** — test with at least one: NVDA + Chrome (Windows),
+  VoiceOver + Safari (macOS / iOS), or TalkBack (Android); verify that
+  all content and state changes are announced correctly
+- **Zoom to 200%** — no content clipped or overlapping at double zoom;
+  horizontal scroll must not appear on a 1280px viewport
+- **High contrast mode** — verify in Windows High Contrast or forced-colors
+  CSS media query; no information lost when colours are overridden
+
+### Criteria for done
+
+A feature is not complete until:
+
+- [ ] `axe-core` reports zero violations in component tests
+- [ ] Lighthouse accessibility score ≥ 90
+- [ ] Keyboard navigation verified manually
+- [ ] Screen reader walkthrough completed for new interactive elements
+
+## Sortable tables
+
+- Boolean columns SHOULD sort descending (true first) on first click ���
+  users click a boolean column to find items that have a feature, not
+  items that lack it; ascending puts `false` first, which looks
+  identical to unsorted and appears broken
+
+## Responsive breakpoints
+
+- Tablet: max-width 1024px
+- Mobile: max-width 768px
+- Small mobile: max-width 480px
+
+## Design system
+
+- Use a design system if one exists for the project — never design ad-hoc
+  components that duplicate established patterns
+- Design tokens (colours, spacing, typography, radii) MUST come from the
+  design system — never hardcode visual values
+- Component-driven development: build UI as a hierarchy of reusable,
+  self-contained components; avoid monolithic views
+- New components SHOULD be documented with usage examples before shipping
+
+## Graded variant bake-off
+[ID: frontend-ux-bakeoff]
+
+When several UX approaches are plausible, do not pick by fiat:
+
+1. Build N minimal variants (e.g. three editor designs).
+2. Grade each on weighted criteria — at least implementation effort and
+   UX quality — by exercising them on a dev server, not on paper.
+3. Pick the best score-per-effort; record the runners-up and why they
+   lost, so the discarded variants document the design space.
+
+## Browser support
+
+[ID: frontend-ux-browsers]
+
+- Default target: last 2 versions of Chrome, Firefox, Safari, and Edge
+- Progressive enhancement: graceful degradation for unsupported features
+
+
+<!-- templates/frontend/quality.md -->
+# Frontend — Quality Attributes
+
+[ID: frontend-quality]
+[DEPENDS ON: templates/base/core/quality.md]
+
+## Patterns
+
+- Use error boundary, skeleton loading, optimistic update, virtual
+  scroll, debounced search, form validation, responsive switch, and
+  URL state sync patterns where appropriate
+
+## Design patterns
+
+Prefer these patterns for frontend concerns:
+
+- **Container / Presentational** — separate data-fetching and state logic
+  (container) from rendering (presentational); presentational components
+  receive only props, have no side effects, and are easy to test in isolation
+- **Custom Hook** — extract reusable stateful logic into a named hook
+  (`use[Name]`); hooks are the frontend equivalent of a service or strategy
+- **Compound Component** — expose a set of related sub-components that share
+  implicit state via context (e.g. `<Tabs>`, `<Tab>`, `<TabPanel>`);
+  prefer over deeply nested prop drilling
+- **Render Props / Slot** — pass render logic as a prop or slot to invert
+  control over what is rendered; use sparingly — prefer custom hooks where possible
+- **Observer** — subscribe to external state changes (store, event bus,
+  WebSocket) via a single subscription point; unsubscribe on component unmount
+- **Facade** — wrap third-party libraries (analytics, maps, payment SDKs)
+  behind a thin project-owned interface; never scatter SDK calls across components
+- **Optimistic Update** — apply the expected result of a mutation immediately
+  in the UI and roll back on failure; document the rollback path
+
+Avoid:
+
+- **Mediator / Event Bus** between components — use shared state or lifting
+  state up instead; an event bus between components creates invisible coupling
+
+## State management
+
+Choose the right tool for the scope of the state — do not use a global store
+for state that is local to a component or a server cache for state that is
+never fetched from a server.
+
+| State type          | Scope                | When to use                                       |
+| ------------------- | -------------------- | ------------------------------------------------- |
+| **Local UI state**  | Single component     | Form inputs, toggles, counters                    |
+| **Shared UI state** | Multiple components  | Auth session, sidebar state, active filters       |
+| **Server state**    | Cached from API      | Lists, detail views, paginated results            |
+| **Form state**      | Form lifecycle       | Validation, field arrays, multi-step flows        |
+| **URL state**       | URL search params    | Bookmarkable filters, pagination, selected tab    |
+
+Rules:
+
+- Never duplicate server state in a global store — use a dedicated server
+  cache; the store holds only client-owned state
+- Never put derived state in the store — compute it from existing state
+- Prefer URL state for anything the user should be able to bookmark or share
+- Keep global store slices small and focused — one slice per domain concern,
+  not one slice for everything
+
+## Linting and formatting
+
+- A linter MUST be configured for all JS/TS code
+- Linter and formatter SHOULD run on save in the IDE — never rely on CI
+  alone to catch style issues
+- No warnings or errors MUST appear in the browser console or test output
+  before a PR is merged — start every review on a clean slate
+- Lint error count SHOULD go down over time — never increase it
+
+## CSS
+
+- No inline styles except for dynamic/computed values
+- No hardcoded colour or spacing values — always use CSS custom properties
+  from `:root` or design tokens
+- Consistent naming convention (e.g. BEM-like `.component-element`)
+- Maximum line length: 80 characters (exempt: prose strings, third-party URLs)
+
+## Performance
+
+- Preload critical above-the-fold assets
+- Keep client-side JS minimal — every dependency adds to bundle size
+- Avoid unnecessary dependencies
+- Defer non-critical scripts
+- Monitor Core Web Vitals (LCP, CLS, INP) — treat regressions as bugs
+
+## SEO & analytics (if applicable)
+
+- `robots.txt`, Open Graph, and Twitter Card meta tags required for
+  server-rendered and static pages
+- Canonical URLs required for publicly indexed pages
+- MUST pick a trailing slash convention (with or without) and enforce it
+  across all internal links, canonical URLs, and sitemap entries — redirect
+  chains waste crawl budget, split link equity, and can prevent indexing
+- Verify the chosen convention matches the hosting platform's behavior
+- Privacy-friendly analytics only — no consent banner required
+- No third-party tracking scripts without explicit user consent
+- If `og:image` is present, `twitter:image` MUST also be present —
+  Twitter/X does not reliably fall back to `og:image`. Include
+  `og:image:width`/`og:image:height` (recommended 1200×630) to avoid
+  render delays on social platforms
+- H1 keywords SHOULD appear in the page body — search and answer engines
+  use heading/body coherence as a relevance signal; H1 SHOULD be unique
+  per page and reflect its content
+- Provide a complete favicon set: an SVG favicon
+  (`<link rel="icon" type="image/svg+xml">`) and a 180×180
+  `apple-touch-icon` for iOS home-screen bookmarks
+- Answer engines retrieve passages, not whole pages — lead each section
+  with a direct answer and keep paragraphs self-contained
+- Measure answer-engine (AEO) visibility as citation frequency across a
+  fixed prompt set over time, not as a single rank — generative output is
+  non-deterministic
+
+## Structured data (if applicable)
+
+- Schema `@type` MUST match the page's actual role — do not use
+  `Product` + `Offer` on informational pages that do not sell anything
+- Fields MUST NOT imply capabilities the site lacks (e.g. `availability`
+  implies commerce, `priceValidUntil` implies a store)
+- Review schema choice when site role differs from template examples —
+  e-commerce examples applied to editorial sites produce misleading markup
+- `FAQPage` markup SHOULD NOT be expected to render a Google rich result
+  (gov/health only since 2023) — it still aids machine parsing for answer
+  engines
+
+
 <!-- templates/frontend/static-site.md -->
 # Frontend — Static Site
 [ID: frontend-static-site]

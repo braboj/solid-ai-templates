@@ -99,6 +99,21 @@ def _parse_manifest(text):
                 list_key = None
             continue
 
+        # bracketed continuation after an empty "key:" line:
+        #   depends_on:
+        #     [a, b, c]
+        if (
+            list_key
+            and stripped.startswith("[")
+            and stripped.endswith("]")
+        ):
+            inner = stripped[1:-1]
+            current_entry[list_key] = [
+                v.strip() for v in inner.split(",") if v.strip()
+            ]
+            list_key = None
+            continue
+
         if stripped.startswith("- ") and list_key:
             current_entry[list_key].append(stripped[2:].strip())
             continue
