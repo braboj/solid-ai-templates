@@ -157,7 +157,8 @@ base/ ──┬── frontend/ ──┐
    `depends_on`, `description`, `label`, and `layer` fields
 5. Run `py tools/sync.py` — updates SPEC.md, README.md, INTERVIEW.md
 6. Add an example in `examples/<name>/CLAUDE.md` if the stack is
-   concrete
+   concrete — generate it via the pipeline per ADR-016 (see PLAYBOOK
+   "Regenerate an example"); never hand-write it
 
 ### 2.6 Adding a new base or layer template
 

@@ -1,11 +1,31 @@
 # Starfield Blog
 
+Personal blog about astronomy and astrophotography. Static site with
+content collections and zero client-side JS.
+
+> Generation inputs (per ADR-016 — examples are agent-generated
+> outputs of the documented pipeline):
+>
+> - Stack source: `stack/static-site-astro.md`
+> - Resolved chain: `generated/stack-astro.md` (base + frontend +
+>   static-site-astro)
+> - Output format: `base/core/agents.md` (hybrid model)
+> - Project brief: Starfield Blog — Alex Rivera — astronomy /
+>   astrophotography blog — TypeScript strict / Astro 4 (static) /
+>   Content Collections / plain CSS — npm, Prettier, ESLint, astro
+>   check — GitHub Pages via GitHub Actions
+
+Quality conventions defined in `docs/solid-ai-templates/` (submodule).
+Project-specific overrides and additions follow below.
+
 > **MANDATORY STARTUP — DO THIS BEFORE YOUR FIRST RESPONSE**
 >
-> You MUST read every file listed below IN FULL using the Read tool before
-> you respond to the user's first message. No exceptions. Do not summarize,
-> skip, or defer. These files contain binding conventions that this CLAUDE.md
-> inherits. If you respond without reading them, you are violating project rules.
+> This file is hybrid: the damage-prone rules (git, TypeScript safety,
+> content, session protocol) are inlined below, but the full quality
+> framework lives in the referenced templates. You MUST read every file
+> listed below IN FULL using the Read tool before you respond to the
+> user's first message. No exceptions. Do not summarize, skip, or defer.
+> If you respond without reading them, you are violating project rules.
 >
 > 1. `docs/solid-ai-templates/base/quality.md`
 > 2. `docs/solid-ai-templates/base/typescript.md`
@@ -20,35 +40,25 @@
 > 11. `docs/solid-ai-templates/frontend/static-site.md`
 > 12. `docs/solid-ai-templates/stack/static-site-astro.md`
 
-Personal blog about astronomy and astrophotography. Static site with
-content collections and zero client-side JS.
-
-- Model: hybrid
-
-Quality conventions defined in `docs/solid-ai-templates/` (submodule).
-Project-specific overrides and additions follow below.
-
 
 ## 1. Project
 
 ### 1.1 Identity
 
+- **Model**: hybrid
 - **Name**: starfield-blog
 - **Owner**: Alex Rivera
 - **Repo**: github.com/arivera/starfield-blog
 - **URL**: starfield.blog
 - **Deployment**: GitHub Pages via GitHub Actions
+- **Language**: TypeScript (strict mode)
+- **Framework**: Astro 4 (output: static)
+- **Content**: Astro Content Collections (Markdown + frontmatter)
+- **CSS**: plain CSS with custom properties
+- **Package manager**: npm
+- **Formatter**: Prettier with `prettier-plugin-astro`
 
-### 1.2 Stack
-
-- Language: TypeScript (strict mode)
-- Framework: Astro 4 (output: static)
-- Content: Astro Content Collections (Markdown + frontmatter)
-- CSS: plain CSS with custom properties
-- Package manager: npm
-- Formatter: Prettier with `prettier-plugin-astro`
-
-### 1.3 Project structure
+### 1.2 Project structure
 
 ```
 src/
@@ -71,7 +81,7 @@ public/
 
 ### 1.3 Commands
 
-```
+```bash
 npm run dev       # develop at localhost:4321
 npm run build     # production build to dist/
 npm run preview   # preview production build
@@ -87,22 +97,31 @@ npm run check     # astro check
 - Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`
 - Always branch — never commit directly to `main`
 - Branch naming: `feat/description`, `fix/description`
+- PRs are small and focused — one concern per PR
+- Never force-push a branch, including with `--force-with-lease`
+- After a PR is merged, delete the branch and pull `main` before new work
+- Do not commit `dist/`, `node_modules/`, or `.env`
 
 ### 2.2 TypeScript
 
 - `strict: true` — no exceptions
 - No `any` — use `unknown` and narrow
 - No enums — use `as const` objects or string literal unions
+- Type all content-collection schemas in `src/content/config.ts`
 
 ### 2.3 Content rules
 
 - One Markdown file per post in `src/content/posts/`
 - Frontmatter must include: title, date, tags, description
 - Image alt text is required — no decorative images without `alt=""`
-- No inline HTML in Markdown posts
+- No inline HTML in Markdown posts — no `set:html` on untrusted input
 
 
 ## 3. Quality
+
+Reference `frontend/quality.md`, `frontend/ux.md`, and
+`frontend/static-site.md` for accessibility, performance, and the
+static-site quality framework. Inline only the SEO targets below.
 
 ### 3.1 SEO
 
@@ -116,27 +135,25 @@ npm run check     # astro check
 
 ### 4.1 Design
 
-- Dark background with deep blue accent
-- Minimal layout — content-first
+- Dark background with deep blue accent — evokes the night sky
+- Minimal, content-first layout — the photograph is the focal point
 - No stock photography — only original astrophotos
+- Generous whitespace; typographic hierarchy over decoration
+- Respect `prefers-reduced-motion` — no autoplay or parallax
 
 ### 4.2 Brand voice
 
-- Educational and enthusiastic
-- Technical but accessible to hobbyists
+- Educational and enthusiastic — share the wonder, explain the science
+- Technical but accessible to hobbyists — define jargon on first use
 - First person, conversational tone
+- Cite gear, settings, and capture conditions for each astrophoto
 
 
 ## 5. Review process
 
-### 5.1 Code review
-
-Follow `base/review.md` priority order. Apply `base/quality.md` and
-`base/typescript.md` as the standard.
-
-### 5.2 Structure audit
-
-Verify MUSTs from `base/docs.md`, `base/readme.md`, `base/git.md`,
+Follow `base/review.md` priority order. Apply `base/quality.md`,
+`base/typescript.md`, and `frontend/quality.md` as the standard. Verify
+MUSTs from `base/docs.md`, `base/readme.md`, `base/git.md`,
 `frontend/static-site.md`, and `stack/static-site-astro.md`.
 
 
@@ -146,14 +163,34 @@ Follow `base/scope.md` for the scope guard and end-of-session audit.
 
 ### 6.1 Start of session
 
-Read `base/scope.md` (Session startup) and the mandatory startup block.
+Read `base/scope.md` (Session startup) and the mandatory startup block
+above. Confirm the scope with the user before making changes.
 
 ### 6.2 During the session
 
 Follow `base/scope.md` (During work) — stay within the agreed scope.
+Run `npm run check` and `npm run lint` after any change; do not
+accumulate unverified changes.
 
 ### 6.3 End of session
 
 On "wrap up" / "close out", read `base/scope.md` (End of session audit)
 and execute each item sequentially; do not summarize or skip. Print the
-checklist and mark each item done before moving to the next.
+checklist and mark each item done (with result) before moving to the
+next. At minimum, confirm in order:
+
+1. Commits and push — all changes committed and pushed (via PR if
+   branch-protected)
+2. Close issues — close completed issues; verify auto-close worked
+3. Dev journal — add a session entry to `docs/dev-journal.md` (date,
+   tool, key changes, PRs merged, issues closed/created)
+4. ADRs — record any architectural decisions in `docs/decisions/`
+5. CLAUDE.md — for each new convention, decide whether it belongs here
+   (a rule the agent MUST apply every turn) or in another doc
+6. README.md / docs — for each new command, dependency, or content
+   rule, confirm it is reflected; name the section
+7. Build and checks — run `npm run check` and `npm run build` and
+   confirm both pass
+8. Flag gaps — report any item that cannot be completed as pending,
+   never as done, before closing
+9. Summary — summarize what was done and what is next
