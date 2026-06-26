@@ -1079,6 +1079,54 @@ def check_sys_05():
 
 
 # ---------------------------------------------------------------------------
+# SYS-06 — every usable stack's resolved chain carries the MUST sections
+# ---------------------------------------------------------------------------
+# ADR-017 defines the canonical stack-template section structure. The MUST
+# tier — Stack, Commands, Project structure — is the stack-unique
+# contribution the core tier cannot supply. Membership is judged on the
+# resolved chain, so a derived stack may inherit a MUST section from its
+# parent. Pure-library stacks (manifest layer: library) prescribe no
+# directory tree and are exempt from Project structure.
+
+_MUST_SECTIONS = ("Stack", "Commands", "Project structure")
+
+
+def check_sys_06():
+    if not HAS_YAML:
+        return ["  PyYAML not installed — run: pip install pyyaml"]
+
+    core_ids, entries, _ = _load_manifest()
+    failures = []
+
+    stacks = [e for e in entries.values()
+              if e["file"].startswith("templates/stack/")]
+
+    for stack in sorted(stacks, key=lambda e: e["id"]):
+        sid = stack["id"]
+        is_lib = stack.get("layer") == "library"
+        files, _ = _resolve_stack(sid, core_ids, entries)
+
+        blob = "\n".join(
+            read(os.path.join(ROOT, f))
+            for f in files
+            if os.path.isfile(os.path.join(ROOT, f))
+        )
+
+        for section in _MUST_SECTIONS:
+            if section == "Project structure" and is_lib:
+                continue
+            heading = re.compile(
+                r"^##\s+" + re.escape(section) + r"\s*$", re.MULTILINE)
+            if not heading.search(blob):
+                failures.append(
+                    f"  {sid}: resolved chain missing MUST section "
+                    f"'## {section}' (ADR-017)"
+                )
+
+    return failures
+
+
+# ---------------------------------------------------------------------------
 # Test registry
 # ---------------------------------------------------------------------------
 
@@ -1113,6 +1161,8 @@ CHECKS = [
      "title": "DEPENDS ON headers match manifest depends_on", "fn": check_sys_04},
     {"id": "SYS-05", "spec": "SAIT-SMK-SYS-05-001A",
      "title": "End-of-session audit inlined verbatim or hard-delegated", "fn": check_sys_05},
+    {"id": "SYS-06", "spec": "SAIT-SMK-SYS-06-001A",
+     "title": "Every usable stack's chain carries the MUST sections", "fn": check_sys_06},
     {"id": "TPL-08", "spec": "SAIT-SMK-TPL-08-001A",
      "title": "Every base template has at least one [ID:] tag", "fn": check_tpl_08},
     {"id": "TPL-09", "spec": "SAIT-SMK-TPL-09-001A",
