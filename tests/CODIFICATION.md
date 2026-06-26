@@ -102,19 +102,19 @@ reused for a different component within the same area.
 | `02` | Go Echo — go-echo stack interview flow |
 | `03` | Django — python-django stack interview flow |
 | `04` | Express — node-express stack interview flow |
-| `05` | React SPA — spa-react stack interview flow |
-| `06` | Next.js — full-nextjs stack interview flow |
+| `05` | — retired (spa-react stack removed, v2.26) |
+| `06` | — retired (full-nextjs stack removed, v2.26) |
 | `07` | Astro — static-site-astro stack interview flow |
 | `08` | Go gRPC — go-grpc stack interview flow |
-| `09` | Flutter — mobile-flutter stack interview flow |
+| `09` | — retired (mobile-flutter stack removed, v2.26) |
 | `10` | Go lib — go-lib stack interview flow |
 | `11` | Flask — python-flask stack interview flow |
 | `12` | Python service — python-service base stack |
 | `13` | Python gRPC — python-grpc stack interview flow |
-| `14` | Celery worker — python-celery-worker stack |
+| `14` | — retired (python-celery-worker stack removed, v2.26) |
 | `15` | Python lib — python-lib stack interview flow |
 | `16` | Go service — go-service base stack |
-| `17` | Hugo — static-site-hugo stack interview flow |
+| `17` | — retired (static-site-hugo stack removed, v2.26) |
 | `18` | Node.js lib — nodejs-lib stack interview flow |
 | `19` | — retired (rust-lib stack removed, v2.25) |
 | `20` | HTMX — htmx stack interview flow |

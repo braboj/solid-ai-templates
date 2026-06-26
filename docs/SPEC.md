@@ -122,8 +122,6 @@ stack/
 ├── htmx.md                     # HTMX 2.x, Alpine.js, SSE, OOB swaps, partial responses
 ├── static-site-astro.md        # Islands architecture, client directives, content collections
 ├── static-site-tutorial.md     # Multi-chapter tutorial, diagrams, CC BY-NC-SA
-├── spa-react.md                # Client-side app, TypeScript, RTL, a11y
-├── full-nextjs.md              # App Router, Server/Client Components, API routes
 ├── python-lib.md               # Installable package or CLI tool, mypy, ruff, pytest
 ├── python-service.md           # Generic Python web service, SQLAlchemy, Alembic
 ├── python-flask.md             # Sync REST API, factory pattern, blueprints
@@ -132,17 +130,10 @@ stack/
 ├── go-lib.md                   # Importable library or CLI binary
 ├── go-service.md               # Generic Go HTTP service, chi, structured logging
 ├── go-echo.md                  # REST API, Echo v4, middleware, validation
-├── spa-vue.md                  # Client-side app, Composition API, Pinia, Vitest
-├── spa-svelte.md               # Client-side app, Svelte 5 runes, Vitest
-├── full-sveltekit.md           # File-based routing, form actions, SSR
-├── static-site-hugo.md         # Go templates, archetypes, content structure
 ├── node-express.md             # Minimal REST API, Zod validation, Supertest
 ├── node-nestjs.md              # Modules, controllers, providers, guards, pipes, DI
-├── python-celery-worker.md     # Background tasks, retry/backoff, Beat scheduling
 ├── go-grpc.md                  # gRPC service, bufconn, errgroup
 ├── python-grpc.md              # gRPC service, grpcio-aio, proto design
-├── mobile-react-native.md      # iOS/Android, Expo, file-based routing, Maestro
-├── mobile-flutter.md           # iOS/Android, Riverpod, go_router, freezed
 ├── nodejs-lib.md               # TypeScript npm package or CLI, tsup, Vitest
 └── c-embedded.md               # GCC + CMake, Unity tests, HAL, binary + .a
 ```

@@ -122,16 +122,6 @@ frontend:
     depends_on:
       [base-git, base-docs, base-quality, base-security, frontend-ux, frontend-quality]
 
-mobile:
-  - id: mobile-auth
-    file: templates/mobile/auth.md
-    description: Token storage, refresh interceptors, biometric unlock
-    depends_on: [base-security]
-  - id: mobile-ux
-    file: templates/mobile/ux.md
-    description: Mobile accessibility, touch targets, screen readers
-    depends_on: [base-quality]
-
 backend:
   - id: base-config
     file: templates/base/core/config.md
@@ -228,43 +218,6 @@ stacks:
       - stack-astro
       - base-issues
       - base-scope
-
-  - id: stack-react-spa
-    file: templates/stack/spa-react.md
-    label: React SPA
-    layer: frontend
-    description: Client-side app, TypeScript, RTL, a11y
-    depends_on:
-      - base-git
-      - base-docs
-      - base-quality
-      - base-oop
-      - base-typescript
-      - base-security
-      - frontend-ux
-      - frontend-quality
-
-  - id: stack-nextjs
-    file: templates/stack/full-nextjs.md
-    label: Next.js (full-stack)
-    layer: full-stack
-    description: App Router, Server/Client Components, API routes
-    depends_on:
-      - base-git
-      - base-docs
-      - base-quality
-      - base-typescript
-      - frontend-ux
-      - frontend-quality
-      - stack-react-spa
-      - base-config
-      - backend-http
-      - backend-api
-      - backend-auth
-      - backend-database
-      - backend-observability
-      - base-cicd
-      - base-devsecops
 
   - id: stack-python-lib
     file: templates/stack/python-lib.md
@@ -364,63 +317,6 @@ stacks:
     depends_on:
       - stack-go-service
 
-  - id: stack-vue
-    file: templates/stack/spa-vue.md
-    label: Vue SPA
-    layer: frontend
-    description: Client-side app, Composition API, Pinia, Vitest
-    depends_on:
-      - base-git
-      - base-docs
-      - base-quality
-      - base-oop
-      - base-typescript
-      - base-security
-      - frontend-ux
-      - frontend-quality
-
-  - id: stack-svelte
-    file: templates/stack/spa-svelte.md
-    label: Svelte SPA
-    layer: frontend
-    description: Client-side app, Svelte 5 runes, Vitest
-    depends_on:
-      - base-git
-      - base-docs
-      - base-quality
-      - base-oop
-      - base-typescript
-      - base-security
-      - frontend-ux
-      - frontend-quality
-
-  - id: stack-sveltekit
-    file: templates/stack/full-sveltekit.md
-    label: SvelteKit (full-stack)
-    layer: full-stack
-    description: File-based routing, form actions, SSR
-    depends_on:
-      - base-git
-      - base-docs
-      - base-quality
-      - base-typescript
-      - frontend-ux
-      - frontend-quality
-      - stack-svelte
-      - base-config
-      - backend-http
-      - backend-auth
-      - base-cicd
-      - base-devsecops
-
-  - id: stack-hugo
-    file: templates/stack/static-site-hugo.md
-    label: Hugo (static site)
-    layer: static
-    description: Go templates, archetypes, content structure
-    depends_on:
-      - frontend-static-site
-
   - id: stack-express
     file: templates/stack/node-express.md
     label: Node.js + Express
@@ -465,23 +361,6 @@ stacks:
       - base-cicd
       - base-devsecops
 
-  - id: stack-celery-worker
-    file: templates/stack/python-celery-worker.md
-    label: Python + Celery
-    layer: backend
-    description: Background tasks, retry/backoff, Beat scheduling
-    depends_on:
-      - base-git
-      - base-docs
-      - base-quality
-      - base-config
-      - backend-jobs
-      - backend-observability
-      - backend-quality
-      - base-cicd
-      - base-devsecops
-      - stack-python-lib
-
   - id: stack-grpc-go
     file: templates/stack/go-grpc.md
     label: Go + gRPC
@@ -510,31 +389,6 @@ stacks:
       - stack-python-lib
       - base-cicd
       - base-devsecops
-
-  - id: stack-react-native
-    file: templates/stack/mobile-react-native.md
-    label: React Native (mobile)
-    layer: mobile
-    description: iOS/Android, Expo, file-based routing, Maestro
-    depends_on:
-      - base-git
-      - base-docs
-      - base-quality
-      - base-typescript
-      - mobile-auth
-      - mobile-ux
-
-  - id: stack-flutter
-    file: templates/stack/mobile-flutter.md
-    label: Flutter (mobile)
-    layer: mobile
-    description: iOS/Android, Riverpod, go_router, freezed
-    depends_on:
-      - base-git
-      - base-docs
-      - base-quality
-      - mobile-auth
-      - mobile-ux
 
   - id: stack-nodejs-lib
     file: templates/stack/nodejs-lib.md

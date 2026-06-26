@@ -41,19 +41,14 @@ Spec files live in `tests/specs/`. See `CODIFICATION.md` for the ID scheme, area
 | `SAIT-E2E-FMT-05-001A` | E2E | P1 | Full interview → generic AI_CONTEXT.md output format |
 | `SAIT-E2E-STK-03-001A` | E2E | P1 | Full interview → CLAUDE.md for a Django project |
 | `SAIT-E2E-STK-04-001A` | E2E | P1 | Full interview → CLAUDE.md for a Node Express project |
-| `SAIT-E2E-STK-05-001A` | E2E | P1 | Full interview → CLAUDE.md for a React SPA project |
-| `SAIT-E2E-STK-06-001A` | E2E | P1 | Full interview → CLAUDE.md for a Next.js project |
 | `SAIT-E2E-STK-07-001A` | E2E | P1 | Full interview → CLAUDE.md for an Astro static site project |
 | `SAIT-E2E-STK-08-001A` | E2E | P1 | Full interview → CLAUDE.md for a Go gRPC service |
-| `SAIT-E2E-STK-09-001A` | E2E | P1 | Full interview → CLAUDE.md for a Flutter mobile project |
 | `SAIT-E2E-STK-10-001A` | E2E | P1 | Full interview → CLAUDE.md for a Go library project |
 | `SAIT-E2E-STK-11-001A` | E2E | P1 | Full interview → CLAUDE.md for a Flask project |
 | `SAIT-E2E-STK-12-001A` | E2E | P2 | Full interview → CLAUDE.md for a generic Python service |
 | `SAIT-E2E-STK-13-001A` | E2E | P1 | Full interview → CLAUDE.md for a Python gRPC service |
-| `SAIT-E2E-STK-14-001A` | E2E | P1 | Full interview → CLAUDE.md for a Python Celery worker |
 | `SAIT-E2E-STK-15-001A` | E2E | P1 | Full interview → CLAUDE.md for a Python library project |
 | `SAIT-E2E-STK-16-001A` | E2E | P2 | Full interview → CLAUDE.md for a generic Go service |
-| `SAIT-E2E-STK-17-001A` | E2E | P1 | Full interview → CLAUDE.md for a Hugo static site project |
 | `SAIT-E2E-STK-18-001A` | E2E | P1 | Full interview → CLAUDE.md for a Node.js library project |
 | `SAIT-E2E-STK-20-001A` | E2E | P1 | Full interview → CLAUDE.md for an HTMX project |
 | `SAIT-E2E-DPL-01-001A` | E2E | P1 | Cloud deployment target produces correct deployment rules |

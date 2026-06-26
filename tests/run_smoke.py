@@ -116,7 +116,6 @@ TEMPLATE_DIRS = [
     os.path.join("templates", "base", "data"),
     os.path.join("templates", "backend"),
     os.path.join("templates", "frontend"),
-    os.path.join("templates", "mobile"),
     os.path.join("templates", "stack"),
 ]
 

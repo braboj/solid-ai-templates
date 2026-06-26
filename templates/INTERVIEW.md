@@ -136,8 +136,6 @@ required structures in `templates/base/core/docs.md`.
 | HTMX + server rendering | `templates/stack/htmx.md` | HTMX 2.x, Alpine.js, SSE, OOB swaps, partial responses |
 | Astro (static site) | `templates/stack/static-site-astro.md` | Islands architecture, client directives, content collections |
 | Astro tutorial site | `templates/stack/static-site-tutorial.md` | Multi-chapter tutorial, diagrams, CC BY-NC-SA |
-| React SPA | `templates/stack/spa-react.md` | Client-side app, TypeScript, RTL, a11y |
-| Next.js (full-stack) | `templates/stack/full-nextjs.md` | App Router, Server/Client Components, API routes |
 | Python library / CLI | `templates/stack/python-lib.md` | Installable package or CLI tool, mypy, ruff, pytest |
 | Python service (no framework) | `templates/stack/python-service.md` | Generic Python web service, SQLAlchemy, Alembic |
 | Python + Flask | `templates/stack/python-flask.md` | Sync REST API, factory pattern, blueprints |
@@ -146,17 +144,10 @@ required structures in `templates/base/core/docs.md`.
 | Go library / CLI | `templates/stack/go-lib.md` | Importable library or CLI binary |
 | Go service / API | `templates/stack/go-service.md` | Generic Go HTTP service, chi, structured logging |
 | Go + Echo | `templates/stack/go-echo.md` | REST API, Echo v4, middleware, validation |
-| Vue SPA | `templates/stack/spa-vue.md` | Client-side app, Composition API, Pinia, Vitest |
-| Svelte SPA | `templates/stack/spa-svelte.md` | Client-side app, Svelte 5 runes, Vitest |
-| SvelteKit (full-stack) | `templates/stack/full-sveltekit.md` | File-based routing, form actions, SSR |
-| Hugo (static site) | `templates/stack/static-site-hugo.md` | Go templates, archetypes, content structure |
 | Node.js + Express | `templates/stack/node-express.md` | Minimal REST API, Zod validation, Supertest |
 | Node.js + NestJS | `templates/stack/node-nestjs.md` | Modules, controllers, providers, guards, pipes, DI |
-| Python + Celery | `templates/stack/python-celery-worker.md` | Background tasks, retry/backoff, Beat scheduling |
 | Go + gRPC | `templates/stack/go-grpc.md` | gRPC service, bufconn, errgroup |
 | Python + gRPC | `templates/stack/python-grpc.md` | gRPC service, grpcio-aio, proto design |
-| React Native (mobile) | `templates/stack/mobile-react-native.md` | iOS/Android, Expo, file-based routing, Maestro |
-| Flutter (mobile) | `templates/stack/mobile-flutter.md` | iOS/Android, Riverpod, go_router, freezed |
 | Node.js library / CLI | `templates/stack/nodejs-lib.md` | TypeScript npm package or CLI, tsup, Vitest |
 | Embedded C (bare metal) | `templates/stack/c-embedded.md` | GCC + CMake, Unity tests, HAL, binary + .a |
 <!-- /generated:interview-stacks -->

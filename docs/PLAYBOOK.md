@@ -275,7 +275,7 @@ hand.
 3. Update all affected documents (`SPEC.md`, `README.md`, `manifest.yaml`) before committing
 4. Commit with a conventional message:
    ```
-   feat(stack): add python-celery-worker template
+   feat(stack): add go-echo template
    docs(spec): update backend layer listing
    ```
 5. Push and open a PR — one concern per PR

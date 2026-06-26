@@ -133,8 +133,6 @@ latest rules.
 | `templates/stack/htmx.md` | hypermedia | HTMX 2.x, Alpine.js, SSE, OOB swaps, partial responses |
 | `templates/stack/static-site-astro.md` | static | Islands architecture, client directives, content collections |
 | `templates/stack/static-site-tutorial.md` | static | Multi-chapter tutorial, diagrams, CC BY-NC-SA |
-| `templates/stack/spa-react.md` | frontend | Client-side app, TypeScript, RTL, a11y |
-| `templates/stack/full-nextjs.md` | full-stack | App Router, Server/Client Components, API routes |
 | `templates/stack/python-lib.md` | library | Installable package or CLI tool, mypy, ruff, pytest |
 | `templates/stack/python-service.md` | abstract | Generic Python web service, SQLAlchemy, Alembic |
 | `templates/stack/python-flask.md` | backend | Sync REST API, factory pattern, blueprints |
@@ -143,17 +141,10 @@ latest rules.
 | `templates/stack/go-lib.md` | library | Importable library or CLI binary |
 | `templates/stack/go-service.md` | abstract | Generic Go HTTP service, chi, structured logging |
 | `templates/stack/go-echo.md` | backend | REST API, Echo v4, middleware, validation |
-| `templates/stack/spa-vue.md` | frontend | Client-side app, Composition API, Pinia, Vitest |
-| `templates/stack/spa-svelte.md` | frontend | Client-side app, Svelte 5 runes, Vitest |
-| `templates/stack/full-sveltekit.md` | full-stack | File-based routing, form actions, SSR |
-| `templates/stack/static-site-hugo.md` | static | Go templates, archetypes, content structure |
 | `templates/stack/node-express.md` | backend | Minimal REST API, Zod validation, Supertest |
 | `templates/stack/node-nestjs.md` | backend | Modules, controllers, providers, guards, pipes, DI |
-| `templates/stack/python-celery-worker.md` | backend | Background tasks, retry/backoff, Beat scheduling |
 | `templates/stack/go-grpc.md` | backend | gRPC service, bufconn, errgroup |
 | `templates/stack/python-grpc.md` | backend | gRPC service, grpcio-aio, proto design |
-| `templates/stack/mobile-react-native.md` | mobile | iOS/Android, Expo, file-based routing, Maestro |
-| `templates/stack/mobile-flutter.md` | mobile | iOS/Android, Riverpod, go_router, freezed |
 | `templates/stack/nodejs-lib.md` | library | TypeScript npm package or CLI, tsup, Vitest |
 | `templates/stack/c-embedded.md` | embedded | GCC + CMake, Unity tests, HAL, binary + .a |
 <!-- /generated:readme-stacks -->
