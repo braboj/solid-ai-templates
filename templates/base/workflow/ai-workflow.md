@@ -296,6 +296,27 @@ art is also data, so document it either way. A five-minute research
 dispatch is trivial against shipping a half-fix that needs later
 amendment.
 
+### Read the prior spike's close-out before re-investigating
+[ID: ai-workflow-prior-spike-closeout]
+
+When a new issue lands in an area a closed spike already explored, read
+that spike's closing PR description and final comment trail BEFORE
+launching any probe or prototype. A prior spike often already measured
+the mechanisms the new issue proposes — rejecting some with data, or
+spinning the one viable path into a still-open follow-up — which can
+make the new issue a duplicate. Re-running the prior probe only
+rediscovers what the close-out already records.
+
+- MUST: before investigating an issue in an area with a closed prior
+  spike, read that spike's closing PR plus its last comment trail first.
+- SHOULD: link the new issue to the prior spike's findings in its body
+  before any code work starts; if those findings already cover it, close
+  it as a duplicate instead of re-probing.
+
+This is the internal counterpart to surveying external prior art, and a
+sibling of reading in-source audit comments: each keeps the agent from
+re-deriving a result the project already paid for.
+
 ### Triage prototype cost before building
 [ID: ai-workflow-prototype-cost]
 
