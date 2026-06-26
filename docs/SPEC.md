@@ -224,8 +224,11 @@ They are not referenced in any stack's `depends_on` chain — users
 opt in via the `Extras` field in the declaration block or during the
 interview.
 
-Orthogonal templates include platform choices (github, gitlab) and
-workflow preferences (360, ai-workflow, review, release, deployment).
+Orthogonal templates include platform choices (github, gitlab),
+workflow preferences (360, ai-workflow, review, release, deployment),
+and the advanced data templates (data-governance, data-migration) —
+opt-in extras no stack pulls automatically (`data-quality` is the only
+data module reached by a chain, via python-service).
 
 Orthogonal templates are NOT expected to appear in stack resolution
 and are excluded from reachability checks.
