@@ -30,6 +30,7 @@ Spec files live in `tests/specs/`. See `CODIFICATION.md` for the ID scheme, area
 | `SAIT-INT-MNF-02-001A` | INT | P0 | All stacks resolve to valid, non-empty file lists |
 | `SAIT-INT-MNF-03-001A` | INT | P0 | All resolved chains include core tier files |
 | `SAIT-INT-MNF-04-001A` | INT | P1 | Prompt builds for all stacks |
+| `SAIT-INT-MNF-05-001A` | INT | P0 | resolve.py resolution matches the PyYAML resolution |
 | `SAIT-INT-ITV-01-001A` | INT | P0 | All REQUIRED interview questions are asked before output is generated |
 | `SAIT-INT-ITV-02-001A` | INT | P1 | DEFAULTED sections are pre-filled from the selected stack template |
 | `SAIT-INT-ITV-03-001A` | INT | P0 | Interview answers override stack and base template rules in the output |
