@@ -2618,6 +2618,12 @@ Each stage MUST fail fast — a failed stage stops the pipeline immediately.
 - Health check endpoint MUST return healthy before traffic is routed to a
   new instance
 - Deploy small and often — large infrequent deployments increase risk
+- Trigger deploys with a post-publish hook — after the artifact is
+  published, the pipeline SHOULD trigger the deploy by sending the
+  artifact's immutable reference (image digest or tag) to the deploy
+  target, never rebuilding in the deploy step. This guarantees the
+  deployed artifact is the exact one that passed the gates (see
+  "Promote the same artifact" under Environment separation)
 
 ## Release record
 
