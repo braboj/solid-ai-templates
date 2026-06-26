@@ -255,8 +255,24 @@ shell access can use them directly.
 
 ## Release a new version
 
-1. Create a release branch: `git checkout -b chore/release-vA.B.C`
-2. Update `docs/dev-journal.md` with a release entry
-3. Commit: `git commit -m "chore: release vA.B.C"`
-4. Push, open PR, merge
-5. Tag on `main`: `git tag vA.B.C && git push origin vA.B.C`
+This repo has no version manifest (plain Markdown), so it follows the
+no-build release variant from ADR-006: tag `main` directly via a GitHub
+Release — there is no `chore: release` branch, commit, or PR.
+
+1. Confirm the milestone's issues are all closed and `main` is green
+   (`py tests/run_smoke.py` passes) and up to date (`git pull`)
+2. Cut the release from `main` with a bare-version title and
+   auto-generated notes:
+   ```bash
+   gh release create vA.B.C --title vA.B.C --generate-notes
+   ```
+   This tags `main` at HEAD and publishes notes built from the PRs
+   merged since the previous tag
+3. Close the `vA.B.C` milestone once the release is published
+4. Add the session's `docs/dev-journal.md` entry **separately** — its
+   own `docs(journal): ...` PR with **no milestone**, not part of the
+   release
+
+Projects with a version manifest (`package.json`, `pyproject.toml`,
+etc.) instead follow the branch → bump → PR → merge → tag flow; see
+ADR-006 and `base/core/git.md`.
