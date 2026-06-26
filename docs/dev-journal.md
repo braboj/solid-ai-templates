@@ -1379,3 +1379,42 @@ v3.0 — Restructure is the clear next milestone.
 
 **Issues closed:** #518, #511, #530, #512, #514, #490, #311. Filed #624 (v3.0 frontend/seo.md consolidation).
 
+## 2026-06-26 — v2.21 Workflow, doc & data lessons + journal-ordering revert
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Triaged the four unmilestoned wuseria S188–189 lessons: created the
+  v2.21 milestone for the three reusable ones (#615, #616, #617); #618
+  (journal-format deviation) parked in v3.0 as the configurable-format
+  question rather than closed.
+- Reverted the dev-journal ordering mandate from newest-first back to
+  chronological (oldest-first) — `docs.md`, the 30 generated chains, and
+  this repo's own 36-entry journal reordered; recorded in ADR-015 (#618
+  ordering half, PR #626). The newest-first flip had been an unexplained
+  side effect of #500 / PR #543.
+- Drained v2.21 in three one-concern PRs: #615 read the prior spike's
+  close-out before re-investigating (`ai-workflow.md`, PR #627); #616 a
+  comment citing an issue inherits its lifecycle (`quality.md` Code
+  style, PR #628); #617 honest absence beats a recovered wrong value
+  (`quality.md` Calibration discipline, PR #629).
+
+**Decision:** ADR-015 settles dev-journal ordering as oldest-first with no
+per-project configurability — a single default keeps generated context
+files uniform. The flip was reverted because it carried no recorded
+rationale and forced long-running downstream journals to either rewrite
+history or carry a standing deviation.
+
+**Lesson:** a convention changed without an ADR is indistinguishable from
+drift — the newest-first flip rode inside an unrelated casing/schema PR
+and could not be defended when challenged. Reversible convention changes
+still need a recorded reason.
+
+**Milestone arc:** v2.21 closes the pre-restructure lesson queue (now
+empty). v3.0 — Restructure is the clear next milestone, spike-driven
+(#179 inline→reference, #180 slim stacks, #350 viability audit).
+
+**PRs merged:** #626, #627, #628, #629
+
+**Issues closed:** #615, #616, #617. Created milestone v2.21; #618 parked in v3.0.
+
