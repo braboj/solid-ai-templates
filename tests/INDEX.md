@@ -15,6 +15,7 @@ Spec files live in `tests/specs/`. See `CODIFICATION.md` for the ID scheme, area
 | `SAIT-SMK-SYS-04-001A` | SMK | P0 | DEPENDS ON headers match manifest depends_on |
 | `SAIT-SMK-SYS-05-001A` | SMK | P1 | End-of-session audit is inlined verbatim or hard-delegated, never paraphrased |
 | `SAIT-SMK-SYS-06-001A` | SMK | P1 | Every usable stack's resolved chain carries the MUST sections |
+| `SAIT-SMK-SYS-07-001A` | SMK | P2 | 360 audit reports live only under docs/audits/ |
 | `SAIT-SMK-TPL-04-001A` | SMK | P1 | All EXTEND and OVERRIDE directives reference existing IDs |
 | `SAIT-INT-TPL-01-001A` | INT | P0 | DEPENDS ON chain assembles a complete rule set |
 | `SAIT-INT-TPL-02-001A` | INT | P1 | EXTEND adds rules without removing base rules |
