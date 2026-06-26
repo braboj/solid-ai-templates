@@ -2786,7 +2786,7 @@ CLAUDE.md
 
 ---
 
-## Code conventions
+## Python conventions
 [ID: python-lib-conventions]
 
 - Follow **PEP 8** for style — enforced by `ruff`; do not override ruff rules

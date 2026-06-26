@@ -2239,6 +2239,21 @@ Extends the static site stack with Astro-specific rules.
 
 ---
 
+## Project structure
+[ID: astro-structure]
+
+- `src/pages/` — file-based routes; each `.astro` file is a page
+- `src/layouts/` — shared page shells (`<head>`, base HTML)
+- `src/components/` — `.astro` components; interactive islands in
+  `src/components/interactive/`
+- `src/content/` — content collections (Markdown + schema in
+  `src/content/config.ts`)
+- `src/data/` — structured data (JSON) when not using content collections
+- `public/` — static assets served as-is (favicon, `robots.txt`)
+- `astro.config.mjs` — integrations, `trailingSlash`, and site URL
+
+---
+
 ## Component architecture
 [OVERRIDE: static-site-architecture]
 
@@ -2439,6 +2454,24 @@ files into `src/content/`.
 - `.astro` files formatted with the official Prettier Astro plugin
 - MUST NOT use `set:html` — it is Astro's equivalent of `innerHTML` and
   bypasses escaping; use `{expression}` for text content instead
+
+---
+
+## Testing
+[ID: astro-testing]
+
+A static site has no unit-test suite by default — "testing" means
+verifying the built output. Each check below is enforced by the Quality
+gates table:
+
+- Build MUST succeed with zero errors: `astro build`, plus `astro check`
+  for type and content-schema validation
+- Internal and external links MUST resolve — `lychee` over `dist/`
+  (`--root-dir dist`, so root-relative paths resolve)
+- Lighthouse CI MUST meet budgets: accessibility ≥ 90 (error),
+  performance / SEO / best practices ≥ 90 (warn)
+- Add component or unit tests (e.g. vitest, single-run via `npm test`)
+  only for non-trivial client scripts or content utilities
 
 ---
 

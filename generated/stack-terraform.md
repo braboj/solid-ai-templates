@@ -1680,7 +1680,7 @@ and testing.
 
 ---
 
-## Repository structure
+## Project structure
 [ID: terraform-structure]
 
 ```
@@ -1770,7 +1770,7 @@ CLAUDE.md
 
 ---
 
-## Coding conventions
+## Terraform conventions
 [ID: terraform-conventions]
 
 - `main.tf`: resource definitions

@@ -1509,7 +1509,7 @@ CLAUDE.md
 
 ---
 
-## Code conventions
+## C conventions
 [ID: c-embedded-code]
 
 - Use C17 -- do not use compiler extensions unless unavoidable; mark them

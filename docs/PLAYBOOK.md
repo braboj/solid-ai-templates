@@ -16,6 +16,11 @@ composition model.
    - One section per concern, each tagged `[ID: <name>]`
    - Use `[EXTEND: <id>]` to add rules on top of a parent section
    - Use `[OVERRIDE: <id>]` to replace a parent section entirely
+   - Follow the canonical section structure (ADR-017): MUST sections
+     are Stack, Commands, Project structure (pure libraries exempt
+     from the last); name the language section `<Language> conventions`.
+     SYS-06 gates the MUST tier on the resolved chain, so a derived
+     stack may inherit a MUST section from its parent
 3. Review for terminology carry-over from the source template:
    - All framework and runtime names match the target stack
    - CLI commands reference the correct package manager and tools

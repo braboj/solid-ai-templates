@@ -192,6 +192,10 @@ base/ ──┬── frontend/ ──┐
 - A mechanically-checkable output constraint MUST name its
   agent-runnable check (command + pass condition); subjective
   constraints stay declarative (see `quality-gates-pair-check`)
+- Stack templates follow the canonical section structure (ADR-017):
+  MUST sections are Stack, Commands, Project structure (pure
+  libraries exempt from the last); see ADR-017 for SHOULD/MAY tiers,
+  ordering, and the `<Language> conventions` naming — gated by SYS-06
 
 ### 2.8 manifest.yaml
 
