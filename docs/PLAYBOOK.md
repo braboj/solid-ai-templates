@@ -238,6 +238,31 @@ shell access can use them directly.
 
 ---
 
+## Regenerate an example
+
+Per ADR-016, the files in `examples/*/CLAUDE.md` are agent-generated
+outputs, not hand-maintained. When a template in an example's chain
+changes the output shape, regenerate the example — do not patch it by
+hand.
+
+1. Attach three inputs to a local agent:
+   - the existing `examples/<name>/CLAUDE.md` — for the project brief
+     (name, owner, repo, deployment, stack choices, architecture) to
+     preserve
+   - `generated/<stack>.md` — the resolved chain (the rules to apply);
+     read any addon templates the example's stack source names but the
+     chain does not include
+   - `templates/base/core/agents.md` — the output models (inline,
+     reference, or hybrid — keep the example's existing model)
+2. Ask the agent to regenerate `examples/<name>/CLAUDE.md` in the
+   six-section structure, keeping the concrete project identity and
+   recording the generation inputs in a note near the top.
+3. Verify: `py tests/run_smoke.py` (SYS-05 gates the §6.3 audit) and
+   review the diff for coherence. Byte-for-byte reproduction is not
+   expected — generation is non-deterministic.
+
+---
+
 ## Submit a pull request
 
 1. Ensure you are on a feature branch — never commit to `main` directly
