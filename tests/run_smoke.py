@@ -67,7 +67,7 @@ def _load_manifest():
         data = yaml.safe_load(f)
 
     entries = {}
-    for section in ("base", "platform", "frontend", "mobile", "backend", "stacks"):
+    for section in ("base", "platform", "frontend", "backend", "stacks"):
         for entry in data.get(section, []):
             entries[entry["id"]] = entry
 
@@ -688,7 +688,7 @@ def check_sys_03():
         manifest = yaml.safe_load(f)
 
     manifest_files = set()
-    for section in ("core", "base", "platform", "frontend", "mobile",
+    for section in ("core", "base", "platform", "frontend",
                     "backend", "stacks"):
         for entry in manifest.get(section, []):
             if isinstance(entry, dict) and "file" in entry:
@@ -720,14 +720,14 @@ def check_sys_04():
 
     # Build id→file and file→depends_on(as files) maps
     id_to_file = {}
-    for section in ("core", "base", "platform", "frontend", "mobile",
+    for section in ("core", "base", "platform", "frontend",
                     "backend", "stacks"):
         for entry in manifest.get(section, []):
             if isinstance(entry, dict):
                 id_to_file[entry["id"]] = entry["file"]
 
     file_manifest_deps = {}
-    for section in ("base", "platform", "frontend", "mobile",
+    for section in ("base", "platform", "frontend",
                     "backend", "stacks"):
         for entry in manifest.get(section, []):
             if isinstance(entry, dict):

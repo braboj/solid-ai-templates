@@ -132,7 +132,7 @@ def load_manifest():
     manifest = _parse_manifest(text)
 
     entries = {}
-    for section in ("base", "platform", "frontend", "mobile", "backend", "stacks"):
+    for section in ("base", "platform", "frontend", "backend", "stacks"):
         for entry in manifest.get(section, []):
             entries[entry["id"]] = entry
 
