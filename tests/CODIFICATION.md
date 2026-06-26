@@ -95,6 +95,7 @@ reused for a different component within the same area.
 | `02` | Resolution — all stacks resolve to valid, non-empty file lists |
 | `03` | Core tier — resolved chains include core tier files |
 | `04` | Prompt assembly — prompt builds for all stacks |
+| `05` | Parser parity — resolve.py resolution matches the PyYAML resolution |
 
 ### STK - Stack
 

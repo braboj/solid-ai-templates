@@ -480,6 +480,56 @@ def check_mnf_04():
 
 
 # ---------------------------------------------------------------------------
+# MNF-05 — resolve.py resolution matches the PyYAML resolution
+# ---------------------------------------------------------------------------
+# The user-facing tools/resolve.py uses a stdlib-only hand-rolled manifest
+# parser; smoke (and the manifest's own semantics) use PyYAML. A divergence
+# between the two — e.g. the multi-line depends_on bug, #654 — ships a wrong
+# generated/ chain that `resolve.py --check` cannot catch, since it only
+# verifies self-consistency against the same parser. This gate resolves every
+# stack with BOTH parsers and fails on any mismatch, so the two can never
+# silently drift again regardless of which parser is edited next.
+
+def check_mnf_05():
+    if not HAS_YAML:
+        return ["  PyYAML not installed — run: pip install pyyaml"]
+
+    tools_dir = os.path.join(ROOT, "tools")
+    if tools_dir not in sys.path:
+        sys.path.insert(0, tools_dir)
+    try:
+        import resolve as resolve_tool
+    except Exception as e:
+        return [f"  cannot import tools/resolve.py: {e}"]
+
+    core_h, entries_h, stacks = resolve_tool.load_manifest()
+    core_y, entries_y, _ = _load_manifest()
+
+    failures = []
+    for stack in stacks:
+        sid = stack["id"]
+        hand = resolve_tool.resolve_chain(sid, core_h, entries_h)
+        ref, _ = _resolve_stack(sid, core_y, entries_y)
+        if hand == ref:
+            continue
+        missing = [f for f in ref if f not in hand]
+        extra = [f for f in hand if f not in ref]
+        parts = []
+        if missing:
+            parts.append(f"missing from resolve.py: {', '.join(missing)}")
+        if extra:
+            parts.append(f"extra in resolve.py: {', '.join(extra)}")
+        if not parts:
+            parts.append("same files, different order")
+        failures.append(
+            f"  {sid}: resolve.py chain != PyYAML chain — "
+            f"{'; '.join(parts)}"
+        )
+
+    return failures
+
+
+# ---------------------------------------------------------------------------
 # TPL-06 — EXTEND/OVERRIDE targets reachable in resolved chain
 # ---------------------------------------------------------------------------
 
@@ -1184,6 +1234,8 @@ CHECKS = [
      "title": "All resolved chains include core tier files", "fn": check_mnf_03},
     {"id": "MNF-04", "spec": "SAIT-INT-MNF-04-001A",
      "title": "Prompt builds for all stacks", "fn": check_mnf_04},
+    {"id": "MNF-05", "spec": "SAIT-INT-MNF-05-001A",
+     "title": "resolve.py resolution matches PyYAML resolution", "fn": check_mnf_05},
     {"id": "TPL-01", "spec": "SAIT-INT-TPL-01-001A",
      "title": "DEPENDS ON chain from python-fastapi.md is complete", "fn": check_tpl_01},
     {"id": "TPL-02", "spec": "SAIT-INT-TPL-02-001A",
