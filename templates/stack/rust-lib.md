@@ -117,7 +117,7 @@ CLAUDE.md
 
 ---
 
-## Code conventions
+## Rust conventions
 [ID: rust-lib-conventions]
 
 - Follow **Rust API Guidelines** (https://rust-lang.github.io/api-guidelines/)

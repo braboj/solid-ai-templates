@@ -18,6 +18,23 @@ integration, and testing. Language-agnostic — compose with any backend stack
 
 ---
 
+## Project structure
+[ID: htmx-structure]
+
+HTMX composes with a backend stack that owns the overall layout. HTMX
+adds a fragment-oriented template tree:
+
+- `templates/` — full-page templates that extend a base layout
+- `templates/partials/` — HTML fragments returned by HTMX endpoints,
+  one file per swappable component
+- Name partials by the component they render, not the route that
+  returns them: `partials/cart_items.html`, not `partials/get_cart.html`
+- Keep each fragment renderable both standalone (HTMX swap) and
+  included in a full page (initial load) — no logic that assumes one
+  context
+
+---
+
 ## Core principles
 [ID: htmx-principles]
 

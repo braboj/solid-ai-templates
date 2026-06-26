@@ -120,6 +120,23 @@ CLAUDE.md
 
 ---
 
+## Testing
+[ID: hugo-testing]
+
+A Hugo site has no unit-test suite — "testing" means verifying the
+built output:
+
+- Build MUST succeed with zero errors and zero warnings:
+  `hugo --gc --minify` (treat `WARN` as a failure in CI)
+- Internal and external links MUST resolve — run `lychee` over
+  `public/` after the build
+- Lighthouse CI SHOULD meet budgets: accessibility ≥ 90, performance /
+  SEO / best practices ≥ 90
+- Validate generated HTML (e.g. `html-validate`) when the theme is
+  hand-authored
+
+---
+
 ## Git conventions
 [EXTEND: base-git]
 
