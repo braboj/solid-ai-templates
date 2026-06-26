@@ -121,6 +121,9 @@ reused for a different component within the same area.
 | `18` | Node.js lib — nodejs-lib stack interview flow |
 | `19` | — retired (rust-lib stack removed, v2.25) |
 | `20` | HTMX — htmx stack interview flow |
+| `21` | NestJS — node-nestjs stack interview flow |
+| `22` | C embedded — c-embedded stack interview flow |
+| `23` | Tutorial site — static-site-tutorial stack interview flow |
 
 ### FMT - Output Format
 
