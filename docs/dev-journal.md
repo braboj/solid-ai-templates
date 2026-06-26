@@ -1663,3 +1663,49 @@ ADR-018 are project-specific tooling and governance.
 
 **Issues closed:** none. Created #654–#665 (+ milestoned #638) and
 milestones v2.27, v2.28.
+
+## 2026-06-26 — v2.27 Correctness & generation integrity
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- #654 (P1 bug): taught the stdlib-only manifest parsers in
+  `resolve.py`/`sync.py` to read a bracketed `depends_on` continuation
+  line. `frontend-static-site` was the only entry in that form, so its
+  deps parsed empty — `stack-astro`/`stack-tutorial` had shipped with no
+  security/CSS/UX/SEO rules (10 files, not 13). Regenerated both chains.
+- #655 (P1): added smoke check MNF-05 — resolve every stack with both
+  the hand-rolled parser and PyYAML and fail on any mismatch. Verified
+  it fails on the pre-fix parser. Smoke 21 → 22.
+- #656: removed the vestigial `"mobile"` manifest section (dead since
+  v2.26) from the iteration tuples in `resolve.py` and `run_smoke.py`.
+- #657: repointed `SAIT-E2E-STK-07-001A`'s retired STK-06 cross-ref to
+  STK-20, and dropped three phantom `FMT-03/04/05` rows from
+  `tests/INDEX.md` (no spec file, no case).
+- #658: named `data-governance`/`data-migration` as intentional opt-in
+  orphans in SPEC's Orthogonal-templates list (both reached by zero
+  chains; `data-quality` is the only chain-reached data module).
+
+**Decision:** fix #654 by teaching the regex parser (keeping `tools/`
+import-free) rather than unifying on PyYAML, then close the
+two-parser fragility *mechanically* with MNF-05 rather than collapsing
+to one parser — the reconciliation gate is stronger than a single
+parser, which could still diverge from YAML semantics on another edge.
+
+**Lesson:** a self-consistency check cannot catch a wrong artifact when
+it regenerates from the same broken code — `resolve.py --check` validated
+`generated/` against the very parser that produced the defect and
+reported "up to date." A correctness gate must compare against an
+independent reference (here, PyYAML), and you must prove it fails on the
+broken input before trusting it green.
+
+**Template feedback:** the parser fix and the MNF-05 gate are
+project-specific tooling — no upstream template. The reusable principle
+(gate two implementations against a reference oracle, and prove the gate
+red before trusting it green) is a testing discipline, not a template
+rule; left in this journal, not added to a template file.
+
+**PRs merged:** #670, #671, #672, #673, #674
+
+**Issues closed:** #654, #655, #656, #657, #658. Released v2.27.0 and
+closed milestone v2.27.
