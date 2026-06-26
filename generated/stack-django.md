@@ -3746,6 +3746,14 @@ Overridden by each framework stack. The common principle:
 - Include: all resources, methods, parameters, response schemas, error responses,
   and authentication requirements
 - Provide a changelog documenting API changes across versions
+- Prefer design-first: hand-author the spec as the single source of
+  truth and serve it verbatim — the published spec is the same file the
+  team edits, not one generated from code annotations
+- Pin the spec to code: assert that enums, routes, and error codes in
+  code match the spec so any drift fails a test, not a consumer
+- Contract-test the running API against the spec — generate cases from
+  the spec and run them against a live instance (e.g. Schemathesis) so
+  the implementation provably conforms to the published contract
 
 ## Versioning
 - APIs in a given version MUST maintain backward compatibility
