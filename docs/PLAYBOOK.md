@@ -277,8 +277,9 @@ dimensions). Run one before a major release, after a milestone, or
 quarterly.
 
 - Store each audit as a dated report at `docs/audits/YYYY-MM-DD-360.md`
-  (the §360-tracking option-b convention) — never the single-file
-  `docs/360-audit.md` form; keep all history in the folder.
+  (per §360-tracking) — this is the only audit location; never use a
+  single-file `docs/360-audit.md` history. All audit history lives in
+  the folder.
 - Each report carries a scores table, the issues created, the current
   bottleneck, and per-dimension findings tables with a grade rationale.
 - File a labelled issue for every actionable finding (CLAUDE.md §2.2)
