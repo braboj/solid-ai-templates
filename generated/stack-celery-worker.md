@@ -825,8 +825,7 @@ Example skeleton:
 - Agents have no persistent memory across sessions — the journal provides
   continuity by recording what was done, what changed, and why
 - Structure: architecture overview at the top, then session entries in
-  reverse-chronological order (newest first, directly under the top
-  heading)
+  chronological order (oldest first, newest at the bottom)
 - Session entry heading format: `## YYYY-MM-DD — Short theme` (3-6 word
   theme; a parenthetical qualifier such as `(evening)` is allowed when a
   single day has multiple sessions)
