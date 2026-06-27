@@ -8,7 +8,7 @@ deployment.
 ---
 
 ## Stack
-[OVERRIDE: python-lib-stack]
+[OVERRIDE: python-service-stack]
 
 - Language: Python 3.11+
 - Framework: FastAPI
