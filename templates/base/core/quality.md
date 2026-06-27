@@ -163,14 +163,6 @@
   library rather than being the product. Extraction stays deferred, but
   the module is ready the moment it is wanted
 
-## Testability
-
-- Testability is a first-class design concern, not an afterthought
-- Code MUST be designed for testability from the start — do not write
-  code first and struggle to test later
-- If code is hard to test, treat it as a design problem, not a
-  testing problem
-
 ## Calibration discipline
 
 [ID: quality-calibration]
@@ -391,7 +383,4 @@ maintainer time on phantom fixes.
 
 ## Testing
 
-- Write tests for business logic and edge cases
-- Do not test implementation details — test behaviour
 - Tests must pass before merging to `main`
-- Tests MUST be runnable from CI without human intervention
