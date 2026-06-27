@@ -1811,3 +1811,52 @@ process for introducing a content-quality gate.
 **Issues closed:** #683, #685, #687, #689, #691, #693. #624 commented
 (seo.md extraction deferred to #492); journal/ADR PR carries no
 milestone.
+
+## 2026-06-27 — Wiki: patterns→wiki rename, cleanup, backend article
+
+**Tool:** Claude Code (Opus 4.8, 1M context).
+
+Cosmetic-then-substantive pass over the human-reference docs: renamed
+the `patterns/` folder to `wiki/` and grew it with a backend primer.
+
+- #696: renamed `docs/patterns/` → `docs/wiki/` ("gathers knowledge");
+  swept the 5 pages (titles, lead text, all `[ID]` tags → wiki framing)
+  and fixed stale `base/*-patterns.md` cross-links; updated the SPEC
+  Wiki section. Also removed SPEC's never-implemented `Resolution: full
+  (rules + patterns)` mode and its companion `*-patterns.md` step —
+  drift that contradicted ADR-004 (patterns are human reference, not in
+  the manifest or agent context).
+- #697: stripped the vestigial template machinery the pages carried
+  from their old life as `base/*-patterns.md` templates — all 50
+  `[ID]`/`[DEPENDS ON]` tags — and trimmed per-section dividers (8 → 1
+  per page). Confirmed: not in the manifest, never resolved, never
+  scanned by smoke.
+- #699: added `docs/wiki/backend.md` — a concept-first primer (what a
+  backend is, API styles, building blocks, composing for requirements,
+  reference compositions). Folded the `imbra-ltd/nango-blogs`
+  webhook-floods post in as a building-block composition ("inbound
+  webhooks under load"), vendor-neutral — product marketing stripped.
+- #700: filled §3 building-block gaps — Config/secrets, Feature flags,
+  Analytics/warehouse, and load balancing + CDN on the edge row.
+
+**Decision:** no new ADR. The rename is a label change and the SPEC
+cleanup enacts ADR-004 (wiki pages are human reference, outside the
+dependency graph) rather than deciding anything new.
+
+**Lesson:** docs describing a never-built mechanism are drift, not
+documentation — SPEC's `Resolution: full` could never differ from the
+default once ADR-004 moved patterns out of the manifest. And a "new
+topic" (webhook floods) is often just a composition of existing blocks
+(queue, DLQ, dedup, debounce, fairness); framing it that way keeps a
+primer coherent and avoids redundancy with the rules templates.
+
+**Template feedback:** all changes are project-specific to `docs/wiki/`
+(human reference). The webhook-flood defenses already live in
+`templates/backend/webhooks.md` (which delegates DLQ/debounce/fairness
+to `messaging.md`), so no template change was needed — the wiki article
+only cross-references them.
+
+**PRs merged:** #696, #697, #699, #700
+
+**Issues closed:** none (ad-hoc session); none created. Journal PR
+carries no milestone.
