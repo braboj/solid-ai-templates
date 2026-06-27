@@ -2130,7 +2130,6 @@ to change.
   should I click this?"
 - JSON-LD structured data SHOULD be present on content pages (Article,
   Course, or appropriate schema type)
-- Privacy-friendly analytics only (no consent banner required)
 - `robots.txt` MUST allow answer-engine crawlers (OAI-SearchBot,
   ChatGPT-User, PerplexityBot, Claude-SearchBot/Claude-User, Applebot)
 - Behind Cloudflare, AI-crawler access MUST be verified in AI Crawl
@@ -2963,8 +2962,6 @@ files into `src/content/`.
   and Astro content collection types)
 - `eslint-plugin-unicorn` SHOULD be added for rules not covered by sonarjs
   (e.g. `no-zero-fractions`, `prefer-number-properties`)
-- **Prettier** owns all formatting — commit `.prettierrc`; no style debates
-  in code review
 - `.astro` files formatted with the official Prettier Astro plugin
 - MUST NOT use `set:html` — it is Astro's equivalent of `innerHTML` and
   bypasses escaping; use `{expression}` for text content instead

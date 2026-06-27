@@ -227,8 +227,6 @@ files into `src/content/`.
   and Astro content collection types)
 - `eslint-plugin-unicorn` SHOULD be added for rules not covered by sonarjs
   (e.g. `no-zero-fractions`, `prefer-number-properties`)
-- **Prettier** owns all formatting — commit `.prettierrc`; no style debates
-  in code review
 - `.astro` files formatted with the official Prettier Astro plugin
 - MUST NOT use `set:html` — it is Astro's equivalent of `innerHTML` and
   bypasses escaping; use `{expression}` for text content instead

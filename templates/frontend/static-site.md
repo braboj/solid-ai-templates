@@ -155,7 +155,6 @@ to change.
   should I click this?"
 - JSON-LD structured data SHOULD be present on content pages (Article,
   Course, or appropriate schema type)
-- Privacy-friendly analytics only (no consent banner required)
 - `robots.txt` MUST allow answer-engine crawlers (OAI-SearchBot,
   ChatGPT-User, PerplexityBot, Claude-SearchBot/Claude-User, Applebot)
 - Behind Cloudflare, AI-crawler access MUST be verified in AI Crawl
