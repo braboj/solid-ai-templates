@@ -2031,7 +2031,6 @@ no HTTP layer.
 - Use `errors.Is()` and `errors.As()` for inspection — never string matching
 - Define sentinel errors (`var ErrNotFound = errors.New(...)`) in the package
   that owns the concept
-- Log errors once — at the top of the call stack, not at every level
 
 ---
 

@@ -9,6 +9,7 @@ and deployment.
 
 ## Stack
 [ID: django-stack]
+[OVERRIDE: python-service-stack]
 
 - Language: Python 3.11+
 - Framework: Django 4.2 LTS / 5.x

@@ -9,6 +9,7 @@ Covers conventions that are shared regardless of framework choice.
 
 ## Stack
 [ID: python-service-stack]
+[OVERRIDE: python-lib-stack]
 
 - Language: Python 3.11+
 - Framework: [Flask / FastAPI / Django]
