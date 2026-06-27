@@ -1,21 +1,21 @@
-# Base — Application Security Patterns
+# Application Security — Wiki
 
-[ID: base-security-patterns]
+[ID: security-wiki]
 [DEPENDS ON: base/security.md]
 
-Reusable structural patterns for secure application code. Each
-pattern describes a problem, solution structure, when to use it,
-and examples.
+Wiki notes on reusable structures for secure application code.
+Each entry describes a problem, solution structure, when to use
+it, and examples.
 
 See `base/security.md` for application security rules.
 See `base/devsecops.md` for pipeline security rules and
-`base/devsecops-patterns.md` for pipeline security patterns.
+`devsecops.md` for pipeline security patterns.
 
 ---
 
 ## 1. Validate-at-boundary
 
-[ID: security-pattern-input-validation]
+[ID: security-wiki-input-validation]
 
 **Problem:** User input flows through multiple layers with
 validation scattered across each. Some paths skip validation
@@ -56,7 +56,7 @@ app.post("/users", (req, res) => {
 
 ## 2. Encode-on-output
 
-[ID: security-pattern-output-encoding]
+[ID: security-wiki-output-encoding]
 
 **Problem:** Data stored raw is rendered in HTML without encoding.
 Stored XSS executes in every user's browser.
@@ -78,7 +78,7 @@ Render: &lt;script&gt;alert(1)&lt;/script&gt;  (HTML-encoded in page)
 
 ## 3. Runtime secret injection
 
-[ID: security-pattern-secret-injection]
+[ID: security-wiki-secret-injection]
 
 **Problem:** Secrets are hardcoded in source, baked into images,
 or passed as build-time variables. They leak into version control,
@@ -120,7 +120,7 @@ services:
 
 ## 4. CSRF double-submit
 
-[ID: security-pattern-csrf]
+[ID: security-wiki-csrf]
 
 **Problem:** A malicious site submits a form using the user's
 session. The server cannot distinguish legitimate from forged
@@ -146,7 +146,7 @@ Mismatch               → 403 Forbidden
 
 ## 5. Rate limiter placement
 
-[ID: security-pattern-rate-limit]
+[ID: security-wiki-rate-limit]
 
 **Problem:** Endpoints are brute-forced or scraped. The server
 is overwhelmed with requests.
@@ -174,7 +174,7 @@ Client → [rate limiter] → allowed (under limit)
 
 ## 6. Lock file as supply chain guard
 
-[ID: security-pattern-dependency-pinning]
+[ID: security-wiki-dependency-pinning]
 
 **Problem:** A version range pulls a compromised patch release
 automatically. Supply chain attack succeeds silently.
@@ -195,7 +195,7 @@ package-lock.json: "lodash": "4.17.21"  (pinned — safe)
 
 ## 7. Least-privilege scoping
 
-[ID: security-pattern-least-privilege]
+[ID: security-wiki-least-privilege]
 
 **Problem:** A compromised component has admin access. The blast
 radius is the entire system.
@@ -219,7 +219,7 @@ Container → non-root, read-only filesystem
 
 ## 8. Security header baseline
 
-[ID: security-pattern-headers]
+[ID: security-wiki-headers]
 
 **Problem:** Default browser behavior is permissive. Every missing
 header is an attack surface.

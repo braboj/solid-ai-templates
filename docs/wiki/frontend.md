@@ -1,10 +1,10 @@
-# Frontend — UI Patterns
+# Frontend UI — Wiki
 
-[ID: frontend-patterns]
+[ID: frontend-wiki]
 [DEPENDS ON: frontend/quality.md, frontend/ux.md]
 
-Reusable structural patterns for frontend applications. Each
-pattern describes a problem, solution structure, when to use it,
+Wiki notes on reusable frontend application structures. Each
+entry describes a problem, solution structure, when to use it,
 and examples.
 
 See `frontend/quality.md` for design patterns and state management.
@@ -14,7 +14,7 @@ See `frontend/ux.md` for accessibility and responsive design.
 
 ## 1. Error boundary
 
-[ID: frontend-pattern-error-boundary]
+[ID: frontend-wiki-error-boundary]
 
 **Problem:** A runtime error in one component crashes the entire
 application. Users see a blank screen with no way to recover.
@@ -74,7 +74,7 @@ class ErrorBoundary extends React.Component<Props, State> {
 
 ## 2. Skeleton loading
 
-[ID: frontend-pattern-skeleton]
+[ID: frontend-wiki-skeleton]
 
 **Problem:** Content loads asynchronously. The page shows a blank
 area or a spinner until data arrives. Layout shifts when content
@@ -111,7 +111,7 @@ Loaded:   John Smith  Admin   john@example.com
 
 ## 3. Optimistic update
 
-[ID: frontend-pattern-optimistic]
+[ID: frontend-wiki-optimistic]
 
 **Problem:** After a user action (like, save, delete), the UI
 waits for the server response before updating. The delay makes
@@ -149,7 +149,7 @@ User clicks "Like" → UI shows liked (instant)
 
 ## 4. Infinite scroll with virtualization
 
-[ID: frontend-pattern-virtual-scroll]
+[ID: frontend-wiki-virtual-scroll]
 
 **Problem:** Rendering thousands of DOM elements for a long list
 freezes the browser. Pagination breaks the browsing flow. Loading
@@ -188,7 +188,7 @@ DOM. Fetch more data when approaching the end of the loaded set.
 
 ## 5. Debounced search
 
-[ID: frontend-pattern-debounced-search]
+[ID: frontend-wiki-debounced-search]
 
 **Problem:** A search input fires an API call on every keystroke.
 Typing "camera" sends 6 requests, 5 of which are immediately
@@ -225,7 +225,7 @@ Requests:  ............→ "camera" (one request after 300ms pause)
 
 ## 6. Form validation pattern
 
-[ID: frontend-pattern-form-validation]
+[ID: frontend-wiki-form-validation]
 
 **Problem:** Validation logic is scattered across event handlers,
 submit functions, and inline checks. Error messages appear
@@ -263,7 +263,7 @@ Form submit → validate all   → show all errors, focus first
 
 ## 7. Responsive layout switch
 
-[ID: frontend-pattern-responsive-switch]
+[ID: frontend-wiki-responsive-switch]
 
 **Problem:** A data table works on desktop but is unusable on
 mobile. Hiding columns loses information. Horizontal scrolling
@@ -303,7 +303,7 @@ Mobile  (≤ 640px): card stack with key fields
 
 ## 8. URL state synchronization
 
-[ID: frontend-pattern-url-state]
+[ID: frontend-wiki-url-state]
 
 **Problem:** Users apply filters, sort a table, and select a tab.
 When they share the URL or refresh the page, all state is lost.

@@ -1,9 +1,9 @@
-# Base — CI/CD Patterns
+# CI/CD — Wiki
 
-[ID: base-cicd-patterns]
+[ID: cicd-wiki]
 [DEPENDS ON: base/cicd.md]
 
-Reusable structural patterns for CI/CD pipelines. Each pattern
+Wiki notes on reusable CI/CD pipeline structures. Each entry
 describes a problem, solution structure, when to use it, and
 platform examples.
 
@@ -15,7 +15,7 @@ configuration.
 
 ## 1. Gate job
 
-[ID: cicd-pattern-gate]
+[ID: cicd-wiki-gate]
 
 **Problem:** Required status checks block merges when conditional
 jobs are skipped. Docs-only PRs wait for a full build that will
@@ -77,7 +77,7 @@ gate:
 
 ## 2. Path filtering
 
-[ID: cicd-pattern-path-filter]
+[ID: cicd-wiki-path-filter]
 
 **Problem:** Every PR runs the full pipeline regardless of what
 changed. Docs and config changes wait minutes for irrelevant
@@ -140,7 +140,7 @@ build:
 
 ## 3. Fan-out / fan-in
 
-[ID: cicd-pattern-fan-out]
+[ID: cicd-wiki-fan-out]
 
 **Problem:** Running lint, test, security scan, and type check
 sequentially wastes time. A lint failure at minute 5 means tests
@@ -189,7 +189,7 @@ gate:
 
 ## 4. Artifact promotion
 
-[ID: cicd-pattern-artifact-promotion]
+[ID: cicd-wiki-artifact-promotion]
 
 **Problem:** Rebuilding the application for each environment
 introduces the risk that staging and production run different
@@ -221,7 +221,7 @@ build → push :sha → staging (sha) → promote → production (sha)
 
 ## 5. Dependency caching
 
-[ID: cicd-pattern-caching]
+[ID: cicd-wiki-caching]
 
 **Problem:** Installing dependencies on every CI run adds minutes
 to every pipeline. Package registries are external — network
@@ -271,7 +271,7 @@ cache:
 
 ## 6. Matrix build
 
-[ID: cicd-pattern-matrix]
+[ID: cicd-wiki-matrix]
 
 **Problem:** The project must work across multiple runtime versions,
 operating systems, or configurations. Testing them sequentially
@@ -315,7 +315,7 @@ test:
 
 ## 7. Auto-merge for bot PRs
 
-[ID: cicd-pattern-auto-merge]
+[ID: cicd-wiki-auto-merge]
 
 **Problem:** Dependabot and Renovate create PRs for dependency
 updates. Each requires manual review and merge — hundreds per
@@ -361,7 +361,7 @@ auto-merge:
 
 ## 8. Deploy preview
 
-[ID: cicd-pattern-deploy-preview]
+[ID: cicd-wiki-deploy-preview]
 
 **Problem:** Reviewing code changes without seeing the result
 requires the reviewer to check out the branch and build locally.

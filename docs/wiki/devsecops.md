@@ -1,22 +1,22 @@
-# Base — DevSecOps Pipeline Patterns
+# DevSecOps Pipeline — Wiki
 
-[ID: base-devsecops-patterns]
+[ID: devsecops-wiki]
 [DEPENDS ON: base/devsecops.md, base/cicd.md]
 
-Reusable structural patterns for security in CI/CD pipelines.
-Each pattern describes a problem, solution structure, when to
+Wiki notes on reusable security structures for CI/CD pipelines.
+Each entry describes a problem, solution structure, when to
 use it, and examples.
 
 See `base/devsecops.md` for SAST, SCA, secret detection, and
 compliance rules.
-See `base/security-patterns.md` for application-level security
+See `security.md` for application-level security
 patterns (input validation, encoding, CSRF, headers).
 
 ---
 
 ## 1. Break-the-build gate
 
-[ID: devsecops-pattern-break-build]
+[ID: devsecops-wiki-break-build]
 
 **Problem:** Security scans run in CI but findings are advisory.
 Developers see warnings, ignore them, and merge. Vulnerabilities
@@ -61,7 +61,7 @@ security:
 
 ## 2. Vulnerability triage workflow
 
-[ID: devsecops-pattern-triage]
+[ID: devsecops-wiki-triage]
 
 **Problem:** SCA tools report dozens of vulnerabilities across
 transitive dependencies. The team has no process for deciding
@@ -99,7 +99,7 @@ SCA report → triage
 
 ## 3. SBOM generation
 
-[ID: devsecops-pattern-sbom]
+[ID: devsecops-wiki-sbom]
 
 **Problem:** A vulnerability is disclosed in a widely-used library.
 The team cannot determine which services use the affected version.
@@ -151,7 +151,7 @@ CVE disclosed → search SBOMs → list affected services → patch
 
 ## 4. Secret rotation
 
-[ID: devsecops-pattern-secret-rotation]
+[ID: devsecops-wiki-secret-rotation]
 
 **Problem:** Secrets (API keys, database passwords, tokens) are
 created once and never rotated. A leaked secret from months ago
@@ -191,7 +191,7 @@ Timeline: [---v1 valid---][--overlap--][---v2 valid---]
 
 ## 5. Dependency update workflow
 
-[ID: devsecops-pattern-dep-update]
+[ID: devsecops-wiki-dep-update]
 
 **Problem:** Dependencies are updated reactively — only when a
 vulnerability is reported. By then, the update may span multiple
@@ -215,12 +215,12 @@ Monthly:
 **When to use:**
 
 - Every project with external dependencies
-- Combine with the auto-merge pattern from `base/cicd-patterns.md`
+- Combine with the auto-merge pattern from `cicd.md`
 
 **Rules:**
 
 - Patch and minor updates: auto-merge if CI passes (see
-  `cicd-pattern-auto-merge`)
+  `cicd-wiki-auto-merge`)
 - Major updates: require human review of changelog and breaking
   changes
 - Group related updates (e.g. all `@typescript-eslint/*` packages)
@@ -234,7 +234,7 @@ Monthly:
 
 ## 6. Security smoke test
 
-[ID: devsecops-pattern-security-smoke]
+[ID: devsecops-wiki-security-smoke]
 
 **Problem:** Security headers, CSP, CORS, and TLS configuration
 are set once and forgotten. A deployment change or proxy update
@@ -292,7 +292,7 @@ exit $FAIL
 
 ## 7. Pre-merge security gate
 
-[ID: devsecops-pattern-pre-merge-gate]
+[ID: devsecops-wiki-pre-merge-gate]
 
 **Problem:** SAST and SCA run on every PR, but DAST only runs
 after merge to staging. A vulnerability that SAST misses is not
@@ -325,7 +325,7 @@ Post-merge to staging:
 
 - Each layer runs independently — failure in one does not skip
   others
-- Combine with the fan-out pattern from `base/cicd-patterns.md`
+- Combine with the fan-out pattern from `cicd.md`
   for parallel execution
 - DAST runs post-merge because it needs a running environment —
   but DAST findings MUST still block production deployment
@@ -336,7 +336,7 @@ Post-merge to staging:
 
 ## 8. Incident-to-hardening loop
 
-[ID: devsecops-pattern-hardening-loop]
+[ID: devsecops-wiki-hardening-loop]
 
 **Problem:** A security incident is resolved. The immediate fix
 is deployed. But the root cause is never addressed. The same
