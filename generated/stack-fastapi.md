@@ -3974,7 +3974,6 @@ CLAUDE.md
 [EXTEND: base-git]
 
 - Do not commit `.env`, `*.db`, `__pycache__/`, `.mypy_cache/`
-- Alembic migrations are committed — never regenerate a migration already merged
 
 ---
 

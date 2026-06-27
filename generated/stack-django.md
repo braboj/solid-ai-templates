@@ -4074,7 +4074,6 @@ CLAUDE.md
 [EXTEND: base-git]
 
 - Do not commit `.env`, `*.pyc`, `__pycache__/`, `.mypy_cache/`, `db.sqlite3`
-- Migrations are committed — never regenerate a migration already merged
 - `staticfiles/` is gitignored — collect on deploy, not in the repo
 
 ---
