@@ -82,13 +82,16 @@ them together.
 
 | Block | Role | Stateful? | Rules |
 |-------|------|-----------|-------|
-| **Edge / gateway** | TLS, routing, rate limit, authn, WAF | No | `backend/http.md` |
+| **Edge / gateway** | TLS, routing, load balancing, CDN, rate limit, authn, WAF | No | `backend/http.md` |
 | **API / application layer** | Validate, authorize, run business logic | No (keep it so) | `backend/quality.md` |
 | **Auth provider** | Identity, tokens, sessions, keys | Yes | `backend/auth.md` |
+| **Config / secrets** | Env vars, secrets, runtime config | Yes | `base/config.md` |
+| **Feature flags** | Toggles, gradual rollout, experiments | Yes | `backend/features.md` |
 | **Relational DB** | Source-of-truth records, transactions | Yes | `backend/database.md` |
 | **Cache / KV** | Hot reads, sessions, locks, counters | Yes (ephemeral) | `backend/caching.md` |
 | **Blob store** | Files, media, large payloads | Yes | — |
 | **Search index** | Full-text and faceted queries | Yes (derived) | — |
+| **Analytics / warehouse** | OLAP, time-series, reporting queries | Yes (derived) | — |
 | **Broker / queue** | Decouple, buffer, fan-out | Yes | `backend/messaging.md` |
 | **Workers / jobs** | Async and scheduled work | No | `backend/jobs.md` |
 | **Integrations** | External APIs, outbound webhooks | No | `backend/webhooks.md` |
