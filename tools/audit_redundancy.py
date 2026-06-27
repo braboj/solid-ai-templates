@@ -49,16 +49,8 @@ NEAR_THRESHOLD = 0.87
 # these and fails only on NEW duplicates. Each key is
 # (fingerprint, (fileA, fileB)) with files sorted; the value is the
 # reason / owning issue. Remove an entry once its duplicate is resolved.
-BASELINE = {
-    ("privacy friendly analytics only no consent banner required",
-     ("templates/frontend/quality.md",
-      "templates/frontend/static-site.md")):
-        "frontend SEO consolidation (#624)",
-    ("prettier owns all formatting commit no style debates",
-     ("templates/frontend/static-site.md",
-      "templates/stack/static-site-astro.md")):
-        "frontend SEO consolidation (#624)",
-}
+# Currently empty — `--check` enforces a true zero.
+BASELINE = {}
 
 
 def normalize(text):
