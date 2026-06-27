@@ -1757,3 +1757,57 @@ splitter, SYS-08 gate, and the three e2e cases are project tooling/tests.
 
 **Issues closed:** #659, #660, #661, #662, #663, #638. Released v2.28.0
 and closed milestone v2.28.
+
+## 2026-06-27 — Redundancy audit & CI ratchet
+
+**Tool:** Claude Code (Opus 4.8, 1M context)
+
+**Key changes:**
+- Session opened exploring authoring/review skills (`write-template`,
+  `review-template`) under `.claude/skills/` — kept local, never
+  committed, then removed once we judged `write-template` redundant with
+  always-loaded context. Running the review on the core tier is what
+  surfaced the redundancy that became the focus.
+- #683 (PR #684): trimmed base-quality's Testability and Testing
+  sections that restated rules owned by base-testing — every chain
+  loaded both.
+- #685 (PR #686): removed the migration-commit rule restated by
+  python-flask/fastapi/django; they inherit it from python-service.
+- #687 (PR #688): added `tools/audit_redundancy.py` — override-aware
+  in-chain duplicate detector (exact + `--near`); PLAYBOOK "Audit
+  redundancy" + CLAUDE.md §1.3 commands.
+- #689 (PR #690): corrected the Python Stack override graph
+  (python-service-stack overrides python-lib-stack; framework stacks
+  override python-service-stack — the abstract Stack was leaking into
+  every chain) and removed the app-logging rule from go-lib (owned by
+  backend-observability; standalone go-lib drops it, service chains
+  keep it). Audit 6 → 2.
+- #691 (PR #692): `BASELINE` allowlist + wired `audit_redundancy.py
+  --check` into CI as a ratchet (fail on new exact dups only).
+- #693 (PR #694): cleared the last two frontend restatements (analytics,
+  prettier); `BASELINE` emptied → true zero.
+
+**Decision:** ADR-019 — detect on the resolved chain, exclude
+override-superseded pairs, gate exact duplicates only, ratchet from a
+baseline. #624's `frontend/seo.md` extraction stays deferred to the
+restructure under #492 (commented, kept open).
+
+**Lesson:** a duplicate-detection gate over a composition system MUST
+model the override graph or it cries wolf on legitimate replacement —
+the throwaway probe over-reported the Go Stack sections; the
+productionized tool excludes `[OVERRIDE]`-superseded pairs (transitively)
+and the false positives vanished. Validate a new lint's signal against
+real findings first, and introduce it as a baseline ratchet, not a
+zero-gate.
+
+**Template feedback:** the Python override-graph correction (#689) and
+the go-lib app-logging removal are reusable template fixes (live in
+`templates/`). The audit tool, `BASELINE`, and the CI gate are project
+tooling/infra; the audit-then-baseline-ratchet sequence is a reusable
+process for introducing a content-quality gate.
+
+**PRs merged:** #684, #686, #688, #690, #692, #694
+
+**Issues closed:** #683, #685, #687, #689, #691, #693. #624 commented
+(seo.md extraction deferred to #492); journal/ADR PR carries no
+milestone.
