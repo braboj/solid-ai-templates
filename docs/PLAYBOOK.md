@@ -231,9 +231,12 @@ finding is not automatically a defect — a duplicate may be intentional
 against the single-source principle, then either trim the restatement
 (prefer the parent/owner template) or accept it with a reason.
 
-`--check` is not yet wired into CI: the library still carries known
-duplicates queued behind their owning issues. Once those clear, the
-gate can ratchet the count to zero.
+`--check` runs in CI as a ratchet: it fails on any exact duplicate not
+in the tool's `BASELINE` allowlist, so new redundancy is blocked while
+the known duplicates clear through their owning issues (currently the
+frontend pair, #624). When you resolve a baselined duplicate, remove
+its `BASELINE` entry in `tools/audit_redundancy.py` — `--check` reports
+any entry that no longer applies.
 
 ---
 

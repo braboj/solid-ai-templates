@@ -53,6 +53,7 @@ py tools/resolve.py --generate               # regenerate all cached files
 # Audit redundant rules across resolved chains
 py tools/audit_redundancy.py                 # exact in-chain duplicates
 py tools/audit_redundancy.py --near          # include near-duplicates
+py tools/audit_redundancy.py --check          # CI gate — fail on new dups
 
 # To generate a context file for a project:
 # 1. Open your agent
