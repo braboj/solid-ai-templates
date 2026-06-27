@@ -266,8 +266,8 @@ for *projects that use the templates*. It is NOT part of the
 dependency graph or agent context. Parent rules files reference
 the relevant wiki pages as one-line conventions.
 
-Current wiki pages: `cicd.md`, `devsecops.md`, `frontend.md`,
-`security.md`, `testing.md`.
+Current wiki pages: `backend.md`, `cicd.md`, `devsecops.md`,
+`frontend.md`, `security.md`, `testing.md`.
 
 ### Meta documents
 
