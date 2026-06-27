@@ -1,8 +1,5 @@
 # Frontend UI — Wiki
 
-[ID: frontend-wiki]
-[DEPENDS ON: frontend/quality.md, frontend/ux.md]
-
 Wiki notes on reusable frontend application structures. Each
 entry describes a problem, solution structure, when to use it,
 and examples.
@@ -13,8 +10,6 @@ See `frontend/ux.md` for accessibility and responsive design.
 ---
 
 ## 1. Error boundary
-
-[ID: frontend-wiki-error-boundary]
 
 **Problem:** A runtime error in one component crashes the entire
 application. Users see a blank screen with no way to recover.
@@ -70,11 +65,7 @@ class ErrorBoundary extends React.Component<Props, State> {
 - Place boundaries at natural isolation points — not around
   every component
 
----
-
 ## 2. Skeleton loading
-
-[ID: frontend-wiki-skeleton]
 
 **Problem:** Content loads asynchronously. The page shows a blank
 area or a spinner until data arrives. Layout shifts when content
@@ -107,11 +98,7 @@ Loaded:   John Smith  Admin   john@example.com
 - Prefer skeletons over spinners for structured content; use
   spinners only for actions (form submit, navigation)
 
----
-
 ## 3. Optimistic update
-
-[ID: frontend-wiki-optimistic]
 
 **Problem:** After a user action (like, save, delete), the UI
 waits for the server response before updating. The delay makes
@@ -145,11 +132,7 @@ User clicks "Like" → UI shows liked (instant)
 - Do not use optimistic updates for operations that affect other
   users' data in real time
 
----
-
 ## 4. Infinite scroll with virtualization
-
-[ID: frontend-wiki-virtual-scroll]
 
 **Problem:** Rendering thousands of DOM elements for a long list
 freezes the browser. Pagination breaks the browsing flow. Loading
@@ -184,11 +167,7 @@ DOM. Fetch more data when approaching the end of the loaded set.
 - Use established libraries: `react-window`, `@tanstack/virtual`,
   `vue-virtual-scroller`
 
----
-
 ## 5. Debounced search
-
-[ID: frontend-wiki-debounced-search]
 
 **Problem:** A search input fires an API call on every keystroke.
 Typing "camera" sends 6 requests, 5 of which are immediately
@@ -221,11 +200,7 @@ Requests:  ............→ "camera" (one request after 300ms pause)
 - Provide immediate local filtering when possible, defer API
   calls for server-side search
 
----
-
 ## 6. Form validation pattern
-
-[ID: frontend-wiki-form-validation]
 
 **Problem:** Validation logic is scattered across event handlers,
 submit functions, and inline checks. Error messages appear
@@ -259,11 +234,7 @@ Form submit → validate all   → show all errors, focus first
 - Never rely on client-side validation alone — always validate
   on the server
 
----
-
 ## 7. Responsive layout switch
-
-[ID: frontend-wiki-responsive-switch]
 
 **Problem:** A data table works on desktop but is unusable on
 mobile. Hiding columns loses information. Horizontal scrolling
@@ -299,11 +270,7 @@ Mobile  (≤ 640px): card stack with key fields
 - Test both layouts — queries like `getAllByText` verify content
   exists in both views
 
----
-
 ## 8. URL state synchronization
-
-[ID: frontend-wiki-url-state]
 
 **Problem:** Users apply filters, sort a table, and select a tab.
 When they share the URL or refresh the page, all state is lost.

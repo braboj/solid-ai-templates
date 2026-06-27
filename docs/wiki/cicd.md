@@ -1,8 +1,5 @@
 # CI/CD — Wiki
 
-[ID: cicd-wiki]
-[DEPENDS ON: base/cicd.md]
-
 Wiki notes on reusable CI/CD pipeline structures. Each entry
 describes a problem, solution structure, when to use it, and
 platform examples.
@@ -14,8 +11,6 @@ configuration.
 ---
 
 ## 1. Gate job
-
-[ID: cicd-wiki-gate]
 
 **Problem:** Required status checks block merges when conditional
 jobs are skipped. Docs-only PRs wait for a full build that will
@@ -73,11 +68,7 @@ gate:
     - when: always
 ```
 
----
-
 ## 2. Path filtering
-
-[ID: cicd-wiki-path-filter]
 
 **Problem:** Every PR runs the full pipeline regardless of what
 changed. Docs and config changes wait minutes for irrelevant
@@ -136,11 +127,7 @@ build:
     - when: never
 ```
 
----
-
 ## 3. Fan-out / fan-in
-
-[ID: cicd-wiki-fan-out]
 
 **Problem:** Running lint, test, security scan, and type check
 sequentially wastes time. A lint failure at minute 5 means tests
@@ -185,11 +172,7 @@ gate:
         done
 ```
 
----
-
 ## 4. Artifact promotion
-
-[ID: cicd-wiki-artifact-promotion]
 
 **Problem:** Rebuilding the application for each environment
 introduces the risk that staging and production run different
@@ -217,11 +200,7 @@ build → push :sha → staging (sha) → promote → production (sha)
 - The artifact that passed tests in staging is the artifact that
   runs in production
 
----
-
 ## 5. Dependency caching
-
-[ID: cicd-wiki-caching]
 
 **Problem:** Installing dependencies on every CI run adds minutes
 to every pipeline. Package registries are external — network
@@ -267,11 +246,7 @@ cache:
   policy: pull-push
 ```
 
----
-
 ## 6. Matrix build
-
-[ID: cicd-wiki-matrix]
 
 **Problem:** The project must work across multiple runtime versions,
 operating systems, or configurations. Testing them sequentially
@@ -311,11 +286,7 @@ test:
 - Use matrix `include`/`exclude` to cover only realistic
   combinations
 
----
-
 ## 7. Auto-merge for bot PRs
-
-[ID: cicd-wiki-auto-merge]
 
 **Problem:** Dependabot and Renovate create PRs for dependency
 updates. Each requires manual review and merge — hundreds per
@@ -357,11 +328,7 @@ auto-merge:
 - CI MUST pass before auto-merge triggers — never bypass checks
 - Review the changelog of auto-merged updates periodically
 
----
-
 ## 8. Deploy preview
-
-[ID: cicd-wiki-deploy-preview]
 
 **Problem:** Reviewing code changes without seeing the result
 requires the reviewer to check out the branch and build locally.
