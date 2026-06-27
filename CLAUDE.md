@@ -30,7 +30,7 @@ templates/          # All template source files
 docs/               # Onboarding, playbook, decision logs, SPEC.md
 examples/           # Complete generated context files (reference)
 tests/              # Smoke and e2e test runners, specs, reports
-tools/              # sync.py, resolve.py — sync and resolution scripts
+tools/              # sync.py, resolve.py, audit_redundancy.py
 generated/          # Pre-resolved template chains (one file per stack)
 ```
 
@@ -49,6 +49,10 @@ py tools/resolve.py --list                    # list stack IDs
 py tools/resolve.py <stack-id>               # print resolved file list
 py tools/resolve.py <stack-id> --concat      # print concatenated content
 py tools/resolve.py --generate               # regenerate all cached files
+
+# Audit redundant rules across resolved chains
+py tools/audit_redundancy.py                 # exact in-chain duplicates
+py tools/audit_redundancy.py --near          # include near-duplicates
 
 # To generate a context file for a project:
 # 1. Open your agent

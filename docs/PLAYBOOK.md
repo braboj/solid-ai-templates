@@ -211,6 +211,32 @@ If the agent cannot run scripts, use the pre-resolved files in
 
 ---
 
+## Audit redundancy
+
+A rule stated in two active sections of the same resolved chain dilutes
+the agent's attention (see `docs/meta/template-content-quality.md`). The
+audit scans every chain and reports duplicates, excluding those the
+override model legitimately produces (one section `[OVERRIDE]`s the
+other):
+
+```bash
+py tools/audit_redundancy.py           # exact in-chain duplicates
+py tools/audit_redundancy.py --near    # also paraphrase near-duplicates
+py tools/audit_redundancy.py --check   # exit 1 if any exact duplicate
+```
+
+Run it before opening a template PR and when consolidating rules. A
+finding is not automatically a defect — a duplicate may be intentional
+(e.g. a rule a base template needs when used standalone). Judge each
+against the single-source principle, then either trim the restatement
+(prefer the parent/owner template) or accept it with a reason.
+
+`--check` is not yet wired into CI: the library still carries known
+duplicates queued behind their owning issues. Once those clear, the
+gate can ratchet the count to zero.
+
+---
+
 ## Run the test suite
 
 ```bash
