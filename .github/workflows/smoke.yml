@@ -25,6 +25,8 @@ jobs:
         run: python tools/sync.py --check
       - name: Check generated/ files are up to date
         run: python tools/resolve.py --check
+      - name: Check for new redundant rules
+        run: python tools/audit_redundancy.py --check
       - name: Install gitleaks
         run: |
           curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | tar -xz

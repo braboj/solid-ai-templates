@@ -15,10 +15,15 @@ wording diverges only after a line wrap may slip past exact matching;
 use `--near` for paraphrases. Judgment still required — a duplicate is
 not always wrong (see docs/meta/template-content-quality.md).
 
+`--check` is a CI ratchet: it fails only on exact duplicates NOT in the
+BASELINE below, so new redundancy is blocked while known dups are worked
+off through their owning issues. Remove a BASELINE entry once its dup is
+resolved; `--check` reports any baseline entry that no longer applies.
+
 Usage:
     py tools/audit_redundancy.py            # exact in-chain duplicates
     py tools/audit_redundancy.py --near     # also show near-duplicates
-    py tools/audit_redundancy.py --check    # exit 1 if any exact dup found
+    py tools/audit_redundancy.py --check    # exit 1 on NEW exact dups
 """
 
 import io
@@ -39,6 +44,21 @@ TAG = re.compile(r"^\[(ID|OVERRIDE|EXTEND):\s*([^\]]+)\]\s*$")
 BULLET = re.compile(r"^\s*(?:[-*]|\d+\.)\s+(.*)$")
 MIN_LEN = 30
 NEAR_THRESHOLD = 0.87
+
+# Known in-chain exact duplicates accepted for now. `--check` ignores
+# these and fails only on NEW duplicates. Each key is
+# (fingerprint, (fileA, fileB)) with files sorted; the value is the
+# reason / owning issue. Remove an entry once its duplicate is resolved.
+BASELINE = {
+    ("privacy friendly analytics only no consent banner required",
+     ("templates/frontend/quality.md",
+      "templates/frontend/static-site.md")):
+        "frontend SEO consolidation (#624)",
+    ("prettier owns all formatting commit no style debates",
+     ("templates/frontend/static-site.md",
+      "templates/stack/static-site-astro.md")):
+        "frontend SEO consolidation (#624)",
+}
 
 
 def normalize(text):
@@ -211,13 +231,18 @@ def collect(core_ids, entries, stacks, want_near=False):
         sections, supersedes = chain_sections(sid, core_ids, entries)
 
         for fp, original, ia, ib in find_exact(sections, supersedes):
+            files = tuple(sorted(
+                [sections[ia]["file"], sections[ib]["file"]]
+            ))
             sites = tuple(sorted([
                 f"{sections[ia]['file']} §{sections[ia]['heading']}",
                 f"{sections[ib]['file']} §{sections[ib]['heading']}",
             ]))
             key = (fp, sites)
             rec = exact.setdefault(
-                key, {"original": original, "sites": sites, "chains": set()}
+                key,
+                {"original": original, "sites": sites, "fp": fp,
+                 "files": files, "chains": set()},
             )
             rec["chains"].add(sid)
 
@@ -253,11 +278,16 @@ def main():
     print("=" * 70)
     for rec in sorted(exact.values(), key=lambda r: -len(r["chains"])):
         chains = sorted(rec["chains"])
-        print(f"\n* {len(chains)} chain(s): {', '.join(chains)}")
+        reason = BASELINE.get((rec["fp"], rec["files"]))
+        tag = f"  [baselined: {reason}]" if reason else ""
+        print(f"\n* {len(chains)} chain(s): {', '.join(chains)}{tag}")
         for site in rec["sites"]:
             print(f"    {site}")
         print(f"    rule: {rec['original'][:84]}")
-    print(f"\n>>> {len(exact)} exact in-chain duplicate(s)")
+    n_base = sum(1 for r in exact.values()
+                 if (r["fp"], r["files"]) in BASELINE)
+    print(f"\n>>> {len(exact)} exact in-chain duplicate(s) "
+          f"({n_base} baselined)")
 
     if "--near" in args:
         print("\n" + "=" * 70)
@@ -275,10 +305,35 @@ def main():
         print(f"\n>>> {len(near)} near in-chain duplicate(s)")
 
     if "--check" in args:
-        if exact:
-            print(f"\nFAIL: {len(exact)} exact in-chain duplicate(s) found.")
+        present = set()
+        new_dups = []
+        for rec in exact.values():
+            bkey = (rec["fp"], rec["files"])
+            if bkey in BASELINE:
+                present.add(bkey)
+            else:
+                new_dups.append(rec)
+
+        resolved = set(BASELINE) - present
+        if resolved:
+            print("\nBaseline entries no longer present "
+                  "(remove from BASELINE):")
+            for fp, files in sorted(resolved):
+                print(f"  {fp[:56]}  {files}")
+
+        if new_dups:
+            print(f"\nFAIL: {len(new_dups)} new exact in-chain "
+                  f"duplicate(s) beyond the baseline:")
+            for rec in new_dups:
+                print(f"  rule: {rec['original'][:70]}")
+                for site in rec["sites"]:
+                    print(f"      {site}")
+            print("\nFix the duplicate, or add it to BASELINE in "
+                  "tools/audit_redundancy.py with its owning issue.")
             sys.exit(1)
-        print("\nOK: no exact in-chain duplicates.")
+
+        print(f"\nOK: no new exact in-chain duplicates "
+              f"({len(present)} baselined).")
         sys.exit(0)
 
 
