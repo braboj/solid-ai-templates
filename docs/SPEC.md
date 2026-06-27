@@ -259,14 +259,14 @@ a mismatch exists between a file header and the manifest, the manifest
 wins and the file header MUST be updated. Smoke check SYS-04 validates
 this contract.
 
-### Pattern files
+### Wiki
 
-Pattern files (`docs/patterns/`) are human reference documentation
-for *projects that use the templates*. They are NOT part of the
-dependency graph or agent context. Parent rules files list which
-patterns to use as one-line conventions.
+The wiki (`docs/wiki/`) gathers human reference documentation
+for *projects that use the templates*. It is NOT part of the
+dependency graph or agent context. Parent rules files reference
+the relevant wiki pages as one-line conventions.
 
-Current pattern files: `cicd.md`, `devsecops.md`, `frontend.md`,
+Current wiki pages: `cicd.md`, `devsecops.md`, `frontend.md`,
 `security.md`, `testing.md`.
 
 ### Meta documents
@@ -443,8 +443,8 @@ a declarative header that the agent resolves at startup.
 │     templates/manifest.yaml → resolves dependency chain   │
 ├─────────────────────────────────────────────────┤
 │  3. DEVELOPMENT (during session)                │
-│     Full context loaded — agent applies rules   │
-│     and patterns without prompting              │
+│     Full context loaded — agent applies the     │
+│     resolved rules without prompting            │
 ├─────────────────────────────────────────────────┤
 │  4. UPDATE (on upstream change)                 │
 │     git submodule update --remote               │
@@ -462,7 +462,6 @@ a hand-curated file list:
 Stack: static-site-astro
 Extras: data-quality, 360, issues, scope, review, readme
 Platform: github
-Resolution: full
 ```
 
 | Field | Required | Description |
@@ -470,7 +469,6 @@ Resolution: full
 | `Stack` | MUST | Stack ID from `manifest.yaml` |
 | `Extras` | MAY | Comma-separated base template IDs not in the stack's dependency chain |
 | `Platform` | MAY | Platform ID (`github`, `gitlab`) |
-| `Resolution` | MAY | `full` (rules + patterns) or `rules` (rules only); default: `rules` |
 
 ### Resolution algorithm
 
@@ -483,12 +481,8 @@ Output: ordered list of template files to load.
    transitive dependencies (depth-first, deduplicated)
 3. Append Extras (skip if already in the resolved set)
 4. Append Platform template (if declared)
-5. If Resolution = full → for each resolved rules file,
-   include its companion *-patterns.md (if it exists
-   in manifest.yaml with a depends_on pointing to
-   the rules file)
-6. Append templates/base/core/agents.md
-7. Return the ordered file list
+5. Append templates/base/core/agents.md
+6. Return the ordered file list
 ```
 
 Ordering: base → backend/frontend → stack (topological sort of
