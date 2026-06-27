@@ -137,7 +137,6 @@ CLAUDE.md
 [EXTEND: base-git]
 
 - Do not commit `.env`, `instance/`, `*.db`, `__pycache__/`, `.mypy_cache/`
-- Migrations are committed — never regenerate a migration that is already merged
 
 ---
 
