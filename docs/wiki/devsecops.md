@@ -1,8 +1,5 @@
 # DevSecOps Pipeline — Wiki
 
-[ID: devsecops-wiki]
-[DEPENDS ON: base/devsecops.md, base/cicd.md]
-
 Wiki notes on reusable security structures for CI/CD pipelines.
 Each entry describes a problem, solution structure, when to
 use it, and examples.
@@ -15,8 +12,6 @@ patterns (input validation, encoding, CSRF, headers).
 ---
 
 ## 1. Break-the-build gate
-
-[ID: devsecops-wiki-break-build]
 
 **Problem:** Security scans run in CI but findings are advisory.
 Developers see warnings, ignore them, and merge. Vulnerabilities
@@ -57,11 +52,7 @@ security:
   in code — not silenced in CI configuration
 - Never add `continue-on-error: true` to security scan steps
 
----
-
 ## 2. Vulnerability triage workflow
-
-[ID: devsecops-wiki-triage]
 
 **Problem:** SCA tools report dozens of vulnerabilities across
 transitive dependencies. The team has no process for deciding
@@ -95,11 +86,7 @@ SCA report → triage
 - Re-triage accepted risks quarterly — the threat landscape
   changes
 
----
-
 ## 3. SBOM generation
-
-[ID: devsecops-wiki-sbom]
 
 **Problem:** A vulnerability is disclosed in a widely-used library.
 The team cannot determine which services use the affected version.
@@ -147,11 +134,7 @@ CVE disclosed → search SBOMs → list affected services → patch
   retrievable per version
 - Automate SBOM generation in CI — never generate manually
 
----
-
 ## 4. Secret rotation
-
-[ID: devsecops-wiki-secret-rotation]
 
 **Problem:** Secrets (API keys, database passwords, tokens) are
 created once and never rotated. A leaked secret from months ago
@@ -187,11 +170,7 @@ Timeline: [---v1 valid---][--overlap--][---v2 valid---]
 - Alert on rotation failure — a failed rotation is worse than
   no rotation (the secret is stuck)
 
----
-
 ## 5. Dependency update workflow
-
-[ID: devsecops-wiki-dep-update]
 
 **Problem:** Dependencies are updated reactively — only when a
 vulnerability is reported. By then, the update may span multiple
@@ -219,8 +198,8 @@ Monthly:
 
 **Rules:**
 
-- Patch and minor updates: auto-merge if CI passes (see
-  `cicd-wiki-auto-merge`)
+- Patch and minor updates: auto-merge if CI passes (see the
+  auto-merge section in `cicd.md`)
 - Major updates: require human review of changelog and breaking
   changes
 - Group related updates (e.g. all `@typescript-eslint/*` packages)
@@ -230,11 +209,7 @@ Monthly:
 - Track update frequency — if a dependency has not been updated
   in 12 months, investigate whether it is abandoned
 
----
-
 ## 6. Security smoke test
-
-[ID: devsecops-wiki-security-smoke]
 
 **Problem:** Security headers, CSP, CORS, and TLS configuration
 are set once and forgotten. A deployment change or proxy update
@@ -288,11 +263,7 @@ exit $FAIL
 - Alert immediately on failure — a missing security header in
   production is an incident
 
----
-
 ## 7. Pre-merge security gate
-
-[ID: devsecops-wiki-pre-merge-gate]
 
 **Problem:** SAST and SCA run on every PR, but DAST only runs
 after merge to staging. A vulnerability that SAST misses is not
@@ -332,11 +303,7 @@ Post-merge to staging:
 - Track which layer catches each finding — if DAST consistently
   catches issues SAST misses, improve SAST rules
 
----
-
 ## 8. Incident-to-hardening loop
-
-[ID: devsecops-wiki-hardening-loop]
 
 **Problem:** A security incident is resolved. The immediate fix
 is deployed. But the root cause is never addressed. The same

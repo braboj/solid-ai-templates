@@ -1,8 +1,5 @@
 # Testing — Wiki
 
-[ID: testing-wiki]
-[DEPENDS ON: base/testing.md]
-
 Wiki notes on reusable structures for test code. Each entry
 describes a problem, solution structure, when to use it, and
 examples.
@@ -13,8 +10,6 @@ See `base/quality.md` for testability as a design concern.
 ---
 
 ## 1. Test factory
-
-[ID: testing-wiki-factory]
 
 **Problem:** Tests create domain objects inline with verbose
 literal syntax. When a field is added to the type, every test
@@ -62,11 +57,7 @@ export function makeLens(overrides: Partial<Lens> = {}): Lens {
   make failures reproducible
 - Use factory composition for nested types: `makeOrder({ items: [makeItem()] })`
 
----
-
 ## 2. Arrange-Act-Assert
-
-[ID: testing-wiki-aaa]
 
 **Problem:** Tests mix setup, execution, and verification into an
 unstructured block. Readers cannot tell what is being tested or
@@ -110,11 +101,7 @@ it("scores weather-sealed lenses higher for landscape", () => {
 - Assert should test one logical concept — multiple `expect`
   calls are fine if they verify the same outcome
 
----
-
 ## 3. Builder pattern for test data
-
-[ID: testing-wiki-builder]
 
 **Problem:** Factory functions work for simple objects but become
 unwieldy when the object has many optional fields, nested
@@ -164,11 +151,7 @@ export const aLens = () => new LensBuilder();
   over-engineer simple test data
 - Name builder entry points as articles: `aUser()`, `anOrder()`
 
----
-
 ## 4. Parameterized tests
-
-[ID: testing-wiki-parameterized]
 
 **Problem:** Multiple tests verify the same logic with different
 inputs. Each test is a copy of the others with one value changed.
@@ -216,11 +199,7 @@ def test_score_aperture(aperture, expected):
   separate file unless it exceeds 20 entries
 - Each row MUST be independent — no row depends on a previous row
 
----
-
 ## 5. Fixture hierarchy
-
-[ID: testing-wiki-fixtures]
 
 **Problem:** Tests duplicate expensive setup (database seeding,
 API mocking, DOM rendering). Extracting setup into `beforeEach`
@@ -279,11 +258,7 @@ def user(db):
 - Name fixtures after what they provide, not what they do:
   `user` not `createUser`
 
----
-
 ## 6. Mock boundary
-
-[ID: testing-wiki-mock-boundary]
 
 **Problem:** Tests mock internal implementation details. When the
 code is refactored, tests break even though behavior is unchanged.
@@ -313,11 +288,7 @@ functions without mocks.
   module, the design needs improvement
 - Mock the dependency, not the function under test
 
----
-
 ## 7. Snapshot testing
-
-[ID: testing-wiki-snapshot]
 
 **Problem:** Verifying complex output (rendered HTML, serialized
 objects, API responses) requires verbose assertions that are hard
@@ -342,11 +313,7 @@ Review snapshot changes in code review like any other diff.
 - Never snapshot non-deterministic output (timestamps, random IDs)
   — stabilize the output first (mock clocks, seed randomness)
 
----
-
 ## 8. Contract testing
-
-[ID: testing-wiki-contract]
 
 **Problem:** Service A depends on Service B's API. Integration
 tests that call Service B are slow, flaky, and require both
