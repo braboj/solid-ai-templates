@@ -257,3 +257,42 @@ See `backend/webhooks.md` and `backend/messaging.md` for the rules.
 The lesson: a handful of blocks (§3) plus a handful of mechanisms (§4)
 compose into the vast majority of backends. Reach for a new style or
 component only when a concrete requirement forces it.
+
+## 6. Design patterns
+
+The building blocks (§3) are the nouns; these are the named structural
+patterns that arrange them. They sit between the resilience mechanisms
+of §4 and the full archetypes of §5 — reach for one when its specific
+problem appears, not by default.
+
+| Pattern | Problem it solves | When to reach for it | Rules |
+|---------|-------------------|----------------------|-------|
+| **Layered / hexagonal** (ports & adapters) | Keep business logic independent of I/O and frameworks | Always — the default shape | `backend/quality.md` |
+| **CQRS** | Read and write models pull in different directions | Read/write asymmetry, heavy reporting | `backend/database.md` |
+| **Event sourcing** | Reconstruct state and history from a log of facts | Audit trails, replay, temporal queries | `backend/messaging.md` |
+| **Outbox** | Write to the DB and publish an event atomically | Avoiding dual-write inconsistency | `backend/database.md`, `backend/messaging.md` |
+| **Saga** (orchestration / choreography) | Consistency across services with no shared transaction | Distributed, multi-service writes | `backend/microservices.md` |
+| **BFF** (backend-for-frontend) | One API cannot serve every client well | Web + mobile + third parties with differing needs | `backend/api.md` |
+| **Anti-corruption layer** | A foreign or legacy model leaks into yours | Integrating a third-party or legacy domain | `backend/microservices.md` |
+| **Strangler fig** | Replacing a system without a big-bang rewrite | Incremental migration off a monolith | `backend/microservices.md` |
+
+Resilience patterns — circuit breaker, retry, idempotency key, bulkhead,
+backpressure, DLQ — are mechanisms, not architecture; see §4 and
+`backend/errors.md`, `backend/jobs.md`, `backend/messaging.md`.
+
+## 7. Anti-patterns
+
+The same blocks, wired wrong. Each of these looks reasonable in the
+small and fails at scale; the fix is almost always a pattern from §6 or
+a block from §3, not a new component.
+
+| Anti-pattern | Why it hurts | Do instead |
+|--------------|--------------|-----------|
+| Business logic in handlers / controllers | Untestable, un-reusable, bound to the transport | Push logic into a service layer (`backend/quality.md`) |
+| Dual writes (DB and queue, no atomicity) | A crash between the two leaves them inconsistent | Outbox pattern (§6) |
+| Distributed monolith | Services deploy together and call each other synchronously — all the cost of services, none of the isolation | Event-driven boundaries; each service owns its data (§6 saga) |
+| Chatty / N+1 APIs | Round-trips and fan-out load stack into latency | Aggregate, paginate, or add a BFF (`backend/api.md`) |
+| Missing timeouts on outbound calls | One slow dependency exhausts threads and cascades | Bound every outbound call (§4, `backend/errors.md`) |
+| Synchronous call chains A → B → C | Availability multiplies down the chain; tail latency compounds | Async handoff, or cache the dependency (§4) |
+| God service / no boundaries | Cannot scale, own, or reason about it independently | Split by domain boundary (`backend/microservices.md`) |
+| Session state in process memory | Breaks horizontal scaling, rolling deploys, and failover | Push durable state to the data tier (§3) |
