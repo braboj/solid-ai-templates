@@ -156,6 +156,10 @@ backend:
     file: templates/backend/webhooks.md
     description: Inbound webhook intake, edge signature verification, fast-ack, retry amplification
     depends_on: [backend-http, backend-messaging, base-security, backend-observability]
+  - id: backend-edge
+    file: templates/backend/edge.md
+    description: Reverse proxy / edge — TLS termination, forwarded headers, upstream routing, timeouts, edge security
+    depends_on: [backend-http, base-security, backend-observability]
   - id: backend-grpc
     file: templates/backend/grpc.md
     description: Proto design, status codes, interceptors, health check

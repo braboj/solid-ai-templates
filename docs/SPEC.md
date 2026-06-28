@@ -107,6 +107,7 @@ backend/
 ├── concurrency.md  # Threads vs. processes vs. async, shared state, structured concurrency
 ├── messaging.md    # Brokers, producers, consumers, schema, DLQ, observability
 ├── webhooks.md     # Inbound webhook intake, edge signature verification, fast-ack, retry amplification
+├── edge.md         # Reverse proxy / edge — TLS termination, forwarded headers, upstream routing, timeouts, edge security
 ├── grpc.md         # Proto design, status codes, interceptors, health check
 ├── microservices.md # Service boundaries, inter-service comms, saga, contract testing
 ├── errors.md       # Classification, propagation, recovery, external failures

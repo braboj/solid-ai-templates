@@ -5,11 +5,12 @@ building blocks you assemble it from, and how to combine those blocks
 to meet requirements such as resilience, availability, and security.
 
 This page is concept-first and maps each topic to the authoritative
-rules. See `backend/http.md`, `backend/api.md`, `backend/auth.md`,
-`backend/database.md`, `backend/caching.md`, `backend/jobs.md`,
-`backend/messaging.md`, `backend/grpc.md`, `backend/microservices.md`,
-`backend/errors.md`, `backend/observability.md`, and
-`backend/monitoring.md` for the specifics.
+rules. See `backend/edge.md`, `backend/http.md`, `backend/api.md`,
+`backend/auth.md`, `backend/database.md`, `backend/caching.md`,
+`backend/jobs.md`, `backend/messaging.md`, `backend/grpc.md`,
+`backend/microservices.md`, `backend/errors.md`,
+`backend/observability.md`, and `backend/monitoring.md` for the
+specifics.
 
 ---
 
@@ -82,7 +83,7 @@ them together.
 
 | Block | Role | Stateful? | Rules |
 |-------|------|-----------|-------|
-| **Edge / gateway** | TLS, routing, load balancing, CDN, rate limit, authn, WAF | No | `backend/http.md` |
+| **Edge / gateway** | TLS, routing, load balancing, CDN, rate limit, authn, WAF | No | `backend/edge.md` |
 | **API / application layer** | Validate, authorize, run business logic | No (keep it so) | `backend/quality.md` |
 | **Auth provider** | Identity, tokens, sessions, keys | Yes | `backend/auth.md` |
 | **Config / secrets** | Env vars, secrets, runtime config | Yes | `base/config.md` |
@@ -149,6 +150,7 @@ docs straight from the contract. See `backend/api.md`, `backend/http.md`.
 Make the backend reachable where users are: front it with an
 edge/gateway and CDN; terminate TLS; use stable DNS; place capacity in
 the regions you serve; keep a documented status page and fallback path.
+See `backend/edge.md`.
 
 ### Scalability & performance — handle more load
 
