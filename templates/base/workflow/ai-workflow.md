@@ -553,6 +553,17 @@ cohort-wide one. The probe costs seconds; the misframing costs a wasted spike.
 The mechanism generalizes to any cohort with byte-identifiable artifacts —
 scraped assets, generated files, captured fixtures, computed reports.
 
+Probe the code surface, not just the data. When the hypothesis is that an
+assumption is wired everywhere — "this generalization needs a schema lift,"
+"every caller hard-codes the old shape" — the cheapest probe greps the
+load-bearing constant or type across the codebase and reads each call site.
+The assumption often turns out to be locked in one function while the rest of
+the pipeline already iterates polymorphically; sizing that in ten minutes
+keeps a one-function change from being scoped as a multi-session rewrite. A
+data probe and a code-surface probe answer different questions — one measures
+what the bytes are, the other locates where an assumption is encoded — and
+both are cheap.
+
 Probe the artifact, not your reading of it. When the claim rests on a dense
 source-of-truth artifact — an overlay image, a generated SVG, a log, a chart, a
 database row — dump its raw representation (pixel scan, JSON dump, AST walk,
