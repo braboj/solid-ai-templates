@@ -13,7 +13,7 @@
 
 version: "1.0"
 
-core: [base-quality, base-git, base-docs, base-readme, base-testing]
+core: [base-quality, base-git, base-docs, base-readme, base-testing, base-review]
 
 base:
   - id: base-git
