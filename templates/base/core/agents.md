@@ -111,8 +111,12 @@ checklist into a short bullet list: that silently drops steps and the
 "print and execute sequentially" enforcement, producing a thin wrap-up.]
 ```
 
-Omit sections that are not applicable to the project (e.g. omit section 4
-for a backend service, omit 3.2+ if only testing applies).
+Top-level sections 1–6 are role-fixed (§4 is always Identity, §5 is
+always Review) — never renumber and never omit them. A top-level
+section that does not apply keeps its numbered heading with a one-line
+`Not applicable — <reason>` body (e.g. §4 Identity for a backend
+service). Omit only non-applicable subsections (e.g. 3.2+ if only
+testing applies). This applies to all three models.
 
 ---
 
