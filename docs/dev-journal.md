@@ -1860,3 +1860,49 @@ only cross-references them.
 
 **Issues closed:** none (ad-hoc session); none created. Journal PR
 carries no milestone.
+
+## 2026-07-05 — v2.29 Generation coherence
+
+**Tool:** Claude Code (Fable 5).
+
+Triaged the 16 unmilestoned issues (labels + Backlog/v3.0 split), then
+planned and shipped v2.29 — four fixes where the generated output
+contradicted itself or its own rules:
+
+- #708: promoted `base-review` into the `core:` tier (now six
+  templates). It was registered but reachable by no chain while the
+  agents.md §5 skeleton universally hardcoded review.md — the review
+  process was unreachable through the dependency graph. SPEC orthogonal
+  set updated; all 17 chains regenerated. The base-oop reach question
+  split out to #727.
+- #710: agents.md said "omit section 4 for a backend service" while all
+  four service examples keep the placeholder. Convention now matches
+  the examples: top-level sections 1–6 are role-fixed; a non-applicable
+  section keeps its heading with a one-line `Not applicable — <reason>`
+  body; only subsections may be omitted.
+- #716: reconciled README-as-SSOT with the Project-structure section
+  requirement (ADR-020): README owns the directory map; the generated
+  section is a pointer to README plus agent-facing placement rules,
+  never a second tree; stack templates keep layout sections as
+  generation-time input. Examples realign at the next regeneration
+  (#709).
+- #713: base-readme §4 now permits the structure as an indented tree or
+  a two-column `Path` | `Purpose` table (validated downstream in
+  demo-sensor-app).
+
+**Decision:** ADR-020 — README owns the directory map
+(`docs/decisions/020-structure-section-ownership.md`).
+
+**Lesson:** a skeleton that hardcodes a template path is an implicit
+dependency the manifest cannot see — anything the output format
+references universally must be in the core tier, or generation quietly
+severs it. Coherence bugs surface downstream first: three of the four
+fixes were reported from consuming projects (demo-sensor-app).
+
+**Template feedback:** all four changes ARE template changes — nothing
+project-specific to feed upstream this session.
+
+**PRs merged:** #726, #728, #729, #730
+
+**Issues closed:** #708, #710, #713, #716. Created: #727 (base-oop
+reach, Backlog). Journal PR carries no milestone.
