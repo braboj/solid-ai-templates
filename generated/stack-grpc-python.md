@@ -2706,6 +2706,23 @@ below close those gaps.
   byte sequences) MUST be excluded from the formatter — they must
   stay byte-for-byte, and reformatting them changes the test input
 
+### Formatter-vs-generator escalation
+
+When a generator (script, codegen, scaffolder) emits a file into a
+directory that a commit-time formatter (prettier, black, gofmt) walks,
+three things MUST hold together:
+
+- The emitted path MUST appear in the formatter's ignore list
+  (`.prettierignore`, black `force-exclude`, or equivalent)
+- A CI staleness gate (`<generator> --check`) MUST run on the same
+  paths (see `quality-gates-staleness`)
+- Both MUST land in the same PR — the ignore line without the gate,
+  or the gate without the ignore line, leaves silent drift
+
+Without all three, the formatter mutates generator output between
+commits and the generator's `--check` fails on a clean checkout — so
+the staleness gate cannot even be wired into CI.
+
 ### Skipped is not passed
 
 - When a code-touching change would skip the build job via a
@@ -2729,6 +2746,23 @@ below close those gaps.
 - When the deploy workflow runs `validate` (or equivalent) on every
   push to main, the PR workflow MUST run the same `validate` on
   every PR, regardless of which paths changed
+
+### Mirror cross-cutting checks with an always-run job
+
+When the deploy gate runs a deterministic check over a broader file
+set than any PR job's path-filter (a formatter or linter over all
+tracked files), mirror it on PRs with a dedicated always-run job —
+not by widening an existing filter:
+
+- A path-filter must enumerate every input the check reads; the next
+  omitted path silently reopens the mirror gap. An always-run job is
+  enumeration-free
+- Keep output-measuring and language-scoped jobs (build, e2e, perf,
+  per-language tests) path-filtered — promote only the cross-cutting
+  deterministic step to always-run
+- This complements `quality-gates-skip-equivalent`: skip noisy output
+  gates on PRs that provably cannot affect them; always run
+  deterministic cross-cutting gates
 
 ### Green CI does not prove environment independence
 
