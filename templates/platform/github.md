@@ -51,6 +51,34 @@ gate categories to GitHub Actions workflows and GitHub-native features.
   ```yaml
   - uses: actions/checkout@<commit-sha>  # v4
   ```
+- **Retry a transient `uses:` step with a conditional second
+  attempt.** `nick-fields/retry` only retries a shell `command` — it
+  cannot re-invoke a `uses:` step, and most first-party actions
+  (`actions/deploy-pages`, etc.) are JS actions. Pattern:
+  `continue-on-error: true` on the first attempt, then a retry gated
+  on the step outcome:
+
+  ```yaml
+  - id: deployment
+    uses: actions/deploy-pages@<commit-sha>  # v5
+    continue-on-error: true
+  - if: steps.deployment.outcome == 'failure'
+    run: sleep 30
+  - id: deployment-retry
+    if: steps.deployment.outcome == 'failure'
+    uses: actions/deploy-pages@<commit-sha>  # v5
+  ```
+
+  - Gate on `outcome`, not `conclusion` — `continue-on-error` flips
+    the step's conclusion to `success` but leaves outcome `failure`
+  - The retry step MUST NOT be `continue-on-error` itself — a double
+    failure fails the job loud instead of masking an outage
+  - Scope the retry to flaky infra steps only (deploys, registry
+    pushes) — never a deterministic gate (`build`, `validate`), or a
+    real failure gets masked
+  - An in-run retry with short backoff covers a single-hit flake,
+    not a sustained backend outage — for a multi-minute incident the
+    right response is wait-and-rerun, not more attempts
 
 ---
 
