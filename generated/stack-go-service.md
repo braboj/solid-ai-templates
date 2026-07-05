@@ -2164,6 +2164,29 @@ records and asserts Y-equality across them.
 
 ---
 
+## Periodic whole-tree audits
+
+[ID: quality-gates-tree-audit]
+
+Duplication and dead code are review-time rules, but a reviewer sees
+the diff — and the twin of a pasted block usually lives outside the
+diff. A rule whose violations are invisible in a diff needs a
+scheduled whole-tree sweep, not a per-change gate.
+
+- Duplication and dead-code detectors (pylint duplicate-code, jscpd,
+  vulture) MUST NOT run as per-PR CI gates when the tree measures
+  clean — both tool classes false-positive on legitimate patterns
+  (look-alike scientific/CLI boilerplate for duplication,
+  intentionally unused API parameters for dead code), so a per-PR
+  gate means maintaining suppression lists forever to guard nothing
+- Run them as a documented periodic whole-tree audit instead: record
+  the exact commands and the last-run result in `docs/PLAYBOOK.md`,
+  and run at epic boundaries and release points
+- File audit findings as tickets rather than fixing on the spot —
+  the audit is a discovery pass, not a change PR
+
+---
+
 ## Tool constraints
 
 [ID: quality-gates-constraints]
