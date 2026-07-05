@@ -645,6 +645,9 @@ levels. Every rule MUST use one of these words:
 
 - `README.md` is the single source of truth for project structure
 - Do not duplicate structure in other documents — reference `README.md` instead
+- Agent context files (`CLAUDE.md` / `AGENTS.md`) keep their Project
+  structure section as a pointer to the README section plus
+  agent-specific placement rules — never a second directory tree
 - No references to non-existent files, components, or services
 
 ## Standard documents
