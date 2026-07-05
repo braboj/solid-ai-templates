@@ -208,7 +208,7 @@ See ADR-004 for the full rationale.
 
 ### Core tier
 
-Five base templates apply to every project. They are declared in
+Six base templates apply to every project. They are declared in
 `templates/manifest.yaml` under `core:` and included during
 resolution — stacks do not need to list them in `depends_on`:
 
@@ -217,6 +217,7 @@ resolution — stacks do not need to list them in `depends_on`:
 - `templates/base/core/docs.md`
 - `templates/base/core/readme.md`
 - `templates/base/core/testing.md`
+- `templates/base/core/review.md`
 
 ### Orthogonal templates
 
@@ -226,7 +227,7 @@ opt in via the `Extras` field in the declaration block or during the
 interview.
 
 Orthogonal templates include platform choices (github, gitlab),
-workflow preferences (360, ai-workflow, review, release, deployment),
+workflow preferences (360, ai-workflow, release, deployment),
 and the advanced data templates (data-governance, data-migration) —
 opt-in extras no stack pulls automatically (`data-quality` is the only
 data module reached by a chain, via python-service).
