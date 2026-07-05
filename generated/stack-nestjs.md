@@ -432,6 +432,14 @@ maintainer time on phantom fixes.
     >100 files), the PR MUST open a tracked follow-up issue AND state
     the STALE accounting explicitly (N files affected, named or
     globbed) — silent staleness is the failure mode
+  - This rule applies to one-directional (source → artifact)
+    derivations only. An artifact that also serves as, or feeds, the
+    source of truth is bidirectional — the tell is an `--apply` or
+    ingest step that reads the artifact back into the source. Do NOT
+    auto-regenerate a bidirectional artifact from the pipeline it
+    feeds: regeneration overwrites human-verified values. Refresh it
+    only through the human-in-the-loop step that owns it, and flag
+    the staleness explicitly instead
 - **Before merging**, review the diff against the base branch. Follow
   `templates/base/core/review.md` priority order: security → correctness →
   clarity →
