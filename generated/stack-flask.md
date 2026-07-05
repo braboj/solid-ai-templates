@@ -3289,6 +3289,28 @@ Stack templates MAY add additional thresholds (e.g. Lighthouse scores).
 
 ---
 
+## Complexity gates
+
+[ID: quality-gates-complexity]
+
+- Complexity gates SHOULD measure cognitive complexity (nesting plus
+  control-flow interruptions) rather than only McCabe branch counts.
+  The two metrics genuinely disagree in practice: McCabe flags flat,
+  linear section emitters while passing deeply nested logic — the
+  opposite of what a readability standard is after
+- Tools: `complexipy` for Python (ruff has no cognitive-complexity
+  rule); `eslint-plugin-sonarjs` for TypeScript/JavaScript (see
+  Recommended lint plugins)
+- Retrofit onto an existing codebase via a ratchet: commit a baseline
+  that freezes current offenders at their recorded values; CI fails
+  only when an over-threshold function is new or has increased. The
+  gate turns on from day one with zero up-front refactoring, and the
+  baseline doubles as a measured refactor priority list
+- Pin the tool version when the baseline file format is
+  version-sensitive
+
+---
+
 ## Skip noisy gates when input is unchanged
 
 [ID: quality-gates-skip-equivalent]
@@ -3584,8 +3606,9 @@ records and asserts Y-equality across them.
 
 - **Docstring coverage for non-public functions** — enforcing docs on
   internal helpers creates busywork
-- **Cyclomatic complexity thresholds** — too many false positives on
-  legitimate complex logic; rely on lint warnings instead
+- **Cyclomatic (McCabe) complexity as a hard gate** — too many false
+  positives on legitimate complex logic; gate cognitive complexity
+  with a ratchet instead (see `quality-gates-complexity`)
 - **100% test coverage** — incentivizes meaningless tests; 80% is the
   practical sweet spot
 - **Commit message format** — enforce in PR title via repository settings,
