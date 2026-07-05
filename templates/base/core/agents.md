@@ -66,7 +66,9 @@ them*.
 ### 1.1 Overview
 [Stack template — Stack section]
 ### 1.2 Project structure
-[Stack template — architecture/structure sections]
+[Pointer to README "Project structure" + agent-specific placement
+rules — never a second directory tree (see docs.md, single source
+of truth)]
 ### 1.3 Commands
 [Stack template — Commands section]
 
@@ -146,7 +148,9 @@ Project-specific overrides and additions follow below.
 ### 1.1 Overview
 [Stack template — Stack section]
 ### 1.2 Project structure
-[Planned or actual directory tree]
+[Pointer to README "Project structure" + agent-specific placement
+rules — never a second directory tree (see docs.md, single source
+of truth)]
 ### 1.3 Commands
 [Stack template — Commands section]
 
@@ -201,8 +205,9 @@ than inline but safer than pure reference.
 
 - **Git conventions** — wrong branch names or commit formats pollute
   history and are hard to fix retroactively
-- **Project structure** — wrong file placement breaks builds and
-  confuses navigation
+- **Project structure placement rules** — wrong file placement breaks
+  builds and confuses navigation; the directory map itself stays in
+  README (see docs.md, single source of truth)
 - **Language-specific safety rules** — e.g. no `set:html`, no `any`,
   no raw SQL — violations introduce security or correctness bugs
 - **Content rules** — formatting, writing style, and structure that
@@ -243,7 +248,9 @@ Project-specific overrides and additions follow below.
 - Model: hybrid
 [IDENTITY answers: owner, repo URL, stack, hosting]
 ### 1.2 Project structure
-[Planned or actual directory tree]
+[Pointer to README "Project structure" + agent-specific placement
+rules — never a second directory tree (see docs.md, single source
+of truth)]
 ### 1.3 Commands
 [Stack template — Commands section]
 
