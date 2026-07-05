@@ -1906,3 +1906,54 @@ project-specific to feed upstream this session.
 
 **Issues closed:** #708, #710, #713, #716. Created: #727 (base-oop
 reach, Backlog). Journal PR carries no milestone.
+
+## 2026-07-05 — v2.30 Downstream lessons
+
+**Tool:** Claude Code (Fable 5).
+
+Second milestone of the day (after v2.29): drained the
+downstream-evidence batch from the Backlog — seven template
+refinements fed back from corrosim, wuseria, and demo-sensor-app,
+shipped as five PRs:
+
+- #704 + #720: hardened `quality-gates-scope-agreement` with the
+  formatter-vs-generator escalation (ignore entry + `--check` gate +
+  same-PR landing, from wuseria #1336) and the always-run-job rule
+  for mirroring cross-cutting deterministic checks (path filters are
+  enumeration-fragile; from a docs-only PR that broke a main deploy).
+- #722: new `quality-gates-complexity` section — gate cognitive
+  complexity (complexipy / sonarjs), retrofit via a committed ratchet
+  baseline; the what-NOT-to-gate McCabe bullet now points there
+  (corrosim ADR 0013: the two metrics measurably disagree).
+- #723: new `quality-gates-tree-audit` section — dup/dead-code
+  detectors are a documented periodic whole-tree audit at epic/release
+  boundaries, not a per-PR gate; diff-scoped review cannot see the
+  twin of a pasted block (corrosim PLAYBOOK 3.8).
+- #718: bidirectional-artifact caveat under git.md's regenerate rule —
+  an artifact an `--apply` step reads back into the source is ground
+  truth; auto-regenerating it overwrites human-verified values
+  (wuseria S201).
+- #719: python-lib src/ adoption must audit path-based excludes for
+  package-dir collisions and anchor them (corrosim: bandit silently
+  dropped src/corrosim/report/ — 2357 vs 4312 LOC scanned, CI green).
+- #721: platform/github retry pattern for transient `uses:` steps —
+  continue-on-error + outcome-gated (not conclusion) conditional
+  retry, fail-loud second attempt, infra steps only (wuseria ADR-077).
+
+**Decision:** no new ADR — all changes are rule additions inside
+existing template sections; nothing structural.
+
+**Lesson:** the Backlog batch pattern works — seven issues from three
+downstream projects composed into one themed milestone with zero
+scope collisions. Downstream incident reports that name the exact
+section they refine (`quality-gates-scope-agreement`) are the
+cheapest template improvements to land.
+
+**Template feedback:** all seven changes ARE template changes
+distilled from downstream projects — the feedback loop working as
+designed.
+
+**PRs merged:** #732, #733, #734, #735, #736, #737
+
+**Issues closed:** #704, #718, #719, #720, #721, #722, #723; none
+created. Journal PR carries no milestone.
