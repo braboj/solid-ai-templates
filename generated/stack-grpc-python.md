@@ -3003,6 +3003,12 @@ CLAUDE.md
 
 - Source layout (`src/`) — prevents accidental imports of the uninstalled
   package
+- When adopting `src/` or adding a sub-package, audit every path-based
+  exclude in tool configs (bandit `exclude_dirs`, coverage `omit`,
+  ruff `extend-exclude`) for patterns that now match new package
+  directories, and anchor them (`"./name"`). Verify by comparing
+  scanned-file counts before and after — a colliding pattern silently
+  drops a whole sub-package from the scan while CI stays green
 - All public API exported from `__init__.py`
 - No `setup.py` — use `pyproject.toml` only
 
