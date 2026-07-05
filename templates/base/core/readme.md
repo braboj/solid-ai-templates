@@ -51,8 +51,11 @@ Every README MUST contain the following sections, in this order:
 - If the project has multiple usage modes, each MUST have its own example
 
 ### 4. Project structure
-- MUST include a directory tree covering the top two levels
+- MUST map the directory structure covering the top two levels
 - Each entry MUST have a one-line description of its purpose
+- MAY be rendered as an indented directory tree or as a two-column
+  table (`Path` | `Purpose`) — a table renders consistently on GitHub
+  and structurally enforces the one-line-description rule
 - Generated directories (`dist/`, `__pycache__/`, `.venv/`) MUST be omitted
 
 ### 5. Development setup
