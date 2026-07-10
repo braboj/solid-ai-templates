@@ -403,3 +403,31 @@ output:
   hash goes CI-flaky across machines and toolchains; commit invariant
   property tests instead. The fingerprint proves the refactor, the
   invariants guard the future
+
+---
+
+## Serve the real app in-process on an ephemeral port
+[ID: testing-in-process-server]
+
+Between the framework's in-process test client (bypasses the real
+WSGI/ASGI/HTTP server, its response headers, and static-file MIME
+resolution) and a full container (slow, needs a runtime) sits a
+lightweight middle option: start the real application on an
+OS-assigned port in a daemon thread and drive it over real HTTP. This
+is the in-process tier the E2E policy names.
+
+- **Bind to port 0** so the OS assigns a free port; derive the base URL
+  from the assigned port and tear the server down in a `finally`. A
+  fixed port collides across parallel tests and repeated runs; port 0
+  never does
+- **It exercises the real server stack** — routing, serialization,
+  response headers, static-file content types — that an in-process test
+  client silently bypasses
+- **One recipe, two consumers** — a driver / screenshot script and a
+  browser-based UI test fixture share the same "serve the real app
+  ephemerally" helper, so UI tests need no container
+- Every server exposes this primitive: Python
+  `werkzeug.serving.make_server(..., 0, ...)`, Node `server.listen(0)`,
+  Go `httptest.Server` (the standard library blessing the pattern).
+  Use the in-process thread when you need only the app; reserve a
+  container when you need the built image or sidecar services
