@@ -459,3 +459,23 @@ instead of the Docker CLI:
 
 This is programmatic single-image e2e from the test suite; local
 multi-service dev composition lives in `containers.md`.
+
+---
+
+## Derive the test tier from the directory, default to fast
+[ID: testing-tier-by-directory]
+
+The taxonomy classifies test types and the regression table names smoke
+/ quick / full triggers, but nothing ties them together: how a tier is
+DERIVED and how the default run excludes the heavy tier. Hand-marking
+every test file drifts from where the test actually lives.
+
+- **Derive the tier from the directory** with a single collection hook
+  (pytest `pytest_collection_modifyitems`, or the runner's equivalent):
+  `tests/*` → unit, `tests/integration/` → integration, `tests/e2e/` →
+  e2e. The tier follows from location, so a marker cannot drift from
+  where the test sits
+- **Make the default run the fast tier** (unit + integration) and gate
+  the heavy tier (container, browser) behind an opt-in marker PLUS an
+  optional-dependency extra, so the common path stays fast and the
+  expensive dependencies are not installed for it
