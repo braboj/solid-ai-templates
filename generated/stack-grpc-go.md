@@ -3312,6 +3312,13 @@ CPU-bound work cannot be offloaded to a background job or worker process.
   code review alone to catch data races
 - Write stress tests for any code that shares state: run N goroutines /
   threads concurrently and assert invariants hold
+- Prove statelessness with disjoint inputs, not just shared-state
+  stress: fire many requests in parallel, each with a distinct,
+  non-overlapping expected-output set, and assert every response falls
+  only within its own request's set. A value that could only have come
+  from another request exposes shared-state bleed — an accidental
+  module-level mutable shared across requests or workers. A same-input
+  concurrency test cannot catch this, because every request looks alike
 - Test cancellation paths: assert that cancelling a context or token
   terminates the operation promptly and cleans up resources
 
