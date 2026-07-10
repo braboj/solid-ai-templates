@@ -79,6 +79,30 @@ gate categories to GitHub Actions workflows and GitHub-native features.
   - An in-run retry with short backoff covers a single-hit flake,
     not a sustained backend outage — for a multi-minute incident the
     right response is wait-and-rerun, not more attempts
+- **Fan out one gate per job, fan in a single required check.** Run
+  each quality gate as its own job (lint, type-check, test, build, e2e,
+  scan) so each fails fast and reports independently, then make ONE
+  `gate` job the sole required branch-protection context. The `gate`
+  job runs `if: always()` and fails unless EVERY upstream result is
+  exactly `success` — treating `skipped` and `cancelled` as failure,
+  not just `failure`. This is the concrete encoding the "skipped is not
+  passed" rule demands: a fan-in that checks only for `failure` lets a
+  skipped required gate slip through as a pass.
+
+  ```yaml
+  gate:
+    needs: [lint, type-check, test, build, e2e, scan]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for r in ${{ join(needs.*.result, ' ') }}; do
+            if [ "$r" != "success" ]; then
+              echo "a required gate did not succeed" >&2
+              exit 1
+            fi
+          done
+  ```
 
 ---
 
