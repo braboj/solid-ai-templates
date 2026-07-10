@@ -2422,10 +2422,13 @@ every project regardless of language or framework.
   - `Strict-Transport-Security` (see Transport security)
   - `Referrer-Policy: strict-origin-when-cross-origin`
   - `Permissions-Policy` — disable unused browser APIs
-- When enabling `nosniff`, pin static asset MIME types in code — the
-  OS registry resolves `.js` to `text/plain` on some platforms, so the
-  browser refuses to run the script and CI on Linux will not catch it;
-  verify script/style execution in a real browser, not just status codes
+- When enabling `nosniff`, pin static asset MIME types in code — with
+  `nosniff` the browser will not correct a wrong `Content-Type`, so the
+  server is the sole authority on it and MIME resolution MUST NOT depend
+  on the host. The OS registry resolves `.js` to `text/plain` on some
+  platforms, so the browser refuses to run the script and CI on Linux
+  will not catch it; verify script/style execution in a real browser,
+  not just status codes
 - Never use `unsafe-inline` or `unsafe-eval` in CSP without a
   written justification
 - Do not expose server version or technology stack in headers —
