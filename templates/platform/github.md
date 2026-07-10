@@ -15,6 +15,25 @@ gate categories to GitHub Actions workflows and GitHub-native features.
 - Pipeline definitions: `.github/workflows/*.yml`
 - Trigger: `on: pull_request` for validation, `on: push` for main branch
 - Actions marketplace for reusable steps
+- **Least-privilege token scope.** Set the workflow-level `permissions:`
+  to `contents: read` by default and grant a write scope ONLY on the
+  specific job that needs it (release creation, artifact/asset attach),
+  at job level. A single compromised step in a blanket-write workflow
+  can do real damage; a read-only default contains it. Keep a scan that
+  needs an elevated scope in its OWN workflow — SAST that writes
+  findings needs `security-events: write`, and isolating it means that
+  scope never rides along with the main CI jobs. Prefer pipeline-as-code
+  (a committed workflow file) over a platform default-setup toggle, so
+  the scoped permission is reviewed and version-controlled.
+
+  ```yaml
+  permissions:
+    contents: read          # workflow-level default
+  jobs:
+    release:
+      permissions:
+        contents: write     # only where needed
+  ```
 - **Authenticate GitHub API calls**, even for public-data reads. Any
   `api.github.com` call in a workflow MUST send
   `Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}`. Unauthenticated
