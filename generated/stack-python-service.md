@@ -1968,6 +1968,12 @@ DEBUG=false
   not for resource identity (use path segments for that)
 - The following names are reserved for framework-level use and MUST NOT
   be repurposed: `limit`, `skip`, `offset`, `expand`, `sortedBy`
+- Parse a typed query parameter explicitly so you can distinguish three
+  states: absent (use the default), present-and-valid (use it), and
+  present-but-invalid (raise 400). Do NOT rely on a framework's
+  type-coercing helper (e.g. Flask `request.args.get('n', type=int)`)
+  that returns the default on a malformed value — it silently turns a
+  client error into a successful default-valued 200
 
 ## Request headers
 - All HTTP headers MUST follow Hyphenated-Pascal-Case casing:
