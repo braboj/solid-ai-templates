@@ -35,6 +35,27 @@ Apply SOLID at the class, module, and service level:
   forces clarifying asides; when the layering and the name disagree, rename
   to match the layer
 
+## When not to reach for a class
+[ID: base-oop-restraint]
+
+SOLID and the patterns above bias toward classes; this is the
+counterweight. Reach for a class to encapsulate state, not to house
+stateless logic.
+
+- **Prefer a free function for stateless logic** — introduce a class
+  only to encapsulate state or attach behaviour to state it owns. A pure
+  transform (inputs → output, no retained state) stays a function; a
+  class only couples it to state it does not use
+- **A class whose only public method is `run()` / `execute()` is usually
+  a function in disguise** — keep the free function unless the retained
+  state genuinely warrants an object
+- **Put state-mutating behaviour on the object that owns the state** —
+  avoid the anemic model where an external function mutates a data bag;
+  this is the active-voice complement of "encapsulate state, expose
+  behaviour" above
+- **Construct through factory classmethods or named constructors** rather
+  than free `build_*` / `init_*` functions that return the type
+
 ## Design patterns
 
 - Apply established **GoF design patterns** where they fit the problem —
