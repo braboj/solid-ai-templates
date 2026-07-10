@@ -2025,3 +2025,71 @@ feedback loop as designed.
 **Issues closed:** #751, #754, #756, #758, #759, #762, #763, #768, #769, #770;
 plus #749 as a duplicate of #753 during grooming. Journal PR carries no
 milestone.
+
+## 2026-07-10 — v2.32 Testing & authoring discipline
+
+**Tool:** Claude Code (Opus 4.8 [1M]).
+
+Third milestone of the day (after v2.31): a themed subset of the same
+downstream backlog — ten self-contained testing-depth and
+authoring-discipline rule additions to existing core/base files, one
+concern per PR (#787–#796). Scope confirmed before the cut; new-file and
+reference-only-doc issues stayed parked for v3.0.
+
+- #739 (#787): `oop.md` gains a "When not to reach for a class"
+  counterweight — prefer free functions for stateless logic, treat a
+  `run()`-only class as a function in disguise, put behaviour on the
+  state that owns it. The file was all pro-OOP, biasing toward
+  over-abstraction.
+- #740 (#788): characterization-fingerprint refactor proof in
+  `testing.md` — hash the full-precision output before, regenerate and
+  diff after; seed nondeterminism; keep the hash disposable (a committed
+  platform-dependent hash goes CI-flaky — commit invariants instead).
+- #764 (#789): serve the real app in-process on an ephemeral port (bind
+  0 in a daemon thread) — the lightweight middle between the framework
+  test client and a container; one helper for driver scripts and
+  browser UI tests.
+- #765 (#790): runtime-agnostic, health-gated container e2e — drive via
+  a Docker-API-compatible library (Docker/Podman via `DOCKER_HOST`),
+  poll-not-sleep, import-guard the optional dep, disable the rootless
+  reaper.
+- #774 (#791): derive the test tier from the directory with one
+  collection hook (a marker can't drift from where the test sits) and
+  default the run to the fast tier, heavy tier opt-in.
+- #741 (#792): `docs.md` — a per-field generator MUST derive its field
+  enumeration from the data schema, never a hardcoded list; dead columns
+  are the visible tell of the silent-omission failure (wuseria S206).
+- #742 (#793): `docs.md` round-trip rule — a refresh of a
+  scaffold-plus-human-edits file MUST preserve human content or fail
+  loud naming what it would discard; silent revert is data loss
+  (wuseria S207).
+- #744 (#794): de-circularization sweep in `quality.md` calibration
+  discipline — when a reference set flips from tool-seeded to verified,
+  grep for comments/guards/thresholds citing the old data and re-verify
+  in the same change (wuseria S209).
+- #745 (#795): forbid ticket/PR/ADR *numbers* in code comments and
+  docstrings (markdown docs still cross-ref by number); scientific
+  source names are the exception; grep test named as enforcement
+  (corrosim #151).
+- #746 (#796): warn in `git.md` that a `close/fix/resolve #N` keyword
+  auto-closes even inside a negation ("does not close #N" still closes
+  it) — use "part of #N" instead (corrosim).
+
+**Decision:** no new ADR — all ten are rule additions inside existing
+template sections; nothing structural. Scope confirmed via a
+themed-subset choice, not an autonomous cut, since a release is
+outward-facing.
+
+**Lesson:** two consecutive themed drains (v2.31 CI/security, v2.32
+testing/authoring) came out of one 36-issue groom — theming by target
+file at groom time makes each release a coherent, low-collision cut.
+A chained `gh pr create && gh pr checks --watch` raced CI registration
+once (#788 "no checks reported"); splitting create from watch fixed it.
+
+**Template feedback:** all ten are template changes distilled from
+downstream evidence (corrosim, wuseria) — reusable upstream content.
+
+**PRs merged:** #787, #788, #789, #790, #791, #792, #793, #794, #795, #796
+
+**Issues closed:** #739, #740, #741, #742, #744, #745, #746, #764, #765, #774.
+Journal PR carries no milestone.
