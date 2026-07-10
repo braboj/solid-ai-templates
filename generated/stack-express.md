@@ -3140,6 +3140,12 @@ not after deployment.
 
 - Secret detection MUST run in CI — any commit containing credentials, tokens,
   or API keys MUST be rejected automatically
+- The scan MUST cover the full git history, not just the current tip: a
+  secret committed and later deleted still lives in old commits, so a
+  shallow checkout gives a false sense of safety. Check out full-depth
+  before the scan (`actions/checkout` with `fetch-depth: 0`)
+- Run the scanner both in CI (full history) and as a pre-commit hook
+  (catch it before it is ever committed) — defense in depth
 - Sensitive values MUST NOT appear in any artefact that enters source control —
   this includes commit messages, issue comments, and documentation files
 - Runtime secrets MUST be fetched from a dedicated vault at startup — MUST NOT
