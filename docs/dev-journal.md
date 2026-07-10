@@ -2137,3 +2137,43 @@ downstream evidence — reusable upstream content.
 
 **Issues closed:** #766, #767, #772, #773, #775. Journal PR carries no
 milestone.
+
+## 2026-07-10 — v2.34 CI & deploy
+
+**Tool:** Claude Code (Opus 4.8 [1M]).
+
+The last self-contained cut from the groom (v2.31–v2.34) — three
+CI/deploy rules, one concern per PR (#804–#806).
+
+- #771 (#804): `cicd.md` — a deploy step whose optional secret is absent
+  on forks/contributor branches MUST skip and stay green, not hard-fail.
+  The issue's other two refinements (deploy-the-published-artifact,
+  tag-triggered production) were already present from #601 build-once CD
+  and the triggers table — only skip-not-fail was missing.
+- #752 (#805): `containers.md` — new Docker Compose section (Compose was
+  absent from the whole tree): when warranted, the `build` / `run --rm`
+  workflow, and bind-mount-for-local-dev-only versus image-is-the-
+  artifact in CI/prod. Kept MAY/SHOULD.
+- #743 (#806): `platform/github.md` — refine the retry bullet to
+  distinguish single-hit flake / multi-minute flake / sustained outage,
+  naming a bounded 3-attempt growing-backoff escalation for the middle
+  class with a reclassify stop condition (wuseria ADR-078).
+
+**Decision:** no new ADR — rule additions/refinements inside existing
+sections; the Compose section is new content in an existing file.
+
+**Lesson:** the drainable backlog is now exhausted. One 36-issue groom
+produced four themed minor releases (v2.31 CI/security, v2.32
+testing/authoring, v2.33 backend, v2.34 CI/deploy) plus a duplicate
+close — theming by target file at groom time is what let each cut land
+coherently. The remaining 8 Backlog issues ALL require v3.0 groundwork
+(new files `python.md` #753 / `cli.md` #755 and their dependents, and
+reference-only-doc placements blocked on the #179 inline→ref
+restructure); no further self-contained minor is possible without it.
+
+**Template feedback:** all three are template changes distilled from
+downstream evidence — reusable upstream content.
+
+**PRs merged:** #804, #805, #806
+
+**Issues closed:** #743, #752, #771. Journal PR carries no milestone.
