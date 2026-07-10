@@ -1957,3 +1957,71 @@ designed.
 
 **Issues closed:** #704, #718, #719, #720, #721, #722, #723; none
 created. Journal PR carries no milestone.
+
+## 2026-07-10 — v2.31 CI & test hardening
+
+**Tool:** Claude Code (Opus 4.8 [1M]).
+
+Groomed the post-v2.30 downstream-lessons backlog — 36 unmilestoned
+issues labeled, clustered by target file, and milestoned; #749 closed
+as a duplicate of #753. Then cut v2.31 from the ready subset: ten
+self-contained CI, security, and test-hardening rule additions to
+chain-reaching template files, shipped one concern per PR (#776–#785).
+
+- #751 (#776): pair the LF MUST in `quality.md` with a `.gitattributes`
+  mechanism (`* text=auto` / `eol=lf`) — EditorConfig normalizes
+  editor-side, `.gitattributes` is the git-side commit/checkout
+  guarantee; names `git ls-files --eol` as the check (corrosim CRLF
+  churn).
+- #756 (#777): scope the coverage denominator to the CI-runnable
+  surface — omit genuinely un-runnable modules (native / GPU /
+  container-only) and validate them out-of-band; the omit-list is a
+  reviewable contract, the coverage analogue of the complexity ratchet.
+- #754 (#778): new in-process config model in `config.md` — frozen
+  preset object + name registry + unset-means-default resolver;
+  composes with 12-factor env rather than replacing it.
+- #758 (#779): AST meta-test for the public-API annotation + docstring
+  contract in `testing.md` — the linter owns format, a test owns
+  presence on the public surface only, adopted behind a module
+  allowlist.
+- #763 (#780): drift-guard meta-tests in `testing.md` — any fact stored
+  twice gets an introspection test that fails on divergence
+  (constant-vs-contract, route coverage, version parity).
+- #759 (#781): secret scanning MUST cover full git history
+  (`fetch-depth: 0`) in `devsecops.md` + `platform/github.md` — a
+  deleted secret persists in old commits, so a shallow scan is false
+  safety.
+- #762 (#782): split scanning by actionability in `devsecops.md` — gate
+  on owned deps, inform on unfixable base-layer CVEs; reconciled the
+  `containers.md` push rule to "no **fixable** high/critical".
+- #768 (#783): runtime version coherence in `containers.md` — base
+  image, CI, type-checker target, and packaging floor pin ONE runtime;
+  move them together so a base-only bump can't ship an untested runtime.
+- #769 (#784): fan-in gate mechanism in `platform/github.md` — one gate
+  per job + a single `always()` fan-in as the sole required context,
+  failing unless every result is exactly `success` (skipped / cancelled
+  count as failure); the encoding the `quality-gates` "skipped is not
+  passed" rule demanded.
+- #770 (#785): least-privilege workflow permissions in
+  `platform/github.md` — `contents: read` default, job-scoped writes,
+  SAST's `security-events: write` isolated in its own workflow.
+
+**Decision:** no new ADR — all ten are rule additions inside existing
+template sections; nothing structural. Milestone named for its content
+("CI & test hardening"), not a round number.
+
+**Lesson:** groom-then-drain scales — a 36-issue downstream batch
+triaged into a ready ten-issue themed milestone (self-contained edits
+to chain-reaching files) while new-file and reference-only-doc
+(`ai-workflow.md`) issues stayed parked for v3.0. Sequential
+one-concern PRs kept the `generated/` regen honest per change.
+
+**Template feedback:** all ten are template changes distilled from
+downstream evidence (corrosim et al.) — reusable upstream content, the
+feedback loop as designed.
+
+**PRs merged:** #776, #777, #778, #779, #780, #781, #782, #783, #784, #785
+
+**Issues closed:** #751, #754, #756, #758, #759, #762, #763, #768, #769, #770;
+plus #749 as a duplicate of #753 during grooming. Journal PR carries no
+milestone.
