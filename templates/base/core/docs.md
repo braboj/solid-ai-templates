@@ -199,6 +199,14 @@ reference for a specific subsystem's empirical numbers.
 - Reference the findings doc from the source where the constant is
   defined (a one-line comment naming the file is enough) so a
   future reader can trace why the constant has the value it does
+- Backfilling a provenance or justification doc — one whose job is to
+  justify a stored value against a cited source (a scoring-log, a
+  data-provenance table) — is a data audit, not transcription: writing
+  "field = X because source says Y" is the moment to cross-check X
+  against Y. Surface a discovered gap or inconsistency (fix it or file
+  it), never encode it as a false "not tested" marker. Distinguish
+  "source silent on the field" (legitimately undefined) from "source has
+  data, record unpopulated" (a data gap, not an untested field)
 
 Example skeleton:
 
