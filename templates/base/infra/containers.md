@@ -37,6 +37,25 @@
   mutable tags in staging or production
 - Remove unused images from the registry regularly
 
+## Runtime version coherence
+
+Pinning the base image (above), the CI runtime, the type-checker target,
+and the packaging floor are four separate loci for the SAME runtime
+version. Pin them independently and a base-image-only bump — often a
+lone dependency-bot PR — ships an image on the new runtime while every
+gate still validates the old one: the gates go green and an untested
+runtime ships.
+
+- The language / runtime version MUST be identical across the container
+  base image tag or digest, every CI job that sets up the runtime, the
+  static type-checker's target version, and the packaging metadata floor
+  (`requires-python`, `engines`, equivalent)
+- Move it in one coordinated change; reject an isolated base-image bump
+  that leaves the gates behind — what is tested MUST be what ships
+- One exception, documented inline: a formatter or linter `target-version`
+  MAY trail one minor as a style floor when the newer target introduces
+  a confusing auto-rewrite
+
 ## Orchestration (Kubernetes)
 - Define all Kubernetes resources as code — no `kubectl apply` from a local
   machine in production
