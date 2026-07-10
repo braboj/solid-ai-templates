@@ -1030,6 +1030,14 @@ it as stale.
   lacks, and silently omits fields it has — and the omission hides
   exactly the records the artifact exists to surface. The dead columns
   are the visible tell; treat them as a defect, not cosmetics
+- A round-trip generated file — one the generator scaffolds and then
+  refreshes in place while preserving human-owned edits (annotation
+  files, mark-up review tables, scaffolded configs with user sections)
+  — MUST on refresh either preserve human-entered content or fail loud
+  naming what it would discard. Silently reverting an edit that does not
+  match the preservation convention (an unmarked cell) is data loss even
+  when documented. Two compliant behaviours: treat divergent unmarked
+  content as a correction to keep, or refuse the refresh naming the cell
 
 ## Output file by agent
 
