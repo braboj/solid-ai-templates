@@ -134,6 +134,10 @@ gate categories to GitHub Actions workflows and GitHub-native features.
   workflow authoring rules) to avoid the paywall.
 - Both SHOULD be enabled — push protection catches on push, gitleaks
   catches in PR validation
+- The gitleaks job MUST check out full history (`actions/checkout` with
+  `fetch-depth: 0`) — the default shallow checkout scans only the tip,
+  missing a secret that was committed and later deleted but still lives
+  in old commits
 
 ---
 
