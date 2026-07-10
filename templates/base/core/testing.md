@@ -322,3 +322,31 @@ two.
 - File as one issue, not two — a fix on the shared code resolves both
 - If the inputs are genuinely independent with no shared upstream, the
   collision itself is the bug worth flagging
+
+---
+
+## Enforce the public-API contract with an AST meta-test
+[ID: testing-ast-contract]
+
+A blanket annotation linter rule (e.g. ruff `ANN`) forces `Any` and
+noise onto private helpers that legitimately take un-stubbed third-party
+objects, so teams either over-lint or let the "every public function
+carries full type hints and a documented docstring" contract drift.
+Split the rule: the linter owns format and complexity; a test owns the
+*presence* of annotations and docstring sections on the public surface
+only.
+
+- Parse each module with the language's AST (Python `ast`, TypeScript
+  via the compiler API, Go `go/ast`) and filter the public defs:
+  top-level non-underscore functions plus public methods of public
+  classes
+- Assert every parameter (except `self`/`cls`) and the return is
+  annotated, that param'd defs carry an `Args:` section, and that
+  value-returning defs carry `Returns:`. Emit failures as
+  `file:line name(param)` so each is self-documenting
+- Roll out behind an allowlist inside the test: sweep module by module
+  and flip the global gate last, so no PR is a big-bang unreviewable
+  sweep
+- The same AST/token pass cheaply enforces adjacent rules a linter has
+  no rule for — a comment trailing code on the right, a ticket/PR/ADR
+  number embedded in a comment — reusing one traversal
