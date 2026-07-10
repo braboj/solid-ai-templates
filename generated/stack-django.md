@@ -1506,6 +1506,34 @@ only.
   no rule for — a comment trailing code on the right, a ticket/PR/ADR
   number embedded in a comment — reusing one traversal
 
+---
+
+## Drift-guard meta-tests pin a duplicated fact to its source
+[ID: testing-drift-guard]
+
+Single-source-of-truth is the goal, but some facts unavoidably live in
+two places: a hand-authored contract file and the code that implements
+it, a documented limit and the constant that enforces it, a version
+string reported at runtime and the package metadata. Without a guard the
+copies drift silently — the exact failure single-source is meant to
+prevent. Any fact represented twice gets a test that fails when the
+copies diverge, introspecting the live artifact rather than hardcoding
+the expected value.
+
+- **Constant vs contract** — assert the documented limit in the spec
+  file equals the code constant that enforces it
+- **Route coverage** — introspect the router (Flask `url_map`, Express
+  router stack, Go mux) and assert every live route appears in the
+  contract document, so a new or renamed endpoint left undocumented
+  fails CI with no human diff review
+- **Version parity** — assert the version reported at runtime equals the
+  installed package metadata, and that the contract's own version field
+  is present
+- Prefer introspection so the test cannot itself drift, and keep the
+  guard one-directional: assert the derived copy matches the source of
+  truth, not the reverse. Complements the AST contract test
+  (`testing-ast-contract`) in the "enforce what the linter can't" family
+
 
 <!-- templates/base/core/review.md -->
 # Base — Peer Review
