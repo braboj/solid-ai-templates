@@ -319,6 +319,13 @@ maintainer time on phantom fixes.
 - Commit an `.editorconfig` file at the project root — enforces indent
   style, indent size, line endings, charset, and trailing whitespace
   across all editors without tool-specific config
+- Commit a `.gitattributes` at the project root with `* text=auto`
+  (add `eol=lf` where the project wants hard LF) — the git-side
+  guarantee that no CRLF is committed, covering files written by any
+  tool, editor, or contributor without an EditorConfig plugin.
+  EditorConfig normalizes editor-side only; `.gitattributes` enforces
+  the LF rule at commit and checkout. Verify with `git ls-files --eol`
+  — no committed file reports `i/crlf`
 - Prefer self-documenting code — if a comment feels necessary, treat it as a
   signal that the code needs restructuring before the comment is added
 - Add comments only where the intent cannot be expressed in code
