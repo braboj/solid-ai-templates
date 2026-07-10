@@ -3003,6 +3003,10 @@ Each stage MUST fail fast — a failed stage stops the pipeline immediately.
   target, never rebuilding in the deploy step. This guarantees the
   deployed artifact is the exact one that passed the gates (see
   "Promote the same artifact" under Environment separation)
+- A deploy step whose secret (a deploy-hook URL or token) is absent on
+  forks or contributor branches MUST skip and still succeed
+  (`if: ${{ secrets.DEPLOY_URL != '' }}`), keeping the workflow green
+  rather than hard-failing — forks do not receive repository secrets
 
 ## Release record
 
