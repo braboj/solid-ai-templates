@@ -192,6 +192,13 @@ that runs the tool. The rules below address each.
   each entry
 - A small hand-built reference set from raw artifacts beats a large
   set carried over from a suspect pipeline
+- When a reference set flips from tool-seeded to independently verified
+  values (the de-circularization above), grep the codebase in the same
+  change for comments, guard conditions, and thresholds whose rationale
+  cites the OLD data, and re-verify each against the new ground truth —
+  or file an issue per survivor. The reasoning citing the stale values
+  keeps steering the code long after the data is corrected; the sweep is
+  one grep at a well-defined moment (the ground-truth-flip change)
 
 ### Honest absence beats a recovered wrong value
 
