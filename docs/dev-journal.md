@@ -2177,3 +2177,45 @@ downstream evidence — reusable upstream content.
 **PRs merged:** #804, #805, #806
 
 **Issues closed:** #743, #752, #771. Journal PR carries no milestone.
+
+## 2026-07-10 — v2.35 Discipline refinements
+
+**Tool:** Claude Code (Opus 4.8 [1M]).
+
+A fifth themed minor from the groom, recovered after re-checking the
+"exhausted backlog" claim made at v2.34 — three issues parked as
+v3.0-blocked were actually self-contained. One concern per PR
+(#808–#810).
+
+- #761 (#808): `scope.md` — strengthen the End-of-session template-
+  feedback item on three axes: capture the reusability verdict at
+  decision time (on the ADR, robust to sessions that never wrap), strip
+  the domain skin before judging, reconcile the whole convention set
+  periodically. The meta-fix behind the #749–#760 batches, which had to
+  be surfaced by a deliberate later gap-analysis instead of firing.
+- #760 (#809): `python-lib.md` — reconcile the flat `mypy --strict`
+  mandate with a staged adoption path (non-strict + `ignore_missing_imports`
+  → tighten per module toward strict) and quarantining untyped deps with
+  a per-module override plus a stated reason.
+- #747 (#810): `docs.md` — a provenance/justification-doc backfill is a
+  data audit: cross-check each stored value against its cited source,
+  surface a gap rather than encode a false "not tested" marker,
+  distinguishing source-silent from source-has-data-but-unpopulated.
+
+**Decision:** no new ADR — rule additions/refinements inside existing
+sections.
+
+**Lesson:** the "drainable backlog exhausted" call at v2.34 was wrong. I
+parked #747/#760/#761 as v3.0-blocked from the issue titles' file names,
+assuming reference-only or new-file dependence. Verifying each target
+against the resolved chains with `resolve.py` (scope.md IS in
+stack-tutorial; python-lib.md and docs.md are in-chain) recovered a
+fifth cut. Verify chain membership before declaring an item blocked —
+not from the filename in the title.
+
+**Template feedback:** all three are template changes distilled from
+downstream evidence — reusable upstream content.
+
+**PRs merged:** #808, #809, #810
+
+**Issues closed:** #747, #760, #761. Journal PR carries no milestone.
