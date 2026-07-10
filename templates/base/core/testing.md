@@ -431,3 +431,31 @@ is the in-process tier the E2E policy names.
   Go `httptest.Server` (the standard library blessing the pattern).
   Use the in-process thread when you need only the app; reserve a
   container when you need the built image or sidecar services
+
+---
+
+## Container e2e: runtime-agnostic and health-gated
+[ID: testing-container-e2e]
+
+When an e2e test needs the real built image, hardcoding Docker and a
+fixed `sleep` breaks on rootless Podman, in CI without Docker, and when
+the container is slow to start. Drive the image through the Docker API
+instead of the Docker CLI:
+
+- **Runtime-agnostic via a Docker-compatible API** — drive containers
+  through a library that speaks the Docker API (Testcontainers and
+  equivalents) so the SAME test runs on Docker or rootless Podman by
+  pointing at whichever socket is present (`DOCKER_HOST`); no test
+  change per runtime
+- **Poll until healthy, never sleep** — gate readiness with a poll loop
+  against the container's health endpoint plus a deadline, so a slow
+  start waits and a dead start fails fast
+- **Import-guard the optional dependency** (`pytest.importorskip` or
+  equivalent) so the module still collects, and skips cleanly, in jobs
+  that do not install the heavy e2e extra
+- **Disable the resource reaper on rootless runtimes** — Ryuk and its
+  kin assume a privileged Docker; a meta-assertion MAY also verify the
+  image runs as a non-root user
+
+This is programmatic single-image e2e from the test suite; local
+multi-service dev composition lives in `containers.md`.
