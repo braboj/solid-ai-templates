@@ -2680,8 +2680,9 @@ Apply SOLID at the class, module, and service level:
 
 ## Image hygiene
 - Scan all images for vulnerabilities in CI before pushing to a registry
-- Never push an image with critical or high vulnerabilities to staging or
-  production
+- Never push an image with **fixable** critical or high vulnerabilities
+  to staging or production — an unfixable upstream or base-layer CVE is
+  advisory (publish it with an SBOM), not a release blocker
 - Tag images with the git commit SHA or release version — never rely on
   mutable tags in staging or production
 - Remove unused images from the registry regularly
@@ -3135,6 +3136,29 @@ not after deployment.
   erases the release — the scan job reaches forward to the release,
   never the reverse. Needs `contents: write` at job scope
 - Dependencies with unacceptable licenses MUST NOT be merged
+
+## Scan by actionability
+
+The block-vs-inform decision turns on one question: can I fix this
+before release? A finding you own has a fix you can apply; a finding in
+a base layer you do not control does not.
+
+- **Gate (blocking) on findings you own** — SCA over your own
+  dependencies (`pip-audit`, `npm audit`, `govulncheck`). A vulnerable
+  dependency has a fix you can apply, so it MUST block the merge
+- **Inform (advisory) on findings you cannot fix at will** — image and
+  base-layer scans (Trivy, Grype). Run them and publish the report plus
+  an SBOM, but do not fail the build on an unfixable upstream CVE
+  (`continue-on-error` plus a non-failing exit code)
+- **Advisory by construction for release-gated scans** — a scan that
+  runs only on a tag or release job cannot be dry-run on a PR, so a
+  hard fail first surfaces mid-release. Keep such scans advisory and
+  OFF the deploy dependency path, so an image hiccup cannot block the
+  deploy or erase the release record
+- **Make the fixable-base case a PR, not a standing advisory** — track
+  the base image with a dependency bot (docker ecosystem) so an
+  available base bump arrives as a reviewable PR, not a perpetual
+  scan finding
 
 ## Secret detection
 

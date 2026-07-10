@@ -30,8 +30,9 @@
 
 ## Image hygiene
 - Scan all images for vulnerabilities in CI before pushing to a registry
-- Never push an image with critical or high vulnerabilities to staging or
-  production
+- Never push an image with **fixable** critical or high vulnerabilities
+  to staging or production — an unfixable upstream or base-layer CVE is
+  advisory (publish it with an SBOM), not a release blocker
 - Tag images with the git commit SHA or release version — never rely on
   mutable tags in staging or production
 - Remove unused images from the registry regularly
