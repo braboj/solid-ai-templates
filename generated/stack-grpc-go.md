@@ -1534,6 +1534,31 @@ the expected value.
   truth, not the reverse. Complements the AST contract test
   (`testing-ast-contract`) in the "enforce what the linter can't" family
 
+---
+
+## Prove a behaviour-preserving refactor with a fingerprint
+[ID: testing-characterization-fingerprint]
+
+When a refactor changes structure but is meant to leave output
+unchanged, "I didn't mean to change it" is not proof — a reordered dict,
+a 1-ULP float shift, or a changed RNG draw order silently perturbs a
+large output that unit tests check only in the small. Extend the
+ground-truth comparison (`testing-shared-path-breadth`) to the whole
+output:
+
+- **Fingerprint the full output before, reproduce and diff after** —
+  reduce the entire output (not a rounded or sampled view) to one exact
+  fingerprint, a hash of the full-precision bytes; capture it before the
+  refactor and regenerate after. Identical output is provably behaviour-
+  preserving; any diff is a real change to investigate
+- **Seed everything nondeterministic** (RNG, clock, iteration order) so
+  the fingerprint is stable and a diff means a regression, not noise
+- **Keep the fingerprint disposable** — it is a private scaffold for the
+  duration of the refactor, not a fixture. A committed platform-dependent
+  hash goes CI-flaky across machines and toolchains; commit invariant
+  property tests instead. The fingerprint proves the refactor, the
+  invariants guard the future
+
 
 <!-- templates/base/core/review.md -->
 # Base — Peer Review
