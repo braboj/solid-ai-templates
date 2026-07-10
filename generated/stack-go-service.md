@@ -356,6 +356,15 @@ maintainer time on phantom fixes.
   audit the references in the same change — `rg "#<number>"` (or the tracker
   URL) over the repo lists them, and the audit is done when none point at the
   stale item
+- In code comments and docstrings, go further: never cite a ticket, PR,
+  or ADR *number* at all — code outlives the tracker, so state the
+  substance instead (name the descriptor, source, or derivation, not
+  "see #123" or "per ADR 0002"). Markdown docs (README, ADRs, the dev
+  journal) are the opposite: cross-referencing issues and ADRs by number
+  is their job. One exception in code: non-obvious or scientific logic
+  MAY name a *source* (author + year + method — "Rappé 1992"), which
+  ages gracefully where an issue number does not. Enforce with a test
+  that greps comments/docstrings for `#\d+` / `ADR\s*\d+`
 
 ## Debug code
 
