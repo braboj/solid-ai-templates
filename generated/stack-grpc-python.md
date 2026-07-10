@@ -1023,6 +1023,13 @@ it as stale.
   not just the file path. "19 of 19 entries stale" tells the maintainer
   the extractor itself drifted; a bare filename reads like a one-line
   edit and hides the scale
+- A generator that renders per-field output (report columns, table
+  sections, config stanzas) MUST derive the field enumeration from the
+  data schema it renders, never from a hardcoded list. A fixed list
+  fails both ways at once: it renders dead columns for fields the data
+  lacks, and silently omits fields it has — and the omission hides
+  exactly the records the artifact exists to surface. The dead columns
+  are the visible tell; treat them as a defect, not cosmetics
 
 ## Output file by agent
 
