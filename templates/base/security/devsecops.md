@@ -42,6 +42,29 @@ not after deployment.
   never the reverse. Needs `contents: write` at job scope
 - Dependencies with unacceptable licenses MUST NOT be merged
 
+## Scan by actionability
+
+The block-vs-inform decision turns on one question: can I fix this
+before release? A finding you own has a fix you can apply; a finding in
+a base layer you do not control does not.
+
+- **Gate (blocking) on findings you own** — SCA over your own
+  dependencies (`pip-audit`, `npm audit`, `govulncheck`). A vulnerable
+  dependency has a fix you can apply, so it MUST block the merge
+- **Inform (advisory) on findings you cannot fix at will** — image and
+  base-layer scans (Trivy, Grype). Run them and publish the report plus
+  an SBOM, but do not fail the build on an unfixable upstream CVE
+  (`continue-on-error` plus a non-failing exit code)
+- **Advisory by construction for release-gated scans** — a scan that
+  runs only on a tag or release job cannot be dry-run on a PR, so a
+  hard fail first surfaces mid-release. Keep such scans advisory and
+  OFF the deploy dependency path, so an image hiccup cannot block the
+  deploy or erase the release record
+- **Make the fixable-base case a PR, not a standing advisory** — track
+  the base image with a dependency bot (docker ecosystem) so an
+  available base bump arrives as a reviewable PR, not a perpetual
+  scan finding
+
 ## Secret detection
 
 - Secret detection MUST run in CI — any commit containing credentials, tokens,
