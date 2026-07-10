@@ -95,9 +95,15 @@ gate categories to GitHub Actions workflows and GitHub-native features.
   - Scope the retry to flaky infra steps only (deploys, registry
     pushes) — never a deterministic gate (`build`, `validate`), or a
     real failure gets masked
-  - An in-run retry with short backoff covers a single-hit flake,
-    not a sustained backend outage — for a multi-minute incident the
-    right response is wait-and-rerun, not more attempts
+  - Distinguish three failure classes: a single-hit flake (the
+    one-retry pattern above covers it), a multi-minute flake (the
+    backend recovers in minutes but slower than one short backoff), and
+    a sustained outage (retries cannot help). For the middle class,
+    escalate to a bounded 3-attempt sequence with growing backoff (e.g.
+    30s then 90s — attempts at roughly +0s / +45s / +2.5min), the final
+    attempt NOT `continue-on-error`. The bound is the stop condition: if
+    all three ever fail on a flake, reclassify as a sustained outage
+    (wait-and-rerun) rather than adding a fourth attempt
 - **Fan out one gate per job, fan in a single required check.** Run
   each quality gate as its own job (lint, type-check, test, build, e2e,
   scan) so each fails fast and reports independently, then make ONE
