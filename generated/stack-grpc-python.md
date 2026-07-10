@@ -3292,6 +3292,17 @@ CLAUDE.md
 - Prefer `collections.abc` types (`Sequence`, `Mapping`) over `list`, `dict`
   in public signatures
 - Use `TypeAlias` for complex type aliases
+- `--strict` is the target end-state, not always the day-one setting. A
+  project on the scientific / data / ML stack (numpy, pandas, rdkit,
+  native libs) whose deps ship no usable stubs would face a wall of
+  unavoidable errors under `--strict` from the start. Adopt in stages:
+  start non-strict with `ignore_missing_imports`, then per module flip
+  `disallow_untyped_defs` + `strict_optional` and drop the
+  missing-imports escape, converging on `--strict`
+- Quarantine an untyped third-party lib with a per-module override
+  (`follow_imports = "skip"`) AND a stated reason, rather than globally
+  weakening the check — the escape stays visible and scoped to the
+  library that needs it
 
 ---
 
