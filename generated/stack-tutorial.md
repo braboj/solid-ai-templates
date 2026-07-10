@@ -443,6 +443,12 @@ maintainer time on phantom fixes.
   closes more than one issue: `Closes #a, closes #b, closes #c` closes
   all three. `Closes #a, #b, #c` closes only `#a` — a bare `#b`/`#c` is
   a plain reference, not a closing one, and stays open after merge.
+- **A closing keyword auto-closes even when negated** — GitHub matches
+  the bare `close/fix/resolve #N` substring regardless of surrounding
+  words, so "does not close #N" in a PR body or commit still closes #N
+  on merge. To reference an issue without closing it, write "part of #N"
+  or `#N` alone — never a closing keyword next to the number unless the
+  change truly resolves it
 - **Regenerate derived artifacts in the same PR** — when a change
   affects generated or derived files committed to the repo (extractor
   outputs, snapshot fixtures, generated docs), regenerate them in the
