@@ -184,6 +184,21 @@ summarize — visible sequential execution prevents missed steps.
     reusable, name the upstream template file and file an issue on the
     upstream repo (not a downstream note) — naming a candidate is not
     contributing it
+    - **Capture at decision time, not only here.** When an ADR or
+      decision records a generic convention, judge reusability then and
+      record the verdict on the record (an `Upstream:` line: candidate
+      file + filed issue, or `none`). This item then harvests flagged
+      candidates instead of re-deriving them, so a session that never
+      formally wraps still leaves the verdict captured
+    - **Strip the domain skin before judging.** Restate the convention
+      with the project's domain nouns removed and re-ask whether it
+      stands alone — a generic core ("scope the coverage denominator to
+      the CI-runnable surface") hides under domain framing ("omit the
+      GPU-only modules") and reads as project-specific
+    - **Reconcile periodically.** Every N sessions, or when a genericized
+      engineering-notes doc is produced, reconcile the whole accumulated
+      convention set against the resolved template chain — a once-missed
+      pattern is swept eventually, not lost forever
 12. **Flag gaps** — if any item cannot be completed this session, report
     it as pending (never as done) before closing — including deferred
     cross-repo work, such as an upstream contribution that was flagged
