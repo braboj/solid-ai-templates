@@ -1698,6 +1698,29 @@ Sources override in this order (highest wins):
 - Never let a lower-priority source silently override a
   higher-priority one
 
+## In-process config model
+
+For a library or CLI whose run configuration is an in-process object
+with named presets — build profiles, dataset variants, run modes — not
+an environment, model it explicitly instead of re-declaring the same
+inputs inside each command. This composes with 12-factor: env vars wire
+deployment and secrets; the in-process object holds one run's inputs.
+
+- **Frozen object** — bundle all inputs for one run in an immutable
+  record (frozen dataclass, readonly struct); each default carries its
+  rationale in place, so a preset's diff reads as intent
+- **Registry** — map names (and aliases) to instances; look up
+  case-insensitively and raise on a miss, listing the known keys
+- **Unset-means-default resolution** — CLI flags default to a
+  null/sentinel, and a shared resolver backfills each unset field from
+  the selected preset while an explicit value always wins. This
+  separates "user said nothing" from "user said this" — never default a
+  flag to the preset value directly, or the two become indistinguishable
+- **Derive layout from the object** — compute paths as properties
+  (e.g. `out_dir` from the run name) so nothing hardcodes them; a copy
+  accessor hands callers a mutable copy so they cannot mutate the shared
+  frozen object
+
 ## Build-time vs runtime config
 
 - **Build-time** — values baked into the artifact at build (API base
