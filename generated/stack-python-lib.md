@@ -1847,6 +1847,18 @@ When a dependency bump adds a lint rule that flags existing source:
 - **Legacy projects** — coverage reported as warning only; CI shows the
   number but never blocks; flip to error when the team has the mandate
   to invest in testing
+- **Un-runnable code** — omit modules that genuinely cannot execute in
+  CI (native extensions, GPU paths, container-only code with no wheels
+  on the runner) from the coverage denominator, and validate them
+  out-of-band (a separate suite, integration environment, or tracked
+  artifacts). Scoping the denominator keeps the gate honest at 80%
+  instead of dropping the bar to a meaningless number that lets
+  permanently-un-runnable code drag the percentage down as dead weight
+- **Omit-list is a contract** — a new pure module is in scope by
+  default and MUST be tested; adding a module to the omit-list is a
+  reviewable decision, never a silent escape. This is the coverage
+  analogue of the complexity ratchet (see `quality-gates-complexity`):
+  make a partial codebase's gate honest without lowering the bar
 
 Stack templates MAY add additional thresholds (e.g. Lighthouse scores).
 
