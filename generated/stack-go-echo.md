@@ -3330,6 +3330,25 @@ runtime ships.
   MAY trail one minor as a style floor when the newer target introduces
   a confusing auto-rewrite
 
+## Docker Compose (if applicable)
+
+Use a `docker-compose.yml` (Compose file) when a single image is not
+enough: more than one service (app plus datastore or cache), or an
+isolated build/run environment for a toolchain impractical to install
+on the host. Not every project needs Compose — keep it to those cases.
+
+- Define each service, its image or build context, ports, and
+  dependencies (`depends_on`) in the Compose file; keep it at the repo
+  root alongside the `Dockerfile`
+- Local dev: `docker compose build` then `docker compose run --rm
+  <service>` (or `up`) — `--rm` cleans up the one-off container so
+  repeated runs do not accumulate stopped containers
+- Bind-mount the source for local dev so edits are live without a
+  rebuild; do NOT bind-mount in CI or production — there the image is
+  the artifact, and a mount would shadow it with host files
+- Compose orchestrates local and single-host multi-service dev;
+  production multi-service orchestration is Kubernetes (below)
+
 ## Orchestration (Kubernetes)
 - Define all Kubernetes resources as code — no `kubectl apply` from a local
   machine in production
