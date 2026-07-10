@@ -2093,3 +2093,47 @@ downstream evidence (corrosim, wuseria) — reusable upstream content.
 
 **Issues closed:** #739, #740, #741, #742, #744, #745, #746, #764, #765, #774.
 Journal PR carries no milestone.
+
+## 2026-07-10 — v2.33 Backend correctness
+
+**Tool:** Claude Code (Opus 4.8 [1M]).
+
+Fourth milestone of the day: the backend-layer subset of the same groom
+— five request / response / concurrency correctness rules, one concern
+per PR (#798–#802).
+
+- #766 (#798): `security.md` — state the principle behind the existing
+  `nosniff` MIME-pinning rule: with `nosniff` the browser will not
+  correct a wrong `Content-Type`, so the server is the sole authority
+  and MIME resolution must not depend on the host.
+- #767 (#799): `concurrency.md` — prove statelessness with disjoint
+  inputs: fire parallel requests with non-overlapping expected outputs
+  and assert each response stays in its own set; a cross-request value
+  exposes an accidental module-level mutable a same-input test can't.
+- #772 (#800): `api.md` — the contract document's own version
+  (OpenAPI `info.version`) is a separate axis from the package/release
+  version; don't bump it on a package patch that doesn't touch the
+  contract, and a drift test asserts the field present, not equal.
+- #773 (#801): `http.md` — parse typed query params explicitly to
+  distinguish absent / valid / present-but-invalid (400), not a
+  coercing helper that collapses invalid into a default-valued 200.
+- #775 (#802): `http.md` — name the concrete `allow_nan=false` encoder
+  flag on the existing reject-non-finite-floats rule.
+
+**Decision:** no new ADR — all five are rule additions/refinements
+inside existing template sections; nothing structural.
+
+**Lesson:** two of the five (#766 nosniff MIME, #775 `NaN`/`Infinity`)
+were already substantially in the templates from an earlier downstream
+pass — the groom predated those additions. Grep the target file for
+existing coverage BEFORE writing: both shipped as minimal
+principle/example enhancements, not redundant bullets. A backlog groomed
+weeks deep should expect some items overtaken by intervening work.
+
+**Template feedback:** all five are template changes distilled from
+downstream evidence — reusable upstream content.
+
+**PRs merged:** #798, #799, #800, #801, #802
+
+**Issues closed:** #766, #767, #772, #773, #775. Journal PR carries no
+milestone.
