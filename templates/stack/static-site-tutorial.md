@@ -159,9 +159,10 @@ Follow `templates/base/core/git.md` release process:
 2. `git commit --allow-empty -m "chore: release vX.Y.Z"`
 3. Push, open PR, merge
 4. `git checkout main && git pull`
-5. `git tag vX.Y.Z && git push origin vX.Y.Z`
+5. `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
 
-Tags use semver: `v1.0.0` (lowercase v, three segments).
+Tags use semver: `v1.0.0` (lowercase v, three segments). Release
+tags MUST be annotated (`-a`) so `git describe` reports them.
 
 ---
 

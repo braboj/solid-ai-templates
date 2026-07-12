@@ -1,0 +1,27 @@
+name: Release tag guard
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  annotated-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Require annotated release tag
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          git fetch --force origin "refs/tags/${tag}:refs/tags/${tag}"
+          type="$(git cat-file -t "${tag}")"
+          if [ "${type}" != "tag" ]; then
+            echo "::error::Release tag ${tag} is lightweight (${type})." \
+                 "Tags MUST be annotated: git tag -a ${tag} -m '${tag}'." \
+                 "See issue #812."
+            exit 1
+          fi
+          echo "Release tag ${tag} is annotated. OK."
