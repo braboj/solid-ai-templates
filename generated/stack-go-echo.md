@@ -620,7 +620,10 @@ When NOT to close-and-resubmit:
   6. `git commit -m "chore: release vX.Y.Z"`
   7. Push, open PR, merge
   8. `git checkout main && git pull`
-  9. `git tag vX.Y.Z && git push origin vX.Y.Z`
+  9. `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
+     — release tags MUST be annotated (`-a`/`-s`); a lightweight
+     `git tag vX.Y.Z` is invisible to `git describe`, which reports
+     a stale version to submodule/`describe` consumers
   10. SHOULD create a GitHub Release from the tag:
       `gh release create vX.Y.Z --title "vX.Y.Z" --generate-notes`
       — a pushed tag alone does NOT create a Releases page entry.
@@ -634,6 +637,8 @@ When NOT to close-and-resubmit:
 ### Projects without a version manifest (no-build)
   4. `git checkout main && git pull`
   5. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
+     — the `-a` is mandatory: a lightweight `git tag` is skipped by
+     `git describe`, so consumers report a stale version
   6. `git push origin vX.Y.Z`
   7. Create a GitHub Release with auto-generated notes:
      `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>"
