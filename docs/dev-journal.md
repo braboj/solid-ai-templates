@@ -2219,3 +2219,38 @@ downstream evidence — reusable upstream content.
 **PRs merged:** #808, #809, #810
 
 **Issues closed:** #747, #760, #761. Journal PR carries no milestone.
+
+## 2026-07-12 — Annotated release tags (incident #812)
+
+**Tool:** Claude Code (Opus 4.8 [1M]).
+
+Incident triaged out of Expedite: 30 of 37 release tags were lightweight
+(`git tag`), which `git describe` skips — a downstream submodule pinned at
+`v2.35.0` reported `v2.17.0-128-g6969ccd`. Root cause was in the templates
+themselves: the version-manifest release flow in `git.md` and
+`static-site-tutorial.md` used plain `git tag`, and the no-build flow used
+`git tag -a` with no rationale, so operators "simplified" the `-a` away.
+
+- #812 (#813): `git.md` — both release flows now mandate `git tag -a`
+  with an inline rationale (a lightweight tag is invisible to
+  `git describe`); `static-site-tutorial.md` fixed the same way; new
+  `.github/workflows/tag-guard.yml` fails CI when a pushed `v*` tag is
+  lightweight; regenerated the 17 `generated/` chains (base-git is core).
+- Retagged all 30 historical lightweight tags as annotated at their
+  original commits — `git describe 6969ccd` now returns `v2.35.0` exactly;
+  37 annotated / 0 lightweight.
+
+**Decision:** no new ADR — the annotated-tag requirement and its rationale
+live in the `git.md` template; ADR-006 (release process) stands unchanged.
+
+**Lesson:** `git push --force` is blocked by the harness even for tags. The
+fallback delete+re-push detaches a tag's GitHub Release to a draft (restore
+per-tag with `gh release edit --draft=false`); updating the tag ref in
+place is preferable, as it keeps Releases published.
+
+**Template feedback:** reusable — the fix lives in the `base-git` template,
+so annotated-tag discipline plus the CI guard propagate to every consumer.
+
+**PRs merged:** #813
+
+**Issues closed:** #812. Journal PR carries no milestone.
