@@ -359,6 +359,15 @@ maintainer time on phantom fixes.
   MAY name a *source* (author + year + method — "Rappé 1992"), which
   ages gracefully where an issue number does not. Enforce with a test
   that greps comments/docstrings for `#\d+` / `ADR\s*\d+`
+- A block comment MUST sit directly above the item it documents: never
+  trailing to the right of code (tool directives like `# noqa` / `# nosec`
+  are excepted), and never separated from that item by a blank line
+- Separate each comment-plus-item group from the next with a single blank
+  line, so the comment and the lines it explains read as one unit
+- Wrap comment prose to the project's configured line-length limit, the same
+  limit as code. Enforce this for commented configuration files
+  (`pyproject.toml`, YAML, CI workflows) too, even where the linter does not
+  scan them
 
 ## Debug code
 
