@@ -68,7 +68,8 @@ base/
 │   ├── quality-gates.md # Three-layer gate model (editor, pre-commit, CI), thresholds
 │   ├── ai-workflow.md  # AI-assisted development lifecycle, work item hierarchy
 │   ├── 360.md          # 360-degree project analysis — four stakeholder perspectives, grading
-│   └── communication.md # Communication preferences — concise output, shorthand verbs, scope-asking
+│   ├── communication.md # Communication preferences — concise output, shorthand verbs, scope-asking
+│   └── two-pass-review.md # Split convention checks into mechanical (auto-fix) and contextual (over-flag, judge) passes over one catalogue
 ├── infra/
 │   ├── cicd.md         # Pipeline stages, triggers, environments, IaC, deployment
 │   ├── containers.md   # Dockerfile, runtime security, resource limits, Kubernetes

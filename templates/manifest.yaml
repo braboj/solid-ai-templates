@@ -96,6 +96,10 @@ base:
   - id: base-communication
     file: templates/base/workflow/communication.md
     description: Communication preferences — concise output, shorthand verbs, scope-asking
+  - id: base-two-pass-review
+    file: templates/base/workflow/two-pass-review.md
+    description: Split convention checks into mechanical (auto-fix) and contextual (over-flag, judge) passes over one catalogue
+    depends_on: [base-quality-gates, base-review]
 
 platform:
   - id: platform-github
