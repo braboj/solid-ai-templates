@@ -440,6 +440,28 @@ A productive session with an AI agent follows this rhythm:
 Keep sessions focused. One theme per session (e.g., "wiki migration" or "lens
 detail pages") produces better results than jumping between unrelated topics.
 
+### Invoke skills explicitly
+
+[ID: ai-workflow-explicit-invocation]
+
+When a project has skills or slash commands that also auto-trigger on
+natural language, prefer the explicit `/slash-command` form. A natural-
+language phrasing can match the wrong skill, and the misfire is silent:
+the agent runs a plausible-but-wrong workflow instead of the intended
+one. Reserve auto-trigger for the few skills where the intent is
+unambiguous.
+
+### Manage the context budget
+
+[ID: ai-workflow-context-budget]
+
+Stay in one session across the revision rounds of a single unit of work.
+The research and file context is already loaded, and a fresh session pays
+to rebuild it. When context gets tight mid-unit, compact it (e.g.
+`/compact focus on <the current artifact and its open feedback>`) rather
+than starting over. Start a new session only when switching to a
+different unit or phase, per "Keep sessions focused" above.
+
 ---
 
 ## Lessons Learned
