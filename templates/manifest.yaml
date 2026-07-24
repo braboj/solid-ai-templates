@@ -80,6 +80,9 @@ base:
   - id: base-scope
     file: templates/base/workflow/scope.md
     description: Scope guard, session protocol, drift prevention
+  - id: base-compression
+    file: templates/base/workflow/compression.md
+    description: Re-verifying summaries, tables and rollups derived from verified research
   - id: base-oop
     file: templates/base/core/oop.md
     description: SOLID, OOP, GoF design patterns, AOP guidance
