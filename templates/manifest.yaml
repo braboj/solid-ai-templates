@@ -34,6 +34,10 @@ base:
   - id: base-agents
     file: templates/base/core/agents.md
     description: Output structure, models (inline/reference/hybrid), formatting rules
+  - id: base-skills
+    file: templates/base/core/skills.md
+    description: Agent skill kinds, shared rule modules, progressive disclosure, evaluation
+    depends_on: [base-agents]
   - id: base-devsecops
     file: templates/base/security/devsecops.md
     description: SAST, SCA, SBOM, secret detection, license compliance
