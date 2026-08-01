@@ -42,6 +42,58 @@ inlined — do not rely on references alone for critical conventions.
 
 ---
 
+## Quality bar
+
+What separates a context file that works from one that dilutes itself.
+These apply to all three models; the review process checks them.
+
+### Principles
+
+- **Signal density over length.** Every line is a rule the agent
+  applies on the next turn — no changelogs, architecture notes, or
+  progress logs. Keep the qualifier or scope a rule needs to be
+  followed; never compress away a load-bearing clause. Optimize for
+  clarity, not bytes (see `docs/meta/agent-context-tradeoffs.md` and
+  `templates/base/workflow/compression.md`).
+- **One line per rule.** A rule that needs a paragraph is a decision
+  with context — write an ADR and leave a one-line pointer (see the
+  Doc placement decision tree in
+  `templates/base/workflow/ai-workflow.md`).
+- **Single source of truth.** Never restate a rule that is
+  authoritative in a skill, ADR, README, or template — point to it.
+  Duplicated rules drift, and the agent gets no signal which copy
+  wins (see `templates/base/core/docs.md`).
+- **State precedence when authorities compete.** When a project has
+  more than one rule source (ADRs, skills, vendored templates), state
+  the override order near the top: who wins when they differ.
+- **Inline load-bearing rules, reference the rest.** A rule whose
+  violation is silent or expensive (safety, git, project landmines)
+  MUST be inlined; the full framework is referenced (see "What to
+  inline", above).
+- **Pair a checkable rule with its check.** A mechanically checkable
+  constraint names its agent-runnable check — command plus pass
+  condition; subjective rules stay declarative (see
+  `quality-gates-pair-check` in
+  `templates/base/workflow/quality-gates.md`).
+
+### Self-check
+
+Run against a drafted file before delivering it. Every item must
+hold; a failing item is a fix, not a note:
+
+- Every line states a rule the agent applies next turn — no changelog,
+  architecture, or progress narrative.
+- No rule is a paragraph that should be an ADR plus a one-line pointer.
+- No prose restates a rule that is authoritative elsewhere (skill,
+  ADR, README, template).
+- If more than one authority governs the project, the precedence order
+  is stated.
+- Every mechanically checkable constraint names its check.
+- The Project structure section points to the README map, not a
+  duplicated directory tree (ADR-020).
+
+---
+
 ## Inline model
 
 All rules are inlined — the output file is self-contained. Use numbered
