@@ -67,8 +67,10 @@ py tools/audit_redundancy.py --check          # CI gate — fail on new dups
 ### 2.1 Git
 
 - Branch: `main` (protected) — never commit directly
-- Branch naming: `feat/<scope>`, `fix/<scope>`, `docs/<scope>`,
-  `chore/<scope>`
+- Branch naming: `<type>/<TICKET>-<scope>` — e.g.
+  `feat/BRA-42-label-scope`. Types: feat, fix, docs, chore. The Linear
+  ticket goes in upper case, as Linear displays it. Omit it only when
+  there is no ticket
 - Commits: `<type>(<scope>): <summary>` — types: feat, fix, chore,
   docs, refactor
 - PR titles: `<type>(<scope>): <summary> (#issue)` — same format
