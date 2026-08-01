@@ -1,148 +1,184 @@
-# Base — Agent Skills
-
+# Skill Authoring
 [ID: base-skills]
-[DEPENDS ON: templates/base/core/agents.md]
 
-## Principle
+Structure, triggering, and quality rules for authoring agent skills —
+`.claude/skills/<name>/SKILL.md` files with YAML frontmatter and a body
+of on-demand instructions. Companion to the context-file spec in
+`templates/base/core/agents.md`: that governs always-loaded rules, this
+governs on-demand procedures.
 
-- A skill is production instruction, not a note. It ships, it drifts, and it
-  needs the same discipline as code
-- Every skill MUST be one of two kinds: **orchestrating** or **atomic**
-- A rule that two skills need MUST live in one shared module, not in both
-- A skill's instructions MUST be testable, and the tests MUST come from
-  failures that actually happened
+---
 
-## The two kinds
+## When to write a skill
+[ID: skills-when]
 
-**Orchestrating** skills own a workflow: the step order, the inputs, and the
-handoffs. They delegate each step and they do not restate rules.
+A skill is a procedure or judgment the agent loads only when a task
+matches its description. It is not always-loaded context. Write one only
+when all three hold:
 
-**Atomic** skills do one job with one output contract and delegate nothing.
+- **Too big for every-turn context** — inlining the procedure in
+  `CLAUDE.md` or a template would dilute rules the agent needs on every
+  turn (see `docs/meta/agent-context-tradeoffs.md`)
+- **Not needed every turn** — it applies only when a recognizable task
+  arrives (write a post, score an article, deploy), not continuously
+- **Reusable** — the same procedure recurs across sessions; a one-off
+  belongs in the conversation, not a skill
 
-A skill that is neither is a monolith. Two signs:
+A rule that MUST fire on every turn belongs in `CLAUDE.md` or a template,
+never a skill — a skill the agent forgets to invoke is weaker than an
+always-loaded rule. Do NOT create a skill that restates always-loaded
+context: it is redundant and drifts from its source (see the single
+source of truth rule in `templates/base/core/agents.md`).
 
-- It asks the user which of several things they meant, then inlines all of
-  them. That is a dispatcher with the implementations pasted underneath it;
-  split it into a router plus one atomic skill per branch
-- It describes work another skill already implements. State the delegation and
-  wire it, or the two descriptions drift apart
+---
 
-## Rules live in shared modules
+## Frontmatter
+[ID: skills-frontmatter]
 
-Self-contained skills are the obvious design and the wrong one. Each reads
-completely on its own, and that is exactly what lets two copies of the same
-rulebook diverge without anyone noticing.
+- `name` and `description` are the only required keys. Add another key
+  only for a real behavior, not for metadata the runtime ignores
+- `name` MUST be kebab-case and match the skill's directory name
+- `disable-model-invocation: true` marks a skill as explicit-invocation
+  only (`/name`); omit it for skills that should auto-trigger
+- A long `description` uses a YAML block scalar (`>-`) so it wraps
+  without embedded newlines
 
-- A rule needed by more than one skill MUST move to a shared module; the
-  skills point at it
-- A skill MUST NOT restate a rule it points at. Restating is how the copies
-  separate
-- Where a skill and a module disagree, the module wins and the skill is the bug
-- Split modules by **rate of change and audience**, not by size. Rules that
-  change when the product changes do not belong with rules that never change
+---
 
-**Failure this prevents.** In one repository the writing skill and the scoring
-skill each carried the same rulebook. The scorer's copy had grown six rules the
-writing skill never received, so work was produced without rules it was then
-graded against. Neither file was wrong on its own.
+## Writing the description
+[ID: skills-description]
 
-## A prose rule does not enforce itself
+The `description` is the highest-leverage line in the file: it is the
+only text the model matches against to decide whether to trigger. Write
+it for retrieval, not for humans.
 
-Writing "re-verify this before use" into a skill does not cause verification.
-The instruction runs only if something runnable reaches it.
+- Open with an imperative purpose clause, then "Use when …", then the
+  concrete trigger phrases a user would actually type. The model matches
+  on those phrases, so name them literally
+- Write in the third person about the user's request ("Use when the user
+  asks to …"), not second person to the model
+- State what the skill is NOT for when a near neighbor would otherwise
+  mis-trigger it
+- For an explicit-only skill, put the invocation in the description
+  ("Invoke with `/name <arg>`") alongside `disable-model-invocation`
+- Name a relationship to another skill when one invokes the other, so
+  the skill graph is discoverable
 
-- A rule that can rot MUST have a check in the verification step, not only a
-  sentence in the guidance
-- Prefer a command whose output is a finding (`grep`, a linter, a script) over
-  a paragraph asking for judgement
-- Timestamp facts that expire, and say where the current value comes from
+---
 
-**Failure this prevents.** A catalog figure sat stale in a skill for months,
-directly above a rule instructing the reader to re-verify it against the live
-source. The rule was correct, was never executed, and the wrong number shipped
-into published work.
+## Body structure
+[ID: skills-structure]
+
+Order: purpose → workflow index → steps → output format → constraints.
+
+- Open with an H1 title and a one-sentence restatement of purpose
+- Follow with a numbered `## Workflow` that lists the steps in order and
+  doubles as a map to the detailed sections below
+- Give each step a numbered, imperative heading ("## Step 1: Read the
+  target")
+- Ship the exact output or report format inline as a skeleton the model
+  fills, not a prose description of it
+- End with a `## Constraints` section for hard rules and don'ts
+- State a core principle or calibration note when the skill applies
+  mechanical rules, so they are not over-applied ("signals, not proof")
+
+Annotated skeleton:
+
+```markdown
+---
+name: skill-name
+description: >-
+  <Imperative purpose>. Use when the user asks to <task> —
+  "<trigger phrase>", "<trigger phrase>", "<trigger phrase>". Not for
+  <near neighbor to exclude>.
+---
+
+# Skill Name
+
+<One sentence restating what this skill does.>
+
+## Workflow
+
+1. <Step one, imperative>
+2. <Step two>
+3. <Step three>
+
+## Step 1: <imperative heading>
+
+<What to do. Point to reference.md or scripts/ where detail lives.>
+
+## Output
+
+<Fenced or ###-structured skeleton the model fills in.>
+
+## Constraints
+
+- <Hard rule>
+- <Don't>
+```
+
+---
 
 ## Progressive disclosure
+[ID: skills-disclosure]
 
-A skill's entry file is loaded whenever the skill triggers; bundled files are
-read only on demand. That makes the entry file the expensive part.
+- Keep `SKILL.md` to procedure and judgment. Move exhaustive catalogs,
+  lookup tables, and long references to a sibling `reference.md` (or
+  `references/*.md`) and point to it by name at the step that needs it
+- Tell the model the reference is authoritative and any inline list is a
+  subset ("the high-frequency ones; full catalogue in `reference.md`")
+- Share one reference across skills rather than copying it — a duplicated
+  catalog drifts, the same single-source-of-truth rule that governs
+  context files
 
-- Keep the entry file to an overview that points at detail
-- References MUST be one level deep from the entry file. A reference that only
-  another reference points at gets previewed rather than read, so the agent
-  silently works from part of it
-- A reference over ~100 lines MUST open with a table of contents, so a partial
-  read still shows the full scope
-- When a shared module absorbs a reference, link that reference directly from
-  every skill that needs it. Routing it through the module alone pushes it to
-  the second level
+---
 
-## Evaluating skills
+## Bundled scripts
+[ID: skills-scripts]
 
-Skills degrade agent behaviour when they trigger wrongly, conflict with each
-other, or instruct poorly. Five dimensions are worth measuring:
+- Bundle a deterministic mechanical pass as `scripts/scan.sh` for
+  anything a regex can catch, so it does not burn model attention.
+  Invoke it with an explicit relative path in a fenced block
+- Split script output into a violations bucket (every hit is a finding)
+  and a review bucket (over-flagged by design, judge in context) and
+  tell the model which is which
+- State the script's limits so it is not over-trusted ("a clean scan is
+  not a passing score; the scanner catches only what a regex reaches").
+  A stated check pairs with its rule (see `quality-gates-pair-check` in
+  `templates/base/workflow/quality-gates.md`)
+- Wrap existing project tooling by path (an npm script, a Python tool)
+  rather than re-implementing its logic in the skill
 
-| Dimension | Question |
-| --- | --- |
-| Triggering accuracy | Fires for the right requests, stays quiet for others |
-| Coexistence | Adding it does not steal another skill's triggers |
-| Isolation | Works correctly on its own |
-| Instruction following | The agent actually does what it says |
-| Output quality | The result is correct and useful |
+---
 
-Rules:
+## Length and tone
+[ID: skills-length]
 
-- Every case MUST cite the observed failure it came from. A case with no
-  failure behind it is an imagined requirement, and imagined requirements are
-  what evaluation exists to prevent
-- Cover negative cases. Where every skill's description names the same domain,
-  a false trigger is likelier than a missed one
-- Adding a skill MUST add its coexistence cases. A new description competes
-  with every existing one for the same words, and nothing surfaces that until
-  something tests it
-- Test on every model the skills will run under. Effectiveness varies by model
+- Right-size to the task: roughly 50–90 lines for a mechanical,
+  single-purpose skill; 130–220 for a judgment-heavy one. Past ~220,
+  split detail into a reference
+- Write imperatively to the agent ("Read the full input", "Do not skip
+  the review step"). Use directive absolutes for critical ordering
+- Encode specific, hard-won lessons with concrete example cases, not
+  generic advice — a named past failure teaches more than an abstraction
+- Keep the prose de-slopped; a skill that produces prose should run its
+  own output through the project's writing check before shipping
 
-**Two findings worth inheriting.**
+---
 
-Indirection survives smaller models better than expected: an instruction to go
-read three modules first was followed at every tier tested. What degraded was
-rule *application*, not rule *loading*. The same rule sat in context on both
-runs and only the stronger model applied it. Do not assume a skipped rule was
-never read.
+## Self-check
+[ID: skills-self-check]
 
-Subagents cannot measure triggering or coexistence. A subagent does not
-reliably carry the parent session's skill registry, so "no skill loaded" is
-ambiguous between the skill correctly staying quiet and the skill never having
-been available. **Negative cases survive this** (both causes give the same
-right answer); positive cases do not, and need a fresh top-level session.
+Run against a drafted skill before delivering it. Every item must hold;
+a failing item is a fix, not a note:
 
-## Shared namespaces have no owner
-
-Where skills or their outputs write into one flat shared directory, no file has
-an owner, and the component that stops using a file is not the component that
-owns it.
-
-- Before deleting from a shared namespace, search every consumer for the name
-- Prefer per-component directories. Scoping is the structural fix; a naming
-  convention is only a mitigation
-- Where a shared namespace is unavoidable, prefix on write and check for
-  collisions mechanically
-
-## MUST checklist
-
-- [ ] Every skill is orchestrating or atomic, and says which
-- [ ] No rule appears in two skills
-- [ ] Every rule that can go stale has a runnable check
-- [ ] Every reference is one level deep from an entry file
-- [ ] Every reference over ~100 lines opens with a table of contents
-- [ ] Every evaluation case cites the failure it came from
-- [ ] Negative and coexistence cases exist, not only positive ones
-- [ ] Skills tested on every model they run under
-- [ ] Deleting a skill leaves no dangling reference in docs, config, or other
-      skills
-
-## Related
-
-- `templates/base/core/agents.md` — the agent instruction file these support
-- `templates/base/core/testing.md` — evaluation as a testing discipline
-- `templates/base/core/review.md` — reviewing agent-authored work
+- Does this need to be a skill, or does it belong in always-loaded
+  context because it must fire every turn?
+- Does the description name the literal phrases a user would type to
+  trigger it?
+- Is any exhaustive catalog inlined that should be a shared `reference.md`?
+- Does the body restate a rule that is authoritative in another skill,
+  a template, or `CLAUDE.md`?
+- Does every mechanically checkable step name its check?
+- Is the output format shipped as an inline skeleton, not described in
+  prose?

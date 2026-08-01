@@ -56,7 +56,7 @@ base/
 │   ├── review.md       # Peer review priority, MUST/SHOULD checklists, deviation rules
 │   ├── testing.md      # Test pyramid, coverage thresholds, naming conventions
 │   ├── agents.md       # Output structure, models (inline/reference/hybrid), formatting rules
-│   ├── skills.md       # Agent skill kinds, shared rule modules, progressive disclosure, evaluation
+│   ├── skills.md       # Skill authoring — when to write one, frontmatter, triggering, structure, scripts
 │   ├── readme.md       # README structure, badges, quick start, contribution guide
 │   └── oop.md          # SOLID, OOP, GoF design patterns, AOP guidance
 ├── security/
