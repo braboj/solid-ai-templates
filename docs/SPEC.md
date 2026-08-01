@@ -66,6 +66,7 @@ base/
 │   ├── release.md      # Semver, version bump propagation, backward compat, cut-over
 │   ├── issues.md       # Issue templates — epic, task, bug, incident, spike
 │   ├── scope.md        # Scope guard, session protocol, drift prevention
+│   ├── compression.md  # Re-verifying summaries, tables and rollups derived from verified research
 │   ├── quality-gates.md # Three-layer gate model (editor, pre-commit, CI), thresholds
 │   ├── ai-workflow.md  # AI-assisted development lifecycle, work item hierarchy
 │   ├── 360.md          # 360-degree project analysis — four stakeholder perspectives, grading
