@@ -108,6 +108,12 @@ Before every commit, update all relevant documentation:
 - Render "Alternatives considered" and "Consequences" as tables where the
   content fits — they scan faster than prose lists
 - ADRs are immutable once merged — create a new ADR to supersede an old one
+- A content-preserving format migration preserves immutability and needs
+  no superseding ADR: normalizing headings, titles, filenames, or
+  cross-links across merged ADRs is allowed as long as it changes no
+  decision prose (Context, Decision, Alternatives considered,
+  Consequences). The commit MUST state "format-only, no decision
+  change". Changing a decision's substance still requires a new ADR
 - When an ADR's premise is refuted shortly after it merges (typically by
   data that should have informed it), prefer a same-day or same-week
   supersession ADR documenting the post-mortem over silently closing the

@@ -785,6 +785,12 @@ Before every commit, update all relevant documentation:
 - Render "Alternatives considered" and "Consequences" as tables where the
   content fits — they scan faster than prose lists
 - ADRs are immutable once merged — create a new ADR to supersede an old one
+- A content-preserving format migration preserves immutability and needs
+  no superseding ADR: normalizing headings, titles, filenames, or
+  cross-links across merged ADRs is allowed as long as it changes no
+  decision prose (Context, Decision, Alternatives considered,
+  Consequences). The commit MUST state "format-only, no decision
+  change". Changing a decision's substance still requires a new ADR
 - When an ADR's premise is refuted shortly after it merges (typically by
   data that should have informed it), prefer a same-day or same-week
   supersession ADR documenting the post-mortem over silently closing the
@@ -1809,6 +1815,23 @@ SHOULD also check:
 
 - No substantial duplication across sibling components — if two or more
   components share the same code, extract a shared module
+
+## Reviewing agent-produced findings
+
+A finding reported by an agent is a lead, not evidence. Verify it against the
+source before acting on it or repeating it to anyone else.
+
+- Check the claim against the file, the commit, or the upstream document that
+  would settle it, not against the plausibility of the wording
+- "Could not confirm" is not evidence of absence. Distinguish a verified
+  negative from a failed lookup, and say which one you have
+- A finding confirmed by several agents is still one finding. Independent
+  agents share the same blind spots and can agree on the same wrong answer
+- When a finding turns out to be wrong after you have passed it on, correct it
+  plainly and name what the check actually showed
+
+Applies equally to the reviewer's own tooling: a grep that returns the expected
+answer for the wrong reason is the same failure in a cheaper form.
 
 ## Deviations
 

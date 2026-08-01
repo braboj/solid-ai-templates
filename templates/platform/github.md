@@ -275,10 +275,14 @@ GitHub implements issue types and priorities as labels. Every issue
 MUST have exactly one type label and one priority label. Triage
 labels are terminal — applied when closing without action.
 
-Every issue and pull request MUST also be assigned to a milestone
-at creation. Issues without a target release MUST use the `Backlog`
-milestone — the milestone field MUST NOT be empty. PRs SHOULD inherit
-the milestone of the issue they close.
+Milestones are optional. An issue MAY carry one; an empty milestone
+field is valid and means the work is not tied to a release. A PR
+SHOULD inherit the milestone of the issue it closes, when that issue
+has one.
+
+A project that does use milestones SHOULD route issues with no target
+release to a `Backlog` milestone, so "unmilestoned" and "deliberately
+unscheduled" stay distinguishable.
 
 The `Expedite` milestone is a rolling fast-track lane for work
 shipping between versioned releases — mainly bugs and incidents,
@@ -304,8 +308,8 @@ remain visually distinct when displayed side by side.
 | Label      | Color     | Maps to  |
 | ---------- | --------- | -------- |
 | `bug`      | `#C9372C` | Bug      |
-| `epic`     | `#8270DB` | Epic     |
-| `task`     | `#357DE8` | Task     |
+| `epic`     | `#9F8FEF` | Epic     |
+| `task`     | `#579DFF` | Task     |
 | `spike`    | `#6CC3E0` | Spike    |
 | `incident` | `#AE2E24` | Incident |
 
@@ -317,7 +321,15 @@ remain visually distinct when displayed side by side.
 | `P1`  | `#FCA700` | P1 — High     |
 | `P2`  | `#EED12B` | P2 — Medium   |
 | `P3`  | `#4BCE97` | P3 — Low      |
-| `P4`  | `#8590A2` | P4 — Backlog  |
+
+### Deferral label (optional)
+
+| Label | Color     | Meaning                       |
+| ----- | --------- | ----------------------------- |
+| `P4`  | `#8590A2` | Deliberately deferred         |
+
+`P4` is not a severity and MUST accompany a severity label rather than
+replace one.
 
 ### Triage labels
 

@@ -34,6 +34,9 @@ base:
   - id: base-agents
     file: templates/base/core/agents.md
     description: Output structure, models (inline/reference/hybrid), formatting rules
+  - id: base-skills
+    file: templates/base/core/skills.md
+    description: Skill authoring — when to write one, frontmatter, triggering, structure, scripts
   - id: base-devsecops
     file: templates/base/security/devsecops.md
     description: SAST, SCA, SBOM, secret detection, license compliance
@@ -113,6 +116,10 @@ platform:
     file: templates/platform/gitlab.md
     description: Semgrep OSS, GitLab CI/CD, gitleaks CLI
     depends_on: [base-quality-gates]
+  - id: platform-linear
+    file: templates/platform/linear.md
+    description: Label groups, native priority, sub-issues, code-host sync
+    depends_on: [base-issues]
 
 frontend:
   - id: frontend-ux
