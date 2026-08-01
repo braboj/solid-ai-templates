@@ -67,8 +67,10 @@ py tools/audit_redundancy.py --check          # CI gate — fail on new dups
 ### 2.1 Git
 
 - Branch: `main` (protected) — never commit directly
-- Branch naming: `feat/<scope>`, `fix/<scope>`, `docs/<scope>`,
-  `chore/<scope>`
+- Branch naming: `<type>/<TICKET>-<scope>` — e.g.
+  `feat/BRA-42-label-scope`. Types: feat, fix, docs, chore. The Linear
+  ticket goes in upper case, as Linear displays it. Omit it only when
+  there is no ticket
 - Commits: `<type>(<scope>): <summary>` — types: feat, fix, chore,
   docs, refactor
 - PR titles: `<type>(<scope>): <summary> (#issue)` — same format
@@ -104,8 +106,13 @@ are terminal — applied when closing without action.
 | `P0` | `#E06C00` | Critical — blocks everything |
 | `P1` | `#FCA700` | High — must fix before next milestone |
 | `P2` | `#EED12B` | Medium — important but not blocking |
-| `P3` | `#4BCE97` | Low — nice to have |
-| `P4` | `#8590A2` | Backlog — someday |
+| `P3` | `#4BCE97` | Low — nice to have, including trivial |
+
+#### Deferral label (optional)
+
+| Label | Color | Meaning |
+|-------|-------|---------|
+| `P4` | `#8590A2` | Deliberately deferred — accompanies a severity, never replaces one |
 
 #### Triage labels
 
