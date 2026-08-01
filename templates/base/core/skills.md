@@ -1,6 +1,7 @@
 # Base — Agent Skills
 
 [ID: base-skills]
+[DEPENDS ON: templates/base/core/agents.md]
 
 ## Principle
 
