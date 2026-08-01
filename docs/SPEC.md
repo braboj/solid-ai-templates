@@ -56,6 +56,7 @@ base/
 │   ├── review.md       # Peer review priority, MUST/SHOULD checklists, deviation rules
 │   ├── testing.md      # Test pyramid, coverage thresholds, naming conventions
 │   ├── agents.md       # Output structure, models (inline/reference/hybrid), formatting rules
+│   ├── skills.md       # Skill authoring — when to write one, frontmatter, triggering, structure, scripts
 │   ├── readme.md       # README structure, badges, quick start, contribution guide
 │   └── oop.md          # SOLID, OOP, GoF design patterns, AOP guidance
 ├── security/
@@ -68,7 +69,8 @@ base/
 │   ├── quality-gates.md # Three-layer gate model (editor, pre-commit, CI), thresholds
 │   ├── ai-workflow.md  # AI-assisted development lifecycle, work item hierarchy
 │   ├── 360.md          # 360-degree project analysis — four stakeholder perspectives, grading
-│   └── communication.md # Communication preferences — concise output, shorthand verbs, scope-asking
+│   ├── communication.md # Communication preferences — concise output, shorthand verbs, scope-asking
+│   └── two-pass-review.md # Split convention checks into mechanical (auto-fix) and contextual (over-flag, judge) passes over one catalogue
 ├── infra/
 │   ├── cicd.md         # Pipeline stages, triggers, environments, IaC, deployment
 │   ├── containers.md   # Dockerfile, runtime security, resource limits, Kubernetes
@@ -85,7 +87,8 @@ base/
 ```
 platform/
 ├── github.md       # CodeQL, GitHub Actions, gitleaks action, push protection
-└── gitlab.md       # Semgrep OSS, GitLab CI/CD, gitleaks CLI
+├── gitlab.md       # Semgrep OSS, GitLab CI/CD, gitleaks CLI
+└── linear.md       # Label groups, native priority, sub-issues, code-host sync
 ```
 
 ```
