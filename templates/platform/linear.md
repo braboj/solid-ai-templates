@@ -206,9 +206,13 @@ Linear tracks parent and child natively and rolls up progress.
   issue still closes, but no pull request attaches to it and it jumps
   straight to `completed`, never passing through a `started` state.
 - Match the identifier anywhere in the name, so the code host's own
-  branch convention survives: `feat/<identifier>-<scope>`. Only the
+  branch convention survives: `feat/<IDENTIFIER>-<scope>`. Only the
   identifier is matched; the title slug the tracker suggests is
   decoration.
+- The identifier matches case-insensitively. Write it in the case the
+  tracker displays — upper case for Linear — so the branch reads as the
+  same token as the ticket. The generated branch name the tracker
+  offers may lower-case it; either works.
 - Configure the automation to move an issue to a `started` state on PR
   open and to a `completed` state on merge.
 - Two-way issue sync duplicates the tracker. Enable it per repository
