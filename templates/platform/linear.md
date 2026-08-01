@@ -198,9 +198,17 @@ Linear tracks parent and child natively and rolls up progress.
 - Install the code-host integration from Linear's settings and grant it
   every repository the team tracks, so a new repository needs no second
   setup step.
-- A branch name MUST contain the issue identifier for the integration
-  to link it. Combine with the code-host branch convention:
-  `feat/<identifier>-<scope>`.
+- Closing an issue and linking a branch are separate mechanisms. Issue
+  sync closes a Linear issue when the code host closes its counterpart,
+  whatever the branch is called. The branch identifier is what attaches
+  the pull request to the issue and drives in-flight status.
+- A branch name SHOULD contain the issue identifier. Without it the
+  issue still closes, but no pull request attaches to it and it jumps
+  straight to `completed`, never passing through a `started` state.
+- Match the identifier anywhere in the name, so the code host's own
+  branch convention survives: `feat/<identifier>-<scope>`. Only the
+  identifier is matched; the title slug the tracker suggests is
+  decoration.
 - Configure the automation to move an issue to a `started` state on PR
   open and to a `completed` state on merge.
 - Two-way issue sync duplicates the tracker. Enable it per repository
