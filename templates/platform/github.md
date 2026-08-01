@@ -275,10 +275,14 @@ GitHub implements issue types and priorities as labels. Every issue
 MUST have exactly one type label and one priority label. Triage
 labels are terminal — applied when closing without action.
 
-Every issue and pull request MUST also be assigned to a milestone
-at creation. Issues without a target release MUST use the `Backlog`
-milestone — the milestone field MUST NOT be empty. PRs SHOULD inherit
-the milestone of the issue they close.
+Milestones are optional. An issue MAY carry one; an empty milestone
+field is valid and means the work is not tied to a release. A PR
+SHOULD inherit the milestone of the issue it closes, when that issue
+has one.
+
+A project that does use milestones SHOULD route issues with no target
+release to a `Backlog` milestone, so "unmilestoned" and "deliberately
+unscheduled" stay distinguishable.
 
 The `Expedite` milestone is a rolling fast-track lane for work
 shipping between versioned releases — mainly bugs and incidents,
