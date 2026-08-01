@@ -87,7 +87,8 @@ base/
 ```
 platform/
 ├── github.md       # CodeQL, GitHub Actions, gitleaks action, push protection
-└── gitlab.md       # Semgrep OSS, GitLab CI/CD, gitleaks CLI
+├── gitlab.md       # Semgrep OSS, GitLab CI/CD, gitleaks CLI
+└── linear.md       # Label groups, native priority, sub-issues, code-host sync
 ```
 
 ```
