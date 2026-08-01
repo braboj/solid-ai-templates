@@ -3587,8 +3587,12 @@ project-specific; the at-creation discipline is not.
 | P0 | Critical — blocks everything |
 | P1 | High — must fix before next milestone |
 | P2 | Medium — important but not blocking |
-| P3 | Low — nice to have |
-| P4 | Backlog — someday |
+| P3 | Low — nice to have, including trivial |
+
+`P4` is not a severity. It marks work deliberately deferred, and MAY
+accompany any of `P0`–`P3` — deferring a high-severity issue is a
+scheduling decision, not a downgrade. Every issue MUST carry exactly
+one of `P0`–`P3`; `P4` is optional and additional.
 
 Platform-specific label implementation (names, colors) is defined in
 the platform template (e.g. `platform/github.md`).
@@ -3894,15 +3898,17 @@ before it becomes planned work:
 - A handoff breadcrumb names continuity, not priority. A
   "next: continue on X" pointer marks the cheapest resumption of the last
   thread, not the highest-priority move. Before acting, re-check X's
-  milestone and priority against the project's current milestone — if
-  they differ, ask first. The wrap-up writer MUST validate each candidate
-  against the tracker before listing it (`gh issue view <N>` or
-  equivalent — still open, in the current milestone, not blocked), drop
-  closed or out-of-milestone candidates, and record each surviving
-  pointer's milestone and priority inline so the next session sees any
-  mismatch. A breadcrumb is captured from session memory, not synced from
-  the tracker, so a stale entry burns the next session's setup time on
-  already-done work.
+  priority — and its milestone, where the project uses milestones —
+  against what the project is currently working on; if they differ, ask
+  first. The wrap-up writer MUST validate each candidate against the
+  tracker before listing it (`gh issue view <N>` or equivalent — still
+  open, not blocked, and not in a milestone the project has moved past),
+  drop closed candidates, and record each surviving pointer's priority
+  (and milestone, if any) inline so the next session sees any mismatch.
+  An issue with no milestone MUST NOT be dropped on that basis — an empty
+  milestone carries no scheduling signal either way. A breadcrumb is
+  captured from session memory, not synced from the tracker, so a stale
+  entry burns the next session's setup time on already-done work.
 
 ## Default scope boundaries
 
