@@ -304,8 +304,8 @@ remain visually distinct when displayed side by side.
 | Label      | Color     | Maps to  |
 | ---------- | --------- | -------- |
 | `bug`      | `#C9372C` | Bug      |
-| `epic`     | `#8270DB` | Epic     |
-| `task`     | `#357DE8` | Task     |
+| `epic`     | `#9F8FEF` | Epic     |
+| `task`     | `#579DFF` | Task     |
 | `spike`    | `#6CC3E0` | Spike    |
 | `incident` | `#AE2E24` | Incident |
 
