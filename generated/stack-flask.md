@@ -1810,6 +1810,23 @@ SHOULD also check:
 - No substantial duplication across sibling components — if two or more
   components share the same code, extract a shared module
 
+## Reviewing agent-produced findings
+
+A finding reported by an agent is a lead, not evidence. Verify it against the
+source before acting on it or repeating it to anyone else.
+
+- Check the claim against the file, the commit, or the upstream document that
+  would settle it, not against the plausibility of the wording
+- "Could not confirm" is not evidence of absence. Distinguish a verified
+  negative from a failed lookup, and say which one you have
+- A finding confirmed by several agents is still one finding. Independent
+  agents share the same blind spots and can agree on the same wrong answer
+- When a finding turns out to be wrong after you have passed it on, correct it
+  plainly and name what the check actually showed
+
+Applies equally to the reviewer's own tooling: a grep that returns the expected
+answer for the wrong reason is the same failure in a cheaper form.
+
 ## Deviations
 
 - Deviating from a SHOULD rule requires a written explanation in the pull
