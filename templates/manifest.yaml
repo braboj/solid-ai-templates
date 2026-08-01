@@ -110,6 +110,10 @@ platform:
     file: templates/platform/gitlab.md
     description: Semgrep OSS, GitLab CI/CD, gitleaks CLI
     depends_on: [base-quality-gates]
+  - id: platform-linear
+    file: templates/platform/linear.md
+    description: Label groups, native priority, sub-issues, code-host sync
+    depends_on: [base-issues]
 
 frontend:
   - id: frontend-ux
