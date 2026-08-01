@@ -1,5 +1,5 @@
 ---
-id: "021"
+id: "022"
 status: Accepted
 date: 2026-07-24
 category: templates
@@ -7,7 +7,7 @@ supersedes: []
 superseded_by: []
 ---
 
-# ADR-021: Skill authoring is an in-scope artifact type
+# ADR-022: Skill authoring is an in-scope artifact type
 
 ## Context
 
