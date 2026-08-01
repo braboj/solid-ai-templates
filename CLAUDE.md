@@ -104,8 +104,13 @@ are terminal — applied when closing without action.
 | `P0` | `#E06C00` | Critical — blocks everything |
 | `P1` | `#FCA700` | High — must fix before next milestone |
 | `P2` | `#EED12B` | Medium — important but not blocking |
-| `P3` | `#4BCE97` | Low — nice to have |
-| `P4` | `#8590A2` | Backlog — someday |
+| `P3` | `#4BCE97` | Low — nice to have, including trivial |
+
+#### Deferral label (optional)
+
+| Label | Color | Meaning |
+|-------|-------|---------|
+| `P4` | `#8590A2` | Deliberately deferred — accompanies a severity, never replaces one |
 
 #### Triage labels
 

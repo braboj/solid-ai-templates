@@ -321,7 +321,15 @@ remain visually distinct when displayed side by side.
 | `P1`  | `#FCA700` | P1 — High     |
 | `P2`  | `#EED12B` | P2 — Medium   |
 | `P3`  | `#4BCE97` | P3 — Low      |
-| `P4`  | `#8590A2` | P4 — Backlog  |
+
+### Deferral label (optional)
+
+| Label | Color     | Meaning                       |
+| ----- | --------- | ----------------------------- |
+| `P4`  | `#8590A2` | Deliberately deferred         |
+
+`P4` is not a severity and MUST accompany a severity label rather than
+replace one.
 
 ### Triage labels
 

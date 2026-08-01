@@ -96,9 +96,9 @@ fails on this unless the order is right.
 
 [ID: platform-linear-priority]
 
-Linear ships a native priority field with exactly five values, mapping
-one-to-one onto the base taxonomy. Use it — a label cannot drive board
-ordering, saved filters, or the no-priority bucket.
+Linear's native priority field carries four named severities plus an
+unset value. Use it — a label cannot drive board ordering or saved
+filters.
 
 | Base | Linear field | API value |
 | ---- | ------------ | --------- |
@@ -106,13 +106,15 @@ ordering, saved filters, or the no-priority bucket.
 | P1   | High         | 2         |
 | P2   | Medium       | 3         |
 | P3   | Low          | 4         |
-| P4   | No priority  | 0         |
 
-- Set priority at creation.
-- `No priority` is also the default for an untouched issue, so P4 and
-  never-triaged are indistinguishable in the field. When that
-  distinction matters, route intake through Triage rather than
-  reintroducing a priority label.
+- Set a severity at creation.
+- `No priority` (0) MUST mean untriaged, and MUST NOT be used for any
+  severity. It is the default for an untouched issue, so spending it on
+  a severity makes deliberate decisions indistinguishable from absent
+  ones.
+- `P4` is a deferral marker, not a severity, so it has no place in this
+  field. Carry it as a label outside every group, or as the tracker's
+  own deferral mechanism.
 
 ---
 

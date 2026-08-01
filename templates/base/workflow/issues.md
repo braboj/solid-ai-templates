@@ -26,8 +26,12 @@ project-specific; the at-creation discipline is not.
 | P0 | Critical — blocks everything |
 | P1 | High — must fix before next milestone |
 | P2 | Medium — important but not blocking |
-| P3 | Low — nice to have |
-| P4 | Backlog — someday |
+| P3 | Low — nice to have, including trivial |
+
+`P4` is not a severity. It marks work deliberately deferred, and MAY
+accompany any of `P0`–`P3` — deferring a high-severity issue is a
+scheduling decision, not a downgrade. Every issue MUST carry exactly
+one of `P0`–`P3`; `P4` is optional and additional.
 
 Platform-specific label implementation (names, colors) is defined in
 the platform template (e.g. `platform/github.md`).
