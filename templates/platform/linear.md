@@ -56,8 +56,39 @@ convention.
 | `incident` | `#AE2E24` | Incident |
 
 **Check:** list the team's issue labels. Every row above MUST report a
-parent of `Type`, and no label named `P0`–`P4`, `duplicate`, or
+parent of `Type` and a non-null team, no row MUST appear a second time
+outside the group, and no label named `P0`–`P4`, `duplicate`, or
 `wontdo` MUST exist.
+
+---
+
+## Label scope
+
+[ID: platform-linear-label-scope]
+
+A Linear label belongs either to the workspace or to one team, and the
+two do not mix. Migrating an existing workspace onto the taxonomy above
+fails on this unless the order is right.
+
+- A label group is team-scoped. A workspace label MUST NOT be parented
+  into one — Linear rejects it as a team mismatch.
+- Linear's stock `Bug`, `Feature` and `Improvement` labels are
+  workspace-scoped, so the labels a workspace already has are exactly
+  the ones that cannot join the group. Recreate the ones worth keeping
+  as team labels.
+- Label names are reserved workspace-wide. To replace a workspace label
+  with a team label of the same name: rename the original to free the
+  name, create the replacement inside the group, apply it to every issue
+  that carried the original, and only then delete the original.
+  Deleting first strips the label from every issue in the gap.
+- Retiring one grouped label into another MUST rewrite the issue's whole
+  label set in one update. A group admits one label, so adding the
+  replacement first is rejected, and removing first leaves the issue
+  untyped while the write is in flight.
+- After deleting a label, re-read the label list and delete any residual
+  copy. `issueLabelDelete` reports success while leaving an ungrouped
+  duplicate carrying the label's pre-rename colour, so a migration that
+  trusts the return value leaves the workspace dirty.
 
 ---
 
