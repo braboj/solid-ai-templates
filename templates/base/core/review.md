@@ -95,7 +95,7 @@ Verify every MUST from:
 
 - `templates/base/core/docs.md` — standard documents (README, ONBOARDING,
   PLAYBOOK, ADRs)
-- `templates/base/core/readme.md` — README has all 8 required sections
+- `templates/base/core/readme.md` — README has all 9 required sections
 - `templates/base/core/git.md` — .gitignore, README exist
 - The relevant frontend or backend layer template — required assets,
   config files, SEO files
