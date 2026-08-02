@@ -38,6 +38,29 @@ the platform template (e.g. `platform/github.md`).
 
 ---
 
+## System of record
+[ID: base-issues-record]
+
+The code host is the system of record. The tracker is a view over it,
+chosen for its UI, and MUST be replaceable without losing anything.
+
+- A ticket description MUST NOT be the only copy of anything that
+  outlives the ticket. Decisions go in ADRs, rationale and specs in
+  `docs/`. The tracker carries status, ordering and assignment — state
+  that is worthless after a migration anyway.
+- A commit message or PR title SHOULD reference the code-host issue
+  number. It lives with the repository and survives a tracker change,
+  where a tracker identifier in either becomes a dead reference the
+  moment the tracker does.
+- A tracker identifier MAY appear in a branch name. Branches are
+  deleted after merge, so that reference is ephemeral, and the
+  identifier is what drives in-flight status.
+
+Retrofitting this is expensive: every commit message and PR title
+written before the rule exists is already permanent.
+
+---
+
 ## Deferred work
 [ID: base-issues-defer]
 
