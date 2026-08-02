@@ -4020,7 +4020,9 @@ summarize — visible sequential execution prevents missed steps.
 
 1. **Commits and push** — all changes committed and pushed (via PR if
    branch-protected)
-2. **Close issues** — close completed issues (verify auto-close worked)
+2. **Close issues** — reconcile the open-issue list against the work
+   shipped this session, from the tracker rather than memory, and close
+   what is done (verify auto-close worked)
 3. **Epic checklists** — update epic checklists if relevant
 4. **Dev journal** — add a session entry to `docs/dev-journal.md`
    (date, tool, key changes, PRs merged, issues closed/created)
@@ -4039,10 +4041,13 @@ summarize — visible sequential execution prevents missed steps.
    here. Evaluate items individually; do not batch-dismiss.
 7. **README.md** — for each new command, dependency, or structural
    change, is it reflected? Name the section.
-8. **ONBOARDING.md** — for each new tool, prerequisite, or setup step,
-   is it documented in `docs/ONBOARDING.md`? Name the section.
-9. **PLAYBOOK.md** — for each new command, script, or workflow added,
-   is it documented in `docs/PLAYBOOK.md`? Name the section.
+8. **ONBOARDING.md** — ensure `docs/ONBOARDING.md` exists and covers
+   each new tool, prerequisite, or setup step. Create it if missing;
+   name the section. A missing doc is work to do here, not a gap to
+   report.
+9. **PLAYBOOK.md** — ensure `docs/PLAYBOOK.md` exists and covers each
+   new command, script, or workflow added. Create it if missing; name
+   the section. A missing doc is work to do here, not a gap to report.
 10. **Submodules** — check if upstream submodules need updates
     (`git submodule update --remote`); commit the pointer bump if needed
 11. **Template feedback** — for each new pattern or convention
@@ -4068,7 +4073,9 @@ summarize — visible sequential execution prevents missed steps.
 12. **Flag gaps** — if any item cannot be completed this session, report
     it as pending (never as done) before closing — including deferred
     cross-repo work, such as an upstream contribution that was flagged
-    but not yet landed
+    but not yet landed. Reserve "pending" for work that is genuinely
+    blocked — it needs a decision, a credential, or the user. Work the
+    agent could do but has not done is not pending; do it.
 13. **Summary** — summarize what was done and what's next
 
 
