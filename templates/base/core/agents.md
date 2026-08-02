@@ -360,6 +360,26 @@ link checkers.
   local command contributors are told to run before pushing fails. A
   green dashboard is not evidence here
 
+A consuming repository asks two different questions of the upstream
+templates, and they need different revisions. The two coincide only
+when the pin equals HEAD.
+
+- "Has this already been raised?" MUST be answered against the upstream
+  issue list at HEAD. Reading the pinned file answers "does this rule
+  exist in the revision we pin", which is a different question, and
+  produces duplicate issues against rules already fixed upstream —
+  inside the commits the pin is behind
+- "What do our rules require?" MUST be answered at the pinned revision:
+  `git -C <submodule> show HEAD:templates/<file>`. This is the more
+  damaging direction to get wrong, because it yields a citation rather
+  than a duplicate: a rule read from HEAD and quoted as governing does
+  not govern until the pin moves, and it makes a local document look
+  conformant when it is not
+- Never read from `origin/main`, and never from the working tree after
+  a bare `fetch`. Fetching makes `origin/main` live while the pin stays
+  put, so anything read there describes a future state of the consuming
+  repository, not its current one
+
 ---
 
 ## Monorepo support (optional)
