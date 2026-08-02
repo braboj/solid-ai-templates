@@ -1931,6 +1931,13 @@ Practical guidance:
       not the shape between samples — on render-producing pipelines
       (charts, diagrams, illustrations) pair them with manual visual
       review; a passing numerical gate is necessary, not sufficient
+- [ ] A score that sums or averages several components draws them from
+      genuinely independent variables, not algebraic transforms of one
+      another (`x`, `x/2`, `1/x`). Scale-invariant aggregation (z-scores,
+      ranks) collapses such components onto one axis, silently
+      re-weighting it while the code and the docs still claim independent
+      contributions. Where components share a quantity, drop the
+      redundant ones or state the real weighting
 
 ## Structure audit
 
