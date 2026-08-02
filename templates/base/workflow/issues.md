@@ -28,10 +28,10 @@ project-specific; the at-creation discipline is not.
 | P2 | Medium — important but not blocking |
 | P3 | Low — nice to have, including trivial |
 
-`P4` is not a severity. It marks work deliberately deferred, and MAY
-accompany any of `P0`–`P3` — deferring a high-severity issue is a
-scheduling decision, not a downgrade. Every issue MUST carry exactly
-one of `P0`–`P3`; `P4` is optional and additional.
+Priority is severity and nothing else. It MUST NOT encode scheduling —
+there is no band meaning "someday", and deferring a high-severity issue
+is a scheduling decision recorded elsewhere, not a downgrade to a lower
+band.
 
 Platform-specific label implementation (names, colors) is defined in
 the platform template (e.g. `platform/github.md`).
@@ -43,8 +43,7 @@ otherwise. Where the tracker can enforce mutual exclusion natively
 (Linear label groups), that is the check; where it cannot (GitHub
 labels), state the query and its pass condition in the platform
 template. The check reports every open issue not carrying exactly one
-type and exactly one of `P0`–`P3`; `P4` is additional and MUST NOT
-count toward the priority total.
+type and exactly one of `P0`–`P3`.
 
 ---
 
@@ -76,15 +75,20 @@ written before the rule exists is already permanent.
 
 When work is genuinely valuable but intentionally deferred — not in the
 next milestone, perhaps not the next several — the right home is an
-open issue carrying the `P4` deferral marker and explicitly named
-trigger conditions, not a TODO line in an ADR or a code comment. `P4`
-records that the deferral is deliberate rather than an untriaged
-oversight. Do NOT park the work in a named holding milestone instead —
-a lane's meaning is lost when the milestone is closed or deleted, while
-a label travels with the issue.
+open, unmilestoned issue with explicitly named trigger conditions, not
+a TODO line in an ADR or a code comment. The milestone field carries
+the scheduling: milestoned means planned into that cut, unmilestoned
+means backlog. Do NOT add a deferral label or a named holding milestone
+on top — either one duplicates the milestone field, and two carriers
+for one signal can disagree without either being wrong.
+
+An empty milestone MUST NOT be read as untriaged. Triage is the type
+and severity applied at creation; scheduling is a separate axis, and an
+issue is fully triaged whether or not it is scheduled.
 
 - Open the body with the deferral note: "Do not pick up before one of
-  the trigger conditions fires."
+  the trigger conditions fires." The milestone field records that the
+  work is unscheduled; the body records what would schedule it.
 - State trigger conditions as concrete, observable events ("a second
   component exhibits pattern X", "badged data runs four weeks without
   pushback") — natural language is fine; naming them is the discipline.
@@ -93,6 +97,9 @@ a label travels with the issue.
   Decision section), so the decision stays discoverable from the tracker
   rather than buried where it will be re-litigated or quietly done
   unnecessarily.
+- Re-read the unmilestoned set when scoping a cut. Deferral is now the
+  absence of a field rather than the presence of a label, so nothing
+  surfaces the backlog on its own.
 
 ---
 

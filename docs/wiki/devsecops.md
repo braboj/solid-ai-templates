@@ -68,7 +68,7 @@ SCA report → triage
   ├→ Critical + exploitable → P0, fix immediately
   ├→ High + reachable       �� P1, fix this sprint
   ├→ Medium + deep transitive → P2, track and monitor
-  └→ Low + no path          → P4, accept risk
+  └→ Low + no path          → P3, accept risk
 ```
 
 **When to use:**

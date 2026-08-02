@@ -345,14 +345,14 @@ MUST have exactly one type label and one priority label. Triage
 labels are terminal — applied when closing without action.
 
 Milestones are optional. An issue MAY carry one; an empty milestone
-field is valid and means the work is not tied to a release. A PR
-SHOULD inherit the milestone of the issue it closes, when that issue
-has one.
+field is valid and means the work is not tied to a release, and is
+where deferred work sits. A PR SHOULD inherit the milestone of the
+issue it closes, when that issue has one.
 
 Do NOT stand up a named holding lane — a `Backlog` or `Expedite`
-milestone — to mark work as unscheduled or fast-tracked. Deferral is
-carried by the `P4` label and urgency by the severity label. Both
-travel with the issue and stay filterable, where a lane's meaning is
+milestone — to mark work as unscheduled or fast-tracked. An empty
+milestone field already says unscheduled, and urgency is carried by the
+severity label, which travels with the issue where a lane's meaning is
 lost the moment the milestone is closed or deleted.
 
 Milestones are forward-looking planning; GitHub Releases are the
@@ -386,14 +386,8 @@ remain visually distinct when displayed side by side.
 | `P2`  | `#EED12B` | P2 — Medium   |
 | `P3`  | `#4BCE97` | P3 — Low      |
 
-### Deferral label (optional)
-
-| Label | Color     | Meaning                       |
-| ----- | --------- | ----------------------------- |
-| `P4`  | `#8590A2` | Deliberately deferred         |
-
-`P4` is not a severity and MUST accompany a severity label rather than
-replace one.
+There MUST NOT be a fifth priority label. Deferral is carried by an
+empty milestone field, not by a band below `P3`.
 
 ### Triage labels
 
@@ -419,5 +413,6 @@ gh issue list --state open --limit 200 --json number,labels \
 
 Output MUST be `[]`. Each reported entry names the issue and its actual
 type and priority counts. The type alternation is the project's own
-taxonomy; the `P[0-3]` pattern is fixed, and `P4` is excluded by it so
-a deferred issue still passes on its severity alone.
+taxonomy; the `P[0-3]` pattern is fixed, and matches the whole priority
+scale — the check does not filter on the milestone field, so a deferred
+issue passes on its labels like any other.
