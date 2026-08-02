@@ -809,6 +809,11 @@ When NOT to close-and-resubmit:
   - **IDE/editor** — `.idea/`, `.vscode/`, `*.swp`, `*.swo`
   - **OS files** — `.DS_Store`, `Thumbs.db`, `desktop.ini`
   - **Test/coverage** — `coverage/`, `.coverage`, `htmlcov/`
+- Share the editor config that mirrors the CI gates through an
+  allowlist rather than ignoring the directory wholesale — ignore
+  `.vscode/*`, then re-include `!settings.json` and
+  `!extensions.json`. The shared project setup is versioned while
+  per-user editor state stays ignored
 - Use [gitignore.io](https://gitignore.io) or GitHub's templates as a
   starting point — then trim to what the project actually needs
 - Do not ignore lockfiles — they MUST be committed
@@ -3112,6 +3117,17 @@ Runs in the developer's IDE as they type. Zero friction.
 - Every project MUST provide config files that enable checks automatically
   when the project is opened in a supported editor
 - Checks: lint, format, type check
+- The editor's type-checker MUST defer to the CI type gate — one
+  type-checker at one strictness, never two. A bundled editor checker
+  runs its own stricter analysis by default and floods the editor with
+  diagnostics the CI gate is configured to ignore, so contributors chase
+  false positives and "green in CI" stops meaning "green in the editor"
+- Turn the bundled checker's type evaluation off, and surface the CI
+  checker's own diagnostics live through its editor extension instead.
+  Only the diagnostics layer defers — completion, hover and rename are
+  unaffected
+- The editor config that mirrors CI MUST be tracked, not left to each
+  contributor to reproduce
 
 ### Layer 2 — Pre-commit hooks (1–5 seconds)
 
