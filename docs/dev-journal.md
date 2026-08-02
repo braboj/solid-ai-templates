@@ -2521,3 +2521,53 @@ changes in this milestone.
 
 **Issues closed:** #938, #939, #840, #862, #838, #908, #837, #819. Journal
 PR carries no milestone.
+
+---
+
+## 2026-08-02 — v2.42 Documentation, licence & tracker
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**v2.42 — Documentation, licence & tracker** (#953-#958). Three rules land
+in `issues.md`: the code host is the system of record and the tracker is a
+replaceable view over it (#883), the label-at-creation rule is paired with
+a conformance check (#952), and a duplicate chain MUST NOT terminate in a
+closed issue (#913). `platform-github-labels` carries the concrete `gh`
+query; `platform-linear-codehost` is reworded so code-host authority is the
+premise rather than a condition on enabling sync. The other three: a README
+MUST NOT state a measured value that moves without an edit (#907), a
+consuming repository reads the issue list at upstream HEAD and its rules at
+the pinned revision (#927), and a redistributed dependency carries an
+attribution obligation that approving its licence does not discharge
+(#839).
+
+**The milestone closed a loop it opened.** #883 is the P1 rule that went
+missing when #883 and #886 were closed against each other; #913 is the rule
+forbidding exactly that closure pattern. Both shipped here — the dropped
+ticket and the rule that stops the drop, in the same cut. #952 has the same
+shape one step removed: it was filed this session against this repository's
+own unlabeled #938 and #939, and shipped in the milestone immediately
+after the one where the failure occurred.
+
+**Lesson — poll for a terminal state, not for the absence of a running
+one.** Two merges this session failed with `QUEUED` after a wait loop
+reported the checks finished. The loop asked whether any check was
+`PENDING` or `IN_PROGRESS`. Immediately after a push the answer is no
+because the array is *empty* — CI has not registered yet — and later the
+answer is no again because the state is `QUEUED`, which is neither. Both
+times the loop fell through and `gh pr merge` refused. The correct
+predicate is positive: at least one check present, and every state in
+{`SUCCESS`, `FAILURE`, `SKIPPED`, `NEUTRAL`}. Enumerating the states that
+mean "not done" fails open on any state not enumerated; enumerating the
+states that mean "done" fails closed.
+
+**Template feedback:** all six are reusable upstream content. #883, #952,
+#913 and #927 came from applying this chain to `braboj/page-fetcher` and to
+this repository itself; #907 and #839 from `page-fetcher` and `corrosim`.
+
+**Releases:** v2.42.0. Milestone v2.42 closed.
+
+**PRs merged:** #953, #954, #955, #956, #957, #958
+
+**Issues closed:** #883, #952, #913, #907, #927, #839. Journal PR carries
+no milestone.
