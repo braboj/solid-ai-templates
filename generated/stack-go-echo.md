@@ -4449,6 +4449,19 @@ a base layer you do not control does not.
 - Before adding a dependency, verify its license is acceptable
 - Copyleft licenses (GPL, AGPL) require explicit approval before use
 - Document and justify any dependency with a non-standard or ambiguous license
+- Approving a license does not discharge the obligation that attaches
+  when the dependency is **redistributed** inside a built artifact
+  handed to users (container image, bundle, installer, fat jar). A
+  permissive or weak-copyleft (LGPL, MPL) dependency shipped that way
+  carries an attribution obligation of its own
+- Ship a third-party notice file inside the artifact, at a stable path
+  a runtime bind mount cannot shadow (e.g. `/licenses/`), placed after
+  the dependency-install layer so editing it does not bust the build
+  cache
+- Guard the notice with a test that derives the required entries from
+  the dependency manifest, so a newly added redistributed dependency
+  fails the build until it is documented. Hand-maintained attribution
+  rots
 
 ## DAST (Dynamic Application Security Testing)
 
