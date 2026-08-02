@@ -224,10 +224,11 @@ and the cost paid once.
 
 When a tool is calibrated against reference data (test fixtures with
 known-correct outputs, benchmark expected results, eval data, decision
-thresholds), three failure modes silently invalidate the calibration:
-suspect data treated as ground truth, the threshold tuned to mask a
-broken measurement, and reference values produced by the same actor
-that runs the tool. The rules below address each.
+thresholds), the calibration is silently invalidated by suspect ground
+truth, by a threshold tuned to mask a broken measurement, and by
+reference values produced by the same actor that runs the tool. The
+rules below govern that, and what a calibrated pipeline may then emit:
+a value it cannot justify is worse than a gap.
 
 ### Ground truth comes from raw artifacts, not suspect data
 
@@ -264,6 +265,37 @@ that runs the tool. The rules below address each.
   the source carries no value there (the correct answer) — the two
   demand opposite responses, and conflating them sends a maintainer to
   "fix" a correct absence
+
+### Report a derived quantity only where it is well-defined
+
+Distinct from the absence rules above, which cover a source that carries
+no value. Here the value is computable and the arithmetic succeeds — the
+condition that gives the result meaning is what fails.
+
+- A derived quantity is often well-defined only under a condition (a
+  non-zero denominator, a minimum sample size, a non-degenerate input).
+  Report it only where that condition holds
+- Where it does not hold, leave the cell empty — not zero, not a
+  placeholder, not the condition-violating value. An empty cell states
+  "undefined here"; a number computed outside its domain is
+  indistinguishable from a measurement and pollutes every downstream
+  aggregation
+- The check belongs at the point of emission. A consumer cannot recover
+  the condition from the value alone, which is exactly why the artifact
+  must not carry it
+
+### A user-visible artifact takes its bar from the strictest consumer
+
+- When a derived or extracted artifact feeds several consumers of
+  differing strictness AND is itself user-facing (rendered or displayed,
+  not only an internal input), its acceptance bar is set by the strictest
+  **visible** consumer
+- Do NOT loosen it to match a coarser downstream consumer, and do NOT
+  lower it for throughput. Coarsening the acceptance metric to a bucketed
+  score, or dropping a label only the visible artifact reads, is correct
+  for the score and corrupts the table a user looks at
+- The compatible throughput lever is honest gaps, not a looser bar: an
+  ambiguous cell is blanked per the rule above, never emitted wrong
 
 ### Thresholds move, not the measurement
 
