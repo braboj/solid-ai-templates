@@ -136,6 +136,16 @@ CLAUDE.md
 - All metadata in `pyproject.toml` — no `setup.cfg`, no `setup.py`
 - Pin minimum Python version in `requires-python`
 - Do not pin exact versions in `dependencies` — use ranges (`>=`, `<`)
+- A floor in a library's `dependencies` is a compatibility claim about
+  consumers, not a record of what CI ran. Raising one narrows what a
+  consumer may install without widening what is tested — CI resolves to
+  the newest release satisfying each floor whatever the floors say.
+  Move a floor only when a new version is genuinely required
+- Set `versioning-strategy: increase-if-necessary` on the pip ecosystem
+  in `.github/dependabot.yml` — the default `increase` lifts every floor
+  to the newest release regardless. Applications, which pin rather than
+  bound, keep the default. Leave the GitHub Actions ecosystem on its
+  default: SHA pins there MUST keep moving
 - Dev/test dependencies in `[project.optional-dependencies]` or
   `[dependency-groups]`
 - Lock file for reproducibility: `requirements-dev.lock` or equivalent
