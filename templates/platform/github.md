@@ -310,24 +310,19 @@ field is valid and means the work is not tied to a release. A PR
 SHOULD inherit the milestone of the issue it closes, when that issue
 has one.
 
-A project that does use milestones SHOULD route issues with no target
-release to a `Backlog` milestone, so "unmilestoned" and "deliberately
-unscheduled" stay distinguishable.
-
-The `Expedite` milestone is a rolling fast-track lane for work
-shipping between versioned releases — mainly bugs and incidents,
-also small tasks. It never closes; issues move in when expedited
-and out when shipped. Use `Expedite` instead of `Backlog` when the
-work is small, urgent, or out-of-cycle and does not fit the current
-versioned milestone's theme.
+Do NOT stand up a named holding lane — a `Backlog` or `Expedite`
+milestone — to mark work as unscheduled or fast-tracked. Deferral is
+carried by the `P4` label and urgency by the severity label. Both
+travel with the issue and stay filterable, where a lane's meaning is
+lost the moment the milestone is closed or deleted.
 
 Milestones are forward-looking planning; GitHub Releases are the
 backward-looking shipped record. Create a versioned milestone (e.g.
-`v1.0.0`) only for a deliberately planned, scoped release. Routine or
-emergent releases cut from `Backlog` / `Expedite` get no versioned
-milestone — the Release is their shipped record. Do NOT backfill empty
-per-version milestones after the fact; a planning artifact created
-retroactively carries no information.
+`v1.0.0`) only for a deliberately planned, scoped release. A routine or
+emergent release that was never scoped as a milestone gets none — the
+Release is its shipped record. Do NOT backfill empty per-version
+milestones after the fact; a planning artifact created retroactively
+carries no information.
 
 Colors follow the Atlassian design system palette. Type labels use
 saturated hues; priority labels use a warm-to-cool gradient to
