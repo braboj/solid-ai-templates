@@ -1150,6 +1150,9 @@ Every README MUST contain the following sections, in this order:
 
 ### 1. Title and summary
 - The repository name MUST appear as a top-level heading
+- A badges line SHOULD sit directly under that heading — build
+  status, latest version, license. Badges belong above the prose,
+  where readers and every README in the wild expect them
 - 2–4 sentences MUST follow the title: what the project does, for whom,
   what problem it solves, and why this solution exists — no preamble, no
   marketing language
@@ -1165,16 +1168,23 @@ Every README MUST contain the following sections, in this order:
     distributed across these paragraphs in any way that reads
     cleanly. The hook is framing, not marketing — the existing
     no-marketing rule still applies
-- An italic differentiator subtitle MAY appear directly under the
-  H1, above the hook, when the project has a one-line claim worth
-  elevating
-- A capability list MUST follow the summary — bullet points stating
-  what the product can do, written as capabilities not counts (e.g.
-  "browse and filter products by spec" not "240+ products"); this list
-  is the product's contract and the primary input for value evaluation
-- A badges line SHOULD follow: build status, latest version, license
+- An italic differentiator subtitle MAY appear below the badges and
+  above the hook, when the project has a one-line claim worth
+  elevating. The order at the top of the file is heading, badges,
+  subtitle, summary
 
-### 2. Quick start
+### 2. Features
+- A capability list MUST follow the summary, under its own `## Features`
+  heading (or a named equivalent such as `## Capabilities`) — bullet
+  points stating what the product can do, written as capabilities not
+  counts (e.g. "browse and filter products by spec" not "240+
+  products"); this list is the product's contract and the primary input
+  for value evaluation
+- The heading is REQUIRED, not optional. Without one the bullets run on
+  from the lede and the reader cannot tell where the prose ends and the
+  contract begins
+
+### 3. Quick start
 - MUST be copy-pasteable: a reader MUST be able to go from zero to running
   in under five minutes by following this section alone
 - Prerequisites MUST be listed before the first command
@@ -1182,13 +1192,13 @@ Every README MUST contain the following sections, in this order:
 - MUST NOT assume environment-specific context (paths, credentials, ports)
   without stating them explicitly
 
-### 3. Usage
+### 4. Usage
 - MUST show the most common real-world usage — not every option, not
   contrived examples
 - Each example MUST include the expected output or outcome
 - If the project has multiple usage modes, each MUST have its own example
 
-### 4. Project structure
+### 5. Project structure
 - MUST map the directory structure covering the top two levels
 - Each entry MUST have a one-line description of its purpose
 - MAY be rendered as an indented directory tree or as a two-column
@@ -1196,26 +1206,26 @@ Every README MUST contain the following sections, in this order:
   and structurally enforces the one-line-description rule
 - Generated directories (`dist/`, `__pycache__/`, `.venv/`) MUST be omitted
 
-### 5. Development setup
+### 6. Development setup
 - MUST cover: cloning, installing dependencies, running tests, running the
   application locally
 - MUST list every external tool or service required (database, message
   broker, etc.) and how to start it
 - If a `.env.example` file exists, MUST reference it here
 
-### 6. Configuration reference
+### 7. Configuration reference
 - SHOULD list every environment variable or configuration key the project
   reads, with type, default value, and a one-line description
 - Sensitive keys (secrets, tokens) MUST be noted as such — never show
   real values as defaults
 
-### 7. Links
+### 8. Links
 - SHOULD link to: full API / library reference, CHANGELOG, contribution
   guide, and any deployed environments (staging, docs site)
 - Internal links MUST use relative paths — not absolute URLs pointing to
   a specific branch or host
 
-### 8. License
+### 9. License
 - MUST state the license name and include a link to the full license text
 - MUST appear as the last section
 
@@ -1870,7 +1880,7 @@ Verify every MUST from:
 
 - `templates/base/core/docs.md` — standard documents (README, ONBOARDING,
   PLAYBOOK, ADRs)
-- `templates/base/core/readme.md` — README has all 8 required sections
+- `templates/base/core/readme.md` — README has all 9 required sections
 - `templates/base/core/git.md` — .gitignore, README exist
 - The relevant frontend or backend layer template — required assets,
   config files, SEO files
