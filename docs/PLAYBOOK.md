@@ -153,7 +153,18 @@ convention change, override model change, governance rule, etc.).
    stays untouched.
 6. Run `py tests/run_smoke.py ADR-01` to validate the frontmatter
    schema before opening the PR.
-7. Open the PR. After merge, the ADR is immutable except for
+7. If the ADR **removes** a concept, sweep for prose that still
+   assumes it — in `templates/` and in open issue bodies:
+   ```bash
+   grep -rn "<concept>" templates/ docs/
+   gh issue list --state open --limit 100 --json number,title,body \
+     --jq '.[] | select(.body | test("<concept>")) | "#\(.number) \(.title)"'
+   ```
+   A queued issue proposing template text that reintroduces the
+   removed concept passes review on its own terms and undoes the
+   ADR when implemented. Fix the issue body, do not rely on
+   catching it at implementation time.
+8. Open the PR. After merge, the ADR is immutable except for
    future supersession metadata updates.
 
 ---
