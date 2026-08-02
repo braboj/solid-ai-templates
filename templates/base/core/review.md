@@ -112,7 +112,49 @@ SHOULD also check:
 - No substantial duplication across sibling components — if two or more
   components share the same code, extract a shared module
 
-## Reviewing agent-produced findings
+## Verifying a finding before reporting it
+
+A finding is a hypothesis until it is demonstrated. Reporting a hypothesis as
+a defect costs the author more than missing it, because each one has to be
+disproved by hand. A finding that cannot be demonstrated MUST be labelled as
+unverified rather than presented alongside demonstrated ones.
+
+What you owe a finding depends on how it was produced.
+
+### From reading
+
+- [ ] Reproduce the defect before reporting it — run the path, not the
+      argument that the path is wrong
+- [ ] When a reproduction contradicts a passing test, read the test before
+      concluding the code is wrong. A test that pins surprising behavior is
+      usually documenting a decision, and its comment is where the reason
+      lives
+
+### From a measurement
+
+A tool that runs cleanly and returns a plausible number is the most convincing
+way to be wrong.
+
+- [ ] Confirm the tool measures the unit the rule is written in — bytes are
+      not characters, `wc -c` is not `wc -m`, disk size is not size on disk
+- [ ] Hand-check one flagged item. If the hand-count disagrees with the tool,
+      the tool is measuring something else
+
+### From an extraction
+
+Extraction tools are silently partial: a parser walks the node types it knows
+and drops the rest, so "X is missing" often means "my extractor does not
+traverse the structure X lives in".
+
+- [ ] Before asserting an element is **absent**, cross-check the raw artifact
+      itself, not just the tool's output
+- [ ] Sanity-check coverage — compare extracted size against the raw artifact
+      and confirm known-present elements survive the round trip
+- [ ] Scope the claim to what was inspected: "not verifiable from the
+      extract", never "missing". Absence of evidence from a lossy tool is not
+      evidence of absence
+
+### From an agent or subagent
 
 A finding reported by an agent is a lead, not evidence. Verify it against the
 source before acting on it or repeating it to anyone else.
@@ -125,6 +167,23 @@ source before acting on it or repeating it to anyone else.
   agents share the same blind spots and can agree on the same wrong answer
 - When a finding turns out to be wrong after you have passed it on, correct it
   plainly and name what the check actually showed
+
+When a finding contradicts an existing verified record, reconcile the two
+before changing anything:
+
+- Check whether both are reading the same artifact. Different pages,
+  endpoints, API versions, or product tiers routinely disagree, and each may
+  be locally correct
+- Prefer the source carrying more specific evidence — a record citing a file
+  with per-item detail outranks a summary citing a README
+- Treat "could not confirm" as a request to reconcile, never as a licence to
+  delete
+- Dispatch with the existing record attached, asking the agent to
+  **reconcile** rather than re-derive. An agent told only "verify this claim"
+  surfaces a different source; one told what was previously found, and where,
+  surfaces a genuine change
+- Record the reconciliation. If it reverses a documented decision, say so and
+  why, in the artifact that documented it
 
 Applies equally to the reviewer's own tooling: a grep that returns the expected
 answer for the wrong reason is the same failure in a cheaper form.
