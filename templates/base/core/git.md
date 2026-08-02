@@ -106,7 +106,11 @@ remaining commits are silently lost.
 - MUST verify that all branch commits are accounted for before
   deleting a branch — compare the squash diff against the branch diff
 - SHOULD enable "automatically delete head branches" in repository
-  settings to prevent stale branches from accumulating
+  settings to prevent stale branches from accumulating. It fires on
+  merge only — a PR closed without merging leaves its branch behind
+  permanently, so branch hygiene is not fully automatic. It is the
+  safe way to delete a branch under a stack, because deletion as part
+  of the merge retargets dependent PRs rather than closing them
 - SHOULD use one focused commit per scope-slice on the branch
   rather than per-folder atomic commits. The squash collapses
   them on merge, so the per-folder narrative is wasted effort —
@@ -131,15 +135,25 @@ dependency-free diff.
 
 ### Merging a stack
 
-Merging the base PR with a delete-branch flag does not retarget the PR
-stacked on it. The host closes that PR and deletes its head branch, and
-it cannot be reopened, because reopening requires the base ref to exist.
+How the base branch is deleted decides whether the PR stacked on it
+survives. The two paths differ, and only one is safe:
+
+- Deleting the branch **as part of the merge** — the repository's
+  automatic head-branch deletion — retargets the dependent PR onto the
+  merged PR's own base and leaves it open
+- Deleting the branch **as a separate step**, such as a delete-branch
+  flag on the merge command, does not. The host closes the dependent PR,
+  and it cannot be reopened, because reopening requires the base ref to
+  exist
+
+Rules:
 
 - MUST merge a stack bottom-up
-- MUST NOT delete a branch while any PR still targets it — retarget the
-  dependent PR to `main` first, then delete
-- To recover: recreate the deleted ref from `main`, reopen the PR,
-  retarget it to `main`, delete the ref again, then update the branch
+- MUST NOT pass a delete-branch flag while any PR still targets the
+  branch — let automatic deletion handle it, or retarget the dependent
+  PR first and delete afterwards
+- To recover: recreate the deleted ref from the base branch, reopen the
+  PR, retarget it, delete the ref again, then update the branch
 
 The same shape bites automated dependency PRs. Merging a change to the
 bot's own config invalidates every open PR it raised, closing them and
