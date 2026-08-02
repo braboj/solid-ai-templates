@@ -215,6 +215,8 @@ Linear tracks parent and child natively and rolls up progress.
   offers may lower-case it; either works.
 - Configure the automation to move an issue to a `started` state on PR
   open and to a `completed` state on merge.
-- Two-way issue sync duplicates the tracker. Enable it per repository
-  only where the code host is the source of truth for that repository;
-  leave it off otherwise.
+- Two-way issue sync duplicates the tracker. The code host is the
+  system of record for every repository (see `base-issues-record`), so
+  sync is a convenience and never what confers authority. Enable it per
+  repository only where the duplication earns its keep; leave it off
+  otherwise.
