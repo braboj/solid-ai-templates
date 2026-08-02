@@ -1752,6 +1752,30 @@ cannot answer whether something is actually black, centred, or on screen.
 
 ---
 
+## A diagnostic view runs through the production entry point
+[ID: testing-diagnostic-production-path]
+
+When a diagnostic or debug rendering of a multi-stage pipeline exists —
+per-stage dumps, trace overlays, an "explain this output" view — it MUST
+be driven from the same entry point as the production path it inspects:
+same input resolution, same config or profile selection, same fan-out.
+
+A sibling command with its own setup diverges from production silently.
+It keeps running, keeps producing plausible output, and reports on a
+computation production never ran — so the bundle can look correct while
+production ships a wrong value, and the reverse.
+
+- Wire the diagnostic into the production entry point behind a flag
+  (`--debug`, `--explain`), not into a second command
+- A parameter the production caller passes and the diagnostic does not is
+  the whole defect. Any divergence in what the two resolve is a
+  divergence in what they compute
+- This is a standing property of a persistent diagnostic view, distinct
+  from choosing the production harness over a throwaway probe for a
+  one-off question
+
+---
+
 ## Identical metrics across distinct inputs are a smoking gun
 [ID: testing-identical-metrics]
 
