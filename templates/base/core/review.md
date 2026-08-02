@@ -34,6 +34,14 @@ such as
 - [ ] Any new dependency carries a license compatible with the project policy
 - [ ] Significant logic or architectural decisions are captured in documentation
 - [ ] Existing documentation reflects the state of the code after this change
+- [ ] Every changed section was re-read whole, not just the changed line — a
+      sentence is correct only in relation to its neighbours, and each one
+      reads fine alone, so a diff review cannot catch the contradiction
+- [ ] Every claim the text makes **about itself** ("each section covers X",
+      "the table below compares N criteria") was verified by counting or
+      grepping the thing claimed — `grep -c` the sections, count the rows —
+      not by reading. Scope both checks to changed sections, so the cost
+      stays proportional to the diff
 
 ## MUST checklist — state and boundaries
 
