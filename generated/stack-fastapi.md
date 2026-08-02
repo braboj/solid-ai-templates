@@ -178,6 +178,27 @@
   re-exports), README, tests, and requirements; a thin CLI wraps the
   library rather than being the product. Extraction stays deferred, but
   the module is ready the moment it is wanted
+- **Split an oversized module into a package behind its import path**:
+  when `mod.py` becomes `mod/`, preserve the public import path via
+  `__init__` re-exports so callers and the test module are NOT modified.
+  The unchanged suite is then the split's regression oracle; rewriting
+  the tests' imports to the new submodules forfeits it, by touching the
+  oracle in the same change that restructures the code under test. This
+  is the in-repo step toward **Build extraction-ready internal
+  modules** — the same `__init__`-owns-the-API discipline, applied
+  before extraction is on the table
+- Split by a cohesive seam (data-flow stage is the usual one) and keep
+  the submodule graph acyclic: each submodule imports only earlier
+  stages, and no submodule imports the package `__init__`. Re-export
+  the public API and the private helpers the test module imports
+  directly, listing both in `__all__` so the linter does not flag them
+  unused. Constants travel with the functions that use them — a central
+  `constants.py` orphans provenance from the code and fights cohesion
+- Verify a split with the cheap static gates before the slow suite:
+  linter undefined-name/unused, an import smoke check, then test
+  collection. They catch every mechanical split error instantly, so the
+  full suite runs once — and a green run of the untouched suite plus a
+  byte-identical output diff is what proves the split behaviour-neutral
 
 ## Expensive computations (if applicable)
 
