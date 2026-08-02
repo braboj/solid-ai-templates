@@ -97,6 +97,22 @@ Before every commit, update all relevant documentation:
   change
 - **`docs/ONBOARDING.md`** — update if the contributor workflow changes
 
+### When a document disagrees with the system
+
+A project document that contradicts the live state of the system it
+describes is not automatically the authority. Establish which one is
+wrong before changing either.
+
+- MUST check whether the rule is inherited. A document generated from a
+  template can drift from the template while the system still matches
+  it — in which case the document is stale and the system is correct
+- MUST NOT act on the document's reading alone when the observed state
+  is defensible. Acting first destroys a correct configuration to
+  satisfy a sentence that was already out of date
+- The order is: read the document, observe the system, then find the
+  rule that governs both. Reconcile to whichever the governing rule
+  supports, and fix the other
+
 ## Decision logs
 
 - Significant architectural decisions MUST be recorded as Architecture Decision
