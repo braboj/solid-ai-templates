@@ -301,6 +301,13 @@ is incomplete.
   commands and flags in prose rather than transcribing them as inline code
 - Summarize intent and link to the source — do not transcribe methods,
   constants, or flags into prose
+- The same holds for a self-documenting source. A hand-maintained table
+  restating a CLI's `--help`, a generated schema, or generated API docs
+  is a second copy that drifts the moment someone adds an option and
+  forgets the table, leaving readers trusting a list that is quietly
+  wrong. Point at the command or the generated artifact instead, and
+  document only what it cannot state itself — why an option exists,
+  which combinations are meaningful
 
 ## Diagrams and assets
 
