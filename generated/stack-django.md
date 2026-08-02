@@ -1572,6 +1572,31 @@ reached the bug site AND took the new branch.
 
 ---
 
+## Verify a visual change against the render
+[ID: testing-verify-the-render]
+
+When a change's intended effect is visual — a style edit, a template, a
+chart, a rendered document — re-reading the source proves only that the
+source changed. Several things break the link between source and result
+silently: a design token resolves to an unexpected value, a more
+specific rule wins the cascade, a built or deployed artifact lags its
+source until pushed, or a cached copy is served.
+
+- MUST verify by capturing the rendered output and asserting on it —
+  render headless, then read the value off the pixels or the resolved
+  DOM, not off the stylesheet
+- SHOULD capture the before as well as the after. The before confirms
+  the problem is real; a page may already satisfy the request, making
+  the change a fix for nothing
+- When the render still looks wrong, confirm it is the fresh build
+  before re-editing. Correct source and a stale deploy is the common
+  shape of "it's still broken" reported against already-fixed code
+
+This complements golden-output gating, which pins structure and text but
+cannot answer whether something is actually black, centred, or on screen.
+
+---
+
 ## Identical metrics across distinct inputs are a smoking gun
 [ID: testing-identical-metrics]
 
