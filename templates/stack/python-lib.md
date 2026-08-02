@@ -30,6 +30,9 @@ src/
     [module].py
 tests/
   test_[module].py
+examples/
+  README.md
+  [pattern].py
 pyproject.toml
 README.md
 CLAUDE.md
@@ -37,6 +40,12 @@ CLAUDE.md
 
 - Source layout (`src/`) — prevents accidental imports of the uninstalled
   package
+- `examples/` holds runnable, maintained usage patterns — one file per
+  pattern or user journey, smoke-tested in CI against the library so
+  they cannot rot, and excluded from the built wheel like `tests/`.
+  Distinct from `scripts/`, which is throwaway probes and benchmarks
+  and is not shipped. A design document references an example rather
+  than duplicating its code
 - When adopting `src/` or adding a sub-package, audit every path-based
   exclude in tool configs (bandit `exclude_dirs`, coverage `omit`,
   ruff `extend-exclude`) for patterns that now match new package

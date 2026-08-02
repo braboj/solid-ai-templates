@@ -67,6 +67,19 @@ Every README MUST contain the following sections, in this order:
   table (`Path` | `Purpose`) — a table renders consistently on GitHub
   and structurally enforces the one-line-description rule
 - Generated directories (`dist/`, `__pycache__/`, `.venv/`) MUST be omitted
+- When the project ships an `examples/` directory, that directory MUST
+  carry its own `README.md` indexing each example as an exact command
+  paired with the output it produces. A bare folder of sample inputs
+  under-delivers and reads as broken data; the index turns it into a
+  try-it-now surface
+  - Examples MUST run offline against data the project already bundles
+  - Output MUST be real or a reproducible dry run — never fabricated
+    numbers. Where the true output needs an engine or service the
+    reader may not have, show the dry run, which conveys the shape and
+    runs anywhere
+  - A sample input that looks incomplete on purpose (an optional field
+    left blank) MUST say so next to the command, not leave the reader
+    to reverse-engineer the intent
 
 ### 6. Development setup
 - MUST cover: cloning, installing dependencies, running tests, running the
