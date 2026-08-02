@@ -2254,3 +2254,73 @@ so annotated-tag discipline plus the CI guard propagate to every consumer.
 **PRs merged:** #813
 
 **Issues closed:** #812. Journal PR carries no milestone.
+
+## 2026-08-02 — v2.36 Branch & session hygiene and v2.37 Documentation & README conventions
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+Two milestones planned and drained in one session, plus a tracker decision.
+
+**Groom.** The 39 untriaged downstream issues were clustered into ten groups
+by target file, the eight carrying no priority label were labelled, and the
+overlaps recorded: #846 and #849 were largely overtaken by #880, which shipped
+the day before; #816 and #824 are one convention in two files; #863 blocks on
+#859.
+
+**v2.36 — Branch & session hygiene** (#888-#899). The startup branch cleanup
+(#865) was broken in this repo's own CLAUDE.md: `git branch --merged main`
+cannot match a squash-merged branch, so it exits 0 having deleted nothing.
+Four merged branches had accumulated unnoticed. The requirement moved to
+`scope.md` with the `gh` commands in `platform/github.md`. Also: tests must not
+signal host processes (#858), the two branch-deletion paths under a stack
+(#859, #863), `fetch.prune` (#836), an imperative end-of-session audit (#825),
+verifying a visual change against the render (#820), and the submodule-versus-
+linter warning (#861).
+
+**v2.37 — Documentation & README conventions** (#901-#906). Badges move under
+the H1 and the capability list becomes required section 2 under `## Features`,
+which also answered #835 (#881). No ADR citations in the README (#882). Check
+the inherited rule before calling a document wrong (#864). Cite by persistent
+identifier (#845). Delegate to a self-documenting source (#822). The
+`examples/` convention across `readme.md` and `python-lib.md` (#816, #824).
+
+**Tracker.** GitHub is the system of record; Linear is a view. #887 removed
+the Linear ticket from this repo's branch-naming convention. The template side
+(#883) is still open.
+
+**Decision:** partial ADR supersession dropped (#856, `wontdo`). Representing
+it would have needed a superseding ADR against ADR-010, a change to the
+`status=Superseded iff superseded_by non-empty` invariant in `run_smoke.py`,
+and new wording — three coupled changes to give one field a second conditional
+meaning.
+
+**Lesson — test the claim, do not reason about it.** #859 shipped a blanket
+"never delete a branch under a stack". Two throwaway stacks against scratch
+bases disproved half of it within minutes: deletion *as part of the merge*
+retargets the dependent PR and leaves it open, while a separate delete-branch
+flag closes it irreversibly. The blanket rule also contradicted `git.md`'s own
+"enable automatic head-branch deletion" two sections earlier. #863's PR
+narrowed it.
+
+**Lesson — verify the tool before believing its finding.** Two defects reported
+at the end of v2.36 were both false. `awk 'length>80'` counts *bytes*, and an
+em dash is three of them, so every line with one read as over-long; a
+character-based scan of every template returns zero violations. The MD029
+warnings flag deliberate continuous numbering that CommonMark renders
+correctly. Neither was filed; #900 (silence MD029) was filed instead.
+
+**Lesson — a self-referential count goes stale silently.** Renumbering the
+README sections broke two claims elsewhere: `review.md` asserted "all 8
+required sections", and `readme.md`'s own Audience rule said "the first three
+sections". The first was caught by grepping for it, the second only by
+re-reading the whole section afterwards — which is #847's rule, applied to the
+PR that was implementing its neighbours.
+
+**Template feedback:** all sixteen are template changes distilled from
+downstream evidence — reusable upstream content, which is what this repo is.
+
+**PRs merged:** #887-#906
+
+**Issues closed:** #816, #820, #822, #824, #825, #835, #836, #845, #856,
+#858, #859, #861, #863, #864, #865, #881, #882. Opened #900; reopened #883.
+Journal PR carries no milestone.
