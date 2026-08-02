@@ -285,14 +285,47 @@ git diff --numstat FETCH_HEAD..<branch>
 | Link checking             | `lycheeverse/lychee-action` (see note)   |
 | All lint/format/type/test | Language-specific CLI in CI steps        |
 
-**Lychee note:** When checking internal links on static site build
-output, MUST use `--root-dir <build-dir>` to resolve root-relative
-paths. Without it, links like `/about` produce false errors:
+**Lychee note (internal links):** When checking internal links on static
+site build output, MUST use `--root-dir <build-dir>` to resolve
+root-relative paths. Without it, links like `/about` produce false
+errors:
 
 ```yaml
 - uses: lycheeverse/lychee-action@<commit-sha>  # v2
   with:
     args: --offline --no-progress --root-dir dist dist/
+```
+
+**Lychee note (external links):** External checking has different
+failure modes and MUST be configured as a separate job:
+
+- MUST run on a schedule, never as a merge-blocking check — a
+  third-party outage is unrelated to the change under review, and a
+  failure means a cited page moved, which is content work
+- MUST accept `403` and `429` — some hosts refuse automated clients
+  while serving browsers normally. Record in a comment beside the
+  exclusion that this forfeits detection of a genuine permission change
+- MUST pass `GITHUB_TOKEN` — a private repository's own README
+  self-links return `404` to an unauthenticated client
+- MUST exclude documentation example URLs by pattern — a placeholder
+  host cited to demonstrate a format never resolves
+- MUST enumerate paths rather than pass a bare `**/*.md` — a recursive
+  glob skips dot-directories, silently omitting agent and skill
+  definition files, which frequently carry external citations
+- MUST run the check by hand and configure out its false positives
+  before committing the workflow — a check that fails on its first run
+  gets muted rather than fixed
+
+```yaml
+- uses: lycheeverse/lychee-action@<commit-sha>  # v2
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  with:
+    args: >-
+      --no-progress --accept 200,403,429 --max-retries 2 --timeout 20
+      --exclude "^https://example-placeholder/"
+      "docs/**/*.md" ".claude/**/*.md" "README.md"
+    fail: true
 ```
 
 **Aggregator timing:** when branch protection requires an aggregator
