@@ -2285,6 +2285,28 @@ deployment and secrets; the in-process object holds one run's inputs.
   (e.g. `out_dir` from the run name) so nothing hardcodes them; a copy
   accessor hands callers a mutable copy so they cannot mutate the shared
   frozen object
+- **Serialisable record** — give the object `to_dict` / `from_dict`
+  (plus `load` / `save`), keyed by field name. `from_dict` does
+  structural validation only — required keys, types, reject unknown
+  keys so a typo fails loud — which keeps deserialising cheap and
+  dependency-light
+- **One resolver, two sources** — the same selector that names a
+  built-in MUST also accept a user-supplied config file, so an
+  installed tool runs a user's own configuration without editing
+  source. The resolver grows one branch: a value carrying an explicit
+  file marker (an extension or a path separator) loads the file; a bare
+  word stays the registry lookup, byte-identical. Never branch on
+  `exists()` — a bare registry key would then collide with a
+  same-named file in the working directory
+- **Ad-hoc flags are sugar over the file path** — a second front door
+  materialises a file and delegates to it, so construction and
+  validation keep one path and the ad-hoc run leaves behind a
+  reproducible artifact
+- **Validate at the door** — check a user config against the supported
+  envelope on entry, reporting a message that names the supported set
+  rather than a traceback deep in the run. Separate the cheap
+  always-on checks (name safety, enum membership) from the expensive
+  ones that need a heavy import, so a dry run stays cheap
 
 ## Build-time vs runtime config
 
