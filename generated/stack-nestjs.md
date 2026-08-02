@@ -1431,6 +1431,14 @@ Every README MUST contain the following sections, in this order:
   section with a `> Note: planned for vX.Y` callout
 - README MUST be updated in the same commit that changes the behaviour it
   describes — a stale README is a defect
+- A README MUST NOT state a measured value that changes without a
+  corresponding edit — coverage percentages, test counts, byte sizes,
+  timings. The rules above cover content that goes stale when someone
+  edits it; these go stale when nobody does, so no gate catches them.
+  Name the file that holds the value and let the reader read it there
+  (`fail_under` in the tool config, a CI badge, a generated report)
+- Where an example's output is genuinely useful, describe its shape
+  rather than its exact value
 
 ### Length and tone
 - Write in present tense — past or future tense signals out-of-sync content
