@@ -72,6 +72,25 @@ on the host. Not every project needs Compose — keep it to those cases.
 - Bind-mount the source for local dev so edits are live without a
   rebuild; do NOT bind-mount in CI or production — there the image is
   the artifact, and a mount would shadow it with host files
+- An image that installs the project's own package in editable mode
+  bakes an absolute package path at build time. When the source is
+  bind-mounted over the workdir, a later layout change — a flat to
+  `src/` migration — leaves that baked path pointing at a directory
+  that no longer exists, so the import fails while the live code sits
+  under the mount. Resolve the package by an explicit source path
+  instead of the baked finder, and assert the import at build time so
+  a broken layout fails the build rather than every run:
+
+```dockerfile
+RUN pip install -e ".[accel,dev]"
+
+# Resolve by the live location, not the path the editable finder baked
+ENV PYTHONPATH=/app/src
+
+# Fail the build, not the run
+RUN python -c "import pkg, heavy_dep"
+```
+
 - Compose orchestrates local and single-host multi-service dev;
   production multi-service orchestration is Kubernetes (below)
 

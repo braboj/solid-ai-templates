@@ -3756,6 +3756,25 @@ on the host. Not every project needs Compose — keep it to those cases.
 - Bind-mount the source for local dev so edits are live without a
   rebuild; do NOT bind-mount in CI or production — there the image is
   the artifact, and a mount would shadow it with host files
+- An image that installs the project's own package in editable mode
+  bakes an absolute package path at build time. When the source is
+  bind-mounted over the workdir, a later layout change — a flat to
+  `src/` migration — leaves that baked path pointing at a directory
+  that no longer exists, so the import fails while the live code sits
+  under the mount. Resolve the package by an explicit source path
+  instead of the baked finder, and assert the import at build time so
+  a broken layout fails the build rather than every run:
+
+```dockerfile
+RUN pip install -e ".[accel,dev]"
+
+# Resolve by the live location, not the path the editable finder baked
+ENV PYTHONPATH=/app/src
+
+# Fail the build, not the run
+RUN python -c "import pkg, heavy_dep"
+```
+
 - Compose orchestrates local and single-host multi-service dev;
   production multi-service orchestration is Kubernetes (below)
 
@@ -4173,6 +4192,13 @@ merged PR and a deployed artifact — humans approve, machines execute.
 - Use gate job, path filtering, fan-out/fan-in, artifact promotion,
   caching, matrix builds, auto-merge, and deploy preview patterns
   where appropriate
+- An image built by hand rather than by the pipeline drifts silently —
+  its heavy dependencies often live only in the container, so the main
+  test suite never exercises it and nothing forces a rebuild. Rebuild
+  it and smoke-test its import in a job path-gated to the files that
+  define the image contract: the Dockerfile, the packaging manifest,
+  and the Compose file. This keeps the check off the hot path of every
+  PR while denying the image a way to drift unnoticed
 
 ## Pipeline stages
 
