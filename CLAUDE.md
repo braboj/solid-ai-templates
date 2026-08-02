@@ -409,9 +409,13 @@ summarize — visible sequential execution prevents missed steps.
 13. **Template feedback** — for each new pattern or convention
     introduced, explicitly state whether it is project-specific
     or reusable; if reusable, name the upstream template file
-14. **Branch cleanup** — delete local branches that have been
-    merged via PR: `git branch --merged main | grep -v main |
-    xargs git branch -d`
+14. **Branch cleanup** — delete local branches whose PRs have merged,
+    verified against the PR record: `gh pr view <N> --json
+    state,headRefOid` must report `MERGED`, then `git branch -D`.
+    `git branch --merged` cannot see a squash merge and silently
+    matches nothing; a `headRefOid` that differs from the local tip
+    usually means `gh pr update-branch` rewrote the remote head, so
+    inspect it rather than assume unpushed work
 15. **Flag gaps** — if any of the above cannot be completed, flag
     it to the user before closing
 16. **Summary** — summarize what was done and what's next
