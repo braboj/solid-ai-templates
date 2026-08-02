@@ -1,2 +1,3 @@
 probe base 1
 a1
+b1
