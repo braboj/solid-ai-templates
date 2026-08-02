@@ -1082,6 +1082,23 @@ general writing-style and diagram rules above still apply.
 - Documentation follows the same review process as code
 - All documentation MUST be written in Markdown
 
+## Citing the software (if applicable)
+
+Where the project expects to be cited, the citation of record MUST be a
+persistent identifier, not a URL. A repository URL or project domain can
+move, lapse, or be rebranded, and rots every citation pointing at it; a
+persistent identifier resolves to an archived, immutable snapshot and is
+independent of any website, so the domain stays freely swappable.
+
+- SHOULD archive each release and mint a persistent identifier, then
+  cite the identifier that resolves to the latest version rather than a
+  per-version one
+- SHOULD ship a machine-readable citation file at the repository root so
+  the forge renders a "cite this repository" affordance, and record the
+  identifier in it
+- A project domain or vanity URL is a convenience for readers and MUST
+  NOT be presented as the citation of record
+
 ## Generated files
 
 Files committed to the repository but produced by a tool (rendered
