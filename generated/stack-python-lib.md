@@ -2908,6 +2908,15 @@ CLAUDE.md
   directories, and anchor them (`"./name"`). Verify by comparing
   scanned-file counts before and after — a colliding pattern silently
   drops a whole sub-package from the scan while CI stays green
+- When adopting `src/`, delete every `sys.path` manipulation from the
+  test suite rather than repointing it — importing the package under
+  test is the installation's job. Check: `grep -rn "sys.path" tests/`,
+  output MUST be empty
+- Prove the layout took by running the suite against an uninstalled
+  package (`pip uninstall -y [package] && pytest --collect-only`) —
+  collection MUST fail with `ModuleNotFoundError`. A suite that still
+  passes has not adopted the layout, it has only moved files; the
+  exclude audit above cannot detect this, because nothing collided
 - All public API exported from `__init__.py`
 - No `setup.py` — use `pyproject.toml` only
 
