@@ -87,6 +87,24 @@ the diff is real and the output is correct.
   "Binary files differ" — opaque to git and often uncovered by the
   test suite. Open each in a viewer (or an image-read tool for agent
   workflows) and confirm it tracks its source data with no corruption
+- Regenerate a known-current control artifact on its own first. A zero
+  diff proves the generator is byte-deterministic in this environment
+  and already matches the committed baseline, so every remaining diff
+  is genuine change. A non-zero control diff means the environment
+  disagrees with whatever produced the committed files — reconcile
+  that before committing, or ship a spurious mass rewrite disguised as
+  the intended change
+- Mask the known-volatile parts, then diff the remainder. A
+  self-contained bundle carries pieces that legitimately change every
+  run — an embedded base64 blob, a generation timestamp, a build id. A
+  clean masked remainder proves the data and prose are untouched and
+  the change lives only where intended:
+
+```bash
+mask() { sed -E 's/base64,[A-Za-z0-9+/=]+/base64,#/g' "$1"; }
+diff <(mask old.html) <(mask new.html) | grep -v 'generated '
+```
+
 - When a fix regenerates many artifacts, pair a spot-check of 3-5
   representative cases (the fix's primary target, the most complex
   case, a clean baseline) with a global metric that aggregates across
