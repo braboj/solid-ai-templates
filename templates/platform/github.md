@@ -224,9 +224,39 @@ gate categories to GitHub Actions workflows and GitHub-native features.
 
 ---
 
-## GitHub Pages
+## Branch cleanup
 
-[ID: platform-github-pages]
+[ID: platform-github-branch-cleanup]
+
+A squash merge writes a new commit, so `git branch --merged main` never
+matches a squash-merged branch. It exits 0 having deleted nothing, which
+reads exactly like a clean tree. Use the PR record instead — it survives
+the head branch's deletion.
+
+```bash
+gh pr view <N> --json state,headRefOid --jq '"\(.state) \(.headRefOid)"'
+git rev-parse <branch>
+```
+
+- `MUST` treat the branch as deletable only when the PR state is
+  `MERGED` and `headRefOid` equals the local tip — then `git branch -D`
+  (`-d` refuses, for the same ancestry reason `--merged` fails)
+- A differing `headRefOid` is the normal case wherever branch protection
+  requires branches be up to date, because `gh pr update-branch` rewrites
+  the remote head and leaves the clone on the commit it replaced. Treat
+  the mismatch as a prompt to inspect, never as proof of unpushed work
+- `MUST` inspect a mismatch by content before deleting. Comparing
+  ancestry gives false positives after a rebase, since the same work
+  carries a new SHA on each side:
+
+```bash
+git fetch origin refs/pull/<N>/head
+git diff --numstat FETCH_HEAD..<branch>
+```
+
+- Lines present only on the local side are safe when they are text later
+  commits superseded. Unique work in the file the branch authored is
+  not — push it before deleting
 
 - MUST enable "Enforce HTTPS" in repository Settings → Pages for custom
   domains — GitHub Pages does not enforce HTTPS by default
