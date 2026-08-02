@@ -1245,6 +1245,19 @@ Every README MUST contain the following sections, in this order:
   table (`Path` | `Purpose`) — a table renders consistently on GitHub
   and structurally enforces the one-line-description rule
 - Generated directories (`dist/`, `__pycache__/`, `.venv/`) MUST be omitted
+- When the project ships an `examples/` directory, that directory MUST
+  carry its own `README.md` indexing each example as an exact command
+  paired with the output it produces. A bare folder of sample inputs
+  under-delivers and reads as broken data; the index turns it into a
+  try-it-now surface
+  - Examples MUST run offline against data the project already bundles
+  - Output MUST be real or a reproducible dry run — never fabricated
+    numbers. Where the true output needs an engine or service the
+    reader may not have, show the dry run, which conveys the shape and
+    runs anywhere
+  - A sample input that looks incomplete on purpose (an optional field
+    left blank) MUST say so next to the command, not leave the reader
+    to reverse-engineer the intent
 
 ### 6. Development setup
 - MUST cover: cloning, installing dependencies, running tests, running the
@@ -4203,6 +4216,9 @@ src/
     [module].py
 tests/
   test_[module].py
+examples/
+  README.md
+  [pattern].py
 pyproject.toml
 README.md
 CLAUDE.md
@@ -4210,6 +4226,12 @@ CLAUDE.md
 
 - Source layout (`src/`) — prevents accidental imports of the uninstalled
   package
+- `examples/` holds runnable, maintained usage patterns — one file per
+  pattern or user journey, smoke-tested in CI against the library so
+  they cannot rot, and excluded from the built wheel like `tests/`.
+  Distinct from `scripts/`, which is throwaway probes and benchmarks
+  and is not shipped. A design document references an example rather
+  than duplicating its code
 - When adopting `src/` or adding a sub-package, audit every path-based
   exclude in tool configs (bandit `exclude_dirs`, coverage `omit`,
   ruff `extend-exclude`) for patterns that now match new package
