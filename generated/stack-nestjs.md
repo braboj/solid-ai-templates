@@ -169,6 +169,61 @@
   library rather than being the product. Extraction stays deferred, but
   the module is ready the moment it is wanted
 
+## Expensive computations (if applicable)
+
+[ID: quality-expensive-compute]
+
+A step built on an iterative numerical routine (a fixed-point solver, an
+optimizer) or on a memory-heavy intermediate fails in ways that produce a
+plausible answer rather than an error. These rules keep the failure loud
+and the cost paid once.
+
+### Verify convergence — escalate, then fail loud
+
+- A routine that exposes a convergence flag but does not force the caller
+  to read it MUST be wrapped in one helper that checks the flag. An
+  unconverged result handed back as if it were valid feeds a wrong number
+  straight downstream
+- On failure, escalate through progressively stronger and slower
+  stabilization strategies, cheapest first, before raising a descriptive
+  error naming what would not converge. The ladder fires ONLY on
+  non-convergence, so the path that already converges is untouched
+- Keep the ladder unit-testable without the heavy engine: each
+  stabilization step is a small function, the driver is pure
+  orchestration, and a stub with scripted per-attempt convergence
+  exercises every rung
+
+### An output-changing approximation is opt-in and off by default
+
+- A speed knob that shifts the numbers (a lower-rank approximation, a
+  coarser grid) MUST default off, so the canonical output is never
+  silently perturbed
+- Carry it as a per-run field in the same single source of truth as the
+  rest of the run's parameters, so a run that needs it is self-reproducing
+
+### Size the budget to the box; spill or refuse, never OOM
+
+- A memory-heavy step detects its real budget (env override → container
+  cgroup limit → physical RAM, scaled for headroom) rather than assuming
+  a fixed library default
+- Estimate the large intermediate up front: keep it in RAM while it fits,
+  stream it to a disk scratch path beyond that, refuse past a hard
+  ceiling. A diagnosable error beats an OOM crash
+- The scratch path MUST be real disk, not a RAM-backed tmpfs
+
+### Persist the reusable intermediate, not just the scalar read off it
+
+- When already paying for an expensive computation, persist its reusable
+  internal state to a checkpoint, not only the scalar this caller needed.
+  Discard the state and the next question about the same input forces a
+  full re-run
+- Make it opt-in (a checkpoint-path parameter, default off) so cheap
+  callers pay nothing, and store the checkpoint with the other
+  regenerable artifacts (gitignored)
+- Validate the round-trip once on a small case before trusting a long
+  batch to it — including any wrapper or proxy layer around the engine,
+  which can silently swallow the checkpoint parameter
+
 ## Calibration discipline
 
 [ID: quality-calibration]
