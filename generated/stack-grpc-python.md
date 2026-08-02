@@ -3773,6 +3773,12 @@ CLAUDE.md
   editable install reports a stale version after a `[project].version`
   bump until `pip install -e .` is rerun. Built artifacts (wheel, image)
   install fresh and are unaffected
+- Rerunning the install does not always clear it. A leftover in-tree
+  `*.egg-info` from an older build sits in the project root, which is on
+  `sys.path` ahead of `site-packages`, so it shadows the freshly written
+  `dist-info` and the version stays stale immediately after a clean
+  reinstall. Delete it first: `rm -rf ./*.egg-info && pip install -e .`.
+  Being gitignored is what keeps it invisible
 
 ---
 
