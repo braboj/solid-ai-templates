@@ -69,16 +69,32 @@ genericity before it becomes template content:
 1. Extract the generic kernel — the rule that holds regardless of stack
    or domain. Strip project-specific nouns (entity, tool, and metric
    names)
-2. If the kernel is genuinely cross-cutting, add it to the relevant
+2. Pick the target by **measured chain reach**, not by the home the
+   issue suggests. A rule in a template no chain resolves reaches no
+   generated context file:
+
+   ```bash
+   # how many of the 17 stacks resolve a candidate file?
+   for s in $(py tools/resolve.py --list); do
+     py tools/resolve.py "$s" | grep -q 'core/review.md' && echo "$s"
+   done | wc -l
+   ```
+
+   A filed issue's suggested home is a hypothesis — it is usually
+   written from the downstream project, without running this. Where a
+   rule needs universal reach but applies only sometimes, put it in a
+   high-reach template behind an `(if applicable)` heading rather than
+   in a low-reach one
+3. If the kernel is genuinely cross-cutting, add it to the relevant
    `base/` or layer template per "Add a new base or layer template"
-3. If a fragment only applies to one stack or domain, fold it as an
+4. If a fragment only applies to one stack or domain, fold it as an
    *example* inside a generic rule — do not add it as standalone base
    content. Standalone one-stack content in a core-tier template loads
    into every chain and dilutes attention
-4. Prefer extending an existing related rule over adding a parallel
+5. Prefer extending an existing related rule over adding a parallel
    section — duplicate rules restated across templates are the same
    attention-dilution failure
-5. Validate per "Validate a template change"
+6. Validate per "Validate a template change"
 
 ---
 
