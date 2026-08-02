@@ -345,6 +345,23 @@ checklist into a short bullet list: that silently drops steps and the
 
 ---
 
+## Vendoring the templates
+
+The reference and hybrid models both vendor this repository as a
+submodule. That puts files on disk which the consuming repository does
+not track, and any tool that walks the tree rather than the VCS index
+will scan them — linters, formatters, secret scanners, spell checkers,
+link checkers.
+
+- MUST exclude the submodule path in each such tool's config before the
+  first commit. Tools scoped by an explicit file list need no change
+- CI may not reveal the problem: checkout actions commonly skip
+  submodules by default, so the CI job sees an empty directory while the
+  local command contributors are told to run before pushing fails. A
+  green dashboard is not evidence here
+
+---
+
 ## Monorepo support (optional)
 
 Some agents walk the directory tree from the project root to the
