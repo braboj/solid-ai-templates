@@ -4514,6 +4514,17 @@ CLAUDE.md
   collection MUST fail with `ModuleNotFoundError`. A suite that still
   passes has not adopted the layout, it has only moved files; the
   exclude audit above cannot detect this, because nothing collided
+- After any path move the documentation references, execute every
+  command the documentation prints from a clean environment and a
+  neutral working directory — the repository root is the one place the
+  old behaviour still appears to work, so a check run there passes for
+  the wrong reason. No gate covers this: lint, types, tests, coverage
+  and wheel contents are all unchanged by a move that breaks the
+  README's headline example
+- A quick start opening with `git clone` MUST carry an install step
+  before the first command that imports the package. Any instruction to
+  run from the repository root is a symptom of the layout the move is
+  undoing, not a workaround for it
 - All public API exported from `__init__.py`
 - No `setup.py` — use `pyproject.toml` only
 
