@@ -401,3 +401,23 @@ replace one.
 | ----------- | --------- | -------------------------------------- |
 | `duplicate` | `#C1C7D0` | Already tracked by another issue       |
 | `wontdo`    | `#C1C7D0` | Acknowledged but will not be addressed |
+
+### Label conformance check
+
+GitHub has no mutually-exclusive label group, so nothing stops an
+unlabeled or double-labeled issue being created. The rule is enforced
+by running the check, not by the platform:
+
+```bash
+gh issue list --state open --limit 200 --json number,labels \
+  --jq '[.[] | {n: .number,
+                t: ([.labels[].name
+                     | select(test("^(bug|epic|task|spike|incident)$"))] | length),
+                p: ([.labels[].name | select(test("^P[0-3]$"))] | length)}
+        | select(.t != 1 or .p != 1)]'
+```
+
+Output MUST be `[]`. Each reported entry names the issue and its actual
+type and priority counts. The type alternation is the project's own
+taxonomy; the `P[0-3]` pattern is fixed, and `P4` is excluded by it so
+a deferred issue still passes on its severity alone.

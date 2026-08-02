@@ -36,6 +36,16 @@ one of `P0`–`P3`; `P4` is optional and additional.
 Platform-specific label implementation (names, colors) is defined in
 the platform template (e.g. `platform/github.md`).
 
+The at-creation rule MUST be paired with a conformance check over open
+issues (`quality-gates-pair-check`) — an unlabeled ticket looks
+identical to a labeled one, so the discipline decays silently
+otherwise. Where the tracker can enforce mutual exclusion natively
+(Linear label groups), that is the check; where it cannot (GitHub
+labels), state the query and its pass condition in the platform
+template. The check reports every open issue not carrying exactly one
+type and exactly one of `P0`–`P3`; `P4` is additional and MUST NOT
+count toward the priority total.
+
 ---
 
 ## System of record
