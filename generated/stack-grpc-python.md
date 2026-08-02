@@ -3819,6 +3819,13 @@ merged PR and a deployed artifact — humans approve, machines execute.
 - Use gate job, path filtering, fan-out/fan-in, artifact promotion,
   caching, matrix builds, auto-merge, and deploy preview patterns
   where appropriate
+- An image built by hand rather than by the pipeline drifts silently —
+  its heavy dependencies often live only in the container, so the main
+  test suite never exercises it and nothing forces a rebuild. Rebuild
+  it and smoke-test its import in a job path-gated to the files that
+  define the image contract: the Dockerfile, the packaging manifest,
+  and the Compose file. This keeps the check off the hot path of every
+  PR while denying the image a way to drift unnoticed
 
 ## Pipeline stages
 
