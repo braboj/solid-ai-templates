@@ -809,6 +809,11 @@ When NOT to close-and-resubmit:
   - **IDE/editor** — `.idea/`, `.vscode/`, `*.swp`, `*.swo`
   - **OS files** — `.DS_Store`, `Thumbs.db`, `desktop.ini`
   - **Test/coverage** — `coverage/`, `.coverage`, `htmlcov/`
+- Share the editor config that mirrors the CI gates through an
+  allowlist rather than ignoring the directory wholesale — ignore
+  `.vscode/*`, then re-include `!settings.json` and
+  `!extensions.json`. The shared project setup is versioned while
+  per-user editor state stays ignored
 - Use [gitignore.io](https://gitignore.io) or GitHub's templates as a
   starting point — then trim to what the project actually needs
 - Do not ignore lockfiles — they MUST be committed
