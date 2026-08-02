@@ -1435,6 +1435,17 @@ fixing the design fixes the testability.
   frameworks), never rely on the ambient process state. A test that
   passes or fails depending on run order is an isolation bug, not
   flakiness
+- A test MUST NOT enumerate, signal, or terminate a process it did not
+  start, and MUST NOT mutate host state outside the working directory —
+  the process table, system services, the registry, or the user's
+  running applications. Where the code under test reaches the host,
+  the suite MUST stub that boundary rather than exercise it, even when
+  the test's own subject is already faked: a fake at one seam does not
+  neutralise a real call at another. This is a distinct class from
+  in-process leakage, and more severe — the failure is damage to the
+  developer's machine, not a flaky test, and a suite doing it can pass
+  every assertion while leaving only a line on stderr. Code that
+  reaches the host SHOULD take that reach as an injectable dependency
 - A failing test MUST trigger an investigation before any other action —
   never suppress or skip a failing test without a documented reason
 - Tests are code and MUST be treated as such — they MAY contain bugs; when
