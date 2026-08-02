@@ -2324,3 +2324,79 @@ downstream evidence — reusable upstream content, which is what this repo is.
 **Issues closed:** #816, #820, #822, #824, #825, #835, #836, #845, #856,
 #858, #859, #861, #863, #864, #865, #881, #882. Opened #900; reopened #883.
 Journal PR carries no milestone.
+
+---
+
+## 2026-08-02 — Milestone lanes retired, then v2.38 and v2.39
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+A tracker cleanup that turned into a template rule, a full groom of the
+remaining backlog, then two milestones planned and drained.
+
+**Milestone lanes retired (ADR-023, #914, PR #915).** Deleting the `Backlog`
+and `Expedite` milestones exposed that `platform/github.md` prescribed both as
+rules and `issues.md` named a `Backlog`-milestoned issue as the home for
+deferred work. Each lane was a milestone doing a label's job: `Backlog`
+answered "is this parked" and `Expedite` "is this urgent", both properties of
+the issue rather than of a release, and both already encoded by `P4` and the
+severity band. A milestone's meaning is also not durable — closing or deleting
+one strips the field from every attached issue, while a label survives. The
+deferred-work rule was additionally stale against ADR-021, still calling its
+`Backlog` issue "distinct from a P4 'someday' issue" after `P4` had been
+redefined as exactly a deferral marker.
+
+**Groom.** The 33 untriaged issues sorted into five themed minors (v2.38-v2.42)
+rather than one cut, matching the v2.29-v2.35 precedent and the eight-issue
+release size. Three moved into v3.0 because they depend on files v3.0 creates,
+each verified from the issue's own text rather than by theme resemblance: #815
+names the CLI conventions #755 introduces, #857 defers to `frontend/seo.md`
+from #624, #844 needs the placement #492 decides. #831 and #832 stayed
+unmilestoned on `P4` — putting a deliberately-deferred issue into a dated cut
+would contradict the rule shipped an hour earlier.
+
+**v2.38 — Review discipline** (#918-#922). Four of the seven issues were
+retractions of confident, wrong findings, and they shared one shape: the
+finding was reported before it was demonstrated, and the check that would have
+caught it depended on the finding's provenance. `review.md`'s agent-findings
+section widened into "Verifying a finding before reporting it", organised by
+whether the finding came from a read (#860), a measurement (#912), an
+extraction (#846), or an agent (#849). Also: re-read the whole section after
+changing a sentence (#847), composite-metric independence (#833), and auditing
+every step of a composite gate command rather than the one that broke (#843).
+
+**v2.39 — Pipeline & derived-data correctness** (#924-#926). A new
+`Expensive computations (if applicable)` section in `quality.md` pairs the two
+halves of one construct: do not hand back an unconverged result, and do not
+discard the state you already paid for (#818, #828). Two rules govern what such
+a pipeline may emit — blank a derived quantity outside its defining condition
+(#827), and take the fidelity bar from the strictest *visible* consumer (#829).
+A diagnostic view must run through the production entry point (#830).
+
+**Lesson — measure reach, do not recall it.** Session memory recorded
+`base-review` as reference-only with zero chains. `resolve.py` shows it
+resolves in 17 of 17. That inverted a placement: #849's suggested home
+(`agents.md`) reaches nothing, so it went to `review.md` instead. The same
+check moved #828 out of `base/data/` (4 of 17, all web services) into
+`quality.md`. Reach is the placement criterion and it is one command away.
+
+**Lesson — a rule found its own class of bug one release later.** Applying the
+self-referential-claim check from #847 to the Calibration discipline section
+while editing it showed the intro claiming "three failure modes ... the rules
+below address each" against six existing subsections. The claim was accurate
+when written and drifted as rules accumulated. Rewritten to carry no count.
+
+**Template feedback:** all thirteen are template changes distilled from
+downstream evidence — reusable upstream content, which is what this repo is.
+The milestone-lane removal is the exception in kind: it began as a local
+tracker cleanup and became a rule only because the templates prescribed the
+thing being removed.
+
+**Releases:** v2.38.0, v2.39.0. Milestones v2.36-v2.39 closed; v2.36 and v2.37
+had shipped earlier the same day but were left open.
+
+**PRs merged:** #915, #918, #920, #921, #922, #924, #925, #926
+
+**Issues closed:** #914, #818, #827, #828, #829, #830, #833, #843, #846,
+#847, #849, #860, #912. Milestones `Backlog` and `Expedite` deleted;
+v2.40-v2.42 created. Journal PR carries no milestone.
