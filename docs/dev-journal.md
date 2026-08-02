@@ -2400,3 +2400,66 @@ had shipped earlier the same day but were left open.
 **Issues closed:** #914, #818, #827, #828, #829, #830, #833, #843, #846,
 #847, #849, #860, #912. Milestones `Backlog` and `Expedite` deleted;
 v2.40-v2.42 created. Journal PR carries no milestone.
+
+## 2026-08-02 — v2.40 Tooling, containers & CI
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+A tracker placement pass, then the milestone drained end to end.
+
+**Placement.** Five issues left unmilestoned by the previous session were
+placed: the two `platform/github.md` bugs (#916, #917) into v2.40 alongside
+the lychee item already there, the submodule read-discipline rule (#927) into
+v2.42 with the tracker work, and the two `git.md` merge-mechanics rules (#919,
+#923) into a new v2.43 — no existing theme fit them, and folding them into
+v2.42 would have made its title stop describing its contents. #831 and #832
+stay unmilestoned, which is now correct rather than an oversight: ADR-023
+deleted the milestone lanes, so `P4` alone carries deferral.
+
+**Deferral conformance.** ADR-023 requires `P4` plus explicitly named trigger
+conditions, and neither #831 nor #832 had one. Both were migrated out of the
+`Backlog` milestone on 2026-08-02 by label alone, so the parking rationale the
+milestone carried implicitly was lost with it. Triggers were written from each
+issue's own content, with the provenance stated on the issue.
+
+**v2.40 — Tooling, containers & CI** (#931-#937). The `## GitHub Pages`
+heading had been deleted rather than displaced when Branch cleanup was
+inserted, stranding two HTTPS rules under the wrong ID; restored, and the
+garbled mismatch bullet directly above it repaired in the same PR since the
+edits touch adjacent lines (#916, #917). MD029 joins the disabled house-style
+rules (#900). The Lychee note splits into internal and external halves (#848).
+The editor's type-checker defers to the CI type gate (#826). An editable
+install bind-mounted over its own workdir is guarded against layout drift
+(#817), and the write-persistence boundary is documented (#821).
+
+**Lesson — an issue's suggested home is a hypothesis, not a decision.** #834
+named `base/workflow/scope.md`, which resolves into 1 of 17 chains.
+`base/core/git.md` is 17 of 17 and already owned a
+`### Verifying regenerated artifacts` section on exactly that topic — where
+one of the issue's three proposed rules already existed, so it was dropped
+rather than duplicated. This is the same lesson as v2.39's "measure reach, do
+not recall it", one step earlier: measure before accepting the issue's own
+suggestion, not only before recalling from memory.
+
+**Lesson — a rule can contradict, not just omit.** #826's `git.md` half read
+as a small addition. The `.gitignore` section already said to ignore
+`.vscode/` wholesale, which is incompatible with tracking the editor config
+the new Layer 1 rule requires. Landing the addition without the allowlist
+would have shipped two rules that cannot both be followed.
+
+**Lesson — retiring a lane does not retire its prose.** #831's proposed
+template text still instructed "file a Backlog issue" weeks after ADR-023
+deleted the lane. Implementing it verbatim would have reintroduced the
+retired lane into the very file the ADR stripped it from. After an ADR
+removes a concept, grep open issue bodies for it, not only `templates/`.
+
+**Template feedback:** all eight are template changes distilled from
+downstream evidence — reusable upstream content. #900 is the exception: it
+configures this repo's own editor tooling and travels nowhere.
+
+**Releases:** v2.40.0. Milestone v2.40 closed; v2.43 created.
+
+**PRs merged:** #931, #932, #933, #934, #935, #936, #937
+
+**Issues closed:** #916, #917, #900, #848, #834, #826, #817, #821. Journal PR
+carries no milestone.
