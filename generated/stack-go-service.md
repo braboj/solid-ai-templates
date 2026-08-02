@@ -3775,6 +3775,21 @@ ENV PYTHONPATH=/app/src
 RUN python -c "import pkg, heavy_dep"
 ```
 
+- A write inside a `--rm` container is discarded on exit, and a write
+  to data baked into the image at build time never reaches the host or
+  a later build. Document where a state-mutating command's write lands
+  and route the reader to a boundary that persists. A quickstart that
+  shows such a command under `run --rm` misleads silently: the reader
+  runs it, sees it succeed, and the state reverts on the next run. For
+  a one-off, prefer the alternative that needs no write at all — pass
+  the value inline:
+
+```text
+run --rm (ephemeral)   bind-mount host path   edit source + rebuild
+write -> top layer     write -> host file     write -> next image
+gone on exit           persists               persists (shipped)
+```
+
 - Compose orchestrates local and single-host multi-service dev;
   production multi-service orchestration is Kubernetes (below)
 
