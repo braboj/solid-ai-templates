@@ -76,6 +76,16 @@
   to reduce indentation rather than adding else branches
 - No boolean flag parameters — they force the caller to read the implementation
   to understand what `true` means; use an enum or two named functions instead
+- Name a pluggable tier for what it requires of the caller, not for the
+  library behind it — a public enum member, CLI flag, or result
+  discriminator MUST be named for the capability or requirement it
+  represents; a private symbol MAY name the library it drives. Prefer
+  `Transport.HTTP` / `JS` / `HEADED` over `Transport.PLAYWRIGHT` /
+  `NODRIVER`: the first says when to pick each, the second makes the
+  caller learn what each library is
+- Corollary: if swapping the implementation would force a caller to
+  change code, the name has leaked. Which library sits behind a tier
+  changes without notice and is not the caller's problem
 - Avoid negative conditions in `if` statements where possible —
   `if isEnabled` reads better than `if !isDisabled`
 
