@@ -254,9 +254,15 @@ git fetch origin refs/pull/<N>/head
 git diff --numstat FETCH_HEAD..<branch>
 ```
 
-- Lines present only on the local side are safe when they are text later
-  commits superseded. Unique work in the file the branch authored is
-  not — push it before deleting
+- Lines present only on the local side are safe when they are text that
+  later commits superseded. Work the branch authored that appears nowhere
+  in the PR head is not — push it before deleting
+
+---
+
+## GitHub Pages
+
+[ID: platform-github-pages]
 
 - MUST enable "Enforce HTTPS" in repository Settings → Pages for custom
   domains — GitHub Pages does not enforce HTTPS by default
