@@ -26,6 +26,8 @@ Read `docs/SPEC.md` for the full composition model before contributing.
 - Git
 - A Markdown editor (any)
 - Python 3.x — for running the structural smoke tests
+- GitHub CLI (`gh`) — for the issue, pull-request and release steps
+  in `docs/PLAYBOOK.md`
 - An AI agent for validation (Claude Code recommended) — for E2E tests
 
 ## First steps
