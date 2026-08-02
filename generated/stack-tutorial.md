@@ -4098,6 +4098,26 @@ a label travels with the issue.
 
 ---
 
+## Closing a duplicate
+[ID: base-issues-duplicate]
+
+When two issues describe the same work, exactly one MUST survive.
+
+- Before closing an issue as a duplicate or superseded, verify the
+  survivor is **open**. If it is closed, reopen it or file a
+  replacement first.
+- A duplicate chain that terminates in a closed issue silently drops
+  the work: every trail leads to a closed record pointing at another
+  closed record, and both claim the work is handled elsewhere.
+- The surviving ticket carries the better description; the closed one
+  carries the triage label and a link to the survivor.
+- Reconcile closed issues against work actually shipped at the end of a
+  session. Two closures made in opposite directions are each
+  individually reasonable and invisible until something compares the
+  tracker against the tree.
+
+---
+
 ## Epic
 
 A large initiative too big for one task. Tracks progress via child issue
