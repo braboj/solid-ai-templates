@@ -108,11 +108,16 @@ Every README MUST contain the following sections, in this order:
   describe what the project does, not how good it is
 
 ### Audience
-- A README serves two audiences. The first three sections (title,
-  quick start, usage) are user-facing — what the product does and
-  how to use it. The remaining sections (structure, setup, config)
-  are developer-facing — how to build and contribute. Write each
-  section for its audience.
+- A README serves two audiences. The first four sections (title,
+  features, quick start, usage) are user-facing — what the product
+  does and how to use it. The remaining sections (structure, setup,
+  config) are developer-facing — how to build and contribute. Write
+  each section for its audience.
+- A README MUST NOT cite an individual decision record. The two
+  audiences above are users and contributors; a decision record serves
+  whoever maintains the decision. Link the document that explains the
+  behaviour and let that document cite the record. The decisions
+  directory MAY still appear in Project structure, which maps the tree
 - Write for a reader who has not seen this project before — MUST
   NOT assume familiarity with internal terminology
 - Acronyms MUST be expanded on first use
