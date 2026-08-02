@@ -28,9 +28,16 @@ Before starting any work, the agent MUST:
    wrap — not stash or delete. If the change is something else, ask what
    it is and whether it should ship before the new scope.
 5. Clean up stale branches: `git fetch --prune` to remove stale
-   remote-tracking refs, then `git branch --merged main | grep -v
-   main | xargs -r git branch -d` to delete local branches whose
-   PRs have squash-merged
+   remote-tracking refs, then delete local branches whose PRs have
+   merged. Verify each against the PR record, never against
+   `git branch --merged` — a squash merge writes a new commit that
+   the branch tip is not an ancestor of, so the filter matches
+   nothing and exits 0, which is indistinguishable from "nothing to
+   clean". When the PR is merged but its head no longer matches the
+   local tip, the remote head was rewritten (safe) or the branch
+   holds unpushed commits (not safe): inspect the difference rather
+   than assuming either. Concrete commands belong in the platform
+   template.
 6. Check deploy health — verify the latest CI/CD deploy on `main`
    completed successfully; flag if stuck, failed, or pending. A deploy
    can sit broken for hours unnoticed when startup checks only cover
