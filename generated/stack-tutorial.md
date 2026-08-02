@@ -3273,7 +3273,14 @@ not by widening an existing filter:
   enumeration-free
 - Keep output-measuring and language-scoped jobs (build, e2e, perf,
   per-language tests) path-filtered — promote only the cross-cutting
-  deterministic step to always-run
+  deterministic steps to always-run
+- Audit the whole command, not the step that broke. When adding the
+  first mirror job for a composite gate command (`validate` = lint +
+  format + typecheck + test + build), enumerate every step in the same
+  pass and check each for inputs outside the path-filter's coverage.
+  Mirror all exposed steps at once, or record which steps read only
+  covered paths — an unaudited assertion that "the rest are covered"
+  is how the second step surfaces later as its own incident
 - This complements `quality-gates-skip-equivalent`: skip noisy output
   gates on PRs that provably cannot affect them; always run
   deterministic cross-cutting gates
