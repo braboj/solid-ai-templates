@@ -2463,3 +2463,61 @@ configures this repo's own editor tooling and travels nowhere.
 
 **Issues closed:** #916, #917, #900, #848, #834, #826, #817, #821. Journal PR
 carries no milestone.
+
+
+---
+
+## 2026-08-02 — v2.41 Python & API conventions
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Label gap closed first.** #938 and #939 were filed during the previous
+session carrying no labels at all, which CLAUDE.md 2.2 forbids at creation.
+They surfaced only because a status sweep enumerated unmilestoned issues —
+nothing in CI or the tracker objects to an unlabeled ticket, so the rule is
+currently a constraint without its check. Both were labeled `task` / `P3`
+and placed in v2.41, taking the milestone from six issues to eight.
+
+**v2.41 — Python & API conventions** (#942-#949). Five rules land in
+`python-lib.md`: a test suite's own `sys.path` insert defeats the `src/`
+layout (#938), the documented commands must be re-run after a path move
+(#939), a stale in-tree `*.egg-info` shadows the fresh `dist-info` (#840),
+a library's dependency floors move only when required (#862), and the test
+suite is exempt from the ruff `D` rules (#838). Three land in the core
+tier: a pluggable tier is named for what it requires of the caller (#908),
+the module-to-package split preserves its import path (#837), and a
+registered config object also loads from a user file through one resolver
+(#819).
+
+**Lesson — a green gate certifies what survived, not what the move was
+for.** #938 and #939 are the same defect from two sides. #719 had already
+landed the config-side audit for a `src/` move: anchor every path-based
+exclude, compare scanned-file counts. In the reported case that audit
+passes and its answer is correct — nothing collided. Meanwhile the suite
+was still importing from the tree through a `conftest.py` insert that had
+simply been repointed, and the README's headline example had stopped
+working. Tests, coverage, statement counts, formatted-file counts, mypy
+source counts and wheel contents were identical before and after. The
+verification has to target the guarantee the move was adopted for
+(collection MUST fail against an uninstalled package), not the artifacts
+the tooling happens to scan.
+
+**Lesson — the inherited-rule check earns its keep.** #838 is not an
+omission but a contradiction across the inheritance boundary:
+`python-lib.md` selected the ruff `D` rules without exempting tests, while
+`quality-gates-exclusions` in its own dependency chain already rules
+docstring coverage on non-public functions out as busywork. Every project
+generated from the stack failed `ruff check` on its own test suite at
+scaffold time. v2.37's #864 added the check for exactly this; this is the
+first case it would have caught.
+
+**Template feedback:** all eight are reusable upstream content distilled
+from downstream evidence (`page-fetcher`, `corrosim`). No project-specific
+changes in this milestone.
+
+**Releases:** v2.41.0. Milestone v2.41 closed.
+
+**PRs merged:** #942, #943, #944, #945, #946, #947, #948, #949
+
+**Issues closed:** #938, #939, #840, #862, #838, #908, #837, #819. Journal
+PR carries no milestone.
