@@ -3820,7 +3820,7 @@ twine check dist/*        # validate wheel/sdist metadata
 | Lint | Ruff | Ruff | Ruff | `pyproject.toml` |
 | Format | Ruff | Ruff format | Ruff format --check | `pyproject.toml` |
 | Type check | Pyright / mypy | mypy | mypy --strict | `pyproject.toml` |
-| Docstrings | Ruff `D` rules | Ruff `D` rules | Ruff `D` rules | `pyproject.toml` (Google convention) |
+| Docstrings | Ruff `D` rules | Ruff `D` rules | Ruff `D` rules | `pyproject.toml` (Google convention, `tests/**` exempt) |
 | Security | — | — | Bandit + platform SAST | — |
 | Secrets | — | gitleaks | gitleaks | `.pre-commit-config.yaml` |
 | Tests | — | — | pytest | `pyproject.toml` |
@@ -3830,6 +3830,12 @@ twine check dist/*        # validate wheel/sdist metadata
 - Hook framework: `pre-commit` — config in `.pre-commit-config.yaml`
 - Docstring convention: Google — enforced via Ruff `D` rules with
   `convention = "google"` in `pyproject.toml`
+- Exempt the test suite from the `D` rules —
+  `[tool.ruff.lint.per-file-ignores]` with `"tests/**" = ["D"]`.
+  Docstrings on test functions are the busywork
+  `quality-gates-exclusions` rules out, and without the exemption a
+  freshly scaffolded project fails `ruff check` on its own tests. The
+  naming convention under `base-testing` already carries a test's intent
 
 
 <!-- templates/base/infra/cicd.md -->
