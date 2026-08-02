@@ -129,6 +129,23 @@ force-push, which is forbidden.
 This keeps remote history intact and yields a clean,
 dependency-free diff.
 
+### Merging a stack
+
+Merging the base PR with a delete-branch flag does not retarget the PR
+stacked on it. The host closes that PR and deletes its head branch, and
+it cannot be reopened, because reopening requires the base ref to exist.
+
+- MUST merge a stack bottom-up
+- MUST NOT delete a branch while any PR still targets it — retarget the
+  dependent PR to `main` first, then delete
+- To recover: recreate the deleted ref from `main`, reopen the PR,
+  retarget it to `main`, delete the ref again, then update the branch
+
+The same shape bites automated dependency PRs. Merging a change to the
+bot's own config invalidates every open PR it raised, closing them and
+deleting their branches. Merge the pending bumps first when the intent
+is to take them and change the policy.
+
 ### Bulk operations
 
 When a bulk operation (cohort emit, codebase-wide migration, mass
