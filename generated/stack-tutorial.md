@@ -3765,11 +3765,13 @@ the platform template (e.g. `platform/github.md`).
 [ID: base-issues-defer]
 
 When work is genuinely valuable but intentionally deferred — not in the
-next milestone, perhaps not the next several — the right home is a
-Backlog-milestoned issue with explicitly named trigger conditions, not a
-TODO line in an ADR or a code comment. This is distinct from a P4
-"someday" issue: the deferral is deliberate, the trigger is named, and
-the work is sized.
+next milestone, perhaps not the next several — the right home is an
+open issue carrying the `P4` deferral marker and explicitly named
+trigger conditions, not a TODO line in an ADR or a code comment. `P4`
+records that the deferral is deliberate rather than an untriaged
+oversight. Do NOT park the work in a named holding milestone instead —
+a lane's meaning is lost when the milestone is closed or deleted, while
+a label travels with the issue.
 
 - Open the body with the deferral note: "Do not pick up before one of
   the trigger conditions fires."
