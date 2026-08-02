@@ -106,11 +106,9 @@ are terminal — applied when closing without action.
 | `P2` | `#EED12B` | Medium — important but not blocking |
 | `P3` | `#4BCE97` | Low — nice to have, including trivial |
 
-#### Deferral label (optional)
-
-| Label | Color | Meaning |
-|-------|-------|---------|
-| `P4` | `#8590A2` | Deliberately deferred — accompanies a severity, never replaces one |
+There is no fifth band. Deferral is carried by an empty milestone
+field, not by a label — milestoned means planned, unmilestoned means
+backlog (ADR-024).
 
 #### Triage labels
 

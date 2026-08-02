@@ -1,10 +1,10 @@
 ---
 id: "021"
-status: Accepted
+status: Superseded
 date: 2026-08-01
 category: process
 supersedes: []
-superseded_by: []
+superseded_by: ["024"]
 ---
 
 # ADR-021: Four severities, with P4 as a deferral marker

@@ -37,7 +37,7 @@ convention.
 - Type label names MUST match the code-host platform template character
   for character, lowercase included — a label differing only by case
   does not round-trip through the code-host integration.
-- MUST NOT create `P0`–`P4` labels. Priority is a native field; see
+- MUST NOT create `P0`–`P3` labels. Priority is a native field; see
   `platform-linear-priority`.
 - MUST NOT create `duplicate` or `wontdo` labels. Both are native
   workflow states; see `platform-linear-triage`.
@@ -57,7 +57,7 @@ convention.
 
 **Check:** list the team's issue labels. Every row above MUST report a
 parent of `Type` and a non-null team, no row MUST appear a second time
-outside the group, and no label named `P0`–`P4`, `duplicate`, or
+outside the group, and no label named `P0`–`P3`, `duplicate`, or
 `wontdo` MUST exist.
 
 ---
@@ -112,9 +112,10 @@ filters.
   severity. It is the default for an untouched issue, so spending it on
   a severity makes deliberate decisions indistinguishable from absent
   ones.
-- `P4` is a deferral marker, not a severity, so it has no place in this
-  field. Carry it as a label outside every group, or as the tracker's
-  own deferral mechanism.
+- Deferral has no place in this field, and MUST NOT be encoded as a
+  band below `Low`. It is carried by the absence of a scheduling
+  assignment — no cycle, no project milestone — exactly as an empty
+  milestone field carries it on the code host.
 
 ---
 
