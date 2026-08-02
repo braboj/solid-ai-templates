@@ -538,6 +538,10 @@ remaining commits are silently lost.
   permanently, so branch hygiene is not fully automatic. It is the
   safe way to delete a branch under a stack, because deletion as part
   of the merge retargets dependent PRs rather than closing them
+- SHOULD set `fetch.prune` so every fetch reconciles remote-tracking
+  refs deleted on the server — the client-side complement to the
+  setting above. Without it, `origin/<branch>` survives the branch it
+  points at and reads as a branch that will not delete
 - SHOULD use one focused commit per scope-slice on the branch
   rather than per-folder atomic commits. The squash collapses
   them on merge, so the per-folder narrative is wasted effort —
