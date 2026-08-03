@@ -97,6 +97,13 @@
   modules — if they do, the abstraction boundary is wrong
 - Before removing or renaming a public symbol, mark it deprecated with a
   comment referencing the replacement; remove it in a follow-up change
+- When retiring a concept — a label, a lane, a flag, a convention — sweep
+  every surface that still instructs its use, not just the source tree. An
+  open ticket body, a planning document, or a draft change description is a
+  delayed write: implemented verbatim later, it reintroduces the concept
+  into the very files the retirement stripped it from. The sweep is done
+  when a search for the concept returns only historical records — decision
+  logs, change logs, journals — and no surviving instruction to apply it
 - When extending a function's return type (value → list, scalar → tuple),
   keep a one-line shim under the old name returning the first/scalar
   element so existing callers and tests survive; remove it in a follow-up
