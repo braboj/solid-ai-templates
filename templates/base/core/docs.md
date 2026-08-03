@@ -138,6 +138,19 @@ wrong before changing either.
   evidence and a post-mortem (Symptom / Root cause / Why missed / Fix /
   Prevention) if the original shipped any change; the superseded ADR's
   status flips to `Superseded by ADR-NNN` in the same PR
+- When a rule the project deliberately does NOT follow moves in its own
+  source — an upstream chain, a vendored rule set, a submodule pointer
+  bump — re-read the divergence record before deciding what the change
+  means. The reconciliation is done by reading a diff, and the diff does
+  not know the divergence exists, so the change reads as a gap to close
+  rather than a decision already reasoned about
+- A reconciliation that touches a recorded divergence MUST state whether
+  the divergence still holds, and MUST separate what the range refuted
+  from what it merely moved nearby. A decision can survive intact while
+  a neighbouring rule it named — a fallback, an alternative mechanism,
+  an exemption it relied on — is deleted; that is a repair to the
+  record, not grounds to reverse it. Recency is no protection, since
+  the source can move within hours of the record merging
 - File naming: `NNN-slug.md` — zero-padded sequence number + kebab-case slug
   (e.g. `001-data-storage.md`, `002-hosting.md`)
 - ADR file format:
