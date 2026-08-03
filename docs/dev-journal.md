@@ -2645,3 +2645,76 @@ rule against a cycle or project milestone. `CLAUDE.md` §2.2 and the
 **PRs merged:** #961
 
 **Issues closed:** #960. Journal PR carries no milestone.
+
+## 2026-08-03 — v2.43 Git merge mechanics
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Two independent PRs merged back to back hit the same refusal a stack
+does** (#923). Under "Require branches to be up to date before merging",
+merging the first moves the base and makes every other open PR stale, so
+the next merge is refused for a reason that has nothing to do with
+content — it fires on disjoint files and on branches that were never
+stacked. `De-stacking a dependent branch` framed the merge-`main`-in step
+as a consequence of duplicate commits and `Merging a stack` framed it as
+a consequence of stacking, so a reader who had internalised both still
+did not expect it. `git.md` now carries `Merging a batch of PRs` between
+`Squash-merge safety` and the de-stacking section, and prices the case:
+N ready PRs are N merges and N-1 update-plus-CI cycles.
+
+**The de-stacking rule was mandating the more expensive of two equal
+routes** (#919). Cherry-picking B fresh off updated main was the only
+sanctioned option, and it closes B's PR — discarding its comments and
+approvals. Retargeting B and merging main in is equally force-push free,
+and under squash merge lands byte-identical content on `main`; the merge
+commit it carries is deleted by the squash that follows. Both routes are
+now permitted, with the trade-off named so the choice is informed:
+cherry-pick when the diff will be read carefully and there is no review
+history worth keeping, merge in when B is already reviewed or the stack
+is deep enough that re-cherry-picking each level is error-prone. The
+equivalence rests on squash merge, so that condition is stated — where
+the merge commit would survive on `main`, cherry-pick. The `MUST NOT
+rebase an already-pushed branch` from #336 is untouched.
+
+**A null that means two things defeated the precedence table** (#963).
+`config.md` already forbade a lower-priority source overriding a higher
+one; what was missing was the mechanism. A parser helper returning the
+value after a flag, or null when there is none, collapses "flag absent"
+with "flag present as the last argument". `tool <target> --wait` then
+runs with the hardcoded default: highest-priority source beaten by the
+lowest, no error, exit zero — and the shape of it guarantees the failure
+lands exactly when the user was trying to set the value. The rule extends
+to empty environment variables and empty config keys, which fail
+identically. Pulled into this cut rather than left in the backlog,
+because it is a silent-failure trap and `config.md` reaches 15 of 17
+stacks.
+
+**Reach blocked a placement again, before the edit rather than after**
+(#951). The proposed rule — re-read the project's own divergence records
+before deciding what a bumped submodule range means, since a rule the
+project deliberately does not follow can move upstream and read as a gap
+to close — targets `scope.md` item 10, which is where the reconciliation
+gap genuinely sits. `scope.md` resolves into 1 of 17 stacks, and that one
+is the Astro tutorial site: the least likely place for a submodule
+reconciliation. Same trap `issues.md` has. The issue stays unmilestoned
+with the measurement and three placement options recorded on it, which is
+what a named trigger condition looks like under ADR-024.
+
+**None of this session's own merges hit #923.** Each branch was cut from
+main after the previous PR merged, so nothing was ever stale. That is the
+other way to avoid the N-1 update cycles, and it costs nothing when the
+work is serial anyway — the rule earns its keep when several PRs are
+already open and waiting.
+
+**Template feedback:** all four items are reusable upstream content, three
+of them landed. `base-git` gains `Merging a batch of PRs` and a widened
+`De-stacking a dependent branch`; `base-config` gains the absent-versus-
+empty distinction under `Config precedence`. Both files are core-tier —
+`git.md` reaches all 17 stacks, `config.md` 15 — so all three rules
+travel. The fourth (#951) is reusable but unplaced.
+
+**Releases:** v2.43.0 — Git merge mechanics.
+
+**PRs merged:** #966, #967, #968
+
+**Issues closed:** #923, #919, #963. #951 commented and left unmilestoned.
