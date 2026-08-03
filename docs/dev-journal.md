@@ -2730,3 +2730,77 @@ so it is unreleased on main and belongs to the next cut.
 **PRs merged:** #966, #967, #968, #972
 
 **Issues closed:** #923, #919, #963, #951.
+
+---
+
+## 2026-08-03 — v2.44 Consumer reconciliation
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Both halves of a bump were unspecified in the same direction** (#970,
+#971). `base-agents` already settled which revision a consumer *reads* —
+the issue list at HEAD, the rules at the pin — and that read-side rule
+had made the write side look settled too. It was not. A downstream bump
+procedure ran `checkout origin/main`, the exact read the section forbids,
+applied to the pin. It had never produced a wrong pin, because until
+`v2.42.0` the newest tag *was* `origin/main` every time it ran. Upstream
+kept working past a release and the two separated: a ticket describing
+the `v2.41.0 → v2.42.0` range attributed a rule to it that lives four
+commits past the tag. The rule now says pin a released tag, and prices
+the second cost — a tag range is citable, "whatever `main` was that
+afternoon" is not, which leaves the commit message as the only record of
+what moved.
+
+**A convenience list was silently acting as the definition** (#971). A
+consumer's `CLAUDE.md` names its resolved chain, and reconciling the
+`v2.42.0` bump against that list was wrong twice at once. It missed
+`workflow/issues.md`, which is not in the list but is reached through
+`platform/github.md` — so `base-issues-record` governed that repository
+while it maintained the same convention by hand, unaware upstream owned
+it. And it nearly imported `agents.md` and `security/devsecops.md`, both
+changed in the same range and both plausible, neither reachable from
+anything declared. The asymmetry is what earns the rule: a missed file
+looks like a local doc drifting, an over-included one looks like ordinary
+diligence, and both pass for reconciliation work rather than a scoping
+error. Governance resolves through the `DEPENDS ON` headers; any list a
+consumer writes down is a cache of that resolution.
+
+**The placement rule pointed away from the right home, and it was still
+right to run it** (#980). Both issues suggested `agents.md`. Measuring
+per PLAYBOOK step 2 returned 0 of 17 stacks — read literally, grounds to
+reject. `agents.md` was correct anyway: `INTERVIEW.md` reads it directly,
+so it shapes every generated file by a route `resolve.py` does not
+measure. The step's justification — "a rule in a template no chain
+resolves reaches no generated context file" — is false for the templates
+the pipeline itself reads. Chain reach answers *does this travel to
+generated projects*; it cannot answer *does this travel at all*. Filed
+rather than fixed in-session: the 0/17 set is currently labelled
+"reference-only", which conflates a different route with low value, and
+separating those is more than a wording fix.
+
+**Prose that quotes a directive is parsed as a declaration** (#979). The
+transitive-governance rule first spelled `DEPENDS ON` out in its bracket
+form inside backticks, and SYS-01 plus SYS-04 failed against a phantom
+file. Backticks are not respected — the parser scans the whole file, and
+a declaration is only meaningful in the header. Shipped by naming the
+header in prose instead, which is a workaround no author will remember,
+so the parser is filed as the actual defect. Worth noting the failure
+misdirects: the message names a file that was never referenced.
+
+**Template feedback:** both rules are reusable upstream content and both
+landed in `base-agents` "Vendoring the templates", extending the existing
+two-revisions rule rather than opening a parallel section. Chain reach is
+0/17 and irrelevant here — `INTERVIEW.md` reads the file directly, so
+they travel to every generated context file. Nothing this session was
+project-specific.
+
+**Releases:** v2.44.0 — Consumer reconciliation. Annotated tag first per
+the recipe #974 landed the day before; `tag-guard` green, and
+`--verify-tag` had nothing left to create.
+
+**PRs merged:** #975, #978
+
+**Issues closed:** #970, #971
+
+**Issues opened:** #979, #980 — both unmilestoned, triggered by the next
+cut being scoped.
