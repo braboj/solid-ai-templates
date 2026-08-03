@@ -380,6 +380,22 @@ when the pin equals HEAD.
   put, so anything read there describes a future state of the consuming
   repository, not its current one
 
+The same distinction governs the write side — which revision a bump
+moves the pin to.
+
+- A bump MUST pin a released tag, never the upstream default branch.
+  `origin/main` is a mid-flight revision: pinning it imports rules that
+  are in no cut yet, so the consumer starts enforcing conventions
+  upstream has not released
+- Pinning a tag is also what makes the bump citable. `v2.41.0 →
+  v2.42.0` names a range any reader can resolve; "whatever `main` was
+  that afternoon" does not, and the commit message becomes the only
+  record of what moved
+- The two agree whenever the newest tag is upstream HEAD, which is most
+  of the time. A `checkout origin/main` bump procedure therefore looks
+  correct until upstream keeps working past a release, then silently
+  attributes rules to a range that does not contain them
+
 ---
 
 ## Monorepo support (optional)
