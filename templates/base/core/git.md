@@ -140,6 +140,30 @@ remaining commits are silently lost.
   breakdown in the PR description, where it stays after merge.
   Use path globs in `git add` for staging hygiene when needed.
 
+### Merging a batch of PRs
+
+Where branch protection requires branches be up to date before merging,
+only the first PR in a batch merges cleanly. That merge moves the base
+and makes every other open PR stale, so the next merge is refused:
+
+```
+Pull request #<N> is not mergeable: the head branch is not up to date
+with the base branch.
+```
+
+This is a staleness check on the ref, not a content conflict. It fires
+even when the two PRs touch entirely disjoint files, and even when
+neither was stacked on the other — so neither "De-stacking a dependent
+branch" nor "Merging a stack" explains it.
+
+- MUST merge the base into every remaining PR of the batch after each
+  merge, and let its checks re-run before merging it
+- MUST NOT read the refusal as a conflict — merging the base in and
+  pushing is the whole fix; no rebase, no fresh branch, no force-push
+- SHOULD budget one update-plus-CI cycle per PR after the first. A
+  batch of N ready PRs is N merges and N-1 update cycles, which is
+  what makes merging a batch cost more than its diffs suggest
+
 ### De-stacking a dependent branch
 
 When branch B was stacked on branch A and A has squash-merged to main,
