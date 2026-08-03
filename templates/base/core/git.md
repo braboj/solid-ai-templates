@@ -172,12 +172,23 @@ rebase B onto main — but B is already pushed, so this requires a
 force-push, which is forbidden.
 
 - MUST NOT rebase the already-pushed B to drop A's commit
-- MUST branch fresh off the updated main and cherry-pick only B's
-  own commits; open the PR from the new branch
-- Delete the old stacked branch once its superseded PR is closed
-
-This keeps remote history intact and yields a clean,
-dependency-free diff.
+- MUST take one of two routes, both force-push free. Under squash
+  merge they put byte-identical content on main, so the choice is
+  about what happens to B, not about the result:
+  - **Cherry-pick fresh** — branch off the updated main, cherry-pick
+    only B's own commits, open the PR from the new branch, and delete
+    the old stacked branch once its superseded PR is closed. Yields a
+    clean, dependency-free diff, and discards B's review history
+  - **Merge main in** — retarget B's PR to main, then merge the
+    updated main into B and push. Keeps the PR, its comments and its
+    approvals; carries a merge commit that the squash then discards
+- SHOULD cherry-pick fresh when the diff will be read carefully and B
+  has no review history worth keeping; SHOULD merge main in when B is
+  already reviewed, or when the stack is deep enough that
+  re-cherry-picking each level is error-prone
+- Both routes keep remote history intact. Where merge is not the
+  squash kind, the merge commit survives on main — cherry-pick fresh
+  instead
 
 ### Merging a stack
 
