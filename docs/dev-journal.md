@@ -2696,9 +2696,19 @@ project deliberately does not follow can move upstream and read as a gap
 to close — targets `scope.md` item 10, which is where the reconciliation
 gap genuinely sits. `scope.md` resolves into 1 of 17 stacks, and that one
 is the Astro tutorial site: the least likely place for a submodule
-reconciliation. Same trap `issues.md` has. The issue stays unmilestoned
-with the measurement and three placement options recorded on it, which is
-what a named trigger condition looks like under ADR-024.
+reconciliation. Same trap `issues.md` has. Measuring first cost minutes
+and moved the rule: it landed in `docs.md` under `Decision logs` (17/17),
+generalised past submodules to any source a divergence was recorded
+against, and beside the existing rule for an ADR premise refuted shortly
+after merge — the same shape with the refutation arriving from outside.
+Nothing was added to `scope.md`, since a pointer there would restate the
+rule and the repository has no inline cross-references by design.
+
+The part worth keeping is the second bullet: a reconciliation MUST
+separate what the range refuted from what it merely moved nearby. In the
+source case the decision survived untouched while the fallback it named
+was deleted upstream — that is a repair to the record, not grounds to
+reverse it, and reading the diff alone cannot tell the two apart.
 
 **None of this session's own merges hit #923.** Each branch was cut from
 main after the previous PR merged, so nothing was ever stale. That is the
@@ -2706,15 +2716,17 @@ other way to avoid the N-1 update cycles, and it costs nothing when the
 work is serial anyway — the rule earns its keep when several PRs are
 already open and waiting.
 
-**Template feedback:** all four items are reusable upstream content, three
-of them landed. `base-git` gains `Merging a batch of PRs` and a widened
+**Template feedback:** all four items are reusable upstream content and
+all four landed. `base-git` gains `Merging a batch of PRs` and a widened
 `De-stacking a dependent branch`; `base-config` gains the absent-versus-
-empty distinction under `Config precedence`. Both files are core-tier —
-`git.md` reaches all 17 stacks, `config.md` 15 — so all three rules
-travel. The fourth (#951) is reusable but unplaced.
+empty distinction under `Config precedence`; `base-docs` gains the
+divergence-reconciliation pair under `Decision logs`. Every one of those
+files is core-tier — `git.md` and `docs.md` reach all 17 stacks,
+`config.md` 15 — so all five rules travel.
 
-**Releases:** v2.43.0 — Git merge mechanics.
+**Releases:** v2.43.0 — Git merge mechanics. #951 merged after the tag,
+so it is unreleased on main and belongs to the next cut.
 
-**PRs merged:** #966, #967, #968
+**PRs merged:** #966, #967, #968, #972
 
-**Issues closed:** #923, #919, #963. #951 commented and left unmilestoned.
+**Issues closed:** #923, #919, #963, #951.
