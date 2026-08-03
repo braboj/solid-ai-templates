@@ -2571,3 +2571,77 @@ this repository itself; #907 and #839 from `page-fetcher` and `corrosim`.
 
 **Issues closed:** #883, #952, #913, #907, #927, #839. Journal PR carries
 no milestone.
+
+---
+
+## 2026-08-02 — P4 retired: priority is severity only
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**The `P4` deferral marker is gone** (#960, ADR-024). Priority is now a
+pure four-band severity scale, `P0`–`P3`, one per issue. Deferral moves to
+the milestone field: milestoned means planned into that cut, unmilestoned
+means backlog. The label was deleted repository-wide, which strips it from
+closed issues as well as open ones.
+
+**The reasoning that flipped.** ADR-021 had considered dropping the marker
+and rejected it — removing it "pushes the information into prose, where it
+stops being filterable". That held only if the alternative to a label was
+prose. It is not. The milestone field is itself a first-class, filterable
+axis, already mandatory reading when scoping a release and already
+documented as optional, with an empty value meaning the work is not tied to
+a release. Deferral was being recorded twice in two places that can
+disagree. Of the four open issues carrying the marker, two also carried a
+milestone and two carried none; in neither pair did the label say anything
+the milestone field did not already say.
+
+**What the milestone field cannot say, the body now must.** The objection
+ADR-021 raised against folding deferral into a tracker's unset value —
+deliberate decisions become unfindable among untriaged ones — applies to an
+empty milestone too, and is answered rather than dismissed. Triage here is
+the type and severity applied at creation, not the milestone, so an empty
+milestone means unscheduled and never untriaged; `base-issues-defer` now
+states that explicitly. The trigger conditions in the issue body remain the
+record that a deferral was deliberate. What is genuinely lost is the label
+filter that used to surface the backlog on its own, so the section gained a
+bullet requiring the unmilestoned set to be re-read when a cut is scoped.
+
+**Lesson — retiring a concept does not retire its prose, and this is the
+second time it fired.** ADR-023 deleted the `Backlog` lane, and weeks
+later #831's proposed template text still said "file a Backlog issue".
+That was recorded as a lesson. It happened again in the same file: the same
+issue's step 4 instructed a future implementer to apply "a severity label
+plus `P4`", so implementing #831 verbatim would have written the marker
+back into `platform/github.md` — the exact file this change strips it from.
+An open issue body is a delayed write against the templates, and a
+concept-removal PR that greps only `templates/` leaves those writes armed.
+Both #831 and #832 were rewritten to describe the `Backlog` → `P4` →
+unmilestoned migration as history rather than as instruction. The lesson
+then landed as a rule (#962): retiring a concept sweeps every surface that
+instructs its use, and is done only when a search returns historical
+records and no surviving instruction.
+
+**Reach decided the home, and the obvious home was the wrong one.** The
+new rule reads as issue-tracker content, which puts it next to
+`base-issues-defer` in `issues.md`. Measuring first: `issues.md` resolves
+into 1 of 17 stacks, `quality.md` into 17 of 17. The rule went to
+`quality.md` beside the existing before-removing-a-public-symbol rule,
+where it also mirrors the citation-inherits-its-lifecycle rule pointing
+the other way. Worth noting for the P4 change itself — its `issues.md`
+edits ship to `stack-tutorial` alone, and only the `platform/` edits
+travel widely, since a platform template is chosen independently of the
+stack chain.
+
+**Template feedback:** reusable upstream content, already landed.
+`base-issues-types` drops the fifth band, `base-issues-defer` is restated
+against the milestone field, `platform-github-labels` drops its deferral
+table and the conformance-check caveat that existed only to exclude `P4`
+from the priority pattern, and `platform-linear-priority` carries the same
+rule against a cycle or project milestone. `CLAUDE.md` §2.2 and the
+`devsecops` triage flow follow.
+
+**Releases:** none. v2.43 stays open — #923 and #919 remain.
+
+**PRs merged:** #961
+
+**Issues closed:** #960. Journal PR carries no milestone.
