@@ -366,9 +366,12 @@ general writing-style and diagram rules above still apply.
 ### IDs and register
 
 - Functional requirements use `FR01…` in shall-form (IEEE 29148);
-  quality goals use `QG01…` with ISO 25010 names (Correctness,
-  Reliability, Maintainability, Portability, Compatibility, Usability) —
-  distinct from the `Q1…` quality scenarios in §10
+  quality goals use `QG01…` named for an ISO 25010 characteristic
+  (Functional Suitability, Performance Efficiency, Compatibility,
+  Usability, Reliability, Security, Maintainability, Portability) or for
+  a sub-characteristic where that is more precise (Correctness,
+  Functional Completeness, Availability) — distinct from the `Q1…`
+  quality scenarios in §10
 - Requirements use "shall"; constraints and other givens stay
   declarative — avoid all-caps RFC 2119 keywords in arc42 prose
 - A per-section purpose line only where it adds meaning (define a term
@@ -376,13 +379,44 @@ general writing-style and diagram rules above still apply.
 - No forward cross-references to later-numbered sections (a section is
   authored before they exist); back-references are fine
 
+### Requirement and goal content
+
+- A quality goal states how well the system behaves, never what it
+  does. Tell: the clause appears verbatim as an `FR` row in the same
+  chapter — that is a duplicate, not a goal
+- A quality goal is not the product's purpose restated. Tell: the
+  motivation reads "…is the reason the service exists"
+- Security goals state who may do what; the mechanism that enforces it
+  (bind address, reverse proxy, allowlist) belongs in §2 or §4. Tell: a
+  goal the system's own top security risk cannot violate
+- Every quality goal carries its measurable target in §1 — a figure
+  living only in a §10 scenario leaves §1 unfalsifiable
+- One goal covers one quality with one failure mode — split a goal
+  whose clauses can fail independently of each other
+- Goal coverage follows what the component is, not only what its risk
+  register lists: a component inline on a write path declares
+  efficiency, a component with human users declares usability
+- A motivation gives a fact and the consequence that follows from it —
+  a bare fact does not justify a priority
+- §10 quality-tree branches are falsifiable — a branch naming module
+  counts, file layout, or bind addresses describes what was built and
+  cannot fail
+- Adding or renaming a quality updates four places: the §1 goal table,
+  the §4 quality-approach table, the §10 tree, and the §10 scenario
+  table
+
 ### Concept sections
 
 - Describe the idea in prose, then give a `Concept | Implementation`
   table mapping it to concrete identifiers — rather than inlining
   identifiers throughout the prose
-- A glossary entry is a **bold term** followed by plain text — no
-  inline-code monospacing of the term
+
+### Glossary
+
+- Every glossary term is bold — `**term**`, never inline-code
+  monospaced, and never left as plain text. Applies to identifiers
+  (table names, routes, service names) as much as to prose terms
+- The definition following the term is plain text
 
 ## Docs-as-code
 
