@@ -396,6 +396,23 @@ moves the pin to.
   correct until upstream keeps working past a release, then silently
   attributes rules to a range that does not contain them
 
+The pinned revision settles *when*; the dependency graph settles *what*.
+Governance resolves transitively through each template's `DEPENDS ON`
+header — declaring `platform/<host>.md` also declares every template it
+reaches, and every template those reach.
+
+- Resolve each changed file against the graph when reconciling a bump,
+  never against a list. A file absent from the list still governs if
+  anything declared reaches it; a file that reads as obviously
+  applicable does not govern unless something declared reaches it
+- Any chain list a consumer writes into its own context file is a cache
+  of that resolution, not the definition. It can go stale, and a stale
+  one changes governed scope without any edit to the rule it drops
+- Both errors pass for ordinary reconciliation work. The missed file
+  surfaces as a local document maintaining a convention upstream
+  already owns; the over-included one as a repository enforcing rules
+  it never adopted
+
 ---
 
 ## Monorepo support (optional)
