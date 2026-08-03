@@ -2364,6 +2364,13 @@ Sources override in this order (highest wins):
 - Document the precedence model for the project
 - Never let a lower-priority source silently override a
   higher-priority one
+- Distinguish "source absent" from "source present but empty". A
+  lookup that returns the same null for both makes the
+  highest-priority source silently lose to the lowest — a flag passed
+  with no value MUST be an error naming the accepted input, never a
+  fallback to the default the user was reaching past. This applies to
+  an empty environment variable and an empty config key as much as to
+  a trailing CLI flag
 
 ## In-process config model
 
