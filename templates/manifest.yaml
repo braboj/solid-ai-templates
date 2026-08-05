@@ -311,6 +311,7 @@ stacks:
       - base-quality
       - base-testing
       - base-quality-gates
+      - base-examples
 
   - id: stack-go-service
     file: templates/stack/go-service.md
@@ -422,6 +423,7 @@ stacks:
       - base-docs
       - base-quality
       - base-typescript
+      - base-examples
 
   - id: stack-c-embedded
     file: templates/stack/c-embedded.md
