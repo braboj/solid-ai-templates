@@ -1,5 +1,5 @@
 # Stack — Python Library / CLI
-[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/workflow/quality-gates.md]
+[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
 
 A Python library, CLI tool, or shared package intended to be imported or
 installed. No web server, no frontend. May be published to PyPI.
@@ -40,12 +40,11 @@ CLAUDE.md
 
 - Source layout (`src/`) — prevents accidental imports of the uninstalled
   package
-- `examples/` holds runnable, maintained usage patterns — one file per
-  pattern or user journey, smoke-tested in CI against the library so
-  they cannot rot, and excluded from the built wheel like `tests/`.
-  Distinct from `scripts/`, which is throwaway probes and benchmarks
-  and is not shipped. A design document references an example rather
-  than duplicating its code
+- `examples/` holds runnable usage patterns, governed by
+  `base-examples`. Python specifics: under `src/` the directory cannot
+  reach the wheel and needs no exclude — a flat layout MUST exclude it
+  explicitly, like `tests/`; the smoke job installs with
+  `pip install -e .` and no extra
 - When adopting `src/` or adding a sub-package, audit every path-based
   exclude in tool configs (bandit `exclude_dirs`, coverage `omit`,
   ruff `extend-exclude`) for patterns that now match new package

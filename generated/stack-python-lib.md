@@ -1442,18 +1442,9 @@ Every README MUST contain the following sections, in this order:
   and structurally enforces the one-line-description rule
 - Generated directories (`dist/`, `__pycache__/`, `.venv/`) MUST be omitted
 - When the project ships an `examples/` directory, that directory MUST
-  carry its own `README.md` indexing each example as an exact command
-  paired with the output it produces. A bare folder of sample inputs
-  under-delivers and reads as broken data; the index turns it into a
-  try-it-now surface
-  - Examples MUST run offline against data the project already bundles
-  - Output MUST be real or a reproducible dry run — never fabricated
-    numbers. Where the true output needs an engine or service the
-    reader may not have, show the dry run, which conveys the shape and
-    runs anywhere
-  - A sample input that looks incomplete on purpose (an optional field
-    left blank) MUST say so next to the command, not leave the reader
-    to reverse-engineer the intent
+  carry its own `README.md`, because the index is a README and this
+  template owns those. What the index and the examples themselves MUST
+  contain is `base-examples`, and MUST NOT be restated here
 
 ### 6. Development setup
 - MUST cover: cloning, installing dependencies, running tests, running the
@@ -2976,9 +2967,133 @@ scheduled whole-tree sweep, not a per-change gate.
 - Platform templates define the CI integration and SAST tool
 
 
+<!-- templates/base/core/examples.md -->
+# Base — Examples
+[ID: base-examples]
+
+Rules for a project that ships an `examples/` directory. An examples
+directory is a try-it-now surface, not a folder of sample inputs: every
+file in it is runnable, maintained, and executed by CI against the
+project it documents.
+
+Applies only where the directory exists. A project without one inherits
+nothing from this template.
+
+---
+
+## Contents
+[ID: base-examples-scope]
+
+- One file per pattern or user journey — not one per API surface, and
+  not one per feature listed in the README. Split on the seams a
+  consumer meets, not on the table of contents
+- `examples/` is maintained; `scripts/` is throwaway probes and
+  benchmarks and is not shipped. A file nobody would run twice belongs
+  in `scripts/`
+- Examples MUST be excluded from the built artifact, the same way tests
+  are
+- A design document references an example rather than duplicating its
+  code — two copies of a snippet drift, and the copy in prose is the
+  one nothing executes
+
+---
+
+## The index
+[ID: base-examples-index]
+
+- The directory MUST carry its own `README.md` indexing every example
+  as an exact command paired with the output it produces. A bare folder
+  of sample inputs under-delivers and reads as broken data
+- Output MUST be real or a reproducible dry run — never fabricated
+  numbers. Where the true output needs an engine or service the reader
+  may not have, show the dry run, which conveys the shape and runs
+  anywhere
+- A sample input that is incomplete on purpose (an optional field left
+  blank) MUST say so next to the command, not leave the reader to
+  reverse-engineer the intent
+- The index is the one document whose body is machine-generated prose,
+  and the secret scanner reads it like source. Where an example prints
+  a derived identifier — a hash, a cache key, a request id — label it
+  with a word the scanner does not treat as a credential keyword. A
+  keyword followed by a high-entropy token is a generic-api-key match
+- Fix the label, never the scanner. A fingerprint-scoped allowlist
+  entry dies at squash-merge and leaves dead config behind; a
+  path-scoped one permanently exempts the one file whose whole purpose
+  is pasting program output
+- The scan reads commit history, not the working tree — a follow-up
+  commit does not clear a finding, the branch has to stop containing it
+
+---
+
+## Offline
+[ID: base-examples-offline]
+
+- Offline means no dependency on a host outside the project. A process
+  the example starts itself, a container the project's own compose file
+  brings up, and a bundled fixture are all offline; a third-party
+  endpoint is not, whoever operates it. Sockets are not the test —
+  reproducibility for a reader who has the repository and nothing else
+  is
+- Examples MUST run offline in that sense, against the data and
+  services the project already carries
+- Where the behaviour being demonstrated inherently needs an outside
+  host, the example drives the project's own seam — the fake, the
+  fixture, the recorded capture — never the live client
+- The rule MUST name the concrete type an example may not construct.
+  A soft "avoid the network" invites an example that builds the real
+  client and points it at a host that obviously resolves, which is
+  offline until the day it is not; a named constructor is a line the
+  reader can check and CI can enforce
+- A project whose subject matter is I/O MUST accept that its central
+  capability may not be demonstrable by any example, and MUST carry it
+  where that capability is documented rather than reaching for the
+  network to cover it
+
+### Exception
+[ID: base-examples-offline-exception]
+
+An example MAY depend on an outside host where the capability cannot be
+sealed behind a seam and building one would cost more than the example
+is worth. Prefer the seam wherever a seam is cheap — this is an
+exception, not a second style. An example taking it MUST:
+
+- name, in its index entry, the external service it requires
+- state in that entry why no seam was built — one sentence
+- carry its pasted output with the date it was captured, never
+  presented as reproducible
+- run in a CI leg that does not gate merges
+
+A project whose examples all take the exception has not found the
+exception, it has skipped the seam.
+
+---
+
+## The smoke job
+[ID: base-examples-smoke]
+
+- Every example MUST be executed by CI against the project, so it
+  cannot rot
+- The job MUST install the project the way a consumer does — no dev,
+  test, or optional extras. Reusing the test job proves only that the
+  examples run beside the test tooling, which no reader has
+- The job MUST glob the directory rather than listing files, so a new
+  example is covered without editing CI. A listed job silently stops
+  covering the file someone forgot to register
+- The job MUST run on the lowest runtime version the project claims to
+  support, so an example cannot depend on syntax that version lacks
+- An example taking `base-examples-offline-exception` MUST run in a
+  separate leg that does not gate merges — a third-party endpoint MUST
+  NOT be able to block a merge by being slow or down
+- That leg MUST still be watched. A non-blocking leg left permanently
+  red is a deleted example with extra steps
+- Check: install the project alone, then execute every file under
+  `examples/`. Pass condition — the gating leg covers at least one file
+  and every file it runs exits zero
+
+
 <!-- templates/stack/python-lib.md -->
 # Stack — Python Library / CLI
-[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/workflow/quality-gates.md]
+[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
 
 A Python library, CLI tool, or shared package intended to be imported or
 installed. No web server, no frontend. May be published to PyPI.
@@ -3019,12 +3134,11 @@ CLAUDE.md
 
 - Source layout (`src/`) — prevents accidental imports of the uninstalled
   package
-- `examples/` holds runnable, maintained usage patterns — one file per
-  pattern or user journey, smoke-tested in CI against the library so
-  they cannot rot, and excluded from the built wheel like `tests/`.
-  Distinct from `scripts/`, which is throwaway probes and benchmarks
-  and is not shipped. A design document references an example rather
-  than duplicating its code
+- `examples/` holds runnable usage patterns, governed by
+  `base-examples`. Python specifics: under `src/` the directory cannot
+  reach the wheel and needs no exclude — a flat layout MUST exclude it
+  explicitly, like `tests/`; the smoke job installs with
+  `pip install -e .` and no extra
 - When adopting `src/` or adding a sub-package, audit every path-based
   exclude in tool configs (bandit `exclude_dirs`, coverage `omit`,
   ruff `extend-exclude`) for patterns that now match new package

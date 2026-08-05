@@ -55,6 +55,9 @@ base:
   - id: base-readme
     file: templates/base/core/readme.md
     description: README structure, badges, quick start, contribution guide
+  - id: base-examples
+    file: templates/base/core/examples.md
+    description: Examples directory — contents, index, offline rule, smoke job
   - id: base-deployment
     file: templates/base/infra/deployment.md
     description: Deployment targets (cloud/hybrid/offline), certs, LB, registries, secrets
@@ -247,6 +250,7 @@ stacks:
       - base-docs
       - base-quality
       - base-quality-gates
+      - base-examples
 
   - id: stack-python-service
     file: templates/stack/python-service.md
