@@ -1,5 +1,5 @@
 # Stack — Go Library / CLI
-[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/core/testing.md, templates/base/workflow/quality-gates.md]
+[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/core/testing.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
 
 Base Go conventions for any Go module — library, CLI tool, or service.
 Never used directly for services — always extended by
@@ -69,6 +69,25 @@ no HTTP layer.
 - Component test naming: `Test<UnitOfWork>_<State>_<Expected>`
   e.g. `TestParseConfig_MissingField_ReturnsError`
 - Run before every commit: `go test ./... && go vet ./...`
+
+---
+
+## Examples
+[ID: go-lib-examples]
+[EXTEND: base-examples]
+
+- Prefer `Example` functions in `_test.go` with an `// Output:` comment.
+  `go test` compares the comment against what the function prints, so
+  the real-output rule is machine-checked rather than reviewed, and the
+  example cannot rot silently
+- Reach for a standalone `examples/` directory only for what an
+  `Example` function cannot carry — a multi-file program, a CLI
+  invocation, a flag-driven journey
+- Each program under `examples/` MUST be `package main`, so it cannot
+  be imported as library API and cannot widen the module's surface
+- Smoke check: `go vet ./... && go test ./...` covers the `Example`
+  functions; `go run ./examples/<name>` covers the directory. Pass
+  condition — every program exits zero
 
 ---
 

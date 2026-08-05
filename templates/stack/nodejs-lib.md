@@ -1,5 +1,5 @@
 # Stack — Node.js Library / CLI
-[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/language/typescript.md]
+[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/language/typescript.md, templates/base/core/examples.md]
 
 A Node.js library or CLI tool written in TypeScript. Intended to be
 published to npm or used as a shared internal package. No web server,
@@ -33,6 +33,9 @@ src/
   types.ts                   # shared TypeScript types and interfaces
 tests/
   [module].test.ts
+examples/
+  README.md                  # index — command and real output per example
+  [pattern].mjs              # runnable against the built package
 dist/                        # build output — gitignored
 tsconfig.json
 tsconfig.build.json          # excludes tests from the build output
@@ -116,6 +119,26 @@ CLAUDE.md
 - Component test naming: `<function>_<state>_<expected>`
   e.g. `parseConfig_missingRequiredField_throwsValidationError`
 - Run before every commit: `npm test && tsc --noEmit`
+
+---
+
+## Examples
+[ID: nodejs-lib-examples]
+[EXTEND: base-examples]
+
+- Examples MUST run against the built package, not raw TypeScript. A
+  consumer who installed from npm has no `tsx` or `ts-node`, so an
+  example written in `.ts` is unrunnable for the reader it is written
+  for. Ship `.mjs` importing the package by name, or compile the
+  examples in the smoke job before running them
+- `examples/` MUST be excluded from the published package. The `files`
+  field in `package.json` is an allowlist — a directory absent from it
+  is already excluded, and `npm pack --dry-run` lists what would ship
+- Smoke check: pack and install the tarball into a clean directory —
+  `npm pack`, then `npm install <tarball>` — and run each example
+  against it. Installing the workspace with `--omit=dev` is the weaker
+  form: it proves the example runs beside the source tree, not against
+  what npm serves
 
 ---
 
