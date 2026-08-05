@@ -3028,10 +3028,17 @@ nothing from this template.
 ## Offline
 [ID: base-examples-offline]
 
-- Examples MUST run offline against data the project already bundles
-- Where the behaviour being demonstrated inherently needs a network, a
-  service, or a device, the example drives the project's own seam — the
-  fake, the fixture, the recorded capture — never the live client
+- Offline means no dependency on a host outside the project. A process
+  the example starts itself, a container the project's own compose file
+  brings up, and a bundled fixture are all offline; a third-party
+  endpoint is not, whoever operates it. Sockets are not the test —
+  reproducibility for a reader who has the repository and nothing else
+  is
+- Examples MUST run offline in that sense, against the data and
+  services the project already carries
+- Where the behaviour being demonstrated inherently needs an outside
+  host, the example drives the project's own seam — the fake, the
+  fixture, the recorded capture — never the live client
 - The rule MUST name the concrete type an example may not construct.
   A soft "avoid the network" invites an example that builds the real
   client and points it at a host that obviously resolves, which is
@@ -3041,6 +3048,23 @@ nothing from this template.
   capability may not be demonstrable by any example, and MUST carry it
   where that capability is documented rather than reaching for the
   network to cover it
+
+### Exception
+[ID: base-examples-offline-exception]
+
+An example MAY depend on an outside host where the capability cannot be
+sealed behind a seam and building one would cost more than the example
+is worth. Prefer the seam wherever a seam is cheap — this is an
+exception, not a second style. An example taking it MUST:
+
+- name, in its index entry, the external service it requires
+- state in that entry why no seam was built — one sentence
+- carry its pasted output with the date it was captured, never
+  presented as reproducible
+- run in a CI leg that does not gate merges
+
+A project whose examples all take the exception has not found the
+exception, it has skipped the seam.
 
 ---
 
@@ -3057,9 +3081,14 @@ nothing from this template.
   covering the file someone forgot to register
 - The job MUST run on the lowest runtime version the project claims to
   support, so an example cannot depend on syntax that version lacks
+- An example taking `base-examples-offline-exception` MUST run in a
+  separate leg that does not gate merges — a third-party endpoint MUST
+  NOT be able to block a merge by being slow or down
+- That leg MUST still be watched. A non-blocking leg left permanently
+  red is a deleted example with extra steps
 - Check: install the project alone, then execute every file under
-  `examples/`. Pass condition — the run covers at least one file and
-  every file exits zero
+  `examples/`. Pass condition — the gating leg covers at least one file
+  and every file it runs exits zero
 
 
 <!-- templates/stack/python-lib.md -->

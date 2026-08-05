@@ -78,6 +78,15 @@ was the obvious place to fix them.
    a credential keyword, and MUST fix the label rather than the
    scanner.
 
+6. **Offline is bounded, and has one exception** — offline means no
+   dependency on a host outside the project, not the absence of
+   sockets; a process the example starts, a container the project
+   brings up, and a bundled fixture all qualify. An example MAY depend
+   on an outside host where the capability cannot be sealed behind a
+   seam and building one would cost more than the example is worth,
+   provided it names the service, states why no seam was built, dates
+   its pasted output, and runs in a CI leg that does not gate merges.
+
 ## Alternatives considered
 
 - **Patch the two gaps in place** — rejected; it leaves the rules
@@ -96,6 +105,18 @@ was the obvious place to fix them.
   rejected; "avoid the network" is satisfiable by an example that
   constructs the real client against a host that obviously resolves,
   which is offline until the day it is not.
+- **An absolute offline rule with no exception** — rejected; it reads
+  as "build a fake of your vendor's API before you may ship an
+  example", which charges a documentation rule for an architectural
+  seam. Where no seam exists the alternative to a dated example is no
+  example, and the portfolio contains products whose entire surface is
+  someone else's service. A rule routinely overridden is a rule stated
+  wrongly.
+- **Define offline as "no sockets"** — rejected; it would ban an
+  example that starts the project's own service on localhost or brings
+  up its own container, both of which are reproducible forever for a
+  reader who has the repository. The property that matters is
+  reproducibility, not socket abstinence.
 
 ## Consequences
 
@@ -117,6 +138,14 @@ was the obvious place to fix them.
   not done here.
 - The redundancy audit stays clean: the rules move, they do not
   duplicate.
+- A project whose examples need an outside host declares the exception
+  per example rather than overriding `base-examples-offline` wholesale,
+  so the preference for a seam survives in the projects that deviate
+  from it.
+- A stack adopting `base-examples` gains a second CI leg where its
+  examples take the exception. The gating leg's pass condition covers
+  only what it runs, so a quarantined example cannot be counted as
+  passing by a job that never executed it.
 
 ## Related
 
