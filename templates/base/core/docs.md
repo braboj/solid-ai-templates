@@ -398,12 +398,16 @@ general writing-style and diagram rules above still apply.
   efficiency, a component with human users declares usability
 - A motivation gives a fact and the consequence that follows from it —
   a bare fact does not justify a priority
-- §10 quality-tree branches are falsifiable — a branch naming module
-  counts, file layout, or bind addresses describes what was built and
-  cannot fail
-- Adding or renaming a quality updates four places: the §1 goal table,
-  the §4 quality-approach table, the §10 tree, and the §10 scenario
-  table
+- §10 scenarios are falsifiable — a scenario naming module counts, file
+  layout, or bind addresses describes what was built and cannot fail
+- §10 is one table, not a table plus a quality tree — a tree duplicates
+  the scenarios at lower resolution and drifts from them; carry the ISO
+  25010 sub-characteristic and the `QG0n` id as columns instead
+- A §10 scenario known not to hold today says so in its expected
+  response and cites the §11 entry — a scenario stating only the target
+  reads as an aspiration
+- Adding or renaming a quality updates three places: the §1 goal table,
+  the §4 quality-approach table, and the §10 scenario table
 
 ### Concept sections
 
