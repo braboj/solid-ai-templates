@@ -372,6 +372,9 @@ general writing-style and diagram rules above still apply.
   a sub-characteristic where that is more precise (Correctness,
   Functional Completeness, Availability) — distinct from the `Q1…`
   quality scenarios in §10
+- The `QG0n` id is the join key across §1, §4 and §10 — §4's
+  quality-approach table and §10's scenario table both carry it, so a
+  script can assert the three still agree
 - Requirements use "shall"; constraints and other givens stay
   declarative — avoid all-caps RFC 2119 keywords in arc42 prose
 - A per-section purpose line only where it adds meaning (define a term
