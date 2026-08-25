@@ -450,7 +450,9 @@ All three models MUST also generate:
 
 - Use fenced code blocks with a language tag for all commands and code samples
 - Use bullet lists for rules; avoid prose paragraphs inside rule sections
-- Keep lines under 80 characters where possible
+- Wrap lines at the width the project declares in its own
+  configuration — this file inherits that width rather than
+  carrying a number of its own
 - No HTML — Markdown only
 
 ---

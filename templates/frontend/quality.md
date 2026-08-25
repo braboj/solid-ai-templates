@@ -75,7 +75,10 @@ Rules:
 - No hardcoded colour or spacing values — always use CSS custom properties
   from `:root` or design tokens
 - Consistent naming convention (e.g. BEM-like `.component-element`)
-- Maximum line length: 80 characters (exempt: prose strings, third-party URLs)
+- Maximum line length follows the formatter's configuration, declared
+  once for the project — do not restate the number in a rule. Prose
+  strings and third-party URLs cannot be broken and stay exempt at
+  any width
 
 ## Performance
 
