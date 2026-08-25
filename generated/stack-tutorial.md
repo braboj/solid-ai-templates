@@ -2727,7 +2727,7 @@ A feature is not complete until:
 
 ## Sortable tables
 
-- Boolean columns SHOULD sort descending (true first) on first click ���
+- Boolean columns SHOULD sort descending (true first) on first click —
   users click a boolean column to find items that have a feature, not
   items that lack it; ascending puts `false` first, which looks
   identical to unsorted and appears broken
