@@ -253,9 +253,10 @@ EOF
 - Non-trivial ADRs SHOULD include at least one inline ASCII diagram or
   mockup in the Decision section — a pipeline flow, layout sketch,
   state transition, or similar — so the concept is scannable without
-  parsing dense prose. Use plain ASCII (`+`, `-`, `|`), not Unicode
-  box-drawing characters, to stay consistent with the ASCII-only
-  source-content rule and keep diffs clean. Example:
+  parsing dense prose. A diagram MUST stay legible in a monospace
+  font and MUST NOT rely on colour or proportional spacing. Plain
+  ASCII (`+`, `-`, `|`) and Unicode box-drawing both satisfy that,
+  so use whichever reads better. Example:
 
   ```
   +---------------------+---------------------+

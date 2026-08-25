@@ -443,8 +443,38 @@ maintainer time on phantom fixes.
 
 ## Code style
 
-- Encode all source files in UTF-8; content MUST be restricted to ASCII
-  characters
+- Encode every committed file in UTF-8
+- Source code content MUST be restricted to ASCII. A non-ASCII
+  character in an identifier, string literal or comment is a hazard
+  rather than a style question: it can be invisible in a diff,
+  unreachable from a keyboard, confusable with the ASCII character it
+  resembles, and it breaks on any console whose encoding is not UTF-8.
+  Check — the command prints nothing:
+
+  ```bash
+  py - <<'EOF'
+import pathlib, subprocess
+EXT = (".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs", ".java",
+       ".c", ".h", ".cpp", ".cs", ".rb", ".php", ".sh")
+tracked = subprocess.run(["git", "ls-files"], capture_output=True,
+                         text=True).stdout.split()
+for name in tracked:
+    if not name.endswith(EXT):
+        continue
+    text = pathlib.Path(name).read_text(encoding="utf-8")
+    for number, line in enumerate(text.splitlines(), 1):
+        found = sorted({ord(c) for c in line if ord(c) > 127})
+        if found:
+            codes = " ".join("U+%04X" % c for c in found)
+            print("%s:%d %s" % (name, number, codes))
+  EOF
+  ```
+
+- Documentation carries NO charset restriction. A document may be
+  written in any language and use whatever symbols it needs, so an
+  ASCII rule over prose would rule out most of the world's writing to
+  buy a house typography nobody asked for. The restriction above
+  protects code; do not extend it to Markdown
 - Line endings MUST be LF — CRLF is not acceptable in any committed file
 - A linter SHOULD enforce formatting automatically on save; keep manual style
   rules to a minimum
