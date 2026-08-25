@@ -1291,6 +1291,74 @@ is incomplete.
 
 ## Writing style
 
+- Markdown wraps at the width the project declares in configuration,
+  never at a width written into a rule. A document is not code and
+  does not inherit the source line limit; it gets its own, and the
+  project chooses the number
+- Declare the width ONCE — in the Markdown linter's configuration or
+  in `.editorconfig` under the Markdown section, not both. A second
+  copy drifts from the first and nothing says which one won
+- The exemptions travel with the declaration. Which of fenced blocks,
+  table rows and unbreakable link targets are excused is part of the
+  configured rule, not a convention each author infers
+- A project that declares no width has no rule, whatever its documents
+  happen to look like. Near-total compliance kept by hand is the
+  signature of an unwritten rule: it looks healthy and decays at the
+  edges with nothing to notice
+- Check — the command reads the configured width rather than assuming
+  one, and prints nothing. A project with no width configured fails it,
+  because an unstated width is the defect and not a gap to fill with a
+  default:
+
+  ```bash
+  py - <<'EOF'
+import json, pathlib, subprocess
+
+# The width and its exemptions come from project configuration, never
+# from this check. A project that declares no width fails here, because
+# an unstated width is the defect, not a default to fill in.
+width, skip_fenced, skip_tables, source = None, True, True, None
+cfg = pathlib.Path(".markdownlint.json")
+if cfg.exists():
+    rule = json.loads(cfg.read_text(encoding="utf-8")).get("MD013")
+    if isinstance(rule, dict):
+        width = rule.get("line_length")
+        skip_fenced = not rule.get("code_blocks", True)
+        skip_tables = not rule.get("tables", True)
+        source = str(cfg)
+if width is None:
+    ec = pathlib.Path(".editorconfig")
+    if ec.exists():
+        section = None
+        for line in ec.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line.startswith("[") and line.endswith("]"):
+                section = line[1:-1]
+            elif section and "md" in section and line.startswith("max_line_length"):
+                width = int(line.split("=")[1].strip())
+                source = str(ec)
+if width is None:
+    print("no Markdown line width is configured; declare one")
+    raise SystemExit(0)
+
+tracked = subprocess.run(["git", "ls-files", "*.md"], capture_output=True,
+                         text=True).stdout.split()
+for name in tracked:
+    fenced = False
+    for number, line in enumerate(
+            pathlib.Path(name).read_text(encoding="utf-8").splitlines(), 1):
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if fenced and skip_fenced:
+            continue
+        if skip_tables and line.lstrip().startswith("|"):
+            continue
+        if len(line) > width:
+            print("%s:%d %d > %d (%s)" % (name, number, len(line), width, source))
+  EOF
+  ```
+
 - Write in present tense — past or future tense indicates out-of-sync
   documentation
 - Write as little as necessary but as much as needed — documentation that goes
