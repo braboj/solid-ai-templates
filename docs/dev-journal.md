@@ -2804,3 +2804,129 @@ the recipe #974 landed the day before; `tag-guard` green, and
 
 **Issues opened:** #979, #980 — both unmilestoned, triggered by the next
 cut being scoped.
+
+## 2026-08-05 — v2.45 Examples governance
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Reconstructed entry.** The session shipped without one, and the gap
+surfaced twenty days later while scoping the next cut. What follows is
+drawn from ADR-025 and the two merged pull requests, not from the
+session; the reasoning below is the ADR's, restated.
+
+**Two gaps sat in a seam, and neither owner was the place to fix them**
+(#987, #988). Governance of an `examples/` directory was split in half.
+`stack/python-lib.md` prescribed the directory, `base/core/readme.md`
+prescribed its contents, and the bridge between them was a single
+conditional bullet under the README's Project structure section — a rule
+about how example code *runs*, reached through the template that governs
+README prose, because the index happens to be a README. "Smoke-tested in
+CI" never said how the package is installed for that job, and the
+cheapest reading, reuse the test job, proves the examples run beside the
+test tooling rather than against the published surface. Separately, the
+index is the one document whose body is machine-generated program
+output, which the secret scanner reads like source: a printed cache key
+matched `generic-api-key` and failed the scan on a file containing no
+secret.
+
+**A file-level ID makes a rule unaddressable** (ADR-025).
+`base/core/readme.md` carries one `[ID: base-readme]` and no section
+IDs, so a project needing to extend the offline rule had to replace the
+entire README contract to reach it. That, with `base-readme` sitting in
+the core tier while `python-lib` was the only stack of seventeen
+prescribing the directory, decided the shape: a dedicated
+`base/core/examples.md` reached by `depends_on` rather than by the core
+tier. The core tier is the set that applies to every project, and most
+projects ship no examples directory — a conditional concern does not
+belong there.
+
+**Offline needed a boundary, not a ban.** An absolute rule reads as
+"build a fake of your vendor's API before you may ship an example",
+which charges a documentation rule for an architectural seam. Where no
+seam exists the alternative to a dated example is no example. The rule
+landed as reproducibility rather than socket abstinence, with a named
+exception the deviating project declares per example.
+
+**Template feedback:** all reusable upstream content.
+`templates/base/core/examples.md` is new (`[ID: base-examples]`), with
+per-section IDs so one rule can be extended without replacing a
+neighbouring contract. `base/core/readme.md` §5 reduces to a pointer.
+`python-lib`, `go-lib` and `nodejs-lib` keep only what is
+language-specific — packaging exclusion, install command, file
+extension, position relative to the source layout.
+
+**ADRs:** ADR-025 — Examples get their own template.
+
+**Releases:** none at the time; cut later as v2.45.0.
+
+**PRs merged:** #990, #992
+
+**Issues closed:** #988, #991
+
+**Issues opened:** none. #987 stays open — its second request, repeating
+the commit-history point wherever the secret scan is described, is
+platform-template scope.
+
+## 2026-08-25 — Backlog groom and the v2.45 cut
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Forty-three issues carried neither a type nor a priority label.** The
+August intake ran to 68 new issues in three weeks and none of them was
+labelled at creation, which CLAUDE.md §2.2 requires. The conformance
+check in `platform-github-labels` exists precisely to catch this and
+returns a list nothing reads, so a rule with a check still decayed for
+three weeks. It now returns `[]` again. The distribution that came out:
+3 P1 bugs, 5 P2 bugs, 59 P2 tasks, 31 P3 tasks, 15 spikes, 1 epic.
+
+**Six of the forty-three were defects, not gaps.** In a template repo the
+`bug` type is easy to under-use, because everything reads as "a rule
+could be extended". The line that held: a rule that states something
+false, contradicts another rule, or is one the repository itself
+breaks is a defect in existing functionality. `platform/github.md:138`
+claims CodeQL is "free for all repositories (public and private)" and
+private repositories need paid Code Security (#1030). Two
+`platform-github` rules make an isolated elevated-scope scan unable to
+join the fan-in it is required to join (#1042). The mandatory startup
+block resolves one manifest axis, so every consumer's chain silently
+omits the platform layer (#1029).
+
+**A rule the templates break 17,571 times** (#1045). `base-quality`
+restricts content to ASCII and names no check. Measured over tracked
+Markdown: 172 of 188 files carry non-ASCII, 14,788 em dashes among them.
+`base-docs` forbids Unicode box-drawing *citing that rule as its reason*
+and then uses it 753 times. Filed at `v2.44.0` against 170 of 186 files
+and 17,350 characters; re-measured during the groom at 172 of 188 and
+17,571. An unchecked rule does not hold steady, it loses ground, and the
+drift is invisible in a diff.
+
+**The tracker is duplicating itself because nothing greps it before
+filing.** Six clusters of overlapping issues came out of the sweep, each
+one several issues editing the same section from different angles. The
+sharpest: "a trigger has no watcher" was filed three times in three days
+across two templates (#1036, #1041, #1052). None is a strict duplicate —
+each carries a distinct claim — so none was closed. They are recorded as
+one pull request each instead, which is the cheaper correction.
+
+**Verify before grooming, not after.** Four issue claims were re-checked
+against `main` before labelling, on the standing lesson that a
+weeks-deep backlog has items overtaken by later work. All four were
+still live, and one had got worse. The check cost four greps and would
+have cost a milestone if any had already landed.
+
+**Template feedback:** nothing project-specific. The self-duplicating
+tracker is a candidate upstream rule — `base-issues` says how to write
+and defer an issue and nothing about searching the tracker before
+opening one — but it is not filed yet, and filing it without searching
+first would be the joke writing itself.
+
+**Releases:** v2.45.0 — Examples governance, covering #988 and #991.
+Milestone created retroactively so the tag had a complete cut behind it;
+annotated tag first per the recipe, `tag-guard` green, `--verify-tag`
+had nothing left to create.
+
+**PRs merged:** none this session beyond this entry.
+
+**Issues closed:** none.
+
+**Issues opened:** none.
