@@ -1018,7 +1018,12 @@ wrong before changing either.
   related decisions (1., 2., …) within its one concern
 - Render "Alternatives considered" and "Consequences" as tables where the
   content fits — they scan faster than prose lists
-- ADRs are immutable once merged — create a new ADR to supersede an old one
+- ADRs are immutable once merged — create a new ADR to supersede an
+  old one. The ONE exception is the supersession metadata: `status`,
+  `date` and `superseded_by` MAY be updated on a merged ADR, because
+  a supersession has to be recorded on both sides. The prose body
+  (Context, Decision, Alternatives considered, Consequences) never
+  changes
 - A content-preserving format migration preserves immutability and needs
   no superseding ADR: normalizing headings, titles, filenames, or
   cross-links across merged ADRs is allowed as long as it changes no
@@ -1032,7 +1037,8 @@ wrong before changing either.
   is documentation-vs-code drift. The supersession ADR records the refuting
   evidence and a post-mortem (Symptom / Root cause / Why missed / Fix /
   Prevention) if the original shipped any change; the superseded ADR's
-  status flips to `Superseded by ADR-NNN` in the same PR
+  status flips to `Superseded` and gains the new id in
+  `superseded_by`, in the same PR
 - When a rule the project deliberately does NOT follow moves in its own
   source — an upstream chain, a vendored rule set, a submodule pointer
   bump — re-read the divergence record before deciding what the change
@@ -1048,13 +1054,20 @@ wrong before changing either.
   the source can move within hours of the record merging
 - File naming: `NNN-slug.md` — zero-padded sequence number + kebab-case slug
   (e.g. `001-data-storage.md`, `002-hosting.md`)
-- ADR file format:
+- ADR file format — YAML frontmatter carrying the machine-readable
+  metadata, then the prose body:
 
 ```markdown
-# ADR-NNN: [Decision title]
+---
+id: "NNN"                 # zero-padded sequence, quoted to stay a string
+status: Proposed          # Proposed | Accepted | Superseded
+date: YYYY-MM-DD          # date the status was last changed
+category: process         # one value from the project's closed set
+supersedes: []            # ids this ADR supersedes
+superseded_by: []         # ids that supersede this ADR
+---
 
-**Status:** Accepted | Superseded by ADR-NNN
-**Date:** YYYY-MM-DD
+# ADR-NNN: Title in sentence case
 
 ## Context
 
@@ -1073,12 +1086,62 @@ wrong before changing either.
 [What follows from this decision]
 ```
 
+- The frontmatter is the source of truth for status, date and
+  supersession links. Do NOT also carry a prose `## Status` section or
+  `**Status:**` / `**Date:**` lines — a second copy drifts from the
+  first and nothing says which one won
+- `id` MUST match the filename's leading digits, and MUST be quoted so
+  a leading zero survives as a string rather than parsing as a number
+- `status` MUST be one of `Proposed`, `Accepted`, `Superseded`, and
+  MUST read `Superseded` if and only if `superseded_by` is non-empty
+- `date` MUST be present and MUST be updated whenever `status` changes
+- `category` MUST come from a closed set the project defines and
+  records. A new category needs its own ADR, which keeps the set a
+  scope-of-impact decision instead of a free-text field
+- `supersedes` and `superseded_by` MUST both be present even when
+  empty, so a reader never has to tell absent from empty
+- Check — every ADR parses and satisfies the schema. Pass condition:
+  the command prints nothing. Run it after adding or superseding an
+  ADR, and wire it into CI beside the other document gates:
+
+```bash
+py - <<'EOF'
+import pathlib
+KEYS = ("id", "status", "date", "category", "supersedes", "superseded_by")
+STATUS = ("Proposed", "Accepted", "Superseded")
+for f in sorted(pathlib.Path("docs/decisions").glob("[0-9][0-9][0-9]-*.md")):
+    lines = f.read_text(encoding="utf-8").splitlines()
+    fm = {}
+    if lines and lines[0].strip() == "---":
+        for line in lines[1:]:
+            if line.strip() == "---":
+                break
+            key, sep, val = line.partition(":")
+            if sep:
+                fm[key.strip()] = val.strip()
+    date = fm.get("date", "")
+    linked = fm.get("superseded_by", "[]") not in ("[]", "")
+    if not (all(k in fm for k in KEYS)
+            and fm.get("status") in STATUS
+            and len(date) == 10 and date.replace("-", "").isdigit()
+            and (fm.get("status") == "Superseded") == linked):
+        print(f)
+EOF
+```
+
 - Do NOT maintain a monolithic architecture document that mixes decisions,
   data model specs, and migration tracking — decisions go in ADRs, data
   model is the code (`src/types/`), migration tracking belongs in the
   dev journal or issue tracker
-- ADRs MUST NOT reference future ADRs that do not exist yet — reference
-  backward only; each ADR is self-contained at the time of writing
+- ADRs MUST NOT cite other ADRs in their prose body — the only
+  ADR-to-ADR links are the frontmatter `supersedes` and
+  `superseded_by` fields, which are the only ones a check can
+  validate. Prose references rot silently, and a forward reference
+  to an ADR that does not exist yet cannot be written at all
+- A `## Related` section MAY close an ADR with context-only
+  pointers. It MUST NOT carry decision-bearing text: moving or
+  superseding anything it names MUST NOT change what the Decision
+  section means
 - Implementation details (phrase tables, templates, worked examples) belong
   in the ADR itself, not in separate spec files — external specs create
   maintenance burden and go stale
