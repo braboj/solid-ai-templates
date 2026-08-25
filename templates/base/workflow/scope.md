@@ -59,7 +59,31 @@ reference mode and hybrid mode.
 The startup block MUST:
 
 - Appear before section 1 (Project)
-- List every template file the project depends on
+- List every template file the project depends on, resolved on BOTH
+  axes. A stack chain and a platform template are selected
+  independently: no stack declares a platform dependency, because the
+  platform follows from where the repository is hosted rather than
+  from what the project is built with. Walking the stack's
+  `DEPENDS ON` graph therefore terminates cleanly, yields no platform
+  template at all, and shows nothing to say one is missing. The block
+  MUST name:
+  - the resolved chain for the project's stack
+  - exactly one platform template, for the host the repository lives
+    on
+  - any base template the project adds deliberately, outside either
+    axis
+- Check — the block names exactly one platform template. Pass
+  condition: the command prints `1`. Zero means the second axis was
+  never resolved, which is the common failure and is invisible in the
+  block itself:
+
+  ```bash
+  grep -oE 'platform/[a-z-]+[.]md' CLAUDE.md | sort -u | wc -l
+  ```
+
+  A project whose context file inlines its rules rather than
+  referencing them has no list to check; the two-axis requirement
+  still governs which templates were read to produce it
 - Use imperative language: "You MUST read every file listed below IN
   FULL using the Read tool before you respond"
 - State the consequence: "If you respond without reading them, you are
