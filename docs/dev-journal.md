@@ -2925,8 +2925,21 @@ Milestone created retroactively so the tag had a complete cut behind it;
 annotated tag first per the recipe, `tag-guard` green, `--verify-tag`
 had nothing left to create.
 
-**PRs merged:** none this session beyond this entry.
+**A generated file can rot without either invocation being wrong**
+(#984). The arc42 pull request had sat 22 days and was three commits
+behind; `gh pr update-branch` brought it current and both sides had
+regenerated `generated/` from different bases. Git merged the two sets
+of regenerated output textually, and a textual merge of generated files
+is not the output of any invocation of the generator. It happened to be
+correct here — `sync.py --check` passed, and `base-examples` and the new
+arc42 rules both survive in all 17 chains — but that was checked, not
+assumed. `docs-generated` names three rot modes and #1002 proposes the
+wrong invocation as a fourth; this is arguably a fifth, and it is the
+one a merge produces silently. Filed nowhere yet, because it wants a
+measurement first rather than a rule written from one instance.
 
-**Issues closed:** none.
+**PRs merged:** #1059, #984.
+
+**Issues closed:** #983 — auto-closed by #984, verified.
 
 **Issues opened:** none.
