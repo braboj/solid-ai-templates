@@ -55,6 +55,17 @@
   `templates/base/core/review.md` priority order: security → correctness →
   clarity →
   conventions. Check CI passes. Only merge after the review passes.
+- **Re-run the verification a pull request body claims, rather than
+  reading it, whenever the base has advanced since the body was
+  written.** A well-written body carries evidence — a grep that found no
+  surviving references, a count, a command whose output justified the
+  change. That evidence is scoped to the base it was produced against,
+  and a commit landing afterwards can falsify it without producing a
+  conflict, a failing check, or any other signal: the merge is clean, the
+  checks pass against the merge commit, and the body still reads as
+  verified. It matters most for a change that proves an ABSENCE — a
+  deleted file, a removed reference, a retired flag — where the later
+  commit reintroduces the very thing the body proved gone
 - **Before pushing or creating a PR**, check `git status` and list open PRs.
   If the previous PR is closed or merged, create a new branch rather than
   pushing to a stale one.
@@ -163,6 +174,14 @@ branch" nor "Merging a stack" explains it.
 - SHOULD budget one update-plus-CI cycle per PR after the first. A
   batch of N ready PRs is N merges and N-1 update cycles, which is
   what makes merging a batch cost more than its diffs suggest
+- SHOULD read a green check as naming the base it ran against. The
+  paragraph above explains why the refusal is not a conflict, which
+  makes the cycle read as bookkeeping — true only while the members are
+  disjoint. Where two of them touch the same file, each carries checks
+  measured against a base the other had not landed on, and the update
+  cycle is the first and only execution of the combined result. A
+  mergeable status asserts that the texts combine without conflict; it
+  is not a claim that the combination passes
 
 ### Ordered documents merge cleanly and still collide
 
@@ -587,6 +606,70 @@ result: it means the tag would land on the same commit as its predecessor.
   11. Create a GitHub Release with auto-generated notes:
      `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>"
      --generate-notes`
+
+## Migrating to a new repository
+
+A migration moves the source. It does not move the settings around the
+source, and it does not move the evidence the open issues were raised
+against. Both losses are silent, and the migration looks complete
+because every file and every issue arrived.
+
+The order is forced by issue transfer, so treat it as a sequence rather
+than a set of tasks:
+
+  1. Create the destination **private**. A private repository's issue
+     cannot be transferred to a public one, and both repositories MUST
+     share an owner. Publishing first means recreating each issue by
+     hand and losing its comments and its number
+  2. Clone the label set BEFORE transferring. A label that does not
+     already exist in the destination by name is dropped from the
+     transferred issue silently — the issue arrives, the label does not
+  3. Transfer the issues
+  4. Grep the transferred bodies for surviving bare `#N` references. The
+     host rewrites most of them to the fully-qualified form and not all,
+     and a survivor resolves against the destination, pointing at a
+     different issue than it did before
+  5. Verify the destination's security-and-analysis settings against the
+     source's — the check is below, and there is no other signal
+  6. Re-verify the open issue cohort as a batch — see below
+  7. Publish
+
+The check for step 5. Repository-level security controls are
+per-repository and a new repository does not inherit them, so a
+repository created to carry a clean history comes up with every control
+off:
+
+```bash
+for repo in <source-owner>/<source-repo> <dest-owner>/<dest-repo>; do
+  echo "$repo"
+  gh api "repos/$repo" --jq '.security_and_analysis | to_entries[] | "  \(.key): \(.value.status)"'
+done
+```
+
+Pass condition: both repositories print the same keys with the same
+statuses. A control `enabled` on the source and `disabled` or absent on
+the destination was lost in the migration. `to_entries cannot be applied
+to: null` under a repository name is a failure, not an absence of
+controls — the field is returned only to an administrator of that
+repository, so the message means the token cannot read it and the
+comparison never happened. Run it before publishing:
+a repository built to improve on a security incident can otherwise go
+public with weaker protection than the one it replaced.
+
+- MUST re-verify every open issue as a cohort at the migration, rather
+  than one issue per session afterwards. A migration, clean-tree import,
+  fork or extraction invalidates all of them at once: each is a claim
+  about a tree that no longer exists, and the issue survives the move
+  while its evidence does not
+- The cohort shares one cause, so sweeping it is cheaper than
+  rediscovering it. Expect two shapes — an issue whose cited defect the
+  import already fixed, and an issue deferring to another that was
+  closed and never covered the condition it deferred on. Both falsify in
+  under a minute, with a grep for the cited defect and one issue read
+- Acting on such an issue produces work that looks real throughout. A
+  rewrite of a file that needed two sentences is indistinguishable from
+  a rewrite that was needed, until someone checks the tree the issue
+  described
 
 ## General
 - Do not commit build output, secrets, or dependency directories
