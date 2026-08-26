@@ -144,6 +144,16 @@ gate categories to GitHub Actions workflows and GitHub-native features.
           done
   ```
 
+- **Select a workflow run by full commit SHA** — `gh run list --commit
+  $(git rev-parse HEAD)`. The abbreviated form matches nothing, prints an
+  empty list and exits 0, so a malformed query is indistinguishable from a
+  commit whose runs have not started. A poll then waits out its budget and
+  reports silence, and a one-shot check reads as "no CI on this commit",
+  which invites calling a push good because nothing came back red. Read
+  every row before doing so — `quality-gates-check-selection` covers why a
+  positional selector such as `--limit 1` stops being a substitute once a
+  repository has more than one workflow
+
 ---
 
 ## SAST
