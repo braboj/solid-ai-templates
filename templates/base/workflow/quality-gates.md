@@ -493,7 +493,8 @@ project fails there, where nobody wrote it and nobody can debug it.
   not running it, and the file is a different medium from the editor
 - A check MUST state what it inspected, not only what it found. A command
   that reached zero files and a command that found zero violations print
-  the same thing. Report the count of inputs examined
+  the same thing. Report the count of inputs examined. The same rule for
+  an assertion inside a test suite is `testing-negative-assertion-coverage`
 - Where an empty result means drift rather than health, the check MUST
   report it as a failure — no journal entries found means the heading
   format moved, not that the file is ordered
