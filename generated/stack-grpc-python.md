@@ -755,6 +755,93 @@ branch" nor "Merging a stack" explains it.
   batch of N ready PRs is N merges and N-1 update cycles, which is
   what makes merging a batch cost more than its diffs suggest
 
+### Ordered documents merge cleanly and still collide
+
+A clean merge proves the *edits* did not overlap. It proves nothing about
+whether the *result* is coherent, and for a document with an ordered
+structure those are different questions.
+
+Two branches each add a section to the same numbered document. One appends
+3.9 at the end; the other inserts 3.5 and renumbers the tail, so its last
+section also becomes 3.9. The edits touch different regions, so git merges
+them without a conflict and the result carries two sections numbered 3.9.
+Nothing reports it — not the merge, not the checks, not a reviewer reading
+either diff, because each diff is individually correct. The defect exists
+only in the combination. Here a conflict would have been the good outcome:
+it would have forced the reconciliation the clean merge skipped.
+
+The existing rules do not reach it. Squash-merge safety is about commits
+being orphaned, not content colliding. `Merging a batch of PRs` tells you
+to merge the base in and re-run the checks, which resolves the staleness
+and produces exactly this clean, wrong merge.
+
+- MUST verify the merged numbering, not merely that the merge was clean,
+  when two or more open pull requests edit one document with an ordered or
+  numbered structure. The second to merge owns the check
+- MUST re-run it after merging the base in, not before — the collision is
+  created by the combination, so a run against either branch alone reports
+  a clean document
+- Applies to any ordered structure a reader relies on: numbered sections,
+  ordered procedures, lettered clauses, a table whose rows carry an index
+
+The check. `PATHS` names the documents two open pull requests both touch:
+
+```bash
+py - <<'EOF'
+import re
+
+# The documents under review -- those more than one open branch edits.
+PATHS = ["<file>"]
+
+# A numbered heading (### 3.9 Title) and a list ordinal (  4. Step).
+HEADING = re.compile(r"^(#{1,6}) +([0-9]+(?:\.[0-9]+)*)\.? ")
+LISTITEM = re.compile(r"^\s*([0-9]+)\. ")
+PLAIN = re.compile(r"^#{1,6} ")
+
+for path in PATHS:
+    group, runs, problems, total = "(top)", {}, [], 0
+    for n, line in enumerate(open(path, encoding="utf-8"), 1):
+        match = HEADING.match(line)
+        if match:
+            parts = match.group(2).split(".")
+            # Group a numbered heading under its parent, so 3.x and 4.x are
+            # separate runs and each may legitimately restart.
+            key = "%s %s" % (match.group(1), ".".join(parts[:-1]) or "(root)")
+            value, label = int(parts[-1]), match.group(2)
+            group = line.strip()
+        else:
+            if PLAIN.match(line):
+                # A list restarts under each heading, numbered or not.
+                group = line.strip()
+                continue
+            match = LISTITEM.match(line)
+            if not match:
+                continue
+            key, value, label = group, int(match.group(1)), match.group(1)
+        total += 1
+        run = runs.setdefault(key, [])
+        if value in run:
+            problems.append("  %s:%d: %s repeats under %s"
+                            % (path, n, label, key))
+        elif run and value != run[-1] + 1:
+            problems.append("  %s:%d: %s follows %s under %s"
+                            % (path, n, label, run[-1], key))
+        run.append(value)
+    print("%s: %d ordinals across %d group(s)" % (path, total, len(runs)))
+    for problem in problems:
+        print(problem)
+    if not total:
+        print("  no ordinals found; the pattern drifted")
+EOF
+```
+
+Pass condition: the command reports, for each document, how many ordinals
+it inspected and how many groups they fall into, then prints nothing else.
+A count of zero is a failure rather than a flat document — it means the
+numbering pattern drifted and the check reached nothing. Adapt the two
+patterns to the document's own convention before trusting a clean result;
+a check calibrated against the wrong convention reports zero either way.
+
 ### De-stacking a dependent branch
 
 When branch B was stacked on branch A and A has squash-merged to main,
