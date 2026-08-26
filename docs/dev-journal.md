@@ -3293,3 +3293,110 @@ requests, milestone created before the work.
 **Issues opened:** #1110 -- the collapsed line continuation, filed against
 the check-integrity rules rather than fixed in this cut, since it is a
 sixth break mode in a file this milestone does not touch.
+
+## 2026-08-26 -- Repository migration and platform corrections (night)
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Guidance that was true once.** Where the previous cut was about green
+results that answer the wrong question, this one is about statements that
+were correct when written and are not now. Two of the eight issues are
+`bug` rather than `task`, which matters: a missing rule leaves a reader
+without help, while a wrong one sends them somewhere confidently.
+
+**A free tier that is not free.** `platform-github` said CodeQL is "free
+for all repositories (public and private)". Code scanning on a private
+repository requires GitHub Code Security, a paid add-on, and the API
+declines the repository outright before any analysis starts. The damage
+is not the sentence -- it is that the sentence reads as an assurance the
+SAST row of the gate table is always satisfiable at no cost, so a private
+project follows it and commits a workflow that can only be permanently
+red or permanently skipped. A gate satisfied by appearance while scanning
+nothing. The correction ships with a check that separates the two
+refusals, because they send you to different places: `404 no analysis
+found` means entitled and nothing has run, `403 Code Security must be
+enabled` means not entitled at all.
+
+**Two right rules with a gap between them.** Keep an elevated-scope scan
+in its own workflow; fan in one required check. Both correct. A fan-in
+job can only depend on jobs in its own workflow, so the isolated scan
+cannot join it -- leaving it gating nothing, or holding a per-job entry
+in branch protection, which is the stale list the fan-in rule exists to
+prevent. The resolution is one required context per workflow rather than
+one per repository, and it makes two existing statements false: the
+fan-in rule's "sole required context", and the aggregator-timing note
+telling a merge waiter to target *the* aggregator by name. Both were
+corrected in the same pass. Adding the rule beside them would have left a
+reader applying rules in order hitting the false one first.
+
+**The measurement corrected the rule, again.** The migration settings
+check was drafted with a pass condition predicting an "empty listing" for
+a repository whose settings cannot be read. Run against one, it produces
+`to_entries cannot be applied to: null` -- the field is returned only to
+an administrator. The shipped wording names the actual message and says
+it means the comparison never happened. Writing what a command will
+probably print is not the same as running it.
+
+**Re-homed by measurement, not by topic.** #1032 proposed its rule for
+`ai-workflow`, which is where it belongs by subject and which resolves
+into 0 of 17 stacks. `git.md` resolves into all 17, and a reader
+performing a migration finds both migration rules together there. The
+topically obvious home and the reachable one are different files more
+often than is comfortable.
+
+**A trigger fired before its own rule was written.** #1119 was open and
+citing an ordinal count and a settings result in its body when #1118
+merged, touching a neighbouring template and regenerating the same
+seventeen chains. The branch went behind, was updated without a
+force-push, and the merge was clean -- which proves the edits did not
+overlap and says nothing about the result. The cited verification was
+re-run rather than re-read, and `sync.py --check` confirmed the merged
+templates still produce the committed output. That is #1025, applied to
+itself while it was still an open issue.
+
+**A rule paid for itself between being written and being merged.**
+`gh pr checks` on the pull request carrying the full-SHA rule returned
+"no checks reported on the branch". Selecting by full commit SHA at the
+same instant returned `queued`. Two queries, one moment, one commit: one
+said nothing had happened, the other named the state. Reading the first
+as a workflow that never fired would have sent someone hunting a broken
+trigger.
+
+**The same issue was implemented twice, in parallel, by two people.**
+#1049 was picked up here and in a separate session, landing as two
+complete pull requests within minutes of each other. One merged, one was
+closed as superseded. Nothing looks at the open pull request list before
+starting a ticket, the same way nothing greps the tracker before filing
+one -- and the second is already a recorded lesson. The wasted work was
+small; the mechanism that produced it is not specific to this issue.
+
+**A regression, caught by reading rather than by any gate.** The two
+bullets added for the isolation gap were inserted between the fan-in rule
+and its YAML example, orphaning the example under a bullet it does not
+illustrate. Smoke passes, the markdown renders, nothing is malformed --
+the only symptom is a reader taking the example for something it is not.
+Found while opening the next pull request against the same region.
+
+**Template feedback:** all reusable, all landed upstream. In
+`base/core/git.md`: the migration checklist with its settings check, the
+issue-cohort rule, the re-run-the-body's-verification rule, and what the
+batch update cycle buys when members are not disjoint. In
+`platform/github.md`: the CodeQL entitlement correction, the isolated
+fan-in rule with its two corrected statements, and run selection by full
+SHA. Nothing project-specific. Note `platform/github.md` resolves into no
+stack chain at all -- it is orthogonal, chosen per project, so chain
+reach says nothing about whether it travels.
+
+**Releases:** v2.51.0 -- Repository migration and platform corrections, 8
+issues. Tagged at commit `be4fe92` rather than at `main`, the first
+release to use the rule added in the previous cut: naming the commit is
+what keeps the journal entry outside the release it describes.
+
+**PRs merged:** #1115, #1116, #1118, #1119, #1120, #1122 (and #1111,
+#1112, #1114 from the previous session's close-out, which fall inside
+this tag's range)
+
+**Issues closed:** #1008, #1021, #1025, #1030, #1032, #1042, #1049, #1117
+
+**Issues opened:** none this cut. #1110 and #1113, opened during the
+previous one, remain open and unimplemented.
