@@ -751,6 +751,72 @@ general writing-style and diagram rules above still apply.
   table mapping it to concrete identifiers — rather than inlining
   identifiers throughout the prose
 
+### Risks and technical debt
+
+- §11 holds two registers that are not interchangeable. A risk is a way
+  the system can fail that has not happened, rated probability × impact.
+  Technical debt is a weakness that exists now, rated impact × effort.
+  Tell: an entry whose probability is `Certain` is not a risk — it is
+  debt, or a limitation belonging in §1 scope
+- The table rates, prose explains. A cell holds an id, a one-sentence
+  statement and a rating, and nothing longer. An entry needing evidence,
+  a trigger or a qualification gets a short subsection below the table
+  keyed by its id. A table is a comparison device — two three-sentence
+  cells cannot be read across, so the register stops comparing anything
+- Register ids are `R01…` and `TD01…` — zero-padded, no separator,
+  matching `FR01` and `QG01`
+- Register ids are chapter-local: no other chapter cites one. This is
+  the containment §9 already has for decision records, and it is what
+  the no-forward-reference rule above breaks against when a §4 or §8
+  body reaches into a register defined later
+- An entry that outgrows the register becomes a decision record. When it
+  needs alternatives, evidence, or reasoning that has to stay fixed, it
+  is a decision, and §9 holds those — the entry leaves §11 rather than
+  citing across, since chapters cite no ADRs. Without this boundary §11
+  becomes a second decision directory, and a mutable one
+- §11 carries its content while §9 only indexes, and that asymmetry is
+  deliberate. A register is mutable state — a mitigated risk is deleted,
+  a probability is edited in place — and a decision record is immutable.
+  Applying either shape to the other destroys one of them, so neither is
+  migrated for symmetry with the other
+- An entry leaves the register when it is resolved. A mitigated risk is
+  deleted, never annotated with a status column or moved to a Resolved
+  heading; version control holds the history. The register is an
+  inventory of what is wrong now
+- A register entry states a weakness and schedules nothing. Where the
+  remedy is work someone is expected to do, the row names its tracked
+  home in the issue tracker. An entry with no tracked home is a standing
+  weakness, and the register is then the only surface that will ever
+  raise it again — which is a choice, and is made deliberately
+- Check — every register id occurs in the chapter that defines it. Pass
+  condition: the command reports how many ids it found and prints
+  nothing after that. A count of zero is a failure, not a clean set: it
+  means the id convention drifted and the check is reading nothing:
+
+  ```bash
+  py - <<'EOF'
+import pathlib, re
+IDS = re.compile("(?<![A-Za-z0-9])(?:R|TD)[0-9]{2}(?![0-9])")
+OWNS = re.compile("^#{1,3} .*(?:risk|technical debt)", re.I)
+docs = sorted(pathlib.Path("docs").rglob("*.md"))
+found, stray = 0, []
+for path in docs:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    defines = any(OWNS.match(line) for line in lines)
+    for number, line in enumerate(lines, 1):
+        for hit in IDS.findall(line):
+            found += 1
+            if not defines:
+                stray.append("%s:%d cites %s outside the register"
+                             % (path, number, hit))
+print("register ids found: %d in %d document(s)" % (found, len(docs)))
+if not found:
+    print("no register ids found; the id convention drifted")
+for line in stray:
+    print(line)
+  EOF
+  ```
+
 ### Glossary
 
 - Every glossary term is bold — `**term**`, never inline-code
