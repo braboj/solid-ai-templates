@@ -3142,23 +3142,63 @@ issues carry no milestone. Its negative control was a planted violation:
 a milestone removed from one closed issue, the check naming it, the
 milestone restored. It validated this session's own cut before the tag.
 
+**A ruling can leave its own earlier statement standing beside it**
+(#1097, #1098). The immutability change landed in the template without
+retiring the sentence it replaced, so the Decision logs section stated
+the superseded rule first -- "the prose body never changes" -- and
+corrected it two bullets later. An agent applying rules in order reads
+the false one first, and treating ADR prose as frozen is the exact
+behaviour the ruling exists to stop. Adding a rule is not the same as
+landing it; the old statement has to go in the same pass.
+
+**Deciding to leave something alone still has to be recorded.** The same
+stale claim sits in a merged decision record that holds four other
+decisions still in daily use. It cannot be edited, because the sentence
+is a claim and editing it is what immutability forbids -- performed on
+the record that states the immutability rule. It cannot be partly
+superseded, because status and the supersession link must agree and the
+partial form was rejected in #856. Retiring the whole record to fix one
+sentence would archive four working rules. What was left looked like
+doing nothing, which is why it needed a record of its own: a decision
+record is a dated statement of what was decided on that date, not a live
+specification. The specification is the template chain. The record is
+doing its job; the template contradicting itself was the actual defect.
+
+**A record that deliberately does not supersede has no link at all.**
+The ADR format keeps references to other records in the frontmatter and
+forbids naming them in prose, so a correcting record with an empty
+`supersedes` field cannot point at what it corrects in either place.
+That forced a fourth clause into the decision -- a correcting record
+must state its rule completely on its own -- which would have been easy
+to miss and would have left the rule unfindable from the stale side.
+
 **Template feedback:** all of it is reusable and landed upstream --
 `quality-gates-check-runs`, `quality-gates-check-selection` and
 `quality-gates-retrofit-ratchet` in `base/workflow/quality-gates.md`,
 `testing-negative-assertion-coverage` in `base/core/testing.md`, and the
-pre-release step in `base/core/git.md`. The only project-specific piece
-is the `docs/PLAYBOOK.md` step that applies the release check here.
+pre-release step in `base/core/git.md`, plus the correct-by-new-record rule in
+`base-docs`. The only project-specific piece is the
+`docs/PLAYBOOK.md` step that applies the release check here.
 
 **Releases:** v2.47.0 (ADR immutability -- a milestone created for the
-four commits that had been sitting on main unmilestoned) and v2.48.0
-(Check integrity, 12 issues, 8 PRs).
+four commits that had been sitting on main unmilestoned), v2.48.0
+(Check integrity, 12 issues, 8 PRs) and v2.49.0 (ADR immutability,
+continued -- 2 issues, 2 PRs, milestone created before the work rather
+than at tag time).
 
-**PRs merged:** #1088, #1089, #1090, #1091, #1092, #1093, #1094, #1095
+**PRs merged:** #1088, #1089, #1090, #1091, #1092, #1093, #1094,
+#1095, #1099, #1100
 
 **Issues closed:** #832, #1005, #1014, #1024, #1026, #1028, #1031,
-#1037, #1044, #1046, #1086, #1087
+#1037, #1044, #1046, #1086, #1087, #1097, #1098
 
 **Issues opened:** #1087 -- filed mid-session after the third
 consecutive milestone-at-tag-time scramble, and closed in the same cut,
 since the fix is one pre-release step and the evidence was already three
-releases deep.
+releases deep. #1097 and #1098 -- the same stale claim in two places,
+filed separately because a template can be edited and a merged record
+cannot, so they needed different remedies. Both closed in v2.49.
+
+**ADRs:** ADR-026 -- a stale claim in a merged record is corrected by a
+new record, never by an edit or an addendum, and the template chain is
+the authority a reader applies.
