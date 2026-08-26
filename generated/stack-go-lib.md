@@ -948,6 +948,18 @@ When NOT to close-and-resubmit:
      relation only; work merged with no milestone is invisible to it, so
      the gate passes green while saying nothing about the commits
      actually being tagged
+  5. Confirm the release pipeline has executed before — inspect the
+     workflow's own run history, not the repository's; the check is
+     below. A workflow file
+     that merged green is evidence its YAML parses, not evidence its
+     steps work: the pull request gate validated the branch path, and
+     the tag path shares none of its jobs
+  6. Where the history is empty, run the pipeline's steps by hand first
+     — build, metadata check, artifact generation, and every assertion
+     it makes — and reproduce each expected result locally. A release
+     trigger is irreversible in a way the other pre-release checks are
+     not: a tag on a public repository cannot be taken back cleanly, so
+     the first execution MUST NOT be the one that ships
 
 The check for step 4, run from the repository root. It is left flush with
 the margin rather than indented under the step: a renderer strips a fenced
@@ -1001,34 +1013,50 @@ unreleased or the commit subject format drifted. A deferred *open* issue
 correctly carries no milestone — this covers only issues closed by merged
 work sitting between two tags.
 
+The check for step 5. Name the release workflow explicitly rather than
+reading whichever run finished last — a repository with more than one
+workflow answers a different question otherwise.
+
+```bash
+gh run list --workflow <release-workflow-file> --json databaseId,conclusion   --limit 100 --jq 'length'
+```
+
+Pass condition: the command prints how many runs it found, capped by
+`--limit`; the question is only whether that number is zero. A non-zero
+count is the evidence the tag path has executed. `0` is the finding, not a
+clean result — it prints `0` and exits `0`, so nothing surfaces it on its
+own, and it means the tag about to be pushed is the workflow's first
+execution and step 6 applies. An error naming an unknown workflow means
+the filename drifted, which is a failure rather than an absence of runs.
+
 ### Projects with a version manifest
-  5. `git checkout -b chore/release-vX.Y.Z`
-  6. Bump version in the project manifest (`package.json`,
+  7. `git checkout -b chore/release-vX.Y.Z`
+  8. Bump version in the project manifest (`package.json`,
      `pyproject.toml`, `Cargo.toml`, or equivalent) to `X.Y.Z`
-  7. `git commit -m "chore: release vX.Y.Z"`
-  8. Push, open PR, merge
-  9. `git checkout main && git pull`
-  10. `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
+  9. `git commit -m "chore: release vX.Y.Z"`
+  10. Push, open PR, merge
+  11. `git checkout main && git pull`
+  12. `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
      — release tags MUST be annotated (`-a`/`-s`); a lightweight
      `git tag vX.Y.Z` is invisible to `git describe`, which reports
      a stale version to submodule/`describe` consumers
-  11. SHOULD create a GitHub Release from the tag:
+  13. SHOULD create a GitHub Release from the tag:
       `gh release create vX.Y.Z --title "vX.Y.Z" --generate-notes`
       — a pushed tag alone does NOT create a Releases page entry.
 
 ### Post-release verification
-  12. Verify the manifest version matches the tag — e.g.
+  14. Verify the manifest version matches the tag — e.g.
       `grep '"version"' package.json` matches `git describe --tags`
-  13. A mismatch means the bump was missed or the wrong commit was
+  15. A mismatch means the bump was missed or the wrong commit was
       tagged — fix before announcing the release
 
 ### Projects without a version manifest (no-build)
-  5. `git checkout main && git pull`
-  6. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
+  7. `git checkout main && git pull`
+  8. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
      — the `-a` is mandatory: a lightweight `git tag` is skipped by
      `git describe`, so consumers report a stale version
-  7. `git push origin vX.Y.Z`
-  8. Create a GitHub Release with auto-generated notes:
+  9. `git push origin vX.Y.Z`
+  10. Create a GitHub Release with auto-generated notes:
      `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>"
      --generate-notes`
 
