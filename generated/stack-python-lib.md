@@ -1136,6 +1136,18 @@ wrong before changing either.
   move. An enumeration of allowed operations would be
   under-inclusive by construction, and it would leave an unreadable
   record unreadable in the name of protecting it
+- A claim in a merged ADR that a later decision falsifies is corrected
+  by writing a new ADR, never by editing the ADR that carries it and
+  never by appending to it — both change what a closed record asserts.
+  An ADR whose remaining decisions are current MUST NOT be marked
+  `Superseded` to correct one claim; supersession is for a record that
+  is wholly replaced
+- Where a merged ADR and the templates disagree, the templates govern
+  and the ADR stands as history. An ADR is a dated statement of what
+  was decided on that date; the template chain is the specification a
+  reader applies. A correction is not complete until the rule is right
+  in the templates, and it is complete at that point whether or not a
+  new ADR was written
 - When an ADR's premise is refuted shortly after it merges (typically by
   data that should have informed it), prefer a same-day or same-week
   supersession ADR documenting the post-mortem over silently closing the
