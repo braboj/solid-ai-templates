@@ -361,6 +361,44 @@ reached the bug site AND took the new branch.
 
 ---
 
+## Assert against the external definition, not your own output
+[ID: testing-external-definition]
+
+A suite can be blind by construction rather than by omission. Where the
+code under test and the code asserting on it share an assumption, every
+assertion agrees and the assumption itself is never tested. Adding tests
+does not reach it and coverage does not report it — the lines are
+covered, and they are covered by a witness that cannot disagree.
+
+- A round trip through your own encoder and decoder proves that they
+  agree, not that either is correct. A serializer and its parser are
+  usually written together, so a defect in one is mirrored in the other.
+  Three of exactly this shape shipped in one library and survived 258
+  passing tests: a checksum written high byte first and read high byte
+  first where the format sends it low byte first; a length-prefixed
+  frame written whole and read as whatever one socket read returned,
+  which coincide on a local link and diverge across a router; an
+  identifier written as a constant and never compared on read
+- Where a format is defined outside the codebase — a wire protocol, a
+  file format, a checksum, a serialization spec — at least one case MUST
+  assert against a fixed vector published by that specification. A suite
+  that never leaves the library measures self-consistency
+- Assert what an object does, not what the runtime says it is. A check
+  phrased against a runtime implementation detail — a type identity, the
+  particular exception class raised for a protocol violation, an
+  attribute the runtime happens to expose — tests the runtime, and can
+  pass for the very defect it was written to catch on a platform or
+  version other than the author's
+- `threading.Lock` is a type on Windows and a builtin function on Linux,
+  so `not isinstance(x, type)` is true of the missing-parentheses defect
+  on one platform and false on the other; entering the unconstructed
+  class raises `AttributeError` on Python 3.10 and `TypeError` on 3.13.
+  Both assertions were written to catch that defect and both varied
+- Exercise the object instead — acquire it, release it, enter it. Where
+  the test asserts a misuse fails, assert that it fails, not how
+
+---
+
 ## Verify a visual change against the render
 [ID: testing-verify-the-render]
 
