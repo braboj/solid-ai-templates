@@ -135,7 +135,25 @@ gate categories to GitHub Actions workflows and GitHub-native features.
 
 [ID: platform-github-sast]
 
-- **CodeQL** — GitHub-native, free for all repositories (public and private)
+- **CodeQL** — GitHub-native. Free on **public** repositories. On a
+  **private** repository code scanning requires GitHub Code Security, a
+  paid add-on, and the API declines the repository outright before any
+  analysis starts. Confirm entitlement before committing a workflow:
+
+```bash
+gh api repos/<owner>/<repo>/code-scanning/analyses
+```
+
+  Pass condition: the command reports the repository's analyses. `HTTP
+  404 no analysis found` means the repository is entitled and nothing has
+  run yet. `HTTP 403 Code Security must be enabled for this repository to
+  use code scanning` means it is not entitled, and a CodeQL workflow
+  committed there can only ever be permanently red or permanently
+  skipped. Distinguish the two before reading either as a failure
+- Where a private project is not entitled, record the decline against
+  the SAST gate with a revisit trigger. Committing an inert workflow
+  instead satisfies the gate list by appearance while scanning nothing,
+  which is the gate-by-omission shape the quality-gate rules name
 - Enable via Settings → Code security → CodeQL analysis
 - Runs as a GitHub Actions workflow or as automatic analysis
 - Supports: JavaScript, TypeScript, Python, Go, Java, C/C++, C#, Ruby
@@ -277,7 +295,7 @@ git diff --numstat FETCH_HEAD..<branch>
 
 | Category                  | Tool / Integration                       |
 | ------------------------- | ---------------------------------------- |
-| SAST                      | CodeQL (GitHub-native)                   |
+| SAST                      | CodeQL — public repos; private needs Code Security |
 | SAST (Python)             | + Bandit (CI step)                       |
 | SAST (Go)                 | + govulncheck (CI step)                  |
 | Secret detection          | GitHub push protection + gitleaks action |
