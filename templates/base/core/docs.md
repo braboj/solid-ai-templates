@@ -124,11 +124,10 @@ wrong before changing either.
 - Render "Alternatives considered" and "Consequences" as tables where the
   content fits — they scan faster than prose lists
 - ADRs are immutable once merged — create a new ADR to supersede an
-  old one. The ONE exception is the supersession metadata: `status`,
-  `date` and `superseded_by` MAY be updated on a merged ADR, because
-  a supersession has to be recorded on both sides. The prose body
-  (Context, Decision, Alternatives considered, Consequences) never
-  changes
+  old one. Two changes are exempt: the supersession metadata
+  (`status`, `date`, `superseded_by`), because a supersession has to
+  be recorded on both sides; and format-only edits to the body, which
+  move no claim
 - What is immutable is the decision, not the format. The decision is
   the set of claims the record makes in Context, Decision,
   Alternatives considered and Consequences. Adding a claim, removing
