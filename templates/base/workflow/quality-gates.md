@@ -621,6 +621,18 @@ project fails there, where nobody wrote it and nobody can debug it.
   heredoc opener itself in prose — an extractor scanning for it reads the
   sentence as a check, the way a backticked directive is read as a real
   declaration
+- A line continuation MUST be confirmed to have survived into the
+  committed file. A trailing backslash can be dropped on the way from
+  author to file, and when it is, the lines join and nothing reports it:
+  the shell accepts the joined command, the compile gate accepts it, and
+  only the text has changed. This is the one break mode that fails neither
+  loudly nor closed, so reading the committed line is the whole check —
+  every other break mode announces itself
+- SHOULD avoid needing the confirmation. Fold the command onto one line —
+  a fenced block is exempt from the width limit precisely so that is
+  available — or bind its parts to shell variables. Where a continuation
+  is genuinely the clearest form, keep it and verify it; the construct is
+  not the defect, the silent loss is
 - A violation count far larger than expected on a tree believed clean MUST
   be triaged as a possible defect in the check before it is worked as a
   backlog of fixes. A rule can be wrong rather than under-enforced
@@ -679,6 +691,54 @@ EOF
 Pass condition: the command reports the number of checks found and prints
 nothing after it. An empty result is a failure too, since no checks found
 means the extraction pattern drifted rather than the files being clean.
+
+A companion locator for the continuation rule. It cannot detect a
+continuation that was already lost — once joined, the line is
+indistinguishable from one written that way — so it reports where the
+risk is instead, and the list is what gets read against the source:
+
+```bash
+py - <<'EOF'
+import pathlib, re
+
+# The files that carry rules and their checks.
+ROOTS = ["templates"]
+
+FENCE = re.compile(r"^(\s*)```")
+blocks, risky = 0, []
+for root in ROOTS:
+    for path in sorted(pathlib.Path(root).rglob("*.md")):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        n = 0
+        while n < len(lines):
+            opened = FENCE.match(lines[n])
+            if not opened:
+                n += 1
+                continue
+            indent, n = len(opened.group(1)), n + 1
+            blocks += 1
+            while n < len(lines) and not FENCE.match(lines[n]):
+                line = lines[n]
+                body = line[indent:] if not line[:indent].strip() else line
+                if body.rstrip().endswith("\\"):
+                    risky.append((path, n + 1))
+                n += 1
+            n += 1
+
+print("fenced blocks inspected: %d" % blocks)
+print("lines ending in a continuation: %d" % len(risky))
+for path, number in risky:
+    print("%s:%d" % (path, number))
+if not blocks:
+    print("no fenced blocks found; the extraction pattern drifted")
+EOF
+```
+
+Pass condition: the command reports how many fenced blocks it inspected
+and how many lines end in a continuation, then lists them. A non-zero
+count is not a failure — it is the set to read against what was written.
+Zero blocks inspected is a failure, since it means the pattern drifted
+rather than the files carrying no checks.
 
 ---
 
