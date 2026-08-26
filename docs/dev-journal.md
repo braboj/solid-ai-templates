@@ -3400,3 +3400,100 @@ this tag's range)
 
 **Issues opened:** none this cut. #1110 and #1113, opened during the
 previous one, remain open and unimplemented.
+
+## 2026-08-26 -- Unconfirmed inputs (late night)
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Every issue in this cut is about confirming the input rather than
+reading the output** -- the tree an issue described, the corpus a check
+read, the text that actually shipped, and whether a derived artifact was
+regenerated at all. Five issues, six pull requests.
+
+**Three checks in one file, none of which said what it read.** The ADR
+frontmatter check printed one line per non-conforming record and nothing
+when the folder was clean, so a clean run and a run that reached no
+records were identical -- in a repository whose own templates carry two
+separate rules against exactly that. Grooming found the same shape in
+both siblings. The journal check reported an empty result but never a
+count. The width check reported neither, and it enumerates with
+`git ls-files`, which reads the index: a document not yet staged is
+invisible to it and the assertion passes having never seen it. All three
+now report their input count and name zero as a failure.
+
+**The width check found something on its first reporting run.** One line
+in `README.md` at 89 characters against the declared 88, sitting there
+since a pull request in the 400s. The check had always been able to find
+it and had always run; what it could not do was say so. Nothing was
+wrong with the assertion.
+
+**An issue can be narrower than it reads.** #1107 proposed a rule for
+meta-tests that enumerate a corpus. Most of it was already in
+`testing-negative-assertion-coverage`, landed in v2.48 -- the input
+coverage requirement, the insistence that the coverage assertion be a
+real comparison rather than a printed number, the failure when a set
+shrinks. Three bullets were genuinely missing, so three bullets is what
+shipped, not the new section the issue reads as.
+
+**And an issue can be wrong, including one filed the same day by the
+person implementing it.** #1110 was written this morning from a real
+observation: a trailing backslash had been dropped between author and
+file, joining two lines of a shipped check. The proposed rule was that a
+check MUST NOT use a line continuation. Measured before enforcing: 107
+fenced blocks across the template tree, three lines ending in a
+continuation, and all three intact -- a `curl` with headers piped through
+three filters and a `jq` program over four fields, each the clearest form
+for what it does. The rule as proposed would have flagged working
+commands and demanded they be made worse. What shipped requires
+confirming the continuation survived and prefers a form that needs no
+confirmation. Being right that something broke does not make the proposed
+remedy right.
+
+**The check for it is a locator, not a detector.** Once a continuation is
+lost the line is indistinguishable from one written joined, so nothing
+can find it afterwards. The check reports where the risk is instead,
+bounding the manual read to three lines rather than 107 blocks, and its
+pass condition says a non-zero count is not a failure.
+
+**A negative control broke on the phenomenon it was built to test.** The
+planted file for that check reported zero continuations where one was
+planted. The check was right; the control was wrong, because `printf`
+mangled the backslash before it reached the file -- the exact silent loss
+under test, reproducing itself one level up in the test harness.
+Rebuilding the control in Python, bypassing the shell, made it
+discriminate.
+
+**A rule that dogfooded on its own pull request.** #1113 says regenerating
+is owed by the edit rather than by the review, and that a staleness check
+run before the edit reports the previous state and reads as a pass. The
+change introducing it edits a core-tier template, so it left all
+seventeen pre-resolved chains stale -- the precise failure, reproduced on
+the pull request that fixes it, with `sync.py --check` reporting `STALE 17`
+before the prescribed regeneration and `All files in sync` after.
+
+**The last rule written was the one the other four had been following.**
+#1102 asks that a filed issue be re-verified against the tree before it
+is implemented. It was implemented last, after four issues in the same
+cut had been groomed, and all three shapes it names had already occurred:
+#1107 narrower than filed, #1103 wider than filed, #1110 wrong as filed.
+`review.md` already required verifying a finding before REPORTING it and
+said nothing about verifying a ticket before ACTING on it, which is the
+same problem on the input side, so it landed as the sibling section.
+
+**Template feedback:** all reusable, all landed upstream --
+`base/core/docs.md` (three checks now self-reporting), `base/core/testing.md`
+(the corpus guard as its own test), `base/workflow/quality-gates.md` (the
+continuation rule and its locator), `base/core/git.md` (the regeneration
+trigger), and `base/core/review.md` (verifying a filed issue). Nothing
+project-specific except the one README line. Note the continuation rule
+sits at 12/17 reach rather than 17/17, which is correct for its subject
+and worth knowing.
+
+**Releases:** v2.52.0 -- Unconfirmed inputs, 5 issues, 6 pull requests.
+
+**PRs merged:** #1124, #1126, #1128, #1129, #1130, #1131
+
+**Issues closed:** #1102, #1103, #1107, #1110, #1113
+
+**Issues opened:** none. Both issues opened during the v2.50 cut were
+closed here.
