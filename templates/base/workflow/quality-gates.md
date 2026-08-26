@@ -594,6 +594,12 @@ project fails there, where nobody wrote it and nobody can debug it.
 - A check MUST emit ASCII. One that reports an offending character MUST
   print its code point, never the character, or it dies on the console
   encoding while reporting exactly what it exists to detect
+- A fenced check MUST NOT be indented more deeply than the first
+  indentation level of the code inside it. A renderer strips the fence's
+  own indentation from every line that has it, so a block indented five
+  spaces under a numbered step turns a four-space nested line into a
+  three-space one and the extracted body stops compiling. Put the check
+  flush with the margin and point to it from the step
 - A check MUST be negative-controlled before merge: name the break modes
   it catches, confirm each one is flagged, and confirm that a valid input
   is not. A negative control that silently matches nothing has tested

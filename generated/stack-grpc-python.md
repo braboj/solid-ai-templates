@@ -873,35 +873,93 @@ When NOT to close-and-resubmit:
   3. Run a 360-degree analysis if the project uses
      `templates/base/workflow/360.md` — the project SHOULD NOT
      ship with critical findings unresolved
+  4. Verify that every issue closed since the previous tag carries the
+     milestone being released — the check is below. Confirming a
+     milestone's issues are all closed checks one direction of the
+     relation only; work merged with no milestone is invisible to it, so
+     the gate passes green while saying nothing about the commits
+     actually being tagged
+
+The check for step 4, run from the repository root. It is left flush with
+the margin rather than indented under the step: a renderer strips a fenced
+block's own indentation, and an indent deeper than the code's first level
+turns a nested line into a shallower one.
+
+```bash
+py - <<'EOF'
+import json, re, subprocess
+
+# Resolve the tag this release follows from the commit under release, not
+# from a position in a list of tags.
+previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0"],
+                          capture_output=True, text=True).stdout.strip()
+subjects = subprocess.run(["git", "log", "--format=%s", previous + "..HEAD"],
+                          capture_output=True, text=True).stdout
+merged = sorted({int(n) for n in re.findall(r"\(#(\d+)\)\s*$", subjects, re.M)})
+print("previous tag: %s" % previous)
+print("pull requests merged since: %d" % len(merged))
+if not merged:
+    print("no pull requests found since %s; either nothing is unreleased "
+          "or the commit subject format drifted" % previous)
+unmilestoned = []
+for pr in merged:
+    raw = subprocess.run(["gh", "pr", "view", str(pr), "--json",
+                          "closingIssuesReferences"],
+                         capture_output=True, text=True).stdout
+    if not raw.strip():
+        print("pull request %d could not be read" % pr)
+        continue
+    for ref in json.loads(raw).get("closingIssuesReferences") or []:
+        issue = ref["number"]
+        detail = subprocess.run(["gh", "issue", "view", str(issue), "--json",
+                                 "milestone"],
+                                capture_output=True, text=True).stdout
+        if not detail.strip():
+            print("issue %d could not be read" % issue)
+            continue
+        if not json.loads(detail).get("milestone"):
+            unmilestoned.append((pr, issue))
+for pr, issue in unmilestoned:
+    print("pull request %d closed issue %d, which carries no milestone"
+          % (pr, issue))
+EOF
+```
+
+Pass condition: the command reports the previous tag and the number of
+pull requests merged since it, then prints nothing. An empty result is a
+failure too, since no pull requests found means either nothing is
+unreleased or the commit subject format drifted. A deferred *open* issue
+correctly carries no milestone — this covers only issues closed by merged
+work sitting between two tags.
 
 ### Projects with a version manifest
-  4. `git checkout -b chore/release-vX.Y.Z`
-  5. Bump version in the project manifest (`package.json`,
+  5. `git checkout -b chore/release-vX.Y.Z`
+  6. Bump version in the project manifest (`package.json`,
      `pyproject.toml`, `Cargo.toml`, or equivalent) to `X.Y.Z`
-  6. `git commit -m "chore: release vX.Y.Z"`
-  7. Push, open PR, merge
-  8. `git checkout main && git pull`
-  9. `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
+  7. `git commit -m "chore: release vX.Y.Z"`
+  8. Push, open PR, merge
+  9. `git checkout main && git pull`
+  10. `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
      — release tags MUST be annotated (`-a`/`-s`); a lightweight
      `git tag vX.Y.Z` is invisible to `git describe`, which reports
      a stale version to submodule/`describe` consumers
-  10. SHOULD create a GitHub Release from the tag:
+  11. SHOULD create a GitHub Release from the tag:
       `gh release create vX.Y.Z --title "vX.Y.Z" --generate-notes`
       — a pushed tag alone does NOT create a Releases page entry.
 
 ### Post-release verification
-  11. Verify the manifest version matches the tag — e.g.
+  12. Verify the manifest version matches the tag — e.g.
       `grep '"version"' package.json` matches `git describe --tags`
-  12. A mismatch means the bump was missed or the wrong commit was
+  13. A mismatch means the bump was missed or the wrong commit was
       tagged — fix before announcing the release
 
 ### Projects without a version manifest (no-build)
-  4. `git checkout main && git pull`
-  5. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
+  5. `git checkout main && git pull`
+  6. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
      — the `-a` is mandatory: a lightweight `git tag` is skipped by
      `git describe`, so consumers report a stale version
-  6. `git push origin vX.Y.Z`
-  7. Create a GitHub Release with auto-generated notes:
+  7. `git push origin vX.Y.Z`
+  8. Create a GitHub Release with auto-generated notes:
      `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>"
      --generate-notes`
 
@@ -4131,6 +4189,12 @@ project fails there, where nobody wrote it and nobody can debug it.
 - A check MUST emit ASCII. One that reports an offending character MUST
   print its code point, never the character, or it dies on the console
   encoding while reporting exactly what it exists to detect
+- A fenced check MUST NOT be indented more deeply than the first
+  indentation level of the code inside it. A renderer strips the fence's
+  own indentation from every line that has it, so a block indented five
+  spaces under a numbered step turns a four-space nested line into a
+  three-space one and the extracted body stops compiling. Put the check
+  flush with the margin and point to it from the step
 - A check MUST be negative-controlled before merge: name the break modes
   it catches, confirm each one is flagged, and confirm that a valid input
   is not. A negative control that silently matches nothing has tested

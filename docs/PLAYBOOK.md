@@ -367,23 +367,27 @@ Release — there is no `chore: release` branch, commit, or PR.
 
 1. Confirm the milestone's issues are all closed and `main` is green
    (`py tests/run_smoke.py` passes) and up to date (`git pull`)
-2. Create and push the tag **annotated** — `tag-guard.yml` fails a
+2. Confirm the inverse — every issue closed since the previous tag
+   carries the milestone being released. Step 1 reads the milestone
+   and cannot see work merged without one. Run the pre-release check
+   in `templates/base/core/git.md`
+3. Create and push the tag **annotated** — `tag-guard.yml` fails a
    pushed lightweight `v*` tag, and `gh release create` makes a
    lightweight one when the tag does not already exist:
    ```bash
    git tag -a vA.B.C -m "vA.B.C — <milestone theme>"
    git push origin vA.B.C
    ```
-3. Cut the release from the existing tag with a bare-version title and
+4. Cut the release from the existing tag with a bare-version title and
    auto-generated notes:
    ```bash
    gh release create vA.B.C --verify-tag --title vA.B.C --generate-notes
    ```
    `--verify-tag` aborts rather than creating the tag, so the release
-   can only ever attach to the annotated tag pushed in step 2. Notes
+   can only ever attach to the annotated tag pushed in step 3. Notes
    are built from the PRs merged since the previous tag
-4. Close the `vA.B.C` milestone once the release is published
-5. Add the session's `docs/dev-journal.md` entry **separately** — its
+5. Close the `vA.B.C` milestone once the release is published
+6. Add the session's `docs/dev-journal.md` entry **separately** — its
    own `docs(journal): ...` PR with **no milestone**, not part of the
    release
 
