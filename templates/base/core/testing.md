@@ -524,6 +524,52 @@ def no_server_thread_outlives_the_test():
 
 ---
 
+## Where a fix changes where a value comes from, assert provenance
+[ID: testing-assert-provenance]
+
+A defect is sometimes not "the value is wrong" but "the value is not
+ours". The code inherits a setting from a platform, a library default, an
+ambient config, or a parent process. Today that inherited value happens
+to be correct; the defect is that nothing in the code says so, and
+nothing would notice when the platform changes.
+
+A TLS client built its context without setting a minimum protocol
+version, so its floor came from whichever OpenSSL was linked. The natural
+regression test —
+
+```python
+assert ctx.minimum_version == ssl.TLSVersion.TLSv1_2
+```
+
+— passes on the development machine before and after the fix, because
+that OpenSSL already defaults to TLS 1.2. Green, meaningless, and
+indistinguishable from a real guard.
+
+- Where a fix's subject is the source of a value rather than the value,
+  an assertion on the value does not test the fix. Assert provenance
+  instead: inject a source that would yield a different value, and assert
+  the code overrides it. In the example, substitute a context whose
+  starting floor is TLS 1.0 and assert the library raises it — that fails
+  against the unfixed source, which is what the test was for
+- Running the new test against the unfixed code is necessary and says
+  nothing about what to do when it passes. The instinct is that the fix
+  was unnecessary; the correct conclusion is that the assertion is aimed
+  at the wrong property
+- Substitute at the seam the module under test reads, not at the module
+  that defines the type. A standard-library type's own methods may
+  resolve their class through a module attribute, so replacing
+  `ssl.SSLContext` on the `ssl` module sends the library's own
+  `minimum_version` setter back into the double and it recurses.
+  Redirecting only the name the module under test reads is the working
+  seam
+- Distinct from `testing-fix-fires-on-real-data`, where the new code did
+  fire and produced no observable difference, and from
+  `testing-platform-fault-injection`, whose trigger is a fault that
+  cannot be reproduced locally. Here the local value is correct, and that
+  is exactly what hides the missing guarantee
+
+---
+
 ## Verify a visual change against the render
 [ID: testing-verify-the-render]
 
