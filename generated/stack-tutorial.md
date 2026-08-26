@@ -3792,6 +3792,42 @@ the staleness gate cannot even be wired into CI.
 - A passing-because-skipped check looks identical to a passing
   check in the GitHub UI; the difference MUST be encoded in the
   workflow, not left to reviewer attention
+- That encoding MUST be verified on the skipped path, not only on the
+  failing one. A failed upstream trips a correct fan-in (comparing
+  every result against success) and a naive one (comparing against
+  failure) alike, so only a skipped upstream separates them. Make one
+  upstream job skip temporarily, confirm the gate fails, and revert —
+  the whole test is one commit and one revert
+
+### A configured scope is verified by coverage, not exit status
+
+A gate that ran, went green, and covered almost nothing renders
+identically to a real pass. It is worse than a skip, because a skip is at
+least visible as one. The check and the parameter setting its input scope
+are separate things, and review usually looks only at the check:
+
+| Gate | Scope parameter | Collapsed scope still exits zero |
+|------|-----------------|----------------------------------|
+| History secret scan | checkout fetch depth | scans the tip only |
+| Linter | path filter or glob | lints zero files |
+| Formatter check | ignore list | checks nothing |
+| Test selector | marker or sampling rate | runs an empty selection |
+| Coverage | measured package list | measures an empty set |
+
+- A gate whose input scope is set by a configuration parameter MUST be
+  verified by the coverage it reports, not by its exit status. Where the
+  tool emits a count of what it covered, read that count; where it does
+  not, the gate SHOULD be wrapped so it fails on an implausibly small one
+- Widening what a check examines MUST widen its scope parameter in the
+  same change — the two are one edit, and splitting them leaves a gate
+  that reads stronger than it is
+- A reviewer MUST NOT accept a green run as evidence that a scope change
+  took effect
+
+`base/security/devsecops.md` and `platform/github.md` both require full
+history for the secret scan specifically. This is the general rule that
+the specific one is an instance of, and it holds regardless of which
+platform or security template a project resolves.
 
 ### PR gate MUST mirror the deploy gate
 
