@@ -399,6 +399,38 @@ covered, and they are covered by a witness that cannot disagree.
 
 ---
 
+## Inject a platform-dependent fault, do not wait for the platform
+[ID: testing-platform-fault-injection]
+
+A test that only fails on one platform is a test that does not run for
+whoever is not on it. The dangerous case is not a failing CI job — that
+is loud — but an investigation concluded on the author's platform and
+recorded as settled, in a commit message or an issue, where nothing
+later rereads it.
+
+- Where behaviour depends on the operating system, the filesystem, the
+  locale, or the interpreter version, the suite MUST reproduce the fault
+  with a double rather than wait for the platform to supply it. Raise
+  the error the other platform raises, from a stub at the same seam the
+  real call sits on
+- A component cleared by a test on one platform is cleared on that
+  platform only. Where that clearing is written down — a commit message,
+  an issue comment, a review — it MUST name the platform the evidence
+  came from, so the next reader can see what was not covered rather than
+  inheriting a conclusion
+- A suspected component that turns out to be innocent is the case to
+  distrust. A confirmed defect is retested until it goes away; an
+  exonerated one is closed, and nothing revisits it
+- Worked example: a socket teardown helper was suspected during a
+  connection-reset fix, tested on Windows where `shutdown()` on a reset
+  socket is silent, found not to raise, and recorded as cleared in both
+  the commit message and the issue. On Linux the same call raises
+  `ENOTCONN`. The helper was the remaining half of the bug, and the
+  closed issue kept reproducing on the only platform CI runs — through
+  three pushes, because the local suite was green each time
+
+---
+
 ## Verify a visual change against the render
 [ID: testing-verify-the-render]
 

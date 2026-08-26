@@ -21,6 +21,13 @@
 ## Pull requests
 - PRs should be small and focused — one concern per PR
 - Always test locally before committing
+- **A local run is evidence about one platform.** Read the CI run for the
+  push before describing the change as good. Where development and CI
+  differ in operating system, interpreter version or locale, a green
+  local suite and a green pipeline are different claims, and only the
+  second covers what the project ships on. A pipeline check at session
+  start is a different moment — it catches one broken before you began,
+  not one you broke and are about to report as clean
 - **Repeat the closing keyword before each issue number** when a PR
   closes more than one issue: `Closes #a, closes #b, closes #c` closes
   all three. `Closes #a, #b, #c` closes only `#a` — a bare `#b`/`#c` is
