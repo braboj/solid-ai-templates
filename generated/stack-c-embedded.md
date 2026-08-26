@@ -1359,6 +1359,52 @@ docs use SHOUT-case (`README.md`, `CLAUDE.md`, `ONBOARDING.md`,
 `PLAYBOOK.md`, `SPEC.md`); multi-word descriptive docs use lower
 kebab-case (`dev-journal.md`). This is intentional, not drift.
 
+### Community health files
+
+- A public repository MUST carry `SECURITY.md`. Public code attracts
+  vulnerability reports whether or not the project invites them, and with
+  no stated route a finder either discloses publicly or stays silent
+- A repository that accepts outside contributions MUST carry
+  `CONTRIBUTING.md`. What makes it required is the issue tracker or pull
+  requests being open to people without commit rights, not the repository
+  being public
+- `CODE_OF_CONDUCT.md` SHOULD accompany a public interaction surface —
+  issues, discussions. It is a governance choice rather than a safety
+  one, which is why it is recommended and the other two are required
+- A private repository with no outside contributors needs none of the
+  three
+- `SECURITY.md` names a private disclosure route and the versions that
+  receive fixes. A public issue tracker is not a disclosure route, since
+  filing there IS the disclosure
+- Code hosts recognise three locations, in this precedence: `.github/`,
+  then the repository root, then `docs/`. Put the files at the root by
+  default — a first-contact document belongs where a visitor lands
+- Each file lives in exactly one recognised location. A copy in two of
+  them means the host serves the first and the other rots unread, with
+  nothing in either file saying which one is live
+- Check — every required file resolves to exactly one recognised
+  location. Scope: a public repository that accepts outside
+  contributions; a private repository with no outside contributors is
+  outside what this checks. Pass condition: the command reports how many
+  names it checked and prints nothing after that:
+
+  ```bash
+  py - <<'EOF'
+import pathlib
+DIRS = (".github", ".", "docs")
+REQUIRED = ("SECURITY.md", "CONTRIBUTING.md")
+NAMES = REQUIRED + ("CODE_OF_CONDUCT.md",)
+print("community health files checked: %d" % len(NAMES))
+for name in NAMES:
+    homes = [d for d in DIRS if pathlib.Path(d, name).is_file()]
+    if len(homes) > 1:
+        print("%s: in %s - the host serves %s and the rest rot"
+              % (name, ", ".join(homes), homes[0]))
+    elif not homes and name in REQUIRED:
+        print("%s: absent from .github/, the root and docs/" % name)
+  EOF
+  ```
+
 ## Numbering
 
 - Use numbered headings (1, 1.1, 1.2, 2, 2.1, etc.) in PLAYBOOK and
