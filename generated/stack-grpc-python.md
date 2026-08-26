@@ -1143,8 +1143,8 @@ superseded_by: []         # ids that supersede this ADR
   the command prints nothing. Run it after adding or superseding an
   ADR, and wire it into CI beside the other document gates:
 
-```bash
-py - <<'EOF'
+  ```bash
+  py - <<'EOF'
 import pathlib
 KEYS = ("id", "status", "date", "category", "supersedes", "superseded_by")
 STATUS = ("Proposed", "Accepted", "Superseded")
@@ -1165,8 +1165,8 @@ for f in sorted(pathlib.Path("docs/decisions").glob("[0-9][0-9][0-9]-*.md")):
             and len(date) == 10 and date.replace("-", "").isdigit()
             and (fm.get("status") == "Superseded") == linked):
         print(f)
-EOF
-```
+  EOF
+  ```
 
 - Do NOT maintain a monolithic architecture document that mixes decisions,
   data model specs, and migration tracking — decisions go in ADRs, data
@@ -1282,6 +1282,44 @@ Example skeleton:
   rule in `templates/base/workflow/ai-workflow.md` (Match document
   convention section) — read prior entries and copy their skeleton
   exactly; the prior entry is the authoritative structural template
+- That rule governs an entry's SHAPE, never the file's ordering.
+  Ordering comes from the rule above and nowhere else. Copying it
+  from the file makes a violation permanent: a journal that starts
+  newest-first stays newest-first, and every compliant session adds
+  another entry in the wrong place. The ordering of a long file is
+  also invisible in a diff that appends one entry, so review does
+  not catch it either — which is why it is checked:
+
+  ```bash
+  py - <<'EOF'
+import pathlib, re
+
+# Session headings only, and only outside fenced blocks so a quoted
+# example is not mistaken for an entry.
+HEADING = re.compile(r"^## (\d{4}-\d{2}-\d{2})\b")
+path = pathlib.Path("docs/dev-journal.md")
+entries, fenced = [], False
+for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+    if line.lstrip().startswith("```"):
+        fenced = not fenced
+        continue
+    if fenced:
+        continue
+    found = HEADING.match(line)
+    if found:
+        entries.append((number, found.group(1)))
+if not entries:
+    print("%s: no session entries found; check the heading format" % path)
+for (before_n, before_d), (after_n, after_d) in zip(entries, entries[1:]):
+    if after_d < before_d:
+        print("%s:%d %s follows %s at line %d; entries run oldest first"
+              % (path, after_n, after_d, before_d, before_n))
+  EOF
+  ```
+
+  Pass condition: the command prints nothing. It reports an empty
+  result as a failure too, since no entries found means the heading
+  format drifted rather than the file being in order
 
 ### Post-mortems
 
