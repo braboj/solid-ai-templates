@@ -3032,3 +3032,56 @@ bugs cleared.
 #1067, #1069, #1072
 
 **Issues opened:** #1062, #1064, #1067, #1069, #1072, #1080
+
+## 2026-08-26 — Immutability ruling and backlog rescope (afternoon)
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**An enumeration of permitted operations is under-inclusive by
+construction** (#1054, #1080). The ADR exemption listed what a
+format-only edit may do -- normalize headings, titles, filenames,
+cross-links -- so anything unlisted implicitly needed a superseding
+record. It now states its test instead: immutability protects the
+decision, meaning the claims made in Context, Decision, Alternatives
+considered and Consequences, and any edit that moves no claim is a
+format change. Rewrapping, splitting an unparseable sentence and
+rendering a buried enumeration as a list all qualify, with
+`git diff --word-diff` as the evidence. The first record it applied to
+was one this repository had been unable to fix for exactly that reason:
+a line two characters over the declared width, on an inline code span
+with no wrap point. The word-level diff showed no word changed.
+
+**A milestone that collects everything nobody wants to decide about
+stops being a milestone.** v3.0 held 38 issues and had not started. The
+cut line turned out to be simple once stated: the restructure changes
+how a consumer's context file *loads* rules, and does not change what
+the rules say. Rule content survives any delivery change, so it ships
+now. Twenty-eight issues went back to the backlog -- new templates, a
+language layer, frontend layer extraction, README polish, and four
+orphaned-template questions from an old coverage analysis -- and v3.0
+came out at twelve, six of them spikes. The epic reads as "answer six
+questions, then implement", which is a tractable shape. Thirty-eight
+was not, and that is the likeliest reason it sat untouched since July.
+
+**Applying a criterion is not the same as holding it consistently.**
+Having ruled that reach questions are composition rather than delivery,
+I still had `base-oop` reach filed on the delivery side while calling
+the identical question shippable elsewhere. Caught on re-reading the
+split rather than by any check. A criterion stated once needs a pass
+back over everything already sorted under it.
+
+**Template feedback:** the immutability change is reusable and landed in
+`base-docs` Decision logs. The rescope is project-specific -- it is
+tracker hygiene, not a rule.
+
+**Releases:** none. PR #1083 sits unreleased on main and unmilestoned,
+which is the third cut in a row where merged work needed a milestone
+found for it before a tag.
+
+**PRs merged:** #1083
+
+**Issues closed:** #1054, #1080
+
+**Issues opened:** #1082 -- split from #1054 rather than carried along,
+since a readability bound is a separate rule and only became actionable
+once fixing an unreadable passage stopped requiring a supersession.
