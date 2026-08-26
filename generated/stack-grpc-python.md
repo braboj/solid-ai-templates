@@ -1358,12 +1358,14 @@ wrong before changing either.
   An ADR whose remaining decisions are current MUST NOT be marked
   `Superseded` to correct one claim; supersession is for a record that
   is wholly replaced
-- Where a merged ADR and the templates disagree, the templates govern
-  and the ADR stands as history. An ADR is a dated statement of what
-  was decided on that date; the template chain is the specification a
-  reader applies. A correction is not complete until the rule is right
-  in the templates, and it is complete at that point whether or not a
-  new ADR was written
+- Precedence between a project's own decision records and the rules it
+  inherits is that project's decision, and MUST be declared in its
+  context file. A record documenting a deliberate divergence from an
+  inherited rule is such a decision: it carries the reasoning the
+  divergence rests on, so a later version of that rule does not retire
+  it. The inverse holds only in a repository that owns the rules it
+  applies, where a record describes a rule rather than departing from
+  one — that ordering belongs in its own context file, not here
 - When an ADR's premise is refuted shortly after it merges (typically by
   data that should have informed it), prefer a same-day or same-week
   supersession ADR documenting the post-mortem over silently closing the
