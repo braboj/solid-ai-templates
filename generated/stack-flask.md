@@ -612,6 +612,13 @@ for name in tracked:
 ## Pull requests
 - PRs should be small and focused — one concern per PR
 - Always test locally before committing
+- **A local run is evidence about one platform.** Read the CI run for the
+  push before describing the change as good. Where development and CI
+  differ in operating system, interpreter version or locale, a green
+  local suite and a green pipeline are different claims, and only the
+  second covers what the project ships on. A pipeline check at session
+  start is a different moment — it catches one broken before you began,
+  not one you broke and are about to report as clean
 - **Repeat the closing keyword before each issue number** when a PR
   closes more than one issue: `Closes #a, closes #b, closes #c` closes
   all three. `Closes #a, #b, #c` closes only `#a` — a bare `#b`/`#c` is
@@ -2890,6 +2897,38 @@ covered, and they are covered by a witness that cannot disagree.
   Both assertions were written to catch that defect and both varied
 - Exercise the object instead — acquire it, release it, enter it. Where
   the test asserts a misuse fails, assert that it fails, not how
+
+---
+
+## Inject a platform-dependent fault, do not wait for the platform
+[ID: testing-platform-fault-injection]
+
+A test that only fails on one platform is a test that does not run for
+whoever is not on it. The dangerous case is not a failing CI job — that
+is loud — but an investigation concluded on the author's platform and
+recorded as settled, in a commit message or an issue, where nothing
+later rereads it.
+
+- Where behaviour depends on the operating system, the filesystem, the
+  locale, or the interpreter version, the suite MUST reproduce the fault
+  with a double rather than wait for the platform to supply it. Raise
+  the error the other platform raises, from a stub at the same seam the
+  real call sits on
+- A component cleared by a test on one platform is cleared on that
+  platform only. Where that clearing is written down — a commit message,
+  an issue comment, a review — it MUST name the platform the evidence
+  came from, so the next reader can see what was not covered rather than
+  inheriting a conclusion
+- A suspected component that turns out to be innocent is the case to
+  distrust. A confirmed defect is retested until it goes away; an
+  exonerated one is closed, and nothing revisits it
+- Worked example: a socket teardown helper was suspected during a
+  connection-reset fix, tested on Windows where `shutdown()` on a reset
+  socket is silent, found not to raise, and recorded as cleared in both
+  the commit message and the issue. On Linux the same call raises
+  `ENOTCONN`. The helper was the remaining half of the bug, and the
+  closed issue kept reproducing on the only platform CI runs — through
+  three pushes, because the local suite was green each time
 
 ---
 
