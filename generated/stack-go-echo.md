@@ -3188,6 +3188,27 @@ the expected value.
 - **Version parity** — assert the version reported at runtime equals the
   installed package metadata, and that the contract's own version field
   is present
+- **Export list vs bindings** — an export list is a hand-written manifest
+  of what a module binds, kept beside the bindings and drifting from them
+  silently. Python `__all__` holds strings, so an entry can name nothing
+  and `from pkg import ThatName` fails for a name the package advertises;
+  a TypeScript barrel has the inverse failure, where a symbol meant to be
+  exported is absent and no consumer of the barrel can tell. Assert that
+  every entry resolves against the live module, naming the offenders:
+
+  ```python
+  missing = sorted(n for n in pkg.__all__ if not hasattr(pkg, n))
+  assert missing == [], missing
+  ```
+
+  The linter covers only half of it, and not the half that matters: ruff
+  `F822` reports an undefined `__all__` entry in a plain module and stays
+  silent in `__init__.py`, which is where a package's export list lives —
+  it cannot see the names a package binds through its submodules, so it
+  declines to guess. Introspecting the imported module can. A language
+  that puts the export where the compiler sees it (Rust `pub use`, Go's
+  capitalised identifiers) needs no guard, which is the test for whether
+  this applies
 - Prefer introspection so the test cannot itself drift, and keep the
   guard one-directional: assert the derived copy matches the source of
   truth, not the reverse. Complements the AST contract test
