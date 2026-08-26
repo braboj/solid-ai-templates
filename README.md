@@ -18,13 +18,13 @@ them to every agent on every project. Tax paid. Move on.
 
 Back to the work that actually moves the product. The spikes, the design
 conversations, the reviews that catch bugs instead of churning style nits.
+
 ## What it does
 
 - Build `CLAUDE.md` or `AGENTS.md` from reusable layers — base, backend/frontend, stack
 - Fork and extend — layer your team's conventions on top of the base without modifying it
 - Codify industry standards — 12-factor app, OWASP, SOLID, SemVer, conventional commits
 - Assemble templates you need, override if needed or create new ones
-
 
 ## How to use
 
