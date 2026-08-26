@@ -115,19 +115,6 @@ gate categories to GitHub Actions workflows and GitHub-native features.
   not just `failure`. This is the concrete encoding the "skipped is not
   passed" rule demands: a fan-in that checks only for `failure` lets a
   skipped required gate slip through as a pass.
-- **One required context per workflow, not one per repository.** A
-  fan-in job can only `needs:` jobs in its own workflow, so a scan
-  isolated for its elevated scope cannot join the main one. It then
-  either gates nothing, or takes its own per-job entry in branch
-  protection — and a per-job list is exactly what the fan-in rule
-  exists to avoid, because it goes stale silently the moment a job is
-  added. Give the isolated workflow its own fan-in over its matrix, and
-  require that. One context per workflow is the price of the isolation
-- **A fan-in over a code-scanning matrix gates on the analysis having
-  run, not on the code being clean.** The analysis succeeds and uploads
-  its alerts; blocking a merge on those alerts is a separate platform
-  control. Conflating the two produces a required check that looks
-  stricter than it is
 
   ```yaml
   gate:
@@ -143,6 +130,39 @@ gate categories to GitHub Actions workflows and GitHub-native features.
             fi
           done
   ```
+- **One required context per workflow, not one per repository.** A
+  fan-in job can only `needs:` jobs in its own workflow, so a scan
+  isolated for its elevated scope cannot join the main one. It then
+  either gates nothing, or takes its own per-job entry in branch
+  protection — and a per-job list is exactly what the fan-in rule
+  exists to avoid, because it goes stale silently the moment a job is
+  added. Give the isolated workflow its own fan-in over its matrix, and
+  require that. One context per workflow is the price of the isolation
+- **A fan-in over a code-scanning matrix gates on the analysis having
+  run, not on the code being clean.** The analysis succeeds and uploads
+  its alerts; blocking a merge on those alerts is a separate platform
+  control. Conflating the two produces a required check that looks
+  stricter than it is
+- **Select a run by FULL commit SHA.** The abbreviated form matches no
+  run, prints an empty list and exits `0`, so a malformed query is
+  indistinguishable from a commit whose runs have not started:
+
+```bash
+gh run list --commit "$(git rev-parse HEAD)" --json workflowName,conclusion
+```
+
+  Pass condition: the command reports a row per workflow that ran on that
+  commit. An empty result means either the query was malformed or nothing
+  has run, and the command cannot tell you which — resolve that before
+  reading it either way. A poll waiting on an abbreviated SHA waits out
+  its whole budget and reports silence, which reads as a workflow that
+  never fired; a one-shot check reads as "no CI on this commit", which
+  invites calling a push good because nothing came back red
+- **Read every row.** Selecting by position — `--limit 1`, the latest, the
+  first — is correct only while exactly one workflow exists. Once a second
+  is added for an unrelated reason, a positional selector reports whichever
+  finished last and hides the other, so a green scan can stand in for a red
+  build
 
 ---
 
