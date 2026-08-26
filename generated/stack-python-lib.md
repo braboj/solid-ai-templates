@@ -3384,6 +3384,36 @@ CLAUDE.md
 
 - Source layout (`src/`) — prevents accidental imports of the uninstalled
   package
+- Check the claim against the built artifact, not the source tree. A
+  wheel that starts carrying `tests/`, `scripts/` or a stray
+  top-level module is invisible until someone installs it: lint,
+  types, tests and coverage are all unchanged by it, and
+  `twine check` does not look inside. Run this in the same CI job
+  as `python -m build` and `twine check dist/*`, which is what
+  makes the Build gate row mean what it says. Pass condition: the
+  command prints nothing, and a missing wheel is a failure rather
+  than a silent pass:
+
+  ```bash
+  py - <<'EOF'
+import pathlib, zipfile
+
+# The wheel is what a consumer installs, and nothing else in CI looks
+# inside it. Run after `python -m build`.
+wheels = sorted(pathlib.Path("dist").glob("*.whl"))
+if not wheels:
+    print("no wheel in dist/; run python -m build before this check")
+for wheel in wheels:
+    parts = wheel.name.split("-")
+    expected = {parts[0], parts[0] + "-" + parts[1] + ".dist-info"}
+    tops = {name.split("/")[0] for name in zipfile.ZipFile(wheel).namelist()}
+    for extra in sorted(tops - expected):
+        print("%s carries %s" % (wheel.name, extra))
+  EOF
+  ```
+
+  One Python version is enough for a pure-Python wheel, so this
+  does not need to join the test matrix
 - `examples/` holds runnable usage patterns, governed by
   `base-examples`. Python specifics: under `src/` the directory cannot
   reach the wheel and needs no exclude — a flat layout MUST exclude it
