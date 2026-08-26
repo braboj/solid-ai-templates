@@ -459,13 +459,45 @@ unlabeled or double-labeled issue being created. The rule is enforced
 by running the check, not by the platform:
 
 ```bash
-gh issue list --state open --limit 200 --json number,labels \
-  --jq '[.[] | {n: .number,
-                t: ([.labels[].name
-                     | select(test("^(bug|epic|task|spike|incident)$"))] | length),
-                p: ([.labels[].name | select(test("^P[0-3]$"))] | length)}
-        | select(.t != 1 or .p != 1)]'
+py - <<'EOF'
+import json, re, subprocess
+
+# Ask for more than the repository is expected to hold, so a listing that
+# comes back at the limit is a truncation rather than a coincidence.
+LIMIT = 500
+TYPES = re.compile(r"^(bug|epic|task|spike|incident)$")
+PRIORITIES = re.compile(r"^P[0-3]$")
+
+raw = subprocess.run(["gh", "issue", "list", "--state", "open",
+                      "--limit", str(LIMIT), "--json", "number,labels"],
+                     capture_output=True, text=True).stdout
+issues = json.loads(raw) if raw.strip() else []
+
+print("issues inspected: %d" % len(issues))
+if not issues:
+    print("no issues found; the query or the repository context is wrong")
+if len(issues) == LIMIT:
+    print("listing came back at the limit of %d; the set is truncated" % LIMIT)
+
+for issue in issues:
+    names = [label["name"] for label in issue["labels"]]
+    types = [n for n in names if TYPES.match(n)]
+    priorities = [n for n in names if PRIORITIES.match(n)]
+    if len(types) != 1 or len(priorities) != 1:
+        print("issue %d: %d type label(s), %d priority label(s)"
+              % (issue["number"], len(types), len(priorities)))
+EOF
 ```
+
+Pass condition: the command reports how many issues it inspected and
+prints nothing after that. A count of zero is a failure rather than an
+empty tracker — anything that empties the listing, an authentication
+failure or the wrong repository context, otherwise reads as full
+compliance. A count equal to the limit is a failure too, since the
+listing was truncated and the check reported on part of the set.
+
+The check covers open issues only. A triage label is terminal, so a
+closed issue's labels are a record rather than a live claim.
 
 Output MUST be `[]`. Each reported entry names the issue and its actual
 type and priority counts. The type alternation is the project's own
