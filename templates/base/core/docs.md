@@ -692,6 +692,20 @@ general writing-style and diagram rules above still apply.
   the §1 functional requirements
 - §3 diagrams are black-box — use the arc42 partner / input / output
   table and distinguish human actors from systems
+- §5 building blocks are named for the role each plays, and the chapter
+  states where each role meets the tree — an `Implementation` column on
+  the level 1 table, or the identifier beside each level 2 heading.
+  Without it the mapping exists only in the head of whoever wrote the
+  chapter, and the chapter passes review because it is internally
+  coherent: nothing in it is wrong, it simply does not join to the tree
+  it describes
+- That is the §8 concept-to-identifier mapping applied to §5. The §3
+  rule against source-file paths above is scoped to context, and that
+  scoping is what puts the mapping on the §5 side of the boundary
+- Where a block name and its implementation use different words, §5 says
+  why, so a deliberate distinction is not read as an oversight. Tell: a
+  block name that is also a real identifier defined elsewhere in the
+  chapter, with nothing telling the two apart
 - Chapters cite no ADRs — keep inline `AD-N` citations and generic
   "ADR" / "decision record" mentions out of chapter bodies; §9 is the
   single ADR index
