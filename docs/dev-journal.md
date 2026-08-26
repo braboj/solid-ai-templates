@@ -3202,3 +3202,94 @@ cannot, so they needed different remedies. Both closed in v2.49.
 **ADRs:** ADR-026 -- a stale claim in a merged record is corrected by a
 new record, never by an edit or an addendum, and the template chain is
 the authority a reader applies.
+
+## 2026-08-26 -- Merge and release verification (late)
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Four green results that prove less than they look like.** A merge with
+no conflict, a release pipeline that has never run, a release whose record
+was written before the last thing landed, and a numbered document two
+branches edited without colliding. Each reports success, and in each the
+success is about the wrong question. The cut is six issues in
+`base/core/git.md`, which is core tier, so all six reach 17/17 stacks.
+
+**The narrative is usually right, and it is never evidence.** De-stacking
+told a maintainer how to resolve a conflict and nothing about verifying
+the resolution. Under squash merge the merge base stays the pre-stack tip,
+so a file both sides rewrote conflicts whole, and "the branch is newer, it
+already contains the lower pull request, take its side" is a story that
+holds until anything else lands on the base in between -- after which
+taking that side discards it silently and the squash makes the loss
+permanent. The remedy is a comparison of the conflict stages, and it was
+built as a real de-stack in a throwaway repository rather than reasoned
+about: with only the lower branch landed the check reports two insertions
+and nothing removed; with an unrelated commit also landed it reports a
+deletion and names the line that would be dropped. The first control did
+not conflict at all, because the two edits sat on different lines -- the
+shape had to be reproduced before it could be measured.
+
+**Which assertion holds depends on how the lower pull request merged**, so
+the rule names the case rather than the command. Under rebase merge the
+branch is a strict superset and the tree-wide form must be empty. Under
+squash the content matches but the history does not, so only the per-file
+form holds. Shipping one assertion for both would have been wrong half the
+time and green either way.
+
+**A check calibrated against nothing reports nothing.** The ordinal check
+for #1020 flagged fourteen violations in `CLAUDE.md` on its first run, all
+false: separate numbered lists under different headings were piling into a
+single run because a numbered heading was counted as an ordinal without
+resetting the group beneath it. Measured against six real documents after
+the fix -- 189 ordinals across 37 groups, silent -- and only then against
+planted duplicates, in both shapes the issue describes. Enforcing the
+first draft would have produced fourteen edits to a compliant file.
+
+**The cut generated its own evidence for one of its issues.** #1020
+describes two branches renumbering one document and merging cleanly into a
+duplicate. This session renumbered `Pre-release checks` twice in two
+separate pull requests, thirteen ordinals each time, and was safe only
+because the two were sequential. Run concurrently they are exactly the
+defect. The issue was filed from a downstream observation and was
+re-confirmed here without anyone looking for it.
+
+**A sixth break mode, and it does not raise.** The five recorded ways an
+embedded check breaks all fail loudly or fail closed. This one does
+neither: a trailing backslash used as a line continuation did not survive
+the authoring path into the template, and the command arrived collapsed
+onto one line with the backslash replaced by spaces. The shell does not
+care, so it still runs, and the compile gate passes because a joined line
+is valid. It was found by reading the committed file rather than by any
+check, and both affected commands were rewritten so that no line ends with
+a backslash. Filed rather than fixed in place, since the rules it belongs
+to are a different file and a different cut.
+
+**An empty result that exits zero is not a pass.** `gh run list` against a
+workflow with no matching runs prints `0` and exits `0`, so a release
+pipeline that has never executed produces the same silence as one that has
+run a hundred times. The pass condition names `0` as the finding for that
+reason, and separates it from the unknown-workflow error, which is drift
+rather than an absence of runs.
+
+**The generated tree is a second output of every core-tier edit.** The
+first pull request failed CI on seventeen stale chains, because
+`sync.py --check` had been run at the start of the session and not after
+the change. Running a gate before the work it gates is the same class of
+error as writing a check and not running it.
+
+**Template feedback:** all of it is reusable and landed upstream in
+`base/core/git.md` -- the de-stack measurement and its two case-scoped
+assertions, the delete-on-merge setting check, the two pre-release steps
+for an unproven pipeline, the release-ordering step, and the
+ordered-document rule with its check. Nothing here is project-specific.
+
+**Releases:** v2.50.0 -- Merge and release verification, 6 issues, 4 pull
+requests, milestone created before the work.
+
+**PRs merged:** #1105, #1106, #1108, #1109
+
+**Issues closed:** #996, #1016, #1020, #1040, #1048, #1053
+
+**Issues opened:** #1110 -- the collapsed line continuation, filed against
+the check-integrity rules rather than fixed in this cut, since it is a
+sixth break mode in a file this milestone does not touch.
