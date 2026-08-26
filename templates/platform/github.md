@@ -115,19 +115,6 @@ gate categories to GitHub Actions workflows and GitHub-native features.
   not just `failure`. This is the concrete encoding the "skipped is not
   passed" rule demands: a fan-in that checks only for `failure` lets a
   skipped required gate slip through as a pass.
-- **One required context per workflow, not one per repository.** A
-  fan-in job can only `needs:` jobs in its own workflow, so a scan
-  isolated for its elevated scope cannot join the main one. It then
-  either gates nothing, or takes its own per-job entry in branch
-  protection — and a per-job list is exactly what the fan-in rule
-  exists to avoid, because it goes stale silently the moment a job is
-  added. Give the isolated workflow its own fan-in over its matrix, and
-  require that. One context per workflow is the price of the isolation
-- **A fan-in over a code-scanning matrix gates on the analysis having
-  run, not on the code being clean.** The analysis succeeds and uploads
-  its alerts; blocking a merge on those alerts is a separate platform
-  control. Conflating the two produces a required check that looks
-  stricter than it is
 
   ```yaml
   gate:
@@ -143,6 +130,19 @@ gate categories to GitHub Actions workflows and GitHub-native features.
             fi
           done
   ```
+- **One required context per workflow, not one per repository.** A
+  fan-in job can only `needs:` jobs in its own workflow, so a scan
+  isolated for its elevated scope cannot join the main one. It then
+  either gates nothing, or takes its own per-job entry in branch
+  protection — and a per-job list is exactly what the fan-in rule
+  exists to avoid, because it goes stale silently the moment a job is
+  added. Give the isolated workflow its own fan-in over its matrix, and
+  require that. One context per workflow is the price of the isolation
+- **A fan-in over a code-scanning matrix gates on the analysis having
+  run, not on the code being clean.** The analysis succeeds and uploads
+  its alerts; blocking a merge on those alerts is a separate platform
+  control. Conflating the two produces a required check that looks
+  stricter than it is
 
 ---
 
