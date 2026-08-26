@@ -3220,6 +3220,67 @@ output:
 
 ---
 
+## Prove a whole-tree rewrite preserved meaning with an AST comparison
+[ID: testing-ast-equivalence]
+
+The sibling of `testing-characterization-fingerprint`: the fingerprint
+proves a *refactor* preserved output, this proves a *rewrite* preserved
+meaning. Adopting an auto-formatter across an existing tree rewrites
+almost every file, and the reviewer's question is always whether any of
+it is a behaviour change. The output fingerprint does not answer it
+directly — the output is unchanged only if you already believe the
+rewrite was mechanical, which is the thing in question.
+
+Compare syntax trees rather than output. Every mainstream language
+exposes them: Python `ast.parse` / `ast.dump`, Go `go/parser` with
+`go/ast`, TypeScript through the compiler API, Java `JavaParser`.
+
+```python
+import ast
+import pathlib
+import sys
+
+
+def fingerprint(path):
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+
+    # State the normalisation, because it is what makes the comparison
+    # sound. Collapsing whitespace inside string constants is right for
+    # a formatter, which re-indents docstring bodies, and wrong for a
+    # refactor that may legitimately change a literal.
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            node.value = " ".join(node.value.split())
+
+    return ast.dump(tree)
+
+
+before, after = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+names = sorted(p.relative_to(after).as_posix() for p in after.rglob("*.py"))
+differs = [n for n in names if fingerprint(before / n) != fingerprint(after / n)]
+
+print(f"{len(names)} file(s) compared, {len(differs)} with a changed tree")
+
+for name in differs:
+    print(f"  {name}")
+```
+
+- The compared count MUST equal the number of files the rewrite touched.
+  A short or zero count means the traversal missed the tree, not that the
+  rewrite was clean
+- Every reported file MUST be inspected by hand and accounted for. That
+  list is the whole value: it turns "trust the formatter" into an
+  exhaustive statement of what changed semantically. One adoption
+  rewrote 53 of 56 files and reported a single differing tree, which had
+  lost a redundant `u""` prefix the language ignores
+- The comparison is only sound if the normalisation is stated. Name it
+  beside the run, so a reader can see which differences were declared
+  invisible before the result was read
+- Where the adoption is recorded as a decision, the record cites this
+  comparison rather than an assurance that the tool is safe
+
+---
+
 ## Serve the real app in-process on an ephemeral port
 [ID: testing-in-process-server]
 
