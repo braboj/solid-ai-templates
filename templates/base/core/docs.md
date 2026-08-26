@@ -229,15 +229,23 @@ superseded_by: []         # ids that supersede this ADR
 - `supersedes` and `superseded_by` MUST both be present even when
   empty, so a reader never has to tell absent from empty
 - Check — every ADR parses and satisfies the schema. Pass condition:
-  the command prints nothing. Run it after adding or superseding an
-  ADR, and wire it into CI beside the other document gates:
+  the command reports how many records it inspected and prints nothing
+  after that. A count of zero is a failure, not a clean folder: the glob
+  selects on a numeric prefix, so moving the directory or changing the
+  numbering convention reduces it to no matches while it keeps reporting
+  success. Run it after adding or superseding an ADR, and wire it into
+  CI beside the other document gates:
 
   ```bash
   py - <<'EOF'
 import pathlib
 KEYS = ("id", "status", "date", "category", "supersedes", "superseded_by")
 STATUS = ("Proposed", "Accepted", "Superseded")
-for f in sorted(pathlib.Path("docs/decisions").glob("[0-9][0-9][0-9]-*.md")):
+records = sorted(pathlib.Path("docs/decisions").glob("[0-9][0-9][0-9]-*.md"))
+print("decision records inspected: %d" % len(records))
+if not records:
+    print("no decision records found; the naming convention drifted")
+for f in records:
     lines = f.read_text(encoding="utf-8").splitlines()
     fm = {}
     if lines and lines[0].strip() == "---":
@@ -397,6 +405,7 @@ for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
     found = HEADING.match(line)
     if found:
         entries.append((number, found.group(1)))
+print("session entries inspected: %d" % len(entries))
 if not entries:
     print("%s: no session entries found; check the heading format" % path)
 for (before_n, before_d), (after_n, after_d) in zip(entries, entries[1:]):
@@ -406,9 +415,10 @@ for (before_n, before_d), (after_n, after_d) in zip(entries, entries[1:]):
   EOF
   ```
 
-  Pass condition: the command prints nothing. It reports an empty
-  result as a failure too, since no entries found means the heading
-  format drifted rather than the file being in order
+  Pass condition: the command reports how many entries it inspected and
+  prints nothing after that. It reports an empty result as a failure
+  too, since no entries found means the heading format drifted rather
+  than the file being in order
 
 ### Post-mortems
 
@@ -449,9 +459,11 @@ is incomplete.
   signature of an unwritten rule: it looks healthy and decays at the
   edges with nothing to notice
 - Check — the command reads the configured width rather than assuming
-  one, and prints nothing. A project with no width configured fails it,
-  because an unstated width is the defect and not a gap to fill with a
-  default:
+  one, reports how many files it inspected, and prints nothing after
+  that. A project with no width configured fails it, because an unstated
+  width is the defect and not a gap to fill with a default. A count of
+  zero is a failure too: the enumeration reads the index, so a document
+  that is not staged yet is invisible to it:
 
   ```bash
   py - <<'EOF'
@@ -496,6 +508,12 @@ def is_directive(text):
 
 tracked = subprocess.run(["git", "ls-files", "*.md"], capture_output=True,
                          text=True).stdout.split()
+# git ls-files reads the index, so a document not yet staged is invisible
+# here and the assertion passes having never seen it.
+print("markdown files inspected: %d" % len(tracked))
+if not tracked:
+    print("no tracked Markdown found; the enumeration is broken, "
+          "not the tree clean")
 for name in tracked:
     fenced = False
     for number, line in enumerate(
