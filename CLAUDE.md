@@ -254,10 +254,12 @@ base/ ──┬── frontend/ ──┐
   consequences
 - Each ADR addresses exactly one concern — a separate concern gets
   its own ADR (multi-part decisions allowed within one concern)
-- ADRs are immutable once merged — create a new ADR to supersede
-  an old one. The ONE exception: `superseded_by` / `status` /
-  `date` frontmatter fields on a previously-merged ADR MAY be
-  updated when a new ADR supersedes it
+- What is immutable in a merged ADR is the decision — the claims
+  made in Context, Decision, Alternatives considered and
+  Consequences. Changing one requires a new ADR. Supersession
+  metadata (`superseded_by` / `status` / `date`) and format-only
+  edits that move no claim are both permitted; see `base-docs`
+  Decision logs for the test and the evidence it requires
 - ADR schema is governed by ADR-010 — YAML frontmatter required
   (`id` as quoted string, `status` in {Proposed, Accepted,
   Superseded}, `date` YYYY-MM-DD, `category` in {composition,
