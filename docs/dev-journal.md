@@ -3647,3 +3647,80 @@ release it describes.
 
 **Issues opened:** #1147, for the two community health files this
 repository now owes itself.
+
+---
+
+## 2026-08-26 -- What a passing test proves
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Cut C shipped as v2.55.0 -- 8 issues, 7 pull requests, all in
+`base/core/testing.md` apart from one bullet in `base/core/git.md`.**
+The eight had one shape between them: the suite is green and the
+evidence is about something other than the claim. A round trip through
+your own codec proves the encoder and decoder agree. A check phrased
+against a type identity tests the runtime. A fault the platform never
+raises is a fault the suite never sees. A value the environment already
+supplies passes before and after the fix. An invariant with no check
+looks identical to one that holds.
+
+**Every check was extracted from the committed file and run, and every
+negative control was proven applied before it was trusted.** The
+per-test resource grep reported 784 files inspected here with no hits,
+then reported a seeded `type(self).port_counter += 1` read back from
+disk. The autouse leak fixture was run under pytest against a thread
+that outlives its test: the leaking test's own body passed -- `2 passed,
+1 error` -- which is the shape the guard converts into a named culprit.
+The AST comparison was run against a real `ruff format` over this
+repository's `tools/`, which rewrote all three files and left all three
+trees identical.
+
+**One control existed to prove the normalisation was not decorative.**
+The AST comparison declares that it collapses whitespace inside string
+constants, and a rule that declares a normalisation is only as sound as
+the normalisation actually doing something. Re-indenting a docstring by
+eight spaces left the bytes different and the trees equal. Dropping a
+`not` from `resolve.py` was reported against that file. Three runs, and
+each answers a different question about the same command.
+
+**A negative control refused to apply itself, which is the whole point
+of asserting on the anchor.** The first attempt at the semantic break
+searched for `if not path.exists():`, which is not in `resolve.py`. The
+assertion stopped rather than seeding nothing and reporting a clean
+comparison -- the exact failure the step exists to catch, met on the
+first use.
+
+**The issue's premise about the linter did not survive measurement, so
+the rule states what the tool does.** #1076 held that ruff never asks
+whether an `__all__` entry resolves. It does: `F822` exists for
+precisely that, and reports an undefined entry in a plain module. It is
+silent in `__init__.py`, where a package's export list actually lives,
+because it cannot see names bound through submodules and declines to
+guess. On a package re-exporting one name from a submodule and
+advertising one that does not exist, `--select F822` returned "All
+checks passed!" and the guard returned `['Missing']`. Written as filed,
+the rule would have been enforced against a claim that is false half the
+time; written from the measurement, it also tells a reader when the
+guard is redundant -- Rust `pub use` and Go's capitalised identifiers
+put the export where the compiler sees it.
+
+**Two issues shipped as one pull request because they are the same
+mistake.** #1009 and #1011 were filed separately, and #1011 says so in
+its own body: both assert against your own environment instead of
+against an external definition. They read as one section with one
+opening paragraph, and would have read as two unrelated rules apart.
+
+**Template feedback:** all reusable, nothing project-specific.
+`base-testing` and `base-git` are both core tier, so all eight rules
+reach 17/17 chains.
+
+**Releases:** v2.55.0 -- What a passing test proves, 8 issues, 7 pull
+requests. The tag names 4cf8e60, the release commit, so this entry sits
+outside the release it describes.
+
+**PRs merged:** #1151, #1152, #1153, #1154, #1155, #1156, #1157
+
+**Issues closed:** #1009, #1010, #1011, #1013, #1019, #1027, #1047,
+#1076
+
+**Issues opened:** none.
