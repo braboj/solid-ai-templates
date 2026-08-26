@@ -2448,6 +2448,19 @@ Python-only. Coverage is the part no failing test reports.
   shrinks unexpectedly. "Every committed export was taken at the documented
   scale" also passes when a source is deleted, because there is then less
   to measure
+- The coverage assertion SHOULD be its own test with its own message,
+  rather than a guard clause inside the property test. "The enumeration is
+  broken" and "a file violates the rule" are different failures wanting
+  different fixes, and a single test reports whichever fires as the same
+  red
+- Where the corpus has a known floor, assert the floor rather than mere
+  non-emptiness. A set that should hold nineteen members and holds one
+  passes a non-empty check while measuring almost nothing
+- Expect the enumeration to break in ways the assertion cannot see. A
+  pattern anchored at the start of a line matches nothing where the lines
+  are indented, as commands inside a block are; an enumeration that reads
+  the index rather than the working tree cannot see a file that is not
+  staged yet. In both the assertion is correct and proves nothing
 - Where a project wants this enforced rather than reviewed, the pattern is
   the meta-test in `testing-ast-contract` — assert over the enumeration
   itself, not only over its findings
