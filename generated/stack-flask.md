@@ -960,6 +960,13 @@ When NOT to close-and-resubmit:
      trigger is irreversible in a way the other pre-release checks are
      not: a tag on a public repository cannot be taken back cleanly, so
      the first execution MUST NOT be the one that ships
+  7. Decide the order against every other pull request that is ready —
+     the check is below. A release record describes the tree as of the
+     release commit; anything merged between that commit and the tag
+     ships inside the release with no entry naming it. Either merge what
+     is ready before cutting the release branch, or hold it until the
+     tag is pushed, but choose — the default is whichever happens to
+     land first
 
 The check for step 4, run from the repository root. It is left flush with
 the margin rather than indented under the step: a renderer strips a fenced
@@ -1018,7 +1025,7 @@ reading whichever run finished last — a repository with more than one
 workflow answers a different question otherwise.
 
 ```bash
-gh run list --workflow <release-workflow-file> --json databaseId,conclusion   --limit 100 --jq 'length'
+gh run list --workflow <release-workflow>.yml --limit 100 --json databaseId --jq 'length'
 ```
 
 Pass condition: the command prints how many runs it found, capped by
@@ -1029,34 +1036,59 @@ own, and it means the tag about to be pushed is the workflow's first
 execution and step 6 applies. An error naming an unknown workflow means
 the filename drifted, which is a failure rather than an absence of runs.
 
+The check for step 7, run from the release commit before the tag is
+pushed. Nothing else reports this: both pull requests are green, both are
+mergeable in either order, and on a repository whose protection does not
+require branches be up to date neither goes stale when the other lands.
+The post-release check does not reach it either — it compares the manifest
+version against the tag, which agrees in both orderings.
+
+```bash
+previous=$(git describe --tags --abbrev=0)
+echo "preceding tag: $previous"
+git log --format='  carries: %s' "$previous..HEAD"
+echo "commits carried: $(git log --format='%s' "$previous..HEAD" | wc -l)"
+ready='select(.mergeStateStatus=="CLEAN")'
+fmt='"  ready but unmerged: #\(.number) \(.title)"'
+gh pr list --state open --json number,title,mergeStateStatus --jq ".[] | $ready | $fmt"
+```
+
+Pass condition: the command names the preceding tag, lists every commit
+the release will carry with a count of them, and lists every open pull
+request that is ready to merge. Each carried commit MUST have an entry in
+the release record. Each pull request listed as ready is a decision, not a
+warning — merge it into this release and record it, or hold it until the
+tag is pushed. A carried count of zero is a failure rather than a clean
+result: it means the tag would land on the same commit as its predecessor.
+
 ### Projects with a version manifest
-  7. `git checkout -b chore/release-vX.Y.Z`
-  8. Bump version in the project manifest (`package.json`,
+  8. `git checkout -b chore/release-vX.Y.Z`
+  9. Bump version in the project manifest (`package.json`,
      `pyproject.toml`, `Cargo.toml`, or equivalent) to `X.Y.Z`
-  9. `git commit -m "chore: release vX.Y.Z"`
-  10. Push, open PR, merge
-  11. `git checkout main && git pull`
-  12. `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
+  10. `git commit -m "chore: release vX.Y.Z"`
+  11. Push, open PR, merge
+  12. `git checkout main && git pull`
+  13. `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
      — release tags MUST be annotated (`-a`/`-s`); a lightweight
      `git tag vX.Y.Z` is invisible to `git describe`, which reports
      a stale version to submodule/`describe` consumers
-  13. SHOULD create a GitHub Release from the tag:
+  14. SHOULD create a GitHub Release from the tag:
       `gh release create vX.Y.Z --title "vX.Y.Z" --generate-notes`
       — a pushed tag alone does NOT create a Releases page entry.
 
 ### Post-release verification
-  14. Verify the manifest version matches the tag — e.g.
+  15. Verify the manifest version matches the tag — e.g.
       `grep '"version"' package.json` matches `git describe --tags`
-  15. A mismatch means the bump was missed or the wrong commit was
+  16. A mismatch means the bump was missed or the wrong commit was
       tagged — fix before announcing the release
 
 ### Projects without a version manifest (no-build)
-  7. `git checkout main && git pull`
-  8. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
+  8. `git checkout main && git pull`
+  9. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
      — the `-a` is mandatory: a lightweight `git tag` is skipped by
      `git describe`, so consumers report a stale version
-  9. `git push origin vX.Y.Z`
-  10. Create a GitHub Release with auto-generated notes:
+  10. `git push origin vX.Y.Z`
+  11. Create a GitHub Release with auto-generated notes:
      `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>"
      --generate-notes`
 
