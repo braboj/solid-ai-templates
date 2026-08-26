@@ -4964,6 +4964,17 @@ paths.
 - A staleness gate that is never run on the relevant paths is the
   gate-by-omission anti-pattern named in `quality-gates-scope-agreement`
   — passing-because-skipped is not passing
+- "The relevant paths" are three input classes, and the filter MUST
+  enumerate all of them: the generator or source code, any source assets
+  the render consumes (images, schemas, fixtures), and the committed
+  artifacts themselves. A hand-edit or an incomplete regeneration is
+  drift the gate exists to catch, and it lives in the artifact rather
+  than the generator. This is the enumerate-every-input rule from
+  `quality-gates-scope-agreement`, stated where a staleness filter is
+  actually written
+- A filter scoped to the generator alone is the common shape of that
+  mistake, because the issue asking for the gate usually names the
+  generator's path and a straight reading stops there
 - The gate MUST fail when the committed artifact differs from a fresh
   render, exactly as it fails on lint or type errors
 
