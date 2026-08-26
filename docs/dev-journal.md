@@ -3085,3 +3085,80 @@ found for it before a tag.
 **Issues opened:** #1082 -- split from #1054 rather than carried along,
 since a readability bound is a separate rule and only became actionable
 once fixing an unreadable passage stopped requiring a supersession.
+
+## 2026-08-26 — Check integrity (evening)
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**A rule that requires a check is not the same as a rule that requires
+the check to work** (#1086). The pairing rule has always demanded that a
+mechanically checkable constraint name its command and pass condition.
+It said nothing about whether that command runs, reaches its inputs, or
+flags the right things -- and five checks written against it in v2.46
+shipped three broken on the first attempt. The four observed failure
+modes are now rules, and the first of them is itself checked: every
+check embedded in a rule file must compile when extracted the way a
+reader extracts it.
+
+**The gate rejected its own author, twice over.** The release-milestone
+check in #1094 was first written indented five spaces under a numbered
+step. A renderer strips a fenced block's own indentation from every line
+that has it, so a four-space nested line became three-space and the
+extracted body raised `IndentationError`. The compile gate from #1088
+named the file and line before the branch was pushed. That was a fifth
+break mode none of the four in #1086 covered, so it landed as a rule in
+the same section: never indent a fenced check more deeply than the first
+indentation level of the code inside it. Writing the anchor rule had
+already turned up the same shape in its own prose -- a heredoc opener
+written inline in a bullet, read as a check by a naive extractor, which
+is #979 wearing different clothes.
+
+**Three things reported nothing because they reached nothing, in one
+session.** A negative control that silently matched nothing and
+therefore tested nothing. A reach measurement that counted 75 "stacks"
+by splitting `--list` description text on whitespace, when there are 17.
+An assertion expecting 11 renumbered ordinals where there were 13, which
+fired before the write and left the file untouched. Every one was caught
+by counting inputs rather than by reading output -- which is the rule
+this whole cut is built around, arriving unprompted three times while
+the cut was being written.
+
+**Grooming before writing changed two of six issues.** #832 reads as a
+missing cross-reference; the section already cross-references the right
+neighbouring rule, just for a different reason, so it needed two bullets
+rather than a rewrite. #1014 argues its case by quoting "every rule
+binds new and modified code, not untouched code" as an existing rule --
+`grep` finds nothing like it in this chain, because it belongs to the
+downstream project the issue was written from. Both were still worth
+doing. Neither was quite the work the issue described.
+
+**The wrong side of a relation passes green.** The release gate confirmed
+a milestone's issues were all closed, which cannot see work merged with
+no milestone at all -- so three consecutive cuts needed a milestone found
+for already-merged work before a tag could be cut, each caught by a
+person reading the log. The inverse check now enumerates the pull
+requests merged since the previous tag and reports any whose closed
+issues carry no milestone. Its negative control was a planted violation:
+a milestone removed from one closed issue, the check naming it, the
+milestone restored. It validated this session's own cut before the tag.
+
+**Template feedback:** all of it is reusable and landed upstream --
+`quality-gates-check-runs`, `quality-gates-check-selection` and
+`quality-gates-retrofit-ratchet` in `base/workflow/quality-gates.md`,
+`testing-negative-assertion-coverage` in `base/core/testing.md`, and the
+pre-release step in `base/core/git.md`. The only project-specific piece
+is the `docs/PLAYBOOK.md` step that applies the release check here.
+
+**Releases:** v2.47.0 (ADR immutability -- a milestone created for the
+four commits that had been sitting on main unmilestoned) and v2.48.0
+(Check integrity, 12 issues, 8 PRs).
+
+**PRs merged:** #1088, #1089, #1090, #1091, #1092, #1093, #1094, #1095
+
+**Issues closed:** #832, #1005, #1014, #1024, #1026, #1028, #1031,
+#1037, #1044, #1046, #1086, #1087
+
+**Issues opened:** #1087 -- filed mid-session after the third
+consecutive milestone-at-tag-time scramble, and closed in the same cut,
+since the fix is one pre-release step and the evidence was already three
+releases deep.
