@@ -86,6 +86,34 @@
 
 ### Verifying regenerated artifacts
 
+Regenerating is owed by the edit, not by the review. Every rule below
+inspects output that already exists, and none of them fires if the
+regeneration never ran.
+
+- MUST regenerate the artifact and stage both together in the change
+  that edits a source. Where an artifact is derived from sources under
+  version control, a test suite that does not read the artifact passes
+  on a stale one — so local green is not evidence the artifact is
+  current, and the first signal is whichever CI step compares the two,
+  after the branch is pushed and the author has moved on
+- MUST name the regeneration trigger beside the sources it derives from,
+  so an author editing a source meets the obligation without having to
+  know the build graph
+- MUST run the staleness comparison AFTER the edit. Run before it, the
+  comparison reports the previous state and reads as a pass — the same
+  class of error as writing a check and never running it:
+
+```bash
+<regenerate-command>
+git diff --stat -- <artifact-path>
+```
+
+  Pass condition: empty. Any output means the committed artifact does not
+  match what its sources produce, and the regeneration is part of this
+  change rather than a follow-up. A regenerator that is not idempotent
+  fails this against an already-current artifact, which is a defect in the
+  generator rather than in the change under review
+
 After regenerating derived artifacts and before staging them, verify
 the diff is real and the output is correct.
 
