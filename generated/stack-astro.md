@@ -4084,6 +4084,48 @@ means the extraction pattern drifted rather than the files being clean.
 
 ---
 
+## A check selects its subject, and the subject can move
+
+[ID: quality-gates-check-selection]
+
+A check can run, exit zero and report on the wrong thing. Two ways: it
+picks an arbitrary member of a set it assumed had one element, or it
+filters on a property that the violation itself changes. Both degrade
+silently, and in both the change that breaks the check lives in a
+different file and touches neither the rule nor the command, so no
+reviewer of that change has reason to look.
+
+- A check MUST select its subject, not a count or a position. Selecting
+  "the latest", "the most recent", the first line or index zero is correct
+  only while exactly one instance of the thing exists. Derive the selector
+  from what is under test — the commit, the ref, the artifact name — never
+  from ordering
+- A check MUST NOT filter on a property that the violation it detects can
+  change. Where a tool classifies artifacts (text or binary, tracked or
+  ignored, parseable or not) and the check selects on that classification,
+  state what a violating artifact's classification becomes, and add a
+  second command covering the reclassified case with its own pass condition
+- A check that has never failed, on a rule that was never enforced, MUST be
+  treated as blind until a planted violation makes it fail (see
+  `quality-gates-check-runs`). This is the only evidence that separates a
+  satisfied check from one whose filter no longer matches anything
+
+Selecting a CI run by recency is correct until a second workflow is added
+for an unrelated reason, after which the check reports whichever finished
+last and hides the other — a contributor can read a green scan and call a
+red build good. Selecting it by the commit under review stays correct at
+one workflow or five.
+
+A line-ending gate that counts index entries classified as CRLF has the
+sharper version of the problem. A file that acquires a NUL byte is
+reclassified as binary, which stops it being normalised — the violation —
+and simultaneously stops it matching the gate's own filter. The count
+stays at zero for exactly as long as the defect is present, and starts
+failing only once someone fixes it. The second command covers the
+reclassified population, excluding the paths that are legitimately binary.
+
+---
+
 ## Convention-as-test
 
 [ID: quality-gates-convention-as-test]
