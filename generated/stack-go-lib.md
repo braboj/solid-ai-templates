@@ -646,6 +646,17 @@ for name in tracked:
   `templates/base/core/review.md` priority order: security → correctness →
   clarity →
   conventions. Check CI passes. Only merge after the review passes.
+- **Re-run the verification a pull request body claims, rather than
+  reading it, whenever the base has advanced since the body was
+  written.** A well-written body carries evidence — a grep that found no
+  surviving references, a count, a command whose output justified the
+  change. That evidence is scoped to the base it was produced against,
+  and a commit landing afterwards can falsify it without producing a
+  conflict, a failing check, or any other signal: the merge is clean, the
+  checks pass against the merge commit, and the body still reads as
+  verified. It matters most for a change that proves an ABSENCE — a
+  deleted file, a removed reference, a retired flag — where the later
+  commit reintroduces the very thing the body proved gone
 - **Before pushing or creating a PR**, check `git status` and list open PRs.
   If the previous PR is closed or merged, create a new branch rather than
   pushing to a stale one.
@@ -754,6 +765,14 @@ branch" nor "Merging a stack" explains it.
 - SHOULD budget one update-plus-CI cycle per PR after the first. A
   batch of N ready PRs is N merges and N-1 update cycles, which is
   what makes merging a batch cost more than its diffs suggest
+- SHOULD read a green check as naming the base it ran against. The
+  paragraph above explains why the refusal is not a conflict, which
+  makes the cycle read as bookkeeping — true only while the members are
+  disjoint. Where two of them touch the same file, each carries checks
+  measured against a base the other had not landed on, and the update
+  cycle is the first and only execution of the combined result. A
+  mergeable status asserts that the texts combine without conflict; it
+  is not a claim that the combination passes
 
 ### Ordered documents merge cleanly and still collide
 
