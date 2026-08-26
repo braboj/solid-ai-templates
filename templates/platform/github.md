@@ -22,7 +22,9 @@ gate categories to GitHub Actions workflows and GitHub-native features.
   can do real damage; a read-only default contains it. Keep a scan that
   needs an elevated scope in its OWN workflow — SAST that writes
   findings needs `security-events: write`, and isolating it means that
-  scope never rides along with the main CI jobs. Prefer pipeline-as-code
+  scope never rides along with the main CI jobs. An isolated workflow
+  MUST then carry its own fan-in job, for the same reason the main one
+  does; see "Fan out one gate per job". Prefer pipeline-as-code
   (a committed workflow file) over a platform default-setup toggle, so
   the scoped permission is reviewed and version-controlled.
 
@@ -107,12 +109,25 @@ gate categories to GitHub Actions workflows and GitHub-native features.
 - **Fan out one gate per job, fan in a single required check.** Run
   each quality gate as its own job (lint, type-check, test, build, e2e,
   scan) so each fails fast and reports independently, then make ONE
-  `gate` job the sole required branch-protection context. The `gate`
+  `gate` job the required branch-protection context. The `gate`
   job runs `if: always()` and fails unless EVERY upstream result is
   exactly `success` — treating `skipped` and `cancelled` as failure,
   not just `failure`. This is the concrete encoding the "skipped is not
   passed" rule demands: a fan-in that checks only for `failure` lets a
   skipped required gate slip through as a pass.
+- **One required context per workflow, not one per repository.** A
+  fan-in job can only `needs:` jobs in its own workflow, so a scan
+  isolated for its elevated scope cannot join the main one. It then
+  either gates nothing, or takes its own per-job entry in branch
+  protection — and a per-job list is exactly what the fan-in rule
+  exists to avoid, because it goes stale silently the moment a job is
+  added. Give the isolated workflow its own fan-in over its matrix, and
+  require that. One context per workflow is the price of the isolation
+- **A fan-in over a code-scanning matrix gates on the analysis having
+  run, not on the code being clean.** The analysis succeeds and uploads
+  its alerts; blocking a merge on those alerts is a separate platform
+  control. Conflating the two produces a required check that looks
+  stricter than it is
 
   ```yaml
   gate:
@@ -349,7 +364,10 @@ failure modes and MUST be configured as a separate job:
 **Aggregator timing:** when branch protection requires an aggregator
 `gate` job that runs after its sub-checks, a merge issued in the gap
 returns `the base branch policy prohibits the merge`. Merge waiters
-MUST target the aggregator job by name, not the individual sub-checks.
+MUST target the aggregator job by name, not the individual sub-checks —
+and MUST target every one of them where an isolated scan workflow
+carries its own. Waiting on one aggregator while a second is still
+pending reproduces the same refusal from a state that reads as ready.
 
 ---
 
