@@ -371,14 +371,23 @@ Release — there is no `chore: release` branch, commit, or PR.
    carries the milestone being released. Step 1 reads the milestone
    and cannot see work merged without one. Run the pre-release check
    in `templates/base/core/git.md`
-3. Create and push the tag **annotated** — `tag-guard.yml` fails a
+3. Confirm nothing else is ready to merge, or decide which side of the
+   tag it lands on. Run the ordering check in
+   `templates/base/core/git.md` — anything merged between the release
+   commit and the tag ships inside the release with no note naming it,
+   and both pull requests stay green in either order
+4. Create and push the tag **annotated**, naming the commit it belongs
+   to rather than whatever `main` points at — `tag-guard.yml` fails a
    pushed lightweight `v*` tag, and `gh release create` makes a
    lightweight one when the tag does not already exist:
    ```bash
-   git tag -a vA.B.C -m "vA.B.C — <milestone theme>"
+   git tag -a vA.B.C <release-commit> -m "vA.B.C — <milestone theme>"
    git push origin vA.B.C
    ```
-4. Cut the release from the existing tag with a bare-version title and
+   Naming the commit is what keeps the journal step below true. Tagging
+   `main` puts a journal or unrelated pull request merged in between
+   inside the release, and nothing reports it
+5. Cut the release from the existing tag with a bare-version title and
    auto-generated notes:
    ```bash
    gh release create vA.B.C --verify-tag --title vA.B.C --generate-notes
@@ -386,8 +395,8 @@ Release — there is no `chore: release` branch, commit, or PR.
    `--verify-tag` aborts rather than creating the tag, so the release
    can only ever attach to the annotated tag pushed in step 3. Notes
    are built from the PRs merged since the previous tag
-5. Close the `vA.B.C` milestone once the release is published
-6. Add the session's `docs/dev-journal.md` entry **separately** — its
+6. Close the `vA.B.C` milestone once the release is published
+7. Add the session's `docs/dev-journal.md` entry **separately** — its
    own `docs(journal): ...` PR with **no milestone**, not part of the
    release
 

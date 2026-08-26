@@ -359,6 +359,8 @@ Run `py tests/run_smoke.py` before every PR. It checks:
 ### 6.2 During the session
 
 - Run `py tests/run_smoke.py` after any template or manifest change
+- Run `py tools/sync.py` after any template edit — smoke does not
+  read `generated/`, so a stale pre-resolved chain surfaces only in CI
 - If a change affects multiple documents, update all in the same PR
 - Do not drift from the agreed scope without checking with the user
 - When a path-based shell query (`test -f`, `ls`, `git -C <path>`,
