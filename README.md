@@ -17,17 +17,14 @@ conventions once — base rules, stack rules, company rules — and feed
 them to every agent on every project. Tax paid. Move on.
 
 Back to the work that actually moves the product. The spikes, the design
-conversations, the reviews that catch bugs instead of style nits. That's
-what your team's time is for.
+conversations, the reviews that catch bugs instead of churning style nits.
 
 ## What it does
 
 - Build `CLAUDE.md` or `AGENTS.md` from reusable layers — base, backend/frontend, stack
 - Fork and extend — layer your team's conventions on top of the base without modifying it
-- Output `CLAUDE.md` for Claude Code or `AGENTS.md` for Cursor, Copilot, Codex CLI
 - Codify industry standards — 12-factor app, OWASP, SOLID, SemVer, conventional commits
-- Run a 360-degree project assessment across four perspectives
-- Enforce standardized issue labels, quality gates, and review processes
+- Assemble templates you need, override if needed or create new ones
 
 ## How to use
 
