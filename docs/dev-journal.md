@@ -3497,3 +3497,74 @@ and worth knowing.
 
 **Issues opened:** none. Both issues opened during the v2.50 cut were
 closed here.
+
+## 2026-08-26 -- Label check coverage
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**A one-issue cut, and the issue was found by running a check rather than
+by reading one.** A label audit turned up nothing wrong with the labels:
+93 open issues, every one carrying exactly one type and one priority, and
+a label set matching the documented taxonomy name for name and colour for
+colour. What it turned up was that the check saying so could not tell
+that from having read nothing.
+
+**The enforcement check had the defect the whole previous cut was
+about.** `platform-github-labels` returns a JSON array of violations and
+nothing else, so `[]` is the output whether it inspected every open issue
+or none. Measured at one moment on one repository: the real run gave
+`[]`, and the same filter forced to match nothing gave `[]`. Anything
+that empties the listing -- an authentication failure, the wrong
+repository context, a renamed label in the selector -- read as full
+compliance. The check was added to stop unlabeled issues reaching the
+tracker, and it had been reporting `[]` for months with nothing
+distinguishing a healthy tracker from an unreachable one.
+
+**Its cap was silent too.** `--limit 200` against 93 open issues and 598
+ever: it has never truncated, and nothing would have reported it when it
+did. A check that bounds its own input has to say what it dropped, or the
+bound reads as coverage.
+
+**Rewriting the form fixed three things at once.** The jq one-liner could
+not carry a count and two guards without interpolating its limit into the
+jq program, so it became a Python heredoc like every other shipped check
+in the chain. That form reports the count naturally; it also joins the
+corpus the embedded-check compile gate scans, which a shell one-liner
+never did, taking that gate from nine checks to ten. And it removed one
+of the three line continuations in the template tree, leaving two -- both
+in a `curl` example where the continuation is genuinely the clearest
+form, which is the reason the continuation rule requires confirming
+survival rather than banning the construct.
+
+**The mangled backslash struck a third time, in the search string.** The
+replacement that rewrote this check would not match its own anchor,
+because the anchor contained a trailing backslash and the authoring path
+dropped it -- the same silent loss that produced the rule two cuts ago,
+now defeating the edit rather than the output. Building the character
+with `chr(92)` instead of writing it literally made the anchor match on
+the first try. The rule says confirm the continuation survived into the
+file; the corollary is that anything quoting such a line has the same
+problem.
+
+**A scope question answered in the template rather than in the issue.**
+26 closed issues carry a type label and no priority, all closed between
+18 April and 25 June, before the rule was enforced; everything closed
+since conforms. The check could be widened to cover them and would then
+produce 26 findings nobody should act on. It stays scoped to open issues,
+and the template now says why: a triage label is terminal, so a closed
+issue's labels are a record rather than a live claim.
+
+**Template feedback:** reusable, landed upstream in
+`platform/github.md`. Nothing project-specific. Note that `platform/`
+resolves into no stack chain -- it is orthogonal, chosen per project, so
+chain reach says nothing about whether it travels.
+
+**Releases:** v2.53.0 -- Label check coverage, 1 issue, 1 pull request.
+Fourth cut of the day.
+
+**PRs merged:** #1135
+
+**Issues closed:** #1134
+
+**Issues opened:** #1134, filed and closed in the same cut, since the
+evidence was one command and the fix was one check.
