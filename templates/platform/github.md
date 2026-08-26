@@ -143,6 +143,26 @@ gate categories to GitHub Actions workflows and GitHub-native features.
   its alerts; blocking a merge on those alerts is a separate platform
   control. Conflating the two produces a required check that looks
   stricter than it is
+- **Select a run by FULL commit SHA.** The abbreviated form matches no
+  run, prints an empty list and exits `0`, so a malformed query is
+  indistinguishable from a commit whose runs have not started:
+
+```bash
+gh run list --commit "$(git rev-parse HEAD)" --json workflowName,conclusion
+```
+
+  Pass condition: the command reports a row per workflow that ran on that
+  commit. An empty result means either the query was malformed or nothing
+  has run, and the command cannot tell you which — resolve that before
+  reading it either way. A poll waiting on an abbreviated SHA waits out
+  its whole budget and reports silence, which reads as a workflow that
+  never fired; a one-shot check reads as "no CI on this commit", which
+  invites calling a push good because nothing came back red
+- **Read every row.** Selecting by position — `--limit 1`, the latest, the
+  first — is correct only while exactly one workflow exists. Once a second
+  is added for an unrelated reason, a positional selector reports whichever
+  finished last and hides the other, so a green scan can stand in for a red
+  build
 
 ---
 
