@@ -660,6 +660,15 @@ for name in tracked:
 - Prefer text-based diagram formats: Mermaid for flowcharts, sequence diagrams,
   and Gantt charts; Draw.io for complex visual diagrams
 - Commit all raw editable sources alongside rendered outputs
+- An artefact committed as a hand-editable source has exactly one
+  authority. Where a generator produced it, the generator is scaffolding
+  and is NOT committed — otherwise the tree holds two authorities for one
+  artefact, whoever opens the editor and moves a box has their work
+  silently reverted by the next run, and nothing in the tree says which
+  of the two is current
+- Committing the generator instead is equally coherent, but then the
+  artefact is build output and MUST NOT be described or edited as a
+  source. Either choice is fine; having both in the tree is the defect
 - Do not use proprietary formats (Word, Illustrator, Affinity Designer)
 - Diagrams MUST be version-controlled — binary-only diagrams are not acceptable
 - Use uniform node shapes; split a diagram that serves two purposes (e.g.
@@ -882,11 +891,25 @@ independent of any website, so the domain stays freely swappable.
 
 Files committed to the repository but produced by a tool (rendered
 docs, generated configs, resolved template chains, code-from-schema
-output) rot in three predictable ways: maintainers hand-edit them,
-the source changes but the committed output is not refreshed, or a
+output) rot in four predictable ways: maintainers hand-edit them,
+the source changes but the committed output is not refreshed, a
 formatter touches the file at commit time and a later check flags
-it as stale.
+it as stale, or the output is produced with a different invocation
+than the documented one.
 
+- The fourth mode is the one that defeats review. The file is not
+  stale, not hand-edited and not reformatted — it is simply generated
+  differently, and for a visual or binary output the property that
+  differs is usually not one the artifact displays. An export committed
+  at half the documented scale renders every arrow correctly, and the
+  smaller file reads in the diffstat as a compression win, so every
+  signal available to a reviewer points the wrong way. The staleness
+  gate MUST re-render rather than rely on inspection
+- Committed diagram exports are the common instance. A rendered `.png`
+  beside its editable source is a generated file by the definition
+  above, but it reads as an asset, so a project can apply `--check`
+  faithfully to its config and schema output and never think to point
+  it at `docs/assets/`
 - Every generated file SHOULD start with a banner identifying the
   tool that produced it and the command to refresh it. Example:
 
