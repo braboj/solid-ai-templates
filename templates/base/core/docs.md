@@ -412,8 +412,15 @@ is incomplete.
   in `.editorconfig` under the Markdown section, not both. A second
   copy drifts from the first and nothing says which one won
 - The exemptions travel with the declaration. Which of fenced blocks,
-  table rows and unbreakable link targets are excused is part of the
-  configured rule, not a convention each author infers
+  table rows, headings and unbreakable link targets are excused is
+  part of the configured rule, not a convention each author infers
+- One exemption is structural rather than configured, because the
+  line cannot be wrapped at all: a bracketed single-line directive a
+  parser reads whole, such as a template's dependency header.
+  Wrapping it changes what it means, so the check skips it wherever
+  the width came from. Write such a directive's name in prose rather
+  than its bracket form -- a parser scanning for the form finds it in
+  the sentence describing it, backticks and all
 - A project that declares no width has no rule, whatever its documents
   happen to look like. Near-total compliance kept by hand is the
   signature of an unwritten rule: it looks healthy and decays at the
@@ -430,7 +437,8 @@ import json, pathlib, subprocess
 # The width and its exemptions come from project configuration, never
 # from this check. A project that declares no width fails here, because
 # an unstated width is the defect, not a default to fill in.
-width, skip_fenced, skip_tables, source = None, True, True, None
+width, source = None, None
+skip_fenced, skip_tables, skip_headings = True, True, False
 cfg = pathlib.Path(".markdownlint.json")
 if cfg.exists():
     rule = json.loads(cfg.read_text(encoding="utf-8")).get("MD013")
@@ -438,6 +446,7 @@ if cfg.exists():
         width = rule.get("line_length")
         skip_fenced = not rule.get("code_blocks", True)
         skip_tables = not rule.get("tables", True)
+        skip_headings = not rule.get("headings", True)
         source = str(cfg)
 if width is None:
     ec = pathlib.Path(".editorconfig")
@@ -454,6 +463,14 @@ if width is None:
     print("no Markdown line width is configured; declare one")
     raise SystemExit(0)
 
+
+def is_directive(text):
+    """A single-line directive a parser reads whole, such as [ID: x]."""
+    text = text.strip()
+    return (text.startswith("[") and text.endswith("]")
+            and ":" in text.split("]")[0])
+
+
 tracked = subprocess.run(["git", "ls-files", "*.md"], capture_output=True,
                          text=True).stdout.split()
 for name in tracked:
@@ -466,6 +483,10 @@ for name in tracked:
         if fenced and skip_fenced:
             continue
         if skip_tables and line.lstrip().startswith("|"):
+            continue
+        if skip_headings and line.lstrip().startswith("#"):
+            continue
+        if is_directive(line):
             continue
         if len(line) > width:
             print("%s:%d %d > %d (%s)" % (name, number, len(line), width, source))

@@ -368,7 +368,8 @@ applies — higher numbers win:
 3. **Stack template** — overrides or extends the layer or base
 4. **Interview answers** — the highest precedence; always win over any template
 
-Example: `templates/base/core/testing.md` defines the test naming convention. `templates/stack/python-fastapi.md`
+Example: `templates/base/core/testing.md` defines the test naming convention.
+`templates/stack/python-fastapi.md`
 extends it with a Python-specific pattern. The interview answer "use BDD-style
 names" overrides both. The final output uses the interview answer.
 
@@ -418,7 +419,8 @@ DEFAULTED sections are pre-filled from the selected base + stack templates.
 
 ## How an agent uses the system
 
-1. User provides `templates/INTERVIEW.md` and a stack template (e.g. `templates/stack/python-fastapi.md`)
+1. User provides `templates/INTERVIEW.md` and a stack template (e.g.
+   `templates/stack/python-fastapi.md`)
 2. Agent reads the stack template, identifies its base dependencies
 3. Agent loads the referenced base templates
 4. Agent runs the interview (REQUIRED questions only)

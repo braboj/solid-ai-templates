@@ -94,7 +94,8 @@ Then run the system end-to-end with an agent:
 
 1. Open Claude Code in any project directory
 2. Attach `templates/INTERVIEW.md` and `templates/stack/python-flask.md`
-3. Ask: "Generate a CLAUDE.md for this project using templates/base/core/agents.md format"
+3. Ask: "Generate a CLAUDE.md for this project using templates/base/core/agents.md
+   format"
 4. Review the output — this is what users get
 
 Or use the automated E2E runner:
@@ -113,7 +114,8 @@ fixing content, and submitting a PR.
 - Rules use RFC 2119 keywords: MUST, MUST NOT, SHOULD, MAY
 - Every section that another template might reference needs `[ID: ...]`
 - Stack files follow the `<prefix>-<name>.md` naming convention (see `CLAUDE.md`)
-- `templates/manifest.yaml` must be updated whenever a file is added, removed, or renamed
+- `templates/manifest.yaml` must be updated whenever a file is added, removed, or
+  renamed
 
 ## Maintainership
 

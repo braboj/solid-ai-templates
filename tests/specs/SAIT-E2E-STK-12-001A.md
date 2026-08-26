@@ -57,7 +57,8 @@ tags: [e2e, output, python, service]
 ### Assertions
 
 1. Assert `## Stack` lists Python with no web framework
-2. Assert virtual environment conventions present (venv, `requirements.txt` or `pyproject.toml`)
+2. Assert virtual environment conventions present (venv, `requirements.txt` or
+   `pyproject.toml`)
 3. Assert type hint rules present
 4. Assert Black or Ruff referenced for formatting
 5. Assert pytest referenced for testing

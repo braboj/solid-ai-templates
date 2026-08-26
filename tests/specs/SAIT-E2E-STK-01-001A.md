@@ -81,7 +81,8 @@ tags: [e2e, output, fastapi, claude-md]
 3. Assert `## Testing` references `pytest` and `pytest-asyncio`
 4. Assert `## Code conventions` includes async handler rules (from `python-fastapi.md`)
 5. Assert `## Code conventions` includes configuration rules (from `backend/config.md`)
-6. Assert `## Git conventions` includes conventional commit prefixes (from `base/git.md`)
+6. Assert `## Git conventions` includes conventional commit prefixes (from
+   `base/git.md`)
 7. Assert no identity-level placeholders remain unsubstituted (e.g.
    `[your project]`, `[owner]`, `[repo]`); note that `[feature].py` in
    architecture diagrams is an intentional naming convention, not a
