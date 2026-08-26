@@ -2930,6 +2930,39 @@ SHOULD also check:
 - No substantial duplication across sibling components — if two or more
   components share the same code, extract a shared module
 
+## Verifying a filed issue before implementing it
+
+An issue is written against the tree as it stood on the filing date. By the
+time it is picked up the tree has moved — sometimes through work that closed
+a neighbouring issue, sometimes because the rule it argues from never existed
+in this project at all. An issue describing a gap is evidence the gap existed
+when it was filed, not that it exists now.
+
+Neither shape means the issue was wrong to file. Both produce subtly wrong
+work when implemented from the text alone, and the wrongness is invisible
+afterwards: the change is coherent, the tests pass, and it addresses
+something that was not the problem.
+
+- [ ] Re-read the target file for existing coverage before writing anything.
+      A rule that landed since the filing date may already say most of it
+- [ ] Verify anything the issue cites as existing — a rule, a file, a command,
+      a behaviour. An issue written from a downstream project may quote that
+      project's rules as though they were this one's, and implementing it as
+      written cites a rule that is not there
+- [ ] Run what the issue proposes against the tree before adopting it. A
+      proposed constraint that would flag working code is a wrong rule, not
+      an under-enforced one
+- [ ] Restate the scope before starting if it moved. Narrower than filed
+      finishes sooner; wider needs saying before the work rather than after
+
+Three shapes, all of which change what gets built:
+
+| Shape | What it looks like |
+|-------|--------------------|
+| Narrower than filed | The section already covers most of it; the work is two bullets, not a rewrite |
+| Wider than filed | The defect the issue names is present in two siblings it does not mention |
+| Wrong as filed | The rule it proposes, run against the tree, flags code that is correct |
+
 ## Verifying a finding before reporting it
 
 A finding is a hypothesis until it is demonstrated. Reporting a hypothesis as
