@@ -431,6 +431,51 @@ later rereads it.
 
 ---
 
+## Allocate a per-test resource outside the class hierarchy
+[ID: testing-unique-resource-allocation]
+
+A test base class that hands out a unique resource from a class
+attribute stops handing out unique values the moment it is subclassed.
+
+```python
+class ServerFixture(unittest.TestCase):
+    port_counter = 20200
+
+    def setUp(self):
+        # Reads the inherited value and writes the result as a NEW
+        # attribute on the subclass, so the sequence restarts per
+        # subclass rather than continuing.
+        type(self).port_counter += 1
+        self.port = type(self).port_counter
+```
+
+Every subclass starts from the same base number and issues the same
+sequence, so three test classes all bind 20201, 20202, 20203 — while the
+code reads as though there is one counter.
+
+- A unique per-test resource — a port, a temporary directory, a database
+  name, a queue — MUST come from a module-level counter or a fixture,
+  never from a counter on a class other tests inherit
+- The collision is invisible where the resource is released promptly and
+  fatal where it lingers, so it is a platform difference like any other
+  (`testing-platform-fault-injection`). In the reporting project it
+  produced a ten-minute CI hang rather than a visible failure: the second
+  bind failed inside a worker thread and the caller was waiting on it
+  with no timeout
+- Check that no test allocates through the subclass, reporting the files
+  reached as well as the hits:
+
+  ```bash
+  grep -rcE 'type[(]self[)][.][A-Za-z_]* *[+]=' tests/ | wc -l
+  grep -rnE 'type[(]self[)][.][A-Za-z_]* *[+]=' tests/
+  ```
+
+  The first line counts the files inspected and MUST be non-zero; the
+  second MUST print nothing. A zero count means the path is wrong, not
+  that the suite is clean
+
+---
+
 ## Verify a visual change against the render
 [ID: testing-verify-the-render]
 
