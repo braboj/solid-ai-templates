@@ -444,37 +444,46 @@ maintainer time on phantom fixes.
 ## Code style
 
 - Encode every committed file in UTF-8
-- Source code content MUST be restricted to ASCII. A non-ASCII
-  character in an identifier, string literal or comment is a hazard
-  rather than a style question: it can be invisible in a diff,
-  unreachable from a keyboard, confusable with the ASCII character it
-  resembles, and it breaks on any console whose encoding is not UTF-8.
-  Check — the command prints nothing:
+- Identifiers MUST be ASCII. A name is typed, searched and compared,
+  so a character unreachable from a keyboard or confusable with the
+  ASCII it resembles turns all three into guesswork — a Cyrillic `а`
+  in a variable name reads as Latin `a` and matches nothing. The
+  check is language-specific, because only a tokenizer can tell an
+  identifier from the prose around it. The Python one, which prints
+  nothing when clean:
 
   ```bash
   py - <<'EOF'
-import pathlib, subprocess
-EXT = (".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs", ".java",
-       ".c", ".h", ".cpp", ".cs", ".rb", ".php", ".sh")
-tracked = subprocess.run(["git", "ls-files"], capture_output=True,
+import io, subprocess, token, tokenize
+
+# Identifiers only. Comments, docstrings and string content are
+# documentation and carry no charset restriction.
+tracked = subprocess.run(["git", "ls-files", "*.py"], capture_output=True,
                          text=True).stdout.split()
 for name in tracked:
-    if not name.endswith(EXT):
-        continue
-    text = pathlib.Path(name).read_text(encoding="utf-8")
-    for number, line in enumerate(text.splitlines(), 1):
-        found = sorted({ord(c) for c in line if ord(c) > 127})
-        if found:
-            codes = " ".join("U+%04X" % c for c in found)
-            print("%s:%d %s" % (name, number, codes))
+    with io.open(name, "rb") as handle:
+        for item in tokenize.tokenize(handle.readline):
+            if item.type != token.NAME:
+                continue
+            bad = sorted({ord(c) for c in item.string if ord(c) > 127})
+            if bad:
+                codes = " ".join("U+%04X" % c for c in bad)
+                print("%s:%d %s %s" % (name, item.start[0], item.string, codes))
   EOF
   ```
 
-- Documentation carries NO charset restriction. A document may be
-  written in any language and use whatever symbols it needs, so an
-  ASCII rule over prose would rule out most of the world's writing to
-  buy a house typography nobody asked for. The restriction above
-  protects code; do not extend it to Markdown
+- Comments, docstrings and string content carry NO charset
+  restriction, and neither does documentation. They are written for
+  readers, in whatever language and symbols the reader needs. A rule
+  that reaches them buys a house typography at the cost of everything
+  else, and it reaches further than it looks: a generator whose string
+  literals draw a diagram is writing a document, not code
+- A program that writes text MUST set its output encoding explicitly
+  rather than inheriting the console's. Inheriting is what turns a
+  correct string into mojibake on someone else's machine, and the
+  boundary is what needs fixing, not every string that crosses it. In
+  Python: `sys.stdout.reconfigure(encoding="utf-8")` at the entry
+  point
 - Line endings MUST be LF — CRLF is not acceptable in any committed file
 - A linter SHOULD enforce formatting automatically on save; keep manual style
   rules to a minimum

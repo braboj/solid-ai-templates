@@ -10,6 +10,14 @@ import io
 import re
 import sys
 from pathlib import Path
+# Set the output encoding at the boundary rather than inheriting the
+# console default, which mangles any non-ASCII this program prints.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 
 # pyyaml is not required — use a minimal yaml subset parser
 # since manifest.yaml only uses simple scalars and lists.

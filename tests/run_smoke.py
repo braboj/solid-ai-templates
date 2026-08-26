@@ -28,6 +28,14 @@ import sys
 
 from lib import ROOT, PASS, FAIL, ERR, write_report
 from cases import ALL_TESTS
+# Set the output encoding at the boundary rather than inheriting the
+# console default, which mangles any non-ASCII this program prints.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 
 try:
     import yaml
