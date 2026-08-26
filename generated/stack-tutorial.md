@@ -3681,6 +3681,62 @@ Stack templates MAY add additional thresholds (e.g. Lighthouse scores).
 
 ---
 
+## Retrofit a gate by freezing instances, never by narrowing it
+
+[ID: quality-gates-retrofit-ratchet]
+
+`quality-gates-complexity` gives the ratchet for one metric. It generalises,
+and it has a look-alike that is far more tempting because it is smaller:
+writing a baseline is work, deleting a field from a comparison is one line
+and the diff reads as a simplification. Both turn a red gate green. Only
+one leaves a gate behind.
+
+- A red gate MAY be made green by exempting the failing instances. It MUST
+  NOT be made green by narrowing what the gate evaluates. Ratcheting freezes
+  which instances fail and leaves the analysis intact; removing a field from
+  a comparison, disabling a strict sub-flag or loosening a matcher removes
+  the analysis for every case, including ones nobody has written yet
+- The tell is what the exemption costs to reverse. A baseline entry is
+  deleted and the case is checked again. A narrowed comparison leaves no
+  record that the property was ever checked, so nothing prompts anyone to
+  restore it
+- When the failing case is a genuine defect and the fix is small, fix it. A
+  check narrowed to accommodate one known defect is a permanent price paid
+  for a temporary problem
+
+### Retrofitting a linter
+
+Adopting a modern linter on an existing codebase produces a finding count
+that makes the gate unadoptable as written. Three responses, two of which
+are traps:
+
+| Response | Outcome |
+|----------|---------|
+| Fix everything first | Buries the gate change under a mechanical diff no reviewer can separate from a behavioural one, and gates untouched code the change was never about |
+| Ignore the offending rule families globally | Never ends. New code is ungated on exactly the rules the project says it wants, nothing ever fails, so nothing is ever fixed |
+| Freeze per file | Works |
+
+- Enable the full rule selection, then record the violations existing on
+  adoption day in a per-file ignore table, each file listed with exactly the
+  rules it broke. A new file has no entry and is gated on everything, an
+  existing file cannot get worse, and shrinking the table is the migration
+- The table MUST be generated from the linter's own output, never curated by
+  hand. A hand-maintained table drifts and becomes a place to hide findings
+- The linter MUST be pinned to a minor range. The table records one
+  version's findings, so a release adding rules to an already-selected
+  family fails the gate on untouched code — the same reason
+  `quality-gates-complexity` pins when the baseline format is
+  version-sensitive
+- A file MUST NOT be added to the table to make a gate pass, and an existing
+  entry MUST NOT be widened. Without that rule the table becomes the global
+  ignore list this whole approach exists to avoid
+
+State the known cost rather than discovering it later: a file-level freeze
+does not newly gate an existing file when it is edited. Line-level would,
+and no widely available linter offers it.
+
+---
+
 ## Skip noisy gates when input is unchanged
 
 [ID: quality-gates-skip-equivalent]
