@@ -1063,12 +1063,22 @@ wrong before changing either.
   a supersession has to be recorded on both sides. The prose body
   (Context, Decision, Alternatives considered, Consequences) never
   changes
-- A content-preserving format migration preserves immutability and needs
-  no superseding ADR: normalizing headings, titles, filenames, or
-  cross-links across merged ADRs is allowed as long as it changes no
-  decision prose (Context, Decision, Alternatives considered,
-  Consequences). The commit MUST state "format-only, no decision
-  change". Changing a decision's substance still requires a new ADR
+- What is immutable is the decision, not the format. The decision is
+  the set of claims the record makes in Context, Decision,
+  Alternatives considered and Consequences. Adding a claim, removing
+  one, or changing what one asserts requires a new ADR, however
+  small the edit looks
+- Reformatting a merged ADR therefore needs no superseding ADR. The
+  test is whether any claim moved, not whether the edit appears on a
+  list of permitted operations: rewrapping to the project width,
+  normalizing headings, titles, filenames and cross-links, splitting
+  a sentence no reader can parse, and rendering a buried enumeration
+  as a list all qualify. State "format-only, no decision change" in
+  the commit, and show it with `git diff --word-diff` — only
+  whitespace, connectives, capitalisation and list rendering may
+  move. An enumeration of allowed operations would be
+  under-inclusive by construction, and it would leave an unreadable
+  record unreadable in the name of protecting it
 - When an ADR's premise is refuted shortly after it merges (typically by
   data that should have informed it), prefer a same-day or same-week
   supersession ADR documenting the post-mortem over silently closing the

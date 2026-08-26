@@ -66,8 +66,11 @@ compose only the modules they need — no transitive surprises.
    require the agent to have read those files. It acts as a **facade**
    over the gate model.
 
-   Before: `[DEPENDS ON: base-quality, base-git, base-testing, base-devsecops, base-cicd]`
-   After: `[DEPENDS ON: base-quality, base-git, base-testing]`
+   Before:
+   `[DEPENDS ON: base-quality, base-git, base-testing, base-devsecops, base-cicd]`
+
+   After:
+   `[DEPENDS ON: base-quality, base-git, base-testing]`
 
 2. **Core tier** (implicit, always loaded by convention): `quality`,
    `git`, `docs`, `readme`, `testing` — these 5 files apply to every
