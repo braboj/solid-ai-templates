@@ -1,7 +1,8 @@
 ---
 id: SAIT-INT-TPL-02-001A
 uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567804
-title: EXTEND directive adds stack rules on top of parent section without removing base rules
+title: EXTEND directive adds stack rules on top of parent section without removing base
+rules
 product: sait
 type: int
 area: TPL

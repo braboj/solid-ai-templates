@@ -17,8 +17,10 @@ tags: [e2e, deployment, offline, air-gapped, pki]
 
 ## Short description
 
-> **Given** `INTERVIEW.md`, a stack template, and `base/deployment.md` are attached to an agent
-> **When** the interview answer selects **offline** (air-gapped) as the deployment target
+> **Given** `INTERVIEW.md`, a stack template, and `base/deployment.md` are attached to
+> an agent
+> **When** the interview answer selects **offline** (air-gapped) as the deployment
+> target
 > **Then** the generated `CLAUDE.md` contains offline-appropriate deployment rules
 > (self-hosted PKI, local DNS, local artifact mirror, no external dependencies)
 
@@ -42,7 +44,8 @@ tags: [e2e, deployment, offline, air-gapped, pki]
 ### Setup
 
 1. Open Claude Code
-2. Attach `INTERVIEW.md`, `stack/python-fastapi.md`, `base/deployment.md`, `base/core/agents.md`
+2. Attach `INTERVIEW.md`, `stack/python-fastapi.md`, `base/deployment.md`,
+   `base/core/agents.md`
 3. Interview answers:
    - Project name: SecureIngestService
    - Language: Python
@@ -59,7 +62,8 @@ tags: [e2e, deployment, offline, air-gapped, pki]
 1. Assert `## Deployment` section specifies **offline** / air-gapped target
 2. Assert self-hosted PKI referenced (internal root CA, no Let's Encrypt or public CA)
 3. Assert local DNS resolver documented (no external DNS assumed)
-4. Assert local artifact registry mirror documented (no pulls from Docker Hub, PyPI, etc.)
+4. Assert local artifact registry mirror documented (no pulls from Docker Hub, PyPI,
+   etc.)
 5. Assert no references to internet-dependent services (CDN, managed cloud services)
 6. Assert base git conventions present
 

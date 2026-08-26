@@ -58,9 +58,12 @@ tags: [e2e, output, htmx, hypermedia, server-side]
 ### Assertions
 
 1. Assert `## Stack` lists HTMX, Jinja2, and the chosen backend
-2. Assert hypermedia-first principle documented (server returns HTML fragments, not JSON)
-3. Assert `hx-*` attribute conventions present (`hx-get`, `hx-post`, `hx-target`, `hx-swap`)
-4. Assert partial HTML response rules present (endpoints return fragments, not full pages)
+2. Assert hypermedia-first principle documented (server returns HTML fragments, not
+   JSON)
+3. Assert `hx-*` attribute conventions present (`hx-get`, `hx-post`, `hx-target`,
+   `hx-swap`)
+4. Assert partial HTML response rules present (endpoints return fragments, not full
+   pages)
 5. Assert out-of-band (OOB) swap usage documented
 6. Assert Alpine.js integration rules present if selected
 7. Assert no JSON API or SPA routing conventions present

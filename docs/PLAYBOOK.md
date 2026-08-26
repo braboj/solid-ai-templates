@@ -347,7 +347,8 @@ quarterly.
 
 1. Ensure you are on a feature branch — never commit to `main` directly
 2. Run the validation steps above for every changed template
-3. Update all affected documents (`SPEC.md`, `README.md`, `manifest.yaml`) before committing
+3. Update all affected documents (`SPEC.md`, `README.md`, `manifest.yaml`) before
+   committing
 4. Commit with a conventional message:
    ```
    feat(stack): add go-echo template

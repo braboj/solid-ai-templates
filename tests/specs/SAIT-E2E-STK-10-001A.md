@@ -57,7 +57,8 @@ tags: [e2e, output, go, library]
 ### Assertions
 
 1. Assert `## Stack` lists Go (no framework)
-2. Assert exported API design rules present (godoc, backward compatibility, minimal surface)
+2. Assert exported API design rules present (godoc, backward compatibility, minimal
+   surface)
 3. Assert semantic versioning rules documented
 4. Assert no `main` package guidance (library only)
 5. Assert no Dockerfile or deployment section present in the output

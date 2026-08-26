@@ -17,7 +17,8 @@ tags: [e2e, deployment, hybrid, private-ca, pki]
 
 ## Short description
 
-> **Given** `INTERVIEW.md`, a stack template, and `base/deployment.md` are attached to an agent
+> **Given** `INTERVIEW.md`, a stack template, and `base/deployment.md` are attached to
+> an agent
 > **When** the interview answer selects **hybrid** as the deployment target
 > **Then** the generated `CLAUDE.md` contains hybrid-appropriate deployment rules
 > (private CA for internal traffic, split DNS, mixed registry strategy)
@@ -42,7 +43,8 @@ tags: [e2e, deployment, hybrid, private-ca, pki]
 ### Setup
 
 1. Open Claude Code
-2. Attach `INTERVIEW.md`, `stack/go-service.md`, `base/deployment.md`, `base/core/agents.md`
+2. Attach `INTERVIEW.md`, `stack/go-service.md`, `base/deployment.md`,
+   `base/core/agents.md`
 3. Interview answers:
    - Project name: InternalPlatformAPI
    - Language: Go
@@ -59,7 +61,8 @@ tags: [e2e, deployment, hybrid, private-ca, pki]
 1. Assert `## Deployment` section specifies **hybrid** target
 2. Assert internal services reference a private CA for mTLS or TLS
 3. Assert split DNS strategy documented (internal vs. external resolvers)
-4. Assert mixed registry strategy documented (private registry for internal, public for external)
+4. Assert mixed registry strategy documented (private registry for internal, public for
+   external)
 5. Assert no assumption that all services can reach the public internet
 6. Assert base git conventions present
 

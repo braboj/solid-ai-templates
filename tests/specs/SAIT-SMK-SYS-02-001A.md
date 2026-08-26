@@ -82,4 +82,5 @@ A future CI step should automate this using `manifest.yaml`.
 
 ## Related
 
-- Related procedures: `SAIT-SMK-SYS-01-001A`, `SAIT-INT-TPL-02-001A`, `SAIT-INT-TPL-03-001A`
+- Related procedures: `SAIT-SMK-SYS-01-001A`, `SAIT-INT-TPL-02-001A`,
+  `SAIT-INT-TPL-03-001A`

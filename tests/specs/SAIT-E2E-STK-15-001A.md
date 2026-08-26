@@ -58,7 +58,8 @@ tags: [e2e, output, python, library]
 
 1. Assert `## Stack` lists Python with no framework
 2. Assert `pyproject.toml` referenced for packaging metadata
-3. Assert public API surface rules present (docstrings, type hints, backward compatibility)
+3. Assert public API surface rules present (docstrings, type hints, backward
+   compatibility)
 4. Assert semantic versioning rules documented
 5. Assert no Dockerfile or deployment section present
 6. Assert base git conventions present

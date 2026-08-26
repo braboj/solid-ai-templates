@@ -461,7 +461,8 @@ recorded in ADR-004.
 - Tool: Claude Code (Opus 4.6)
 - Audited 5 generated stacks: terraform, tutorial, python-lib, react-spa, go-service
 - Created #264 (audit parent) + 4 sub-issues (#265–#268)
-- Fixed #268: added `base-security` and `base-containers` to `backend-quality` deps — resolved missing dependency gap for all 6 service stacks
+- Fixed #268: added `base-security` and `base-containers` to `backend-quality` deps —
+  resolved missing dependency gap for all 6 service stacks
 - Merged PR #269
 - Swapped milestones: v2.4 is now Templates & Content, v2.5 is now Discovery
 
@@ -511,7 +512,8 @@ recorded in ADR-004.
 - Moved 5 new-content issues to Backlog
 
 **PRs merged:** #282, #286, #287, #288, #289, #290, #291, #292, #293
-**Issues closed:** #104, #131, #203, #224, #233, #255, #264, #272, #275, #276, #283, #284, #285
+**Issues closed:** #104, #131, #203, #224, #233, #255, #264, #272, #275, #276, #283,
+#284, #285
 **Smoke checks:** 11 → 13 (TPL-06, TPL-07)
 
 ---
@@ -1129,7 +1131,8 @@ ai-workflow.md would have mis-placed them. One concern can span files
 
 **PRs merged:** #556, #557, #558
 
-**Issues closed:** #485, #484, #486, #526, #494, #501, #527, #516, #430, #460, #480, #525, #502
+**Issues closed:** #485, #484, #486, #526, #494, #501, #527, #516, #430, #460, #480,
+#525, #502
 
 ## 2026-06-25 — v2.15 Backend & resilience + repo hygiene
 
@@ -1291,7 +1294,9 @@ side-patterns were preserved as #600/#601 rather than lost on close.
 
 **PRs merged:** #593, #594, #595, #596, #597, #598, #599, #602
 
-**Issues closed:** #454, #448, #483, #427, #488, #504, #487, #495, #520, #453, #576, #463, #449, #575, #461, #517, #462, #325, #467. Also: #503 closed as already-covered; #493 moved to v2.19; #600/#601 filed.
+**Issues closed:** #454, #448, #483, #427, #488, #504, #487, #495, #520, #453, #576,
+#463, #449, #575, #461, #517, #462, #325, #467. Also: #503 closed as already-covered;
+#493 moved to v2.19; #600/#601 filed.
 
 ## 2026-06-25 — v2.19 Quality, testing & maintainability lessons
 
@@ -1339,7 +1344,9 @@ the capstone closes the loop the v2.17 PLAYBOOK convention opened.
 
 **PRs merged:** #605, #606, #607, #608, #609, #610, #611, #612, #613
 
-**Issues closed:** #469, #464, #428, #451, #436, #345, #332, #452, #476, #475, #455, #523, #592, #519, #337, #491, #493, #473, #432, #440, #591. Filed #600, #601, #604 (Backlog).
+**Issues closed:** #469, #464, #428, #451, #436, #345, #332, #452, #476, #475, #455,
+#523, #592, #519, #337, #491, #493, #473, #432, #440, #591. Filed #600, #601, #604
+(Backlog).
 
 ## 2026-06-25 — v2.20 Concrete Python & frontend
 
@@ -1377,7 +1384,8 @@ v3.0 — Restructure is the clear next milestone.
 
 **PRs merged:** #619, #620, #621, #622, #623
 
-**Issues closed:** #518, #511, #530, #512, #514, #490, #311. Filed #624 (v3.0 frontend/seo.md consolidation).
+**Issues closed:** #518, #511, #530, #512, #514, #490, #311. Filed #624 (v3.0
+frontend/seo.md consolidation).
 
 ## 2026-06-26 — v2.21 Workflow, doc & data lessons + journal-ordering revert
 
