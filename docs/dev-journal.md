@@ -2951,3 +2951,84 @@ measurement first rather than a rule written from one instance.
 **Issues closed:** #983 — auto-closed by #984, verified.
 
 **Issues opened:** none.
+
+## 2026-08-26 — v2.46 Unenforced rules
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**A rule can be wrong rather than under-enforced** (#1045, #1067). The
+ASCII restriction read as covering all source content, and measuring it
+returned 5,593 characters across 155 of 171 files. It also returned
+zero of the hazards an ASCII rule exists to prevent: no smart quotes, no
+non-breaking spaces, no zero-width characters, no byte-order marks. What
+it had missed was five U+FFFD, the residue of text decoded with the
+wrong encoding, one of which shipped through two chains and left a rule
+justification unreadable downstream. So the rule banned 5,593 harmless
+characters and caught none of the five that were real damage. Twice the
+answer was to narrow the rule rather than sweep the files, and the
+second pass mattered more than the first: the rule still covered string
+literals, and `tools/sync.py` draws the specification trees with
+box-drawing literals, so enforcing it would have rewritten 98 lines of
+documentation into ASCII on the authority of a code rule.
+
+**A number written into a template is a preference shipped downstream**
+(#1055, #1072). Width resolved into the same shape as charset. The rule
+states that a width is declared once and checked; the project supplies
+the number. Moving this repository from 80 to 88 then re-scoped the
+check with no code change at all, which was the test of whether the
+design was right rather than merely tidy. Two templates still named 80
+and now name nothing.
+
+**Every check had to be run, not written** (#1056, #1045, #1069). Three
+shipped broken on the first attempt. A regex using the anchor and
+newline escapes did not survive the trip into the template and raised
+`SyntaxError` on extraction. The ASCII check crashed with
+`UnicodeEncodeError` while reporting a non-ASCII character, which is the
+failure it existed to detect. The width check carried backslashes and
+was refused. The habit that came out: an embedded check is
+backslash-free, prints code points rather than characters, and is
+extracted from the committed template and executed before the pull
+request opens.
+
+**A check that reports nothing and a check that reaches nothing look
+identical** (#999, #1015, #1069). Every check landed with its inputs
+counted -- 65 journal entries, 25 decision records, 8 source files, 17
+chains -- and with a table of the break modes it catches. Two of them
+treat an empty result as a failure for the same reason: no entries found
+means the heading format drifted, and no wheel in `dist/` means the
+build never ran.
+
+**The mangled output was a boundary, not a character.** Smoke printed
+`23 checks ? 23 passed` for the whole session. Not the em dash: an unset
+output encoding, inherited from the console. Five entry points now set
+it explicitly, which fixes every string that crosses the boundary
+including ones not written yet.
+
+**Withdrawn:** a decision record proposing an enumerated
+permitted-character set for Markdown. It was Latin-centric by
+construction and would have broken a document written in another
+language. Number 026 was never merged and returned to the pool; the
+number now in use for it belongs to a different decision.
+
+**Filed rather than fixed:** #1062, the only reference-mode example
+names no platform template, which needs a pipeline regeneration rather
+than a hand edit. #1080, one decision record overflows the declared
+width on an unbreakable code span, deferred behind #1054 because
+settling it would decide that issue sideways in a commit about
+whitespace.
+
+**Template feedback:** all reusable. Checks now travel beside their
+rules in `base-quality`, `base-docs` and `python-lib-structure`. The
+width rule states no number, the charset rule guards identifiers only,
+and the ADR schema finally matches what the project practises.
+
+**Releases:** v2.46.0 -- Unenforced rules, 11 issues, all three open P1
+bugs cleared.
+
+**PRs merged:** #1061, #1063, #1065, #1068, #1070, #1071, #1073, #1074,
+#1075, #1078, #1079
+
+**Issues closed:** #983, #999, #1015, #1029, #1045, #1055, #1056, #1064,
+#1067, #1069, #1072
+
+**Issues opened:** #1062, #1064, #1067, #1069, #1072, #1080
