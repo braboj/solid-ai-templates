@@ -3600,6 +3600,18 @@ Runs on every PR. The final gate before merge.
 - CI checks MUST be configured as required status checks in branch
   protection — a passing CI run that does not block merge is
   informational, not a gate
+- The protection MUST bind administrators. The administrator exemption
+  is off by default and easy to leave off, and it satisfies the
+  required-checks rule while leaving a red pull request mergeable. On a
+  single-maintainer repository the exempt administrator is the only
+  person the gate would ever apply to, and the configuration passes any
+  audit that reads the required-checks list
+- Where the member count is below the required approving-review count,
+  that requirement blocks every merge rather than gating it, since
+  nobody can approve their own pull request. Set the count to zero and
+  rely on administrator enforcement. The two settings look
+  interchangeable and are not: the review count governs who reviews,
+  the protection scope governs whom the gate binds
 - CI MUST duplicate Layer 2 checks — pre-commit hooks can be bypassed
   with `--no-verify`
 - CI adds checks that cannot run locally: deep security analysis (SAST),
@@ -3629,6 +3641,31 @@ templates map each category to a concrete tool.
 
 Stack templates MAY add additional categories (e.g. link checking, site
 quality scoring for web projects, docstring enforcement for Python).
+
+### A named tool that cannot run is declined, not left blank
+
+Stack templates name tool pairs for a category — a local scanner plus a
+hosted analysis service is the usual shape. Sometimes only one half is
+reachable: the hosted half needs a paid tier the repository does not have,
+a plan the organisation has not bought, or a visibility setting the project
+deliberately does not want.
+
+- A gate category naming more than one tool is satisfied by the tools that
+  can run, plus a recorded decline for each that cannot
+- The decline MUST name why the tool is unavailable and the concrete
+  condition that would reopen it, and MUST live in a decision record rather
+  than a comment. This is the YAGNI revisit trigger from `base-quality`
+  applied to tooling: a deferral without a trigger gets re-argued or
+  quietly forgotten
+- A category MUST NOT be left blank because one named tool is unavailable.
+  It then reads as unimplemented, the next audit re-raises it as a gap, and
+  someone re-derives the same unavailability from scratch
+- A workflow for a tool that cannot run MUST NOT be committed to fill the
+  row. It sits permanently red or permanently skipped, which is the
+  gate-by-omission shape `quality-gates-scope-agreement` names
+
+This governs what a compliant implementation looks like when a named tool
+is genuinely unreachable. It relaxes no category from MUST.
 
 ### Recommended lint plugins
 
