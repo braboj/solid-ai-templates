@@ -2018,12 +2018,20 @@ general writing-style and diagram rules above still apply.
 ### IDs and register
 
 - Functional requirements use `FR01…` in shall-form (IEEE 29148);
-  quality goals use `QG01…` named for an ISO 25010 characteristic
-  (Functional Suitability, Performance Efficiency, Compatibility,
-  Usability, Reliability, Security, Maintainability, Portability) or for
-  a sub-characteristic where that is more precise (Correctness,
-  Functional Completeness, Availability) — distinct from the `Q1…`
-  quality scenarios in §10
+  quality goals use `QG01…` named for a characteristic of ISO 25010,
+  distinct from the `Q1…` quality scenarios in §10
+- Name the ISO 25010 edition the goals are drawn from, because the
+  characteristic set changed between them and a goal named for a retired
+  characteristic cannot be found in the standard it cites. ISO/IEC
+  25010:2023 has nine: Functional Suitability, Performance Efficiency,
+  Compatibility, Interaction Capability, Reliability, Security,
+  Maintainability, Flexibility and Safety. Usability and Portability are
+  2011 names retired into Interaction Capability and Flexibility; Safety
+  is new in 2023
+- Name a sub-characteristic where it is more precise — Functional
+  Correctness, Functional Completeness, Availability. "Correctness"
+  unqualified is in no edition; the characteristic it belongs to is
+  Functional Suitability
 - The `QG0n` id is the join key across §1, §4 and §10 — §4's
   quality-approach table and §10's scenario table both carry it, so a
   script can assert the three still agree
@@ -2041,6 +2049,15 @@ general writing-style and diagram rules above still apply.
   chapter — that is a duplicate, not a goal
 - A quality goal is not the product's purpose restated. Tell: the
   motivation reads "…is the reason the service exists"
+- A statement a single observation can confirm is a requirement, not a
+  quality goal. A goal is a universal that no one case settles, a measure
+  of what something costs, or a property of the source rather than of the
+  running system
+- The quantifier is what separates the two, so it is visible in the
+  phrasing: "every broken internal link is found" is a goal, "a broken
+  internal link is found" is the requirement underneath it. Tell: a goal
+  that reads as two FRs conjoined, or that restates constraints already
+  in §2, is a requirement wearing a category label
 - Security goals state who may do what; the mechanism that enforces it
   (bind address, reverse proxy, allowlist) belongs in §2 or §4. Tell: a
   goal the system's own top security risk cannot violate
