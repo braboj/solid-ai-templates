@@ -190,6 +190,61 @@ force-push, which is forbidden.
   squash kind, the merge commit survives on main — cherry-pick fresh
   instead
 
+The merge-main-in route needs a measurement, because its conflicts are
+manufactured by the squash rather than by disagreement. A's commits are
+replaced on the base by one equivalent commit that B is not descended
+from, so the merge base stays the pre-stack tip and any file both sides
+rewrote conflicts whole — including a file neither change is about.
+
+- MUST expect the server-side update to refuse, and MUST NOT read the
+  refusal as damage. B carries A's original commit while main carries A's
+  squash, so every file both touched reads as modified on both sides.
+  That is a content conflict, not the ref-staleness refusal described in
+  `Merging a batch of PRs`, and it is the normal entry into the manual
+  route — not a signal to rebase, to branch afresh, or to force-push
+- MUST compare the conflict stages before resolving a whole-file
+  conflict, rather than reasoning about which side is newer. Stage 2 is
+  the branch, stage 3 is the base:
+
+```bash
+git diff --stat :3:<path> :2:<path>
+```
+
+  Pass condition: the command names the file and reports the lines
+  resolving to the branch would add, remove and change. Additions only,
+  with nothing removed and nothing changed, is the evidence that the
+  branch discards nothing. Any removal is content on the base that B
+  lacks, and taking B's side drops it
+- MUST NOT apply "resolve in favour of the branch" without that
+  evidence. The instruction is sound only while B is a strict superset
+  of the base — true when A is the one thing that landed, false as soon
+  as anything else merges in between. The narrative is usually right,
+  and it is not a measurement
+- MUST assert the resolution after resolving and before committing. Which
+  assertion holds depends on how A merged, so name it before running it:
+  - Where A was **rebase**-merged, main's content is byte-identical to
+    what B already carries, so the merge can bring in nothing new and
+    `git diff --stat HEAD` MUST be empty. Any output is either a real
+    concurrent change to reconcile or a mis-resolved hunk
+  - Where A was **squash**-merged, main carries one new commit whose
+    content matches but whose history does not, so the tree-wide form
+    does not hold. Assert per resolved file instead — `git diff
+    <B-tip-before-merge> -- <path>` MUST be empty, proving the
+    resolution reproduced B's content exactly
+- MUST NOT read the merge's own diffstat as what the squash will land. It
+  counts the base arriving on the branch, not the content going to main:
+  a file the PR changes by 46 lines can report 156. Confirm the landing
+  figures against the ones the PR reports — `git diff origin/main --stat`
+  — and treat a mismatch in either direction as unresolved. Reading it the
+  other way hides a real defect behind a number that looks explained
+
+A whole-file conflict can also arrive for a reason nothing in the diff
+explains. Where the merge base holds a byte that makes git classify the
+blob as binary — a stray NUL the lower PR removed — there is no
+three-way merge to attempt and every line reads as conflicting. The
+stage comparison is what separates that case from a real disagreement,
+and it is the same command either way.
+
 ### Merging a stack
 
 How the base branch is deleted decides whether the PR stacked on it
@@ -209,6 +264,20 @@ Rules:
 - MUST NOT pass a delete-branch flag while any PR still targets the
   branch — let automatic deletion handle it, or retarget the dependent
   PR first and delete afterwards
+- MUST read which of the two paths the repository actually takes before
+  merging a stack. It is a repository setting, not a property of the
+  merge command, so the command a maintainer types looks identical either
+  way and the safe path is only available where the setting is on:
+
+```bash
+gh api repos/<owner>/<repo> --jq '.delete_branch_on_merge'
+```
+
+  Pass condition: the command prints the setting for the named
+  repository. `true` means the merge itself deletes the head branch and
+  retargets the dependent PR. `false` means nothing deletes it, the
+  branch survives the merge, and any later deletion is the separate step
+  that closes the dependent PR permanently — so retarget first
 - To recover: recreate the deleted ref from the base branch, reopen the
   PR, retarget it, delete the ref again, then update the branch
 
