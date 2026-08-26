@@ -476,6 +476,54 @@ code reads as though there is one counter.
 
 ---
 
+## Guard the no-leaked-worker invariant with an autouse fixture
+[ID: testing-worker-leak-guard]
+
+`base-testing-general` requires a test to leave no host state behind. A
+suite that violates it looks identical to a clean one, because the damage
+lands after the test that caused it: the offending test passes, something
+unrelated later fails, or the run ends with a traceback beside the summary
+that reads as a failure and is not one.
+
+Review does not reach it either. The reviewer sees a fixture that calls a
+stop method and sleeps, which looks like teardown, and whether the sleep
+is long enough is a property of the thing being stopped rather than of the
+diff.
+
+- Where a suite starts a background worker — a thread, a subprocess, a
+  server — an autouse fixture MUST assert at the end of every test that
+  none survives it
+- The assertion MUST run per test, not once at session end. A session-end
+  check reports that something leaked, not which test leaked it, and
+  naming the culprit is the whole value
+- The message MUST name the leak and what to do about it. The cause is
+  nearly always a fixture that slept instead of joining, and the sleep is
+  usually shorter than the wait it stands in for
+- Leave it on permanently. It enumerates live workers and waits for
+  nothing, so a clean run pays one list comprehension per test
+
+```python
+SERVER_THREAD_NAME = "AppServerSim"
+
+
+@pytest.fixture(autouse=True)
+def no_server_thread_outlives_the_test():
+    yield
+
+    survivors = [
+        t for t in threading.enumerate() if t.name == SERVER_THREAD_NAME
+    ]
+
+    if survivors:
+        pytest.fail(
+            f"{len(survivors)} {SERVER_THREAD_NAME} thread(s) still running "
+            "after the test. Call stop() and then join() it with a timeout "
+            "in tearDown -- a sleep is a guess, not a wait."
+        )
+```
+
+---
+
 ## Verify a visual change against the render
 [ID: testing-verify-the-render]
 
