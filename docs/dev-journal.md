@@ -3568,3 +3568,82 @@ Fourth cut of the day.
 
 **Issues opened:** #1134, filed and closed in the same cut, since the
 evidence was one command and the fix was one check.
+
+## 2026-08-26 -- What a record fixes
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Cut E shipped as v2.54.0 -- 12 issues, 7 pull requests, all in
+`base/core/docs.md` and `base/core/readme.md`.** The backlog held five
+separate issues that turned out to be one question asked five ways: what
+part of a written record is fixed once it is written. `base-docs` had
+made ADRs immutable and said nothing about the other records it requires
+-- journal entries, dated reports, post-mortems.
+
+**Five issues shipped as one pull request because the statements had to
+agree.** Written independently they would have collided: the dated-report
+issue asks for a stale instruction to be corrected by dated addendum,
+while the Decision-logs section already forbids appending to a merged
+record. Both are right, for different artifacts, and neither said so. The
+new section states the general test once -- an edit that changes what the
+record claims happened is an amendment and goes in a new record, one that
+does not is a correction made in place -- and then says explicitly that
+the addendum exists because a report has no supersession chain and is not
+available on an ADR. Shipped as five pull requests, that collision lands
+in the templates and a consumer resolves it by guessing.
+
+**The mangled backslash struck again, on the first check drafted.** The
+register-id check's regex used `\b` and `\d`; neither survived into the
+draft. The word boundaries vanished silently and the digit class arrived
+as a literal that only announced itself as a SyntaxWarning. This is the
+same authoring-path loss recorded two cuts ago, now hitting a regex
+rather than a line continuation. Reading the text back out of the file is
+what caught it -- the draft looked correct at the point of writing. The
+remedy that worked was removing every backslash from the pattern:
+`(?<![A-Za-z0-9])(?:R|TD)[0-9]{2}(?![0-9])` needs none, and cannot lose
+what it does not contain.
+
+**Three checks shipped, each run against a negative control before
+merge.** Register-id containment was run against a violating set, a clean
+set, a set whose ids had drifted to another scheme, and a tree with no
+arc42 docs at all -- the last two report zero and fail rather than
+reading as a clean folder. The community-health check was run against
+compliant-at-root, compliant-under-`.github/`, both-files-missing, and
+one-file-duplicated. Its output is ASCII only, so it cannot fail on
+encoding what it reports.
+
+**A rule was landed that this repository does not satisfy.** The
+community-health rule requires `SECURITY.md` of any public repository and
+`CONTRIBUTING.md` of any repository accepting outside contributions. This
+one is public with issues enabled and has neither -- the check run here
+reports both absent. The rule was written to the principle rather than
+tuned so the repository would pass, and the files were not added in the
+same pull request: a disclosure policy and a contribution guide are
+first-contact documents whose wording belongs to the owner, not a side
+effect of stating a rule. Filed as #1147.
+
+**Grooming against the tree changed one issue's shape again.** #997
+quoted a version of the quality-goal bullet that no longer exists -- the
+"Correctness" entry had already moved to the sub-characteristic list
+since filing. What remained was the unnamed ISO 25010 edition and a 2011
+characteristic set naming two categories the 2023 edition retired. The
+membership half of the issue was untouched and shipped as filed. Second
+consecutive cut in which reading the file first changed what got built.
+
+**Template feedback:** all reusable, nothing project-specific. Landed
+upstream in `base/core/docs.md` (record amendment, arc42 §5 and §11,
+generated-artefact authority, community health files) and
+`base/core/readme.md` (headline claims). Both are core tier, so every
+rule here reaches all 17 chains.
+
+**Releases:** v2.54.0 -- Docs & records, 12 issues, 7 pull requests. The
+tag names 303c0d7, the release commit, so this entry sits outside the
+release it describes.
+
+**PRs merged:** #1139, #1141, #1142, #1143, #1144, #1145, #1146
+
+**Issues closed:** #993, #995, #997, #998, #1001, #1002, #1003, #1017,
+#1018, #1023, #1057, #1104
+
+**Issues opened:** #1147, for the two community health files this
+repository now owes itself.
