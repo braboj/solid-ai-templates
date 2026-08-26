@@ -260,6 +260,13 @@ base/ ──┬── frontend/ ──┐
   metadata (`superseded_by` / `status` / `date`) and format-only
   edits that move no claim are both permitted; see `base-docs`
   Decision logs for the test and the evidence it requires
+- Where a merged ADR and the templates disagree, the templates
+  govern and the ADR stands as history. This repository owns the
+  rules it applies, so a record describes a rule rather than
+  departing from one, and a correction is complete when the rule is
+  right in the templates — whether or not a new ADR was written. A
+  project consuming the templates declares its own ordering, per
+  `base-docs`
 - ADR schema is governed by ADR-010 — YAML frontmatter required
   (`id` as quoted string, `status` in {Proposed, Accepted,
   Superseded}, `date` YYYY-MM-DD, `category` in {composition,
