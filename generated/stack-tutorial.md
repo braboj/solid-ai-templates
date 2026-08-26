@@ -2401,6 +2401,18 @@ Every README MUST contain the following sections, in this order:
   edits it; these go stale when nobody does, so no gate catches them.
   Name the file that holds the value and let the reader read it there
   (`fail_under` in the tool config, a CI badge, a generated report)
+- A claim in the title block or the feature list MUST hold on every path
+  the README itself documents. Every rule above compares the README to
+  the system; this one compares it to itself, and nothing else does — a
+  claim that was never true, sitting in a section nobody edited, passes
+  all of them, and the headline is the line most readers take away and
+  the one least likely to be re-read once written
+- A headline claim the limitations or performance section takes back is a
+  defect in the claim, not a caveat. Reword it to the axis on which it
+  holds unconditionally, rather than softening the claim or hiding the
+  limitation. Where an automatic mode pays for a failed cheap attempt
+  before falling back, it is not the fastest route and no wording makes
+  it one — the claim that holds is about which tier ends up used
 - Where an example's output is genuinely useful, describe its shape
   rather than its exact value
 
