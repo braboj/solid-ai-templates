@@ -3948,6 +3948,99 @@ A rule states intent; its paired check is what makes the intent hold.
 
 ---
 
+## Run the check in the form it ships
+
+[ID: quality-gates-check-runs]
+
+`quality-gates-pair-check` requires a constraint to name its check. It
+does not make that check work. A check that was written but never run is
+the decoration the pairing rule exists to prevent, and it is worse than
+none, because it looks enforced. A check that travels into a generated
+project fails there, where nobody wrote it and nobody can debug it.
+
+- A check MUST be run in the form it ships before the rule is merged.
+  Extract it from the committed file and execute it — writing a check is
+  not running it, and the file is a different medium from the editor
+- A check MUST state what it inspected, not only what it found. A command
+  that reached zero files and a command that found zero violations print
+  the same thing. Report the count of inputs examined
+- Where an empty result means drift rather than health, the check MUST
+  report it as a failure — no journal entries found means the heading
+  format moved, not that the file is ordered
+- A check MUST emit ASCII. One that reports an offending character MUST
+  print its code point, never the character, or it dies on the console
+  encoding while reporting exactly what it exists to detect
+- A check MUST be negative-controlled before merge: name the break modes
+  it catches, confirm each one is flagged, and confirm that a valid input
+  is not. A negative control that silently matches nothing has tested
+  nothing
+- Prefer a form that survives being copied. A heredoc whose delimiter is
+  quoted passes escapes through untouched; an inline `-c` string loses
+  them to shell expansion and arrives as a `SyntaxError`. Do not write the
+  heredoc opener itself in prose — an extractor scanning for it reads the
+  sentence as a check, the way a backticked directive is read as a real
+  declaration
+- A violation count far larger than expected on a tree believed clean MUST
+  be triaged as a possible defect in the check before it is worked as a
+  backlog of fixes. A rule can be wrong rather than under-enforced
+
+The first of these is itself mechanically checkable: every check embedded
+in a rule file MUST compile when extracted the way a reader extracts it.
+Adapt `ROOTS` to the files that carry the rules — the template tree in
+this repository, the context file in a generated project:
+
+```bash
+py - <<'EOF'
+import pathlib, re
+
+# The files that carry rules and their checks.
+ROOTS = ["templates"]
+
+# A shipped check is a heredoc inside a fenced block. The fence may be
+# indented under a list item, and a renderer strips that indent -- so
+# strip it here too, or the extracted body will not compile.
+FENCE = re.compile(r"^(\s*)```")
+found, broken = 0, []
+for root in ROOTS:
+    for path in sorted(pathlib.Path(root).rglob("*.md")):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        n = 0
+        while n < len(lines):
+            opened = FENCE.match(lines[n])
+            if not opened:
+                n += 1
+                continue
+            indent, body, n = len(opened.group(1)), [], n + 1
+            while n < len(lines) and not FENCE.match(lines[n]):
+                line = lines[n]
+                body.append(line[indent:] if not line[:indent].strip() else line)
+                n += 1
+            n += 1
+            text = "\n".join(body)
+            if "<<'EOF'" not in text:
+                continue
+            found += 1
+            source = text.split("<<'EOF'", 1)[1].split("\nEOF", 1)[0].lstrip("\n")
+            try:
+                compile(source, str(path), "exec")
+            except SyntaxError as error:
+                broken.append((path, error.lineno, error.msg))
+
+print("embedded checks found: %d" % found)
+for path, lineno, msg in broken:
+    print("%s: extracted body line %s does not compile: %s"
+          % (path, lineno, msg))
+if not found:
+    print("no embedded checks found; the extraction pattern drifted")
+EOF
+```
+
+Pass condition: the command reports the number of checks found and prints
+nothing after it. An empty result is a failure too, since no checks found
+means the extraction pattern drifted rather than the files being clean.
+
+---
+
 ## Convention-as-test
 
 [ID: quality-gates-convention-as-test]
