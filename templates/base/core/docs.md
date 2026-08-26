@@ -273,7 +273,10 @@ for f in records:
   ADR-to-ADR links are the frontmatter `supersedes` and
   `superseded_by` fields, which are the only ones a check can
   validate. Prose references rot silently, and a forward reference
-  to an ADR that does not exist yet cannot be written at all
+  to an ADR that does not exist yet cannot be written at all. The
+  prohibition binds records authored after the project adopts it —
+  records merged beforehand keep their prose citations, per Amending
+  a record below
 - A `## Related` section MAY close an ADR with context-only
   pointers. It MUST NOT carry decision-bearing text: moving or
   superseding anything it names MUST NOT change what the Decision
@@ -354,6 +357,73 @@ Example skeleton:
 2. ...
 ```
 
+## Amending a record
+
+[ID: docs-record-amendment]
+
+A record whose job is to say what happened — a decision record, a dated
+report, a journal entry — is fixed in what it claims, not in its bytes. The
+test for any edit is whether it changes what the record claims happened. If
+it does, it is an amendment and MUST go in a new record; if it does not, it
+is a correction and is made in place with no marker.
+
+### Scope of a form rule over an immutable corpus
+
+- A rule constraining the FORM of a document class whose members are
+  immutable once merged — a citation ban, a heading convention, a required
+  section, a naming scheme — MUST state whether it binds forward or
+  retroactively. The two readings differ by an unbounded amount of work and
+  by whether the existing corpus is compliant or in violation
+- Absent a statement the rule binds forward: records merged before the
+  project adopted it keep their form, because immutability outranks a form
+  rule that arrived later
+- Record the boundary the rule starts at — a date, or the first record id it
+  binds — and gate from there, so the untouched history is visibly in scope
+  of nothing rather than reading as standing debt the next reader files
+- Do NOT migrate the corpus to satisfy such a rule. What the rule targets is
+  frequently load-bearing inside a Decision section, so the rewrite moves a
+  claim and the format-only exemption does not cover it. Superseding each
+  affected record is worse — it produces a supersession that changes no
+  decision
+
+### Dated reports
+
+- A dated report — an audit, an incident write-up, a review — mixes two kinds
+  of content with opposite lifespans. Observations are what was measured on
+  the date and are immutable in the sense an ADR is. Operative instructions —
+  a condition for lifting a redaction, a re-review trigger, a "revisit when X
+  ships" — govern future behaviour, and can become unfulfillable when the
+  world moves
+- Correct a stale instruction with a dated addendum stating what changed,
+  which instruction it supersedes, and that the observations are deliberately
+  left as written. Rewriting the sentence silently changes a dated
+  observation to match a later decision; leaving it makes the report issue an
+  instruction nobody can discharge, which every later reader re-derives as
+  stuck
+- A grade, score or severity in a dated report is an observation, not an
+  instruction. It is NOT re-derived when the underlying facts change — the
+  closed report keeps its number and a later report derives its own
+- The addendum is available because a report has no supersession chain. It
+  MUST NOT be used on an ADR: appending to a merged decision record changes
+  what a closed record asserts, and the Decision logs section above already
+  routes that correction through a new record instead
+
+### Retiring a document
+
+- Retiring a document does not retire what it says. Scope the removal by
+  searching the tree for the CONTENT — the incident, the identifier, the
+  material — never by deleting the file named for it
+- The journal is the surface most likely to be missed: it is append-only,
+  organised by date rather than by topic, and its post-mortems routinely
+  restate an incident in more detail than the report that triggered it
+- Where a surviving copy is sensitive, state the finding to whoever owns the
+  repository rather than widening the deletion unasked. What a repository
+  publishes is that owner's decision
+- The concept-retirement sweep in `templates/base/core/quality.md` does not
+  cover this. That rule chases surviving instructions to APPLY a retired
+  concept and explicitly settles for historical records; a record is exactly
+  what carries the content here
+
 ## Development journal
 
 - Projects using agent-assisted development MUST maintain a
@@ -375,6 +445,21 @@ Example skeleton:
 - Do not duplicate content that belongs elsewhere — link to ADRs for
   decisions, link to issues for task tracking, do not repeat data model
   specs that live in code
+- A journal entry's ACCOUNT is fixed: what a session changed, why a
+  decision went the way it did, what it got wrong, and what it left
+  undone. A later entry corrects an earlier one; the earlier one is not
+  rewritten
+- A cross-reference is not part of that account. It says where something
+  is now, makes no claim about the session, and is corrected in place
+  with no amendment marker. Continuity for an agent with no memory is
+  the job this document is given above, so a stale pointer defeats its
+  stated purpose — and under a blanket immutability reading the breakage
+  accumulates, since every later move of a cited target adds another
+  dead reference permanently
+- The "not done" or follow-ups list is account, not pointer. A carried
+  item is closed by the next entry saying so, never by editing the entry
+  that raised it — tidying the old list is the tempting move and the
+  wrong one
 - When writing a new entry, follow the document-convention-matching
   rule in `templates/base/workflow/ai-workflow.md` (Match document
   convention section) — read prior entries and copy their skeleton
@@ -423,17 +508,33 @@ for (before_n, before_d), (after_n, after_d) in zip(entries, entries[1:]):
 ### Post-mortems
 
 P0/P1 bugs and all incidents MUST include a post-mortem in the dev
-journal session entry. Format:
+journal session entry. The trigger is the item's severity, not its
+outcome — a P0/P1 closed as NOT PLANNED carries one too. Format:
 
 - **Symptom:** what the user saw
 - **Root cause:** what was actually wrong
 - **Why missed:** what review or test gap allowed it
-- **Fix:** PR reference
+- **Fix:** what was done and what was deliberately not done, with a PR
+  reference wherever one shipped
 - **Prevention:** what was changed to catch it next time
 
 Not needed for minor fixes or cosmetic bugs. The purpose is to produce
 actionable prevention steps — a post-mortem without a prevention action
 is incomplete.
+
+An accepted risk needs the entry more than a fix does. The code shows
+nothing, the diff shows nothing, and the tracker shows a closed issue
+with a terse reason, so the reasoning for accepting is the only thing a
+future reader has. Two fields carry it:
+
+- **Fix** records the split. Partial remediation is the common case —
+  rotate the credential, decline to purge the history — and which half
+  went which way is the substance
+- **Prevention** records the compensating control that makes the
+  acceptance safe, and NAMES the premise it rests on ("nothing trusts
+  this", "no consumer reads that path"). When the premise stops holding
+  the acceptance stops holding, and nothing else in the repository
+  records that dependency
 
 ## Writing style
 
