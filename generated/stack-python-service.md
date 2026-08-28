@@ -31,6 +31,34 @@
   needs it, git history has it. Distinct from YAGNI: YAGNI says do not
   build speculative code; this says retract what probing made speculative.
 
+## Revisit triggers
+
+[ID: quality-revisit-trigger]
+
+A revisit trigger names the condition that reopens a deferral. Nothing
+polls it, and the record holding it is not re-read on a schedule, so by
+default it fires into an empty room: a record describing a constraint
+that has since lifted reads exactly like a live one.
+
+- The obligation attaches to the action, not to the record. An actor
+  who takes a step that fires a recorded trigger MUST reopen the
+  decision in the same change — as a superseding record, or as a ticket
+  carrying the evidence that the trigger fired
+- Before changing a piece of project state, search the records for
+  triggers naming it. The actor usually does not know that a record
+  names their action, and the search is the only thing that connects
+  them. Write triggers in a consistent, greppable form for exactly that
+  reason — a trigger nobody can find is a trigger nobody watches
+- State what would detect the trigger: a scheduled check, a gate that
+  fails, or the surface a reader would notice it on. Where nothing
+  would, record that detection is a person looking, so the cost is
+  visible rather than assumed away. A trigger that fires outside this
+  repository has no automatic watcher at all
+- A trigger is a claim about the world and decays like any other.
+  Re-verify it against the system rather than by re-reading the record,
+  and state that check beside the condition, so re-verifying costs one
+  command rather than a re-derivation
+
 ## Architecture
 
 - All editable content in a data directory — never hardcoded in source modules
