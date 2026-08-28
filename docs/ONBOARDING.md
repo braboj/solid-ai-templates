@@ -90,6 +90,13 @@ First, run the structural smoke tests to confirm the repo is in good shape:
 py tests/run_smoke.py
 ```
 
+Then run the checks the templates themselves prescribe, against this
+repository — it is a consumer of its own base tier:
+
+```bash
+py tests/run_conformance.py
+```
+
 Then run the system end-to-end with an agent:
 
 1. Open Claude Code in any project directory
