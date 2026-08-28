@@ -278,6 +278,11 @@ broken. This is distinct from matching document convention (that rule
 is about form; this is about substance) — a file can match convention
 perfectly and still carry a load-bearing audit comment.
 
+When the comment names a rejected mechanism rather than a measured
+outcome, the read has a second step: sweep the codebase for that
+mechanism per `quality-rejected-mechanism-sweep`. The comment is one
+call site's record of a defect that was never filed against the rest.
+
 ### Verify working directory before concluding on a negative
 [ID: ai-workflow-pwd-on-negative]
 

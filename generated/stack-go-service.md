@@ -222,6 +222,33 @@ that has since lifted reads exactly like a live one.
   full suite runs once — and a green run of the untouched suite plus a
   byte-identical output diff is what proves the split behaviour-neutral
 
+## A workaround comment is a half-filed defect report
+
+[ID: quality-rejected-mechanism-sweep]
+
+A comment explaining why one module avoids a construct is evidence that
+the construct is wrong everywhere, not a note about local taste. Someone
+diagnosed a shared mistake, fixed the module they were looking at, and
+had no reason to check the others — so the siblings that still use it
+carry no comment saying so, and this comment is the only record that
+they were never checked.
+
+- When a comment names a **rejected mechanism** — a specific construct,
+  call, or idiom recorded as not working — grep the codebase for that
+  mechanism before moving on: `grep -rn '<the construct>' <source root>`.
+  The pattern is already written down for you, in the comment. Scope the
+  search to the construct, not to the prose around it
+- Read every hit as a suspected instance of the same defect rather than
+  as a style question. The comment recorded an outcome, and the outcome
+  does not depend on which module the construct sits in
+- Where the sweep finds none, the comment is doing its narrower job and
+  the cost was one command. Where it finds hits, what looked like a
+  design note was an unfixed bug with a known diagnosis
+- This is the discovery half of `testing-shared-path-breadth`, which
+  covers verifying every call site once they are known. The sweep is how
+  the other call sites are found at all — from a comment rather than
+  from a diff
+
 ## Destructive operations
 
 [ID: quality-destructive-ownership]
