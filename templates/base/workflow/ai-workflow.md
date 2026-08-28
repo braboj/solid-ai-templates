@@ -480,11 +480,34 @@ failing approach. Recognize the difference:
   styling tweaks, field mapping errors, off-by-one bugs.
 - **Revert** when the approach itself is wrong — the architecture doesn't fit,
   performance got worse, or the complexity isn't justified.
+- **Revert and re-scope** when the approach is right and the change is only
+  half of the fix — correct on its own terms, and incomplete in a way that
+  ships a worse state than shipping nothing.
 
 The signal: if you're on the third round of fixes for the same feature and it
 still doesn't feel right, the approach is wrong. Revert cleanly, document why it
 failed (in the issue or an ADR), and try a different approach. Don't let sunk
 cost drive technical decisions.
+
+A third case sits between the two: a prototype that is **correct but
+partial**. It clears the regression bar — the target metric improves and
+the control cohort holds — and it is only the first half of a bug with
+two mechanisms. Shipping that half leaves the system worse than before,
+because the second mechanism nets out the gain: a dropped data track
+recovered by the first fix, then mislabelled downstream by the one it
+does not address.
+
+The tell is breadth of effect rather than quality of result. The
+prototype clears its bar AND exposes a second mechanism it does not
+address, or trips tests and effects beyond the target case. That
+unexpected breadth is the signal to revert and scope the complete
+multi-part fix as one spike — the work is not wrong, the two halves are
+simply not independently shippable.
+
+This is distinct from `Middle scope: ship a novel data shape before the
+UI`, where each slice stands on its own and the first is useful alone.
+Here the first half alone degrades the output, so shipping it buys a
+documented half-state and an obligation to finish.
 
 A special case: when a new bug looks like a previously-fixed pattern, the
 instinct is to extend the existing fix mechanism. Try it — but measure the
