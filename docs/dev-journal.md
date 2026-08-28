@@ -4398,3 +4398,105 @@ things from the same file -- stays intact for the next cut: #1238, #1239,
 3 of 15 rather than the 5 of 33 recorded earlier, and #1242's cited
 `resolve.py --check` does not exist. ADR-028 was written after the tag,
 so v2.62.0 carries the rule and not its record.
+
+---
+
+## 2026-08-28 -- The question a resolved chain leaves unsettled
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**v2.63.0 shipped 5 issues across 4 pull requests, the second cut of the
+day.** It was scoped in the v2.62 groom and held intact, which is the first
+time a cut has been planned one release ahead and shipped unchanged. The
+theme is what a consumer's resolved chain does not settle: three cases
+where two rules answer the same question differently, and two where no rule
+answers it at all.
+
+**A conflict invisible from either file.** `base-cli` claims any executable
+entry point; an example is executable, is an entry point, and is none of
+the three things the scope names. The two readings produce opposite work --
+`base-cli-plumbing` factors each example's body into a shared module, while
+`base-examples` asks for one file per pattern, and `base-cli-main` wants an
+`argv` seam that an example verified by a smoke run does not use. Both
+templates resolve into the same 11 chains and neither named the other, so
+the conflict was reachable only by reading them side by side. The scope
+paragraph now excludes the directory and says why, because an outcome
+without its reasoning invites the next edit to undo it.
+
+**A directory cannot be the home for files that must not be committed.**
+`base-examples` called `scripts/` the home for throwaway probes;
+`base-quality` says a probe never lands on main. Together they left the
+directory unowned, and the downstream outcome was seven files of which five
+were dead. What `scripts/` actually holds is maintained tooling that is not
+shipped. Eligibility came out as three grounds rather than the two the
+issue proposed -- invoked by a documented command, executed by CI, or
+imported by a file that is -- because a rule with only the first two
+deletes a live helper module. That is the sixth shape from last cut,
+applied to an issue filed this cut.
+
+**Placement was decided by measurement three times.** ADR-028 landed hours
+earlier, and every rule in this cut had to choose a file under it. The
+`scripts/` rule went into `quality.md` (17 chains) with `examples.md` (11)
+deferring, because the other direction leaves six consumers holding the
+deferral and not the rule. The suppression rule could name `base-quality`
+because every chain carrying `quality-gates.md` carries `quality.md`. The
+changelog rule could not cite the pair-a-rule-with-a-check requirement,
+which dangles in five, so it states it inline. A rule written a few hours
+before became the thing that shaped where four rules live.
+
+**The freeze answered one question and the escape beside it was
+undocumented.** A per-file lint freeze says "this file was already broken
+on adoption day". Nothing said "this rule is wrong at this line", so the
+only moves were adding the file to the table -- which the same rule forbids
+and which suppresses the rule for every other line in it -- or an
+undocumented suppression with no stated form. The only `# noqa` anywhere in
+the templates was the comment-layout exception. A site-local suppression
+must now name its rule, because a bare one silently absorbs every rule that
+later applies to the line and a named one keeps failing on the next
+finding.
+
+**The check matched its own pattern table.** The bare-suppression check
+scanned whole lines, so run against a tree containing itself it reported
+nine findings where four were real, five being its own list of the tokens
+it searches for. It now reads only the comment half of each line. Nothing
+about the check looked wrong; extracting it from the committed template and
+running it somewhere it could see itself is what showed it.
+
+**Where a class is unspecified and its neighbour is not, it inherits the
+neighbour's voice.** Nothing in the base layer shaped a changelog entry --
+the word appears in seven templates and only `stack/nodejs-lib` carried a
+rule. The failure does not present as a missing rule but as a changelog
+that reads like whatever else the project writes, and the development
+journal, specified in detail, sits one section away. Measured downstream:
+16 of 37 entries over 40 words, the longest at 142. The bound is now 40
+words with a check, and the journal relationship is stated, since those
+rules are what fill the vacuum when this one is absent.
+
+**Two rules shipped today are violated by this repository.** `base-docs`
+now requires `CHANGELOG.md` of a project that publishes versions; this repo
+has 63 tags, a published release for nearly all of them, and no such file.
+Filed as #1257 -- with the prior question attached, because the rule does
+not say whether generated release notes discharge it, and the two answers
+produce different work. That makes three rules this repository ships and
+does not satisfy, each found by hand after the rule merged. #1258 says the
+obvious thing: nothing runs the templates' embedded checks against this
+tree, and the composition suite does not attempt to.
+
+**PRs merged:** #1252, #1253, #1255, #1256
+
+**Issues closed:** #1230, #1231, #1238, #1239, #1240
+
+**Issues opened:** #1257, the changelog requirement being unsatisfied here
+and ambiguous about hosted release notes; and #1258, nothing running the
+templates' own checks against this repository, which is the pattern behind
+#1147, #1233 and #1257 alike. Both from audit item 12.
+
+**Also this session:** the second pull request went BEHIND, which is the
+case documented in the PLAYBOOK earlier the same day -- `gh pr
+update-branch`, then the staleness gate re-run on the merged result, both
+clean. Two groom corrections: #1240's claim that the security half was
+already solved and could be copied is half right, since `base-devsecops`
+carries the principle and none of the three concrete properties; and the
+shell working directory persisted across a check run and produced a
+false-negative, which is the trap this repository's own session protocol
+warns about, met while validating a check about traps.
