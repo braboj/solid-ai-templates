@@ -492,12 +492,16 @@ When NOT to close-and-resubmit:
   3. Run a 360-degree analysis if the project uses
      `templates/base/workflow/360.md` — the project SHOULD NOT
      ship with critical findings unresolved
-  4. Verify that every issue closed since the previous tag carries the
-     milestone being released — the check is below. Confirming a
-     milestone's issues are all closed checks one direction of the
-     relation only; work merged with no milestone is invisible to it, so
-     the gate passes green while saying nothing about the commits
-     actually being tagged
+  4. Where the release is scoped to a milestone, verify that every issue
+     closed since the previous tag carries that milestone — the check is
+     below. Confirming a milestone's issues are all closed checks one
+     direction of the relation only; work merged with no milestone is
+     invisible to it, so the gate passes green while saying nothing about
+     the commits actually being tagged. A routine release that was never
+     scoped as a milestone skips this check rather than backfilling one:
+     a planning artifact created after the fact carries no information,
+     and every issue closed since the tag would otherwise be reported in
+     the same shape as a finding
   5. Confirm the release pipeline has executed before — inspect the
      workflow's own run history, not the repository's; the check is
      below. A workflow file
@@ -525,50 +529,78 @@ turns a nested line into a shallower one.
 
 ```bash
 py - <<'EOF'
-import json, re, subprocess
+import json, re, subprocess, sys
+
+# The check prints a milestone title, which may hold characters the
+# console code page cannot encode. Without this the check raises
+# UnicodeEncodeError on the finding it exists to report.
+sys.stdout.reconfigure(encoding="utf-8")
+
+# The milestone this release is scoped to, or None for a routine release
+# that was never scoped as one. Setting it is the decision the step asks
+# for: a release with no milestone skips the check rather than reporting
+# every issue closed since the tag.
+MILESTONE = None
+
+# Decode every subprocess as UTF-8 rather than the locale encoding. `gh`
+# and `git` emit UTF-8; on a console whose code page is not, text=True
+# alone decodes a non-ASCII milestone title into different characters
+# than the literal it is compared against, and the check reports a
+# mismatch between a string and itself.
+RUN = dict(capture_output=True, text=True, encoding="utf-8")
+
+if MILESTONE is None:
+    print("release not scoped to a milestone; this check does not apply")
+    raise SystemExit(0)
 
 # Resolve the tag this release follows from the commit under release, not
 # from a position in a list of tags.
 previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0"],
-                          capture_output=True, text=True).stdout.strip()
+                          **RUN).stdout.strip()
 subjects = subprocess.run(["git", "log", "--format=%s", previous + "..HEAD"],
-                          capture_output=True, text=True).stdout
+                          **RUN).stdout
 merged = sorted({int(n) for n in re.findall(r"\(#(\d+)\)\s*$", subjects, re.M)})
 print("previous tag: %s" % previous)
 print("pull requests merged since: %d" % len(merged))
 if not merged:
     print("no pull requests found since %s; either nothing is unreleased "
           "or the commit subject format drifted" % previous)
-unmilestoned = []
+mismatched = []
 for pr in merged:
     raw = subprocess.run(["gh", "pr", "view", str(pr), "--json",
-                          "closingIssuesReferences"],
-                         capture_output=True, text=True).stdout
+                          "closingIssuesReferences"], **RUN).stdout
     if not raw.strip():
         print("pull request %d could not be read" % pr)
         continue
     for ref in json.loads(raw).get("closingIssuesReferences") or []:
         issue = ref["number"]
         detail = subprocess.run(["gh", "issue", "view", str(issue), "--json",
-                                 "milestone"],
-                                capture_output=True, text=True).stdout
+                                 "milestone"], **RUN).stdout
         if not detail.strip():
             print("issue %d could not be read" % issue)
             continue
-        if not json.loads(detail).get("milestone"):
-            unmilestoned.append((pr, issue))
-for pr, issue in unmilestoned:
-    print("pull request %d closed issue %d, which carries no milestone"
-          % (pr, issue))
+        found = (json.loads(detail).get("milestone") or {}).get("title")
+        if found != MILESTONE:
+            mismatched.append((pr, issue, found))
+for pr, issue, found in mismatched:
+    carries = "no milestone" if found is None else "milestone %s" % found
+    print("pull request %d closed issue %d, which carries %s"
+          % (pr, issue, carries))
 EOF
 ```
 
-Pass condition: the command reports the previous tag and the number of
-pull requests merged since it, then prints nothing. An empty result is a
-failure too, since no pull requests found means either nothing is
-unreleased or the commit subject format drifted. A deferred *open* issue
-correctly carries no milestone — this covers only issues closed by merged
-work sitting between two tags.
+Pass condition: with `MILESTONE` set, the command reports the previous
+tag and the number of pull requests merged since it, then prints nothing.
+An empty result is a failure too, since no pull requests found means
+either nothing is unreleased or the commit subject format drifted. A
+deferred *open* issue correctly carries no milestone — this covers only
+issues closed by merged work sitting between two tags.
+
+With `MILESTONE` left at `None` the command reports that the check does
+not apply, which is a pass and not a skip: the line is the record that a
+routine release was cut deliberately without one. Distinguish it from a
+finding before running anything — a milestone-scoped release left at
+`None` reports "does not apply" and proves nothing.
 
 The check for step 5. Name the release workflow explicitly rather than
 reading whichever run finished last — a repository with more than one
