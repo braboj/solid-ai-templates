@@ -5068,14 +5068,40 @@ project fails there, where nobody wrote it and nobody can debug it.
   committed file. A trailing backslash can be dropped on the way from
   author to file, and when it is, the lines join and nothing reports it:
   the shell accepts the joined command, the compile gate accepts it, and
-  only the text has changed. This is the one break mode that fails neither
-  loudly nor closed, so reading the committed line is the whole check —
-  every other break mode announces itself
+  only the text has changed. Reading the committed line back is the whole
+  check: this break mode fails neither loudly nor closed
 - SHOULD avoid needing the confirmation. Fold the command onto one line —
   a fenced block is exempt from the width limit precisely so that is
   available — or bind its parts to shell variables. Where a continuation
   is genuinely the clearest form, keep it and verify it; the construct is
   not the defect, the silent loss is
+- The same silent loss applies to **quoting** such a line, not only to
+  writing one. A search string, patch, fixture or prose example carrying
+  the backslash is reconstructed by the same path, and the symptom
+  inverts: an anchor that will not match text plainly present in the file.
+  Construct the character with `chr(92)` rather than transcribing it
+  wherever the reconstruction has to be exact
+- An embedded check MUST NOT depend on a backslash escape surviving the
+  authoring path at all. A lost continuation is detectable by
+  construction — a line that was two is now one — but an escape lost from
+  inside a pattern leaves a check that is the right length, parses, runs,
+  and is wrong about what it matches. So the confirmation the rule above
+  requires is not specific to continuations; it is the only thing that
+  catches this family at all. Where a pattern needs an escape, express it
+  without one:
+
+  | Instead of | Write |
+  |------------|-------|
+  | `\d` | `[0-9]` |
+  | `\w` | `[A-Za-z0-9_]` |
+  | `\b` at each end | `(?<![A-Za-z0-9])` and `(?![A-Za-z0-9])` |
+  | a literal backslash | `chr(92)` |
+
+  A pattern holding no backslash cannot lose one. The two losses differ in
+  what they say: a vanished `\b` still compiles and still matches, so the
+  check reports confidently over a wider set than intended, while a
+  degraded `\d` announces itself only as a `SyntaxWarning` on stderr —
+  which a check whose pass condition reads stdout will not surface
 - A violation count far larger than expected on a tree believed clean MUST
   be triaged as a possible defect in the check before it is worked as a
   backlog of fixes. A rule can be wrong rather than under-enforced
@@ -5095,7 +5121,7 @@ ROOTS = ["templates"]
 # A shipped check is a heredoc inside a fenced block. The fence may be
 # indented under a list item, and a renderer strips that indent -- so
 # strip it here too, or the extracted body will not compile.
-FENCE = re.compile(r"^(\s*)```")
+FENCE = re.compile(r"^([ ]*)```")
 found, broken = 0, []
 for root in ROOTS:
     for path in sorted(pathlib.Path(root).rglob("*.md")):
@@ -5112,11 +5138,13 @@ for root in ROOTS:
                 body.append(line[indent:] if not line[:indent].strip() else line)
                 n += 1
             n += 1
-            text = "\n".join(body)
+            text = chr(10).join(body)
             if "<<'EOF'" not in text:
                 continue
             found += 1
-            source = text.split("<<'EOF'", 1)[1].split("\nEOF", 1)[0].lstrip("\n")
+            marker = chr(10) + "EOF"
+            source = text.split("<<'EOF'", 1)[1].split(marker, 1)[0]
+            source = source.lstrip(chr(10))
             try:
                 compile(source, str(path), "exec")
             except SyntaxError as error:
@@ -5147,7 +5175,7 @@ import pathlib, re
 # The files that carry rules and their checks.
 ROOTS = ["templates"]
 
-FENCE = re.compile(r"^(\s*)```")
+FENCE = re.compile(r"^([ ]*)```")
 blocks, risky = 0, []
 for root in ROOTS:
     for path in sorted(pathlib.Path(root).rglob("*.md")):
@@ -5163,7 +5191,7 @@ for root in ROOTS:
             while n < len(lines) and not FENCE.match(lines[n]):
                 line = lines[n]
                 body = line[indent:] if not line[:indent].strip() else line
-                if body.rstrip().endswith("\\"):
+                if body.rstrip().endswith(chr(92)):
                     risky.append((path, n + 1))
                 n += 1
             n += 1
