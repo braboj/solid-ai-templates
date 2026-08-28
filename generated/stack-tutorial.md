@@ -31,6 +31,34 @@
   needs it, git history has it. Distinct from YAGNI: YAGNI says do not
   build speculative code; this says retract what probing made speculative.
 
+## Revisit triggers
+
+[ID: quality-revisit-trigger]
+
+A revisit trigger names the condition that reopens a deferral. Nothing
+polls it, and the record holding it is not re-read on a schedule, so by
+default it fires into an empty room: a record describing a constraint
+that has since lifted reads exactly like a live one.
+
+- The obligation attaches to the action, not to the record. An actor
+  who takes a step that fires a recorded trigger MUST reopen the
+  decision in the same change — as a superseding record, or as a ticket
+  carrying the evidence that the trigger fired
+- Before changing a piece of project state, search the records for
+  triggers naming it. The actor usually does not know that a record
+  names their action, and the search is the only thing that connects
+  them. Write triggers in a consistent, greppable form for exactly that
+  reason — a trigger nobody can find is a trigger nobody watches
+- State what would detect the trigger: a scheduled check, a gate that
+  fails, or the surface a reader would notice it on. Where nothing
+  would, record that detection is a person looking, so the cost is
+  visible rather than assumed away. A trigger that fires outside this
+  repository has no automatic watcher at all
+- A trigger is a claim about the world and decays like any other.
+  Re-verify it against the system rather than by re-reading the record,
+  and state that check beside the condition, so re-verifying costs one
+  command rather than a re-derivation
+
 ## Architecture
 
 - All editable content in a data directory — never hardcoded in source modules
@@ -6137,6 +6165,15 @@ issue is fully triaged whether or not it is scheduled.
 - State trigger conditions as concrete, observable events ("a second
   component exhibits pattern X", "badged data runs four weeks without
   pushback") — natural language is fine; naming them is the discipline.
+- The open issue is not the watcher, and stating a trigger does not
+  create one. Record in the body what would detect the condition, or
+  that nothing would — otherwise every pass over the backlog re-runs the
+  check by hand to establish that it still has not fired, which is the
+  work the ticket was supposed to save.
+- Where the issue is also the only thing tracking a drift recorded
+  elsewhere — a stale count in a merged record, a divergence held open
+  pending this work — say so in the body, so that closing it names what
+  loses its tracker instead of dropping it silently.
 - Carry acceptance criteria as usual, so the work is sized when picked up.
 - Reference the issue from the decision that deferred it (e.g. the ADR's
   Decision section), so the decision stays discoverable from the tracker
@@ -6145,6 +6182,13 @@ issue is fully triaged whether or not it is scheduled.
 - Re-read the unmilestoned set when scoping a cut. Deferral is now the
   absence of a field rather than the presence of a label, so nothing
   surfaces the backlog on its own.
+- Re-verify the trigger against the system before deferring the issue
+  again — at triage, at scope selection, or when a session reads the
+  backlog and skips it. The body was written once, and a fired trigger
+  and an unfired one look identical from the text. A trigger that has
+  fired makes the issue open work rather than deferred work, and the
+  body MUST be corrected to say so, because the issue's own text is what
+  the next reader triages from.
 
 ---
 
