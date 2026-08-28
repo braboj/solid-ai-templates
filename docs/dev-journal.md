@@ -3907,3 +3907,96 @@ outside the release it describes.
 **Issues opened:** #1174, for `c-embedded` having no quality-gates
 section and C no language file -- the only stack family left without one
 after this cut.
+
+---
+
+## 2026-08-28 -- What the check measures
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Cut D shipped as v2.58.0 -- 10 issues, 8 pull requests, closing the gap
+between a check that runs cleanly and a check that answers the question
+the claim is about.** Eight separate observations turned out to share one
+shape: a false zero, a measurement taken at the wrong scope, a probe run
+as the wrong principal, a planted break nobody proved had landed, a family
+of absence checks with no shared control, a floor with no derivation, a
+scan that flagged the comment recording its own fix, and a staleness gate
+that could not see its own subject.
+
+**The cut's own theme caught the cut, twice.** Rewriting `sync.py` by
+anchored replacement failed on an anchor containing `"\n"`: the two
+characters in the file became one newline in the search string, so the
+anchor never matched and the edit silently did nothing. The assertion
+fired before the write, so the file was untouched -- but the same slip
+inside a successful edit would have shipped. The redo used a placeholder
+token substituted for `chr(92)` at the end, so no backslash appeared in
+the editing script at all. Then the journal entry describing that failure
+was written the unsafe way and broke on the same escape, mid-sentence,
+inside the sentence naming it. Seventh and eighth recorded instances of
+the mode. Reading the text back out of the file is what caught both, as
+it has caught every one of them.
+
+**A guard that fires is worth more than a guard that passes.** The chain
+generator refuses an unknown stack id, and it refused one immediately:
+`load_manifest` returns `stacks` as a *list of dicts*, so `stack_id not in
+stacks` was always true. Without the guard the block would have rendered
+empty -- a fenced code block containing nothing, which reads as a real
+result and is exactly the drift the generator exists to prevent.
+
+**Measuring the historical drift needed three attempts, each failing
+differently.** Counting the pre-correction example blocks first over-ran
+its bounds -- the last block had no following delimiter, so the count swept
+`templates/` lines out of later sections and reported 28 where the truth
+was 21. The fix over-corrected onto the wrong fence and returned 0 for
+every block, the reached-nothing signature. Only the third, indexing
+explicit fence pairs, reproduced the issue's numbers exactly. A one-file
+correction to `review.md` in this same cut says a count carrying a finding
+is produced twice by different means; writing that rule and then needing
+it three times in an hour is the strongest argument for it available.
+
+**The staleness gate repairs what it reports on.** `_update_file` has no
+`check_mode` guard, so `sync.py --check` writes the files it is checking.
+The first invocation reported `1 file(s) out of sync` and exited 1; a
+second, moments later, reported clean and exited 0, because the first had
+already rewritten the file. Read straight, the pair says the gate is
+flaky. It is not, it is destructive -- and every negative control of a
+marker has to specify a single fresh invocation. Pre-existing and
+affecting every marker rather than the one added here, so it was filed
+(#1192) rather than folded in.
+
+**An accepted decision retired a filed acceptance criterion.** #1159 asked
+for the mutation-testing tool mapping in the `python-*`, `go-*` and JS/TS
+stack templates. ADR-027 was accepted after the issue was filed and moved
+per-language tool selection into `base/language/`, forbidding the abstract
+gate from naming a tool at all. Implementing the criterion as written
+would have contradicted a decision merged eight commits earlier. The
+mapping went to the language layer instead, which reaches wider: one
+binding on `stack-python-lib` covers six stacks.
+
+**Five negative controls on one two-line grep.** The fix for #1181 adds
+`^[^#]*` so the unique-resource scan skips lines where the pattern is
+discussed rather than used. The controls that mattered were not the
+obvious two. Running the *old* pattern against the clean corpus proved the
+fix was load-bearing rather than decorative; a real allocation carrying a
+trailing `# noqa` proved the guard had not been over-applied; and an empty
+tree proved the "a zero count means the path is wrong" condition still
+discriminated.
+
+**A zero is not always drift.** The test-edit boundary check reports zero
+when a change touches no tests at all, which is a real answer needing no
+escalation -- the opposite reading from `quality-gates-check-runs`, where
+an empty result means the enumeration broke. The section says so
+explicitly rather than letting the file's general rule be read onto it.
+
+**PRs merged:** #1185, #1186, #1187, #1188, #1189, #1190, #1191, #1193
+
+**Issues closed:** #1022, #1039, #1043, #1140, #1159, #1160, #1161, #1168,
+#1181, #1183
+
+**Issues opened:** #1192, for `sync.py --check` writing the files it is
+checking.
+
+**Also this session:** #1181 was labelled `bug`/`P2` on the #979
+precedent -- a shipped check producing a false positive is a defect, not a
+task -- which returned the repository's own label conformance check to
+`[]`.
