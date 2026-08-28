@@ -51,9 +51,9 @@
 ## Tooling
 [ID: base-typescript-tooling]
 
-`base-quality-gates` states which categories a project MUST gate; this
-table names the TypeScript tool that satisfies each. Stack templates add
-only the tools their shape changes.
+The project's quality-gate rules state which categories MUST be gated;
+this table names the TypeScript tool that satisfies each. Stack templates
+add only the tools their shape changes.
 
 | Category              | Tool                     | Config              |
 | --------------------- | ------------------------ | ------------------- |

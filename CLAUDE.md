@@ -198,6 +198,10 @@ base/ ──┬── frontend/ ──┐
 - A mechanically-checkable output constraint MUST name its
   agent-runnable check (command + pass condition); subjective
   constraints stay declarative (see `quality-gates-pair-check`)
+- Never name another file's section ID in running prose unless that file
+  resolves into every chain carrying yours — state the substance inline
+  instead; SYS-11 checks it per chain (see SPEC.md "Naming another file's
+  section in prose")
 - Stack templates follow the canonical section structure (ADR-017):
   MUST sections are Stack, Commands, Project structure (pure
   libraries exempt from the last); see ADR-017 for SHOULD/MAY tiers,

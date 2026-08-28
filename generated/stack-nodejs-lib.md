@@ -1234,9 +1234,10 @@ When NOT to close-and-resubmit:
      — investigate any results before proceeding
   2. Check for orphaned commits: `git fsck --unreachable --no-reflogs
      | grep commit` — verify no unique work is lost
-  3. Run a 360-degree analysis if the project uses
-     `templates/base/workflow/360.md` — the project SHOULD NOT
-     ship with critical findings unresolved
+  3. Where the project runs a periodic project-wide audit, run one
+     before the release — it SHOULD NOT ship with critical findings
+     unresolved. A project with no such audit skips this step rather
+     than inventing one for the release
   4. Where the release is scoped to a milestone, verify that every issue
      closed since the previous tag carries that milestone — the check is
      below. Confirming a milestone's issues are all closed checks one
@@ -1276,7 +1277,7 @@ reads. Four of the seven carry no pass condition:
 | --- | --- |
 | 1 | `git branch --no-merged main`, run by hand. Command, no pass condition — "investigate any results" is a judgement |
 | 2 | `git fsck --unreachable --no-reflogs`, run by hand. Same shape as step 1 |
-| 3 | nothing. Conditional on the project using `base-360`, and no pass condition either way |
+| 3 | nothing. Conditional on the project running a periodic project-wide audit at all, and no pass condition either way |
 | 4 | the milestone-coverage check below |
 | 5 | the pipeline-history check below |
 | 6 | **nothing**, and it is the step to gate first |
@@ -2705,8 +2706,9 @@ Every README MUST contain the following sections, in this order:
 - Generated directories (`dist/`, `__pycache__/`, `.venv/`) MUST be omitted
 - When the project ships an `examples/` directory, that directory MUST
   carry its own `README.md`, because the index is a README and this
-  template owns those. What the index and the examples themselves MUST
-  contain is `base-examples`, and MUST NOT be restated here
+  template owns those. What that index and the examples themselves MUST
+  contain belongs to the project's rules for its examples directory, and
+  MUST NOT be restated here
 
 ### 6. Development setup
 - MUST cover: cloning, installing dependencies, running tests, running the
@@ -4113,9 +4115,9 @@ answer for the wrong reason is the same failure in a cheaper form.
 ## Tooling
 [ID: base-typescript-tooling]
 
-`base-quality-gates` states which categories a project MUST gate; this
-table names the TypeScript tool that satisfies each. Stack templates add
-only the tools their shape changes.
+The project's quality-gate rules state which categories MUST be gated;
+this table names the TypeScript tool that satisfies each. Stack templates
+add only the tools their shape changes.
 
 | Category              | Tool                     | Config              |
 | --------------------- | ------------------------ | ------------------- |

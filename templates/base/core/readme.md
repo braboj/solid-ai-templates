@@ -69,8 +69,9 @@ Every README MUST contain the following sections, in this order:
 - Generated directories (`dist/`, `__pycache__/`, `.venv/`) MUST be omitted
 - When the project ships an `examples/` directory, that directory MUST
   carry its own `README.md`, because the index is a README and this
-  template owns those. What the index and the examples themselves MUST
-  contain is `base-examples`, and MUST NOT be restated here
+  template owns those. What that index and the examples themselves MUST
+  contain belongs to the project's rules for its examples directory, and
+  MUST NOT be restated here
 
 ### 6. Development setup
 - MUST cover: cloning, installing dependencies, running tests, running the
