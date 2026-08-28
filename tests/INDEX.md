@@ -19,6 +19,7 @@ and component group registry.
 | `SAIT-SMK-SYS-07-001A` | SMK | P2 | 360 audit reports live only under docs/audits/ |
 | `SAIT-SMK-SYS-08-001A` | SMK | P2 | Every showcased stack keeps its example CLAUDE.md |
 | `SAIT-SMK-SYS-09-001A` | SMK | P2 | sync.py --check inspects without writing |
+| `SAIT-SMK-SYS-10-001A` | SMK | P2 | A quoted DEPENDS ON in prose is not a declaration |
 | `SAIT-SMK-TPL-04-001A` | SMK | P1 | All EXTEND and OVERRIDE directives reference existing IDs |
 | `SAIT-INT-TPL-01-001A` | INT | P0 | DEPENDS ON chain assembles a complete rule set |
 | `SAIT-INT-TPL-02-001A` | INT | P1 | EXTEND adds rules without removing base rules |
