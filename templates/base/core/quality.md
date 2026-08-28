@@ -648,6 +648,12 @@ for name in tracked:
   are excepted), and never separated from that item by a blank line
 - Separate each comment-plus-item group from the next with a single blank
   line, so the comment and the lines it explains read as one unit
+- A comment that is the first thing inside a block or a bracketed literal
+  is exempt from that separation: it opens the first group rather than
+  dividing two, and the line above it is the `def`, `if`, `for`, `try` or
+  opening bracket the comment is inside. There is nothing to separate it
+  from, and a blank line inserted there detaches the comment from the item
+  it documents — the violation the rule above forbids
 - Wrap comment prose to the project's configured line-length limit, the same
   limit as code. Enforce this for commented configuration files
   (`pyproject.toml`, YAML, CI workflows) too, even where the linter does not
@@ -657,16 +663,19 @@ for name in tracked:
   between them, and an aside to the right of code that is not a tool
   directive. Scope: Python sources, read through `tokenize` — a line-based
   grep reports the `#` in a usage example inside a docstring, which is not
-  a comment at all. Whether a comment sits above the *right* item is not
-  mechanical and stays declarative; wrap width is the formatter's. Pass
-  condition: the command reports how many files it checked and prints
-  nothing after that:
+  a comment at all. `OPENERS` carries the exemption above; test it against
+  the code the line above *ends* with, since a line closing the previous
+  entry (`],`) opens nothing and its comment is a real finding. Whether a
+  comment sits above the *right* item is not mechanical and stays
+  declarative; wrap width is the formatter's. Pass condition: the command
+  reports how many files it checked and prints nothing after that:
 
   ```bash
   py - <<'EOF'
 import io, pathlib, tokenize
 DIRECTIVES = ("noqa", "nosec", "type:", "pragma:", "pylint:", "fmt:", "mypy:")
 SKIP = (".venv", "venv", "build", "dist", ".git", ".tox")
+OPENERS = (":", "(", "[", "{")
 paths = [p for p in sorted(pathlib.Path(".").rglob("*.py"))
          if not any(part in SKIP for part in p.parts)]
 print("Python files checked: %d" % len(paths))
@@ -682,7 +691,9 @@ for path in paths:
                     print("%s:%d: aside to the right of code"
                           % (path.as_posix(), row))
             elif row > 1 and src[row - 2].strip():
-                if not src[row - 2].strip().startswith("#"):
+                above = src[row - 2].split("#")[0].rstrip()
+                if not src[row - 2].strip().startswith("#") and not (
+                        above.endswith(OPENERS)):
                     print("%s:%d: comment block with code directly above it"
                           % (path.as_posix(), row))
   EOF
