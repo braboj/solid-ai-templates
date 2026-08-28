@@ -372,7 +372,114 @@ quarterly.
 5. Push and open a PR — one concern per PR
 6. After merge: delete the branch and pull `main`
 
+Where a cut carries more than one pull request, every branch after the
+first goes `BEHIND`. Each merge regenerates `generated/`, so the second
+branch carries pre-resolved chains built from a tree that lacks the
+first one's change. Git reports the branch `MERGEABLE` — the edits fall
+in different regions of the same files — so nothing warns that the
+chains are stale, and smoke does not read `generated/` either. CI is the
+first signal.
+
+Recover it with `gh pr update-branch`, never a rebase and force-push.
+Then re-run both staleness gates on the updated branch, because
+mergeable is not the same claim as current:
+
+```bash
+gh pr update-branch <number>
+git pull
+py tools/sync.py --check
+```
+
+Pass condition: the gate prints `All files in sync` **after** the
+update, having listed every generated chain it compared. `sync.py
+--check` is the whole gate — it covers `generated/` as well as the three
+generated documents, so there is no second command to run. Run it before
+the update instead and it reports the previous state, which reads as a
+pass.
+
+`tools/resolve.py` takes no `--check`; given one it falls through to
+`--list`, prints the stack IDs and exits `0`. An unknown flag on that
+tool is indistinguishable from a clean gate.
+
 ---
+
+## Groom the backlog
+
+Run this before scoping a cut. Nothing surfaces the backlog on its own —
+an unmilestoned issue is triaged, not untriaged, so no view reports it and
+no gate asks about it.
+
+1. Re-read the whole unmilestoned set. Milestoned means planned into that
+   cut; unmilestoned means backlog, and the only way to see it is to list
+   it:
+   ```bash
+   gh issue list --state open --limit 200 --json number,title,milestone --jq '.[] | select(.milestone == null) | [.number, .title] | @tsv'
+   ```
+2. **Verify each issue's claims against the tree before grooming, not
+   after.** An issue is written against the tree as it stood on its
+   filing date, and grooming a claim that has since moved plans work that
+   does not exist. Measure the claim, then annotate the issue with what
+   the measurement found and its date
+3. Cluster by target file. Issues touching one section are one pull
+   request rather than several, and the clustering is visible only once
+   the claims are verified — two issues can name the same file and want
+   changes that do not compose
+4. Scope the cut from the clusters, then create the milestone. A theme
+   falls out of what the groom found; choosing a theme first selects
+   issues to fit it. The title is `vA.B.C — <theme>` and the description
+   enumerates the issues; the release tag message quotes that theme, so
+   a milestone titled with a bare version leaves the tag with nothing to
+   quote
+
+Grooming produces annotations and a milestone, not edits. An issue whose
+measurement shows it is narrower, wider or wrong as filed is annotated
+with that finding and left open — restating the scope is the implementer's
+step, and `base-review` covers the shapes it takes.
+
+### Sweep merged commits for still-open issues
+
+An issue whose work merged while it stayed open is invisible to every
+other gate: the release gate inspects only issues closed **by** merged
+pull requests, so a manually-closed issue — or one nothing ever closed —
+never reaches it. Run this during the groom.
+
+```bash
+py - <<'EOF'
+import json, re, subprocess
+
+subjects = subprocess.run(
+    ["git", "log", "--format=%s"], capture_output=True, text=True).stdout.splitlines()
+print("commit subjects scanned: %d" % len(subjects))
+
+reffed = set()
+for s in subjects:
+    reffed.update(re.findall(r"[(]#([0-9]+)[)]", s))
+print("distinct issue numbers referenced: %d" % len(reffed))
+
+raw = subprocess.run(
+    ["gh", "issue", "list", "--state", "open", "--limit", "500", "--json", "number"],
+    capture_output=True, text=True).stdout
+open_now = {str(i["number"]) for i in json.loads(raw)}
+print("open issues: %d" % len(open_now))
+
+hits = sorted(reffed & open_now, key=int)
+print("referenced by a merged commit and still open: %d" % len(hits))
+for h in hits:
+    print("  #%s" % h)
+EOF
+```
+
+Pass condition: the check prints how many commit subjects it scanned, how
+many issue numbers it found in them, and how many open issues it compared
+against, before printing the hits. All three counts are load-bearing — a
+sweep that reaches nothing and a sweep that finds nothing print the same
+empty result otherwise. A scanned count of zero is a failure, not a clean
+run.
+
+Each hit is a decision, not a defect: the work may have merged under a
+different issue, or the issue may name more than the commit closed. Close
+it or record why it stays open. One instance stayed open across eleven
+releases before this sweep existed.
 
 ## Release a new version
 
@@ -384,14 +491,14 @@ Release — there is no `chore: release` branch, commit, or PR.
    (`py tests/run_smoke.py` passes) and up to date (`git pull`)
 2. Confirm the inverse — every issue closed since the previous tag
    carries the milestone being released. Step 1 reads the milestone
-   and cannot see work merged without one. Run the pre-release check
-   in `templates/base/core/git.md`, setting its `MILESTONE` to the
+   and cannot see work merged without one. Run the milestone-coverage
+   check in `templates/base/core/git.md`, setting its `MILESTONE` to the
    milestone being released. Left unset it reports that the check does
    not apply — correct for a routine release on a project that scopes
    some cuts and not others, and a silent pass here, where every cut is
    milestoned
 3. Confirm nothing else is ready to merge, or decide which side of the
-   tag it lands on. Run the ordering check in
+   tag it lands on. Run the release-ordering check in
    `templates/base/core/git.md` — anything merged between the release
    commit and the tag ships inside the release with no note naming it,
    and both pull requests stay green in either order
@@ -418,9 +525,17 @@ Release — there is no `chore: release` branch, commit, or PR.
    and the milestone's description both carry it already, and a release
    list mixing the two forms reads as two conventions rather than one
 6. Close the `vA.B.C` milestone once the release is published
-7. Add the session's `docs/dev-journal.md` entry **separately** — its
-   own `docs(journal): ...` PR with **no milestone**, not part of the
-   release
+7. Record that the session owes a `docs/dev-journal.md` entry — do not
+   write it here. The entry is written at the end-of-session audit item
+   that owns it, which is the last item for a reason: it is the only one
+   whose output is a record of the others, and items above it file
+   issues and open pull requests. Written at this point instead, the
+   entry names none of them, and `base-docs` fixes its account once
+   written, so the repair is a second entry for one session. When the
+   entry is written it is still **separate** — its own
+   `docs(journal): ...` PR with **no milestone**, not part of the
+   release. A release cut without a wrap-up still owes the entry;
+   publishing the release does not discharge it
 8. Verify the release exists before closing the session. This is last
    rather than part of step 5 on purpose: a check inside a step is
    skipped whenever the step is:
@@ -438,12 +553,12 @@ Which of those steps are actually enforced, audited per step as
 | Step | Enforced by |
 | --- | --- |
 | 1 | `py tests/run_smoke.py`, plus the milestone's own issue list |
-| 2 | the pre-release check in `base/core/git.md` |
-| 3 | the ordering check in `base/core/git.md` |
+| 2 | the milestone-coverage check in `base/core/git.md` |
+| 3 | the release-ordering check in `base/core/git.md` |
 | 4 | `tag-guard.yml`, which fails a pushed lightweight `v*` tag |
 | 5 | step 8, and nothing before it |
 | 6 | nothing — an open milestone after a published release is silent |
-| 7 | nothing — a missing entry surfaces at the next wrap-up, or never |
+| 7 | nothing — a missing entry surfaces at the next wrap-up, or never. The entry itself is gated by the audit item that writes it |
 | 8 | nothing; it is the closing check, so it is the one to run by hand |
 
 Step 5 is the one to protect first, because its omission cannot be
