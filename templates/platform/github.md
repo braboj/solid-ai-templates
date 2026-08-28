@@ -349,6 +349,36 @@ errors:
     args: --offline --no-progress --root-dir dist dist/
 ```
 
+**Lychee note (source Markdown, no build step):** A documentation or
+knowledge-base repository has no build output to point `--root-dir` at,
+and checks the relative links in its `.md` sources directly. Choose this
+variant when the links under check are the ones an author wrote, and the
+build-output variant above when they are the ones a generator emitted.
+
+- MUST pass `--offline`, which checks local files and blocks network
+  requests. An external URL rots outside the repository, so including
+  one turns an unrelated change red
+- MUST exclude vendored and submodule trees with `--exclude-path`. A
+  submodule carries links the repository does not own, and one carrying
+  a `node_modules` fails the run on content nobody here can fix
+- `--exclude-path` values are regular expressions, not paths. A bare
+  `docs` excludes every path containing that substring, so anchor the
+  pattern unless the loose match is what is wanted
+- MUST enumerate content directories rather than pass a bare recursive
+  glob, for the same reason the external note gives — a recursive glob
+  skips dot-directories, and this variant is the one most likely to be
+  pointed at a repository whose agent definitions live in them
+
+```yaml
+- uses: lycheeverse/lychee-action@<commit-sha>  # v2
+  with:
+    args: >-
+      --offline --no-progress
+      --exclude-path '^tutorials/' --exclude-path '^vendor/'
+      "docs/**/*.md" ".claude/**/*.md" "README.md"
+    fail: true
+```
+
 **Lychee note (external links):** External checking has different
 failure modes and MUST be configured as a separate job:
 
