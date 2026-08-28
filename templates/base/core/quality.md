@@ -216,6 +216,46 @@ that has since lifted reads exactly like a live one.
   full suite runs once — and a green run of the untouched suite plus a
   byte-identical output diff is what proves the split behaviour-neutral
 
+## Destructive operations
+
+[ID: quality-destructive-ownership]
+
+An operation that deletes, truncates, overwrites or kills decides what
+to act on from its inputs, and the inputs are precisely what fail. A
+configurable path resolves somewhere unintended when the value is empty
+or the variable unset; a before-and-after sample attributes a process
+that merely appeared during the window. Either failure alone is
+survivable. Paired with a filter on a generic property — a file
+extension, a process name — it destroys something the user never
+offered the operation.
+
+- A destructive operation acts only on what it can prove it created.
+  Proof is a property the operation's own subsystem wrote: process
+  ancestry, a key scheme, a filename prefix, a marker file, an ownership
+  tag. Never a path, a configuration value, or a file extension
+- Where the proof is unavailable the operation finds nothing — not an
+  error, not a prompt, not a best guess. The safe outcome of a lost
+  ownership check is that the destructive step has no work to do, so a
+  mis-resolved target yields an empty sweep rather than a broad one
+- Validating the input is not a substitute. A wrong path can be
+  perfectly valid, so the two defences fail independently and both are
+  needed: reject the empty configuration value, and match the key scheme
+- The rule holds beyond caches — a build tool clearing an output
+  directory, a log rotator pruning old logs, a temp-file reaper. Anywhere
+  the target set is "the files in a directory someone configured"
+
+The ownership filter looks redundant, and that is the whole point.
+Inside the directory it was written for it matches everything the
+generic pattern matches, so the next reader to call it dead code will be
+right about the common case and wrong about the reason it exists:
+
+```
+match on ".html"              wrong directory -> README.html deleted
+match on "[0-9a-f]{16}.html"  wrong directory -> nothing matched
+```
+
+The path bug still happens. It stops being destructive.
+
 ## Expensive computations (if applicable)
 
 [ID: quality-expensive-compute]
