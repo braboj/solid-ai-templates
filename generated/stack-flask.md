@@ -2852,6 +2852,21 @@ Python-only. Coverage is the part no failing test reports.
 - Where a project wants this enforced rather than reviewed, the pattern is
   the meta-test in `testing-ast-contract` — assert over the enumeration
   itself, not only over its findings
+- That control MUST blind the single call the family reads its corpus
+  through — a tracked-file listing, a database cursor, an API client —
+  rather than each member's own enumeration. One patch point covers a
+  member added later, and needs no knowledge of what each member named its
+  reader
+- The control MUST derive its members from that call rather than listing
+  them. A hand-maintained roster of the checks under control carries the
+  blind spot the checks carry: a member missing from the roster is never
+  controlled, and the roster reports success while covering less than it
+  claims, which is the failure this rule exists to prevent. Selecting on
+  the shared call also fails a member written later without a coverage
+  assertion, which a roster cannot do
+- The control SHOULD ship as a test rather than a one-off run, so that
+  member fails on the pull request that adds it rather than at the next
+  audit
 
 ---
 
