@@ -4500,3 +4500,58 @@ carries the principle and none of the three concrete properties; and the
 shell working directory persisted across a check run and produced a
 false-negative, which is the trap this repository's own session protocol
 warns about, met while validating a check about traps.
+
+---
+
+## 2026-08-28 -- Session close-out after v2.63.0
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**This is the second record for the session the entry above describes, and
+it exists because the wrap-up audit ran twice.** The first pass ran when
+v2.63.0 was tagged and produced #1257 and #1258, which that entry names.
+The session then continued, and the explicit end-of-session audit produced
+two more things it cannot name. `base-docs` fixes a record in what it
+claims rather than in its bytes, so adding them to the entry above would be
+an amendment and belongs in a new record instead of an in-place edit.
+
+**Item 6 found a decision made three times and written down nowhere.**
+ADR-028 records the constraint on cross-file references. The placement
+heuristic it implies -- measure both candidate files' chain reach and put
+the rule in the wider one, leaving the narrower to defer -- was applied
+three times during v2.63 and stated in neither the ADR nor CLAUDE.md. It is
+now one line in CLAUDE.md 2.7, which is the right home by the every-turn
+test: an agent adding a rule to a template has to make the call before
+writing a line.
+
+**Item 12 found a check-authoring failure that every existing control
+misses.** The rules about proving a check work are all about reach -- did
+it run, did it see its inputs, would it fail if the defect were present. A
+check that matches its own source fails in the opposite direction, and
+every reach-oriented control reports healthy while it does. The
+bare-suppression check shipped in v2.63 hit this: run from a directory
+containing its own extracted copy it reported nine findings where four were
+real, the other five being the lines of the tuple listing the tokens it
+searches for. Filed as #1260, with the quieter variant named too -- a
+self-match that produces a passing result verifies nothing and looks like a
+clean tree.
+
+**The ordering rule fixed this morning assumes the audit runs once.**
+#1228 moved the journal out of the release procedure and into the audit,
+because the audit produces work the entry must name. It does not say what
+to do when a session runs the audit more than once, which is what happened
+here: a release wrap-up followed by an explicit end-of-session one. Filed
+as #1262. The rule is right and its edge is unspecified, which is the same
+shape as the five issues v2.63 shipped.
+
+**PRs merged:** #1261
+
+**Issues opened:** #1260, a check matching its own source with no rule
+telling an author to test for it; and #1262, the journal ordering rule
+being silent on a session whose audit runs twice.
+
+**Also this session:** the audit confirmed no update was needed for
+README.md, docs/ONBOARDING.md or templates/manifest.yaml -- no command,
+prerequisite or template registration changed across either cut -- and that
+CLAUDE.md 6.3 and the rewritten PLAYBOOK step 7 now agree on when the
+journal is written.
