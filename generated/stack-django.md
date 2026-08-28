@@ -3080,6 +3080,16 @@ Python-only. Coverage is the part no failing test reports.
   claims, which is the failure this rule exists to prevent. Selecting on
   the shared call also fails a member written later without a coverage
   assertion, which a roster cannot do
+- The control's own discovery count is a floor like any other and takes
+  the same sizing. Its corpus is the members themselves, which churn, so
+  it takes a stated margin rather than the measured count: retiring a
+  member is an ordinary deletion, and a control sized to the exact count
+  fails it with a message about a corpus reader when nothing about the
+  reader has changed. This is the floor most likely to be written without
+  a margin, because the author is counting the members they have just
+  finished writing — and everywhere else in this section "the floor" names
+  what a member reads, so nothing has taught the reader to apply the rule
+  here
 - The control SHOULD ship as a test rather than a one-off run, so that
   member fails on the pull request that adds it rather than at the next
   audit
