@@ -227,6 +227,46 @@ def _interview_stacks(manifest):
     return "\n".join(lines)
 
 
+# Worked resolved-chain examples in SPEC.md, as (heading, stack id) pairs.
+# Generated rather than hand-maintained: each block is resolver output, so a
+# hand-written copy drifts silently whenever a dependency edge moves and the
+# staleness gate reports the file in sync over it.
+SPEC_CHAIN_EXAMPLES = [
+    ("static-site-astro", "stack-astro"),
+    ("python-flask", "stack-flask"),
+]
+
+NEWLINE = "\n"
+
+
+def _spec_chain_examples():
+    """Render SPEC.md's worked chain examples from the resolver itself."""
+    from resolve import load_manifest as _load, resolve_chain
+
+    core_ids, entries, stacks = _load()
+    known = set(entry["id"] for entry in stacks)
+    blocks = []
+
+    for heading, stack_id in SPEC_CHAIN_EXAMPLES:
+        if stack_id not in known:
+            raise SystemExit("sync: unknown stack in examples: " + stack_id)
+        files = resolve_chain(stack_id, core_ids, entries)
+        # An empty chain would render an empty fence that reads as a real
+        # result, which is the drift this generator exists to prevent.
+        if not files:
+            raise SystemExit("sync: empty chain for " + stack_id)
+        body = NEWLINE.join(files)
+        blocks.append(
+            "### Example: " + heading + NEWLINE * 2
+            + "```bash" + NEWLINE
+            + "py tools/resolve.py " + stack_id + NEWLINE
+            + "```" + NEWLINE * 2
+            + "```" + NEWLINE + body + NEWLINE + "```"
+        )
+
+    return (NEWLINE * 2).join(blocks)
+
+
 # ---- file update ----
 
 MARKER_RE = re.compile(
@@ -253,8 +293,11 @@ def _update_file(path, replacements):
             + r" -->)",
             re.DOTALL,
         )
+        # A function replacement, not a template string: generated
+        # content is data, and a backslash in it would otherwise be
+        # read as a group reference and silently rewrite the block.
         text = pattern.sub(
-            r"\g<1>" + content + "\n" + r"\3",
+            lambda m, c=content: m.group(1) + c + NEWLINE + m.group(3),
             text,
         )
 
@@ -273,11 +316,18 @@ def main():
     manifest = _parse_manifest(manifest_text)
 
     spec_content = _spec_sections(manifest)
+    chain_examples = _spec_chain_examples()
     readme_content = _readme_stacks(manifest)
     interview_content = _interview_stacks(manifest)
 
     targets = [
-        (ROOT / "docs" / "SPEC.md", {"spec-directories": spec_content}),
+        (
+            ROOT / "docs" / "SPEC.md",
+            {
+                "spec-directories": spec_content,
+                "spec-chain-examples": chain_examples,
+            },
+        ),
         (ROOT / "README.md", {"readme-stacks": readme_content}),
         (ROOT / "templates" / "INTERVIEW.md", {"interview-stacks": interview_content}),
     ]

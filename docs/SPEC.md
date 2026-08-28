@@ -501,6 +501,7 @@ Ordering: base → backend/frontend → stack (topological sort of
 the dependency graph). Within the same depth level, order follows
 the `depends_on` list declaration order.
 
+<!-- generated:spec-chain-examples -->
 ### Example: static-site-astro
 
 ```bash
@@ -559,6 +560,7 @@ templates/stack/python-lib.md
 templates/stack/python-service.md
 templates/stack/python-flask.md
 ```
+<!-- /generated:spec-chain-examples -->
 
 ---
 
