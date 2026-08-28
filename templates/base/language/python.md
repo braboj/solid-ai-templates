@@ -21,6 +21,7 @@ checks — and do not re-declare the bindings below.
 | Security (SAST)       | `bandit`                    | `pyproject.toml`          |
 | Tests                 | `pytest`                    | `pyproject.toml`          |
 | Coverage              | `pytest-cov`                | `pyproject.toml`          |
+| Mutation testing      | `mutmut`                    | `pyproject.toml`          |
 | Docstrings            | `ruff` `D` rules            | `pyproject.toml`          |
 | Package manifest      | `pyproject.toml`            | —                         |
 
@@ -40,6 +41,10 @@ checks — and do not re-declare the bindings below.
 - The coverage tool is named here; the threshold is not. The number and
   its escalation policy belong to `quality-gates-thresholds`, which
   governs every language
+- Mutation testing is opt-in per `quality-gates-mutation`, and a project
+  that has not adopted it carries no `mutmut` config. Prefer `mutmut`
+  over `cosmic-ray` for a first adoption: it needs no session database
+  to run, so the smallest useful run is one command against one module
 
 
 ## Optional and native dependencies

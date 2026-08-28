@@ -3792,6 +3792,7 @@ changes and do not re-declare the bindings below.
 | Security (SAST)       | `govulncheck`                 | —                         |
 | Tests                 | `go test`                     | —                         |
 | Coverage              | `go test -cover`              | —                         |
+| Mutation testing      | `gremlins`                    | `.gremlins.yaml`          |
 | Package manifest      | `go.mod`                      | —                         |
 
 - Cognitive complexity binds through `golangci-lint` rather than a
@@ -3807,6 +3808,10 @@ changes and do not re-declare the bindings below.
 - `gofmt` settles formatting; Go projects MUST NOT carry a formatter
   choice or a style config. Its output is canonical, which is why the
   Format category needs no options here
+- Mutation testing is opt-in per `quality-gates-mutation`, and a project
+  that has not adopted it carries no `.gremlins.yaml`. Prefer `gremlins`
+  over `go-mutesting`: it reports a per-package score a ratchet can be
+  written against, where `go-mutesting` reports diffs for a reader
 
 
 <!-- templates/base/core/config.md -->
@@ -4267,6 +4272,42 @@ Stack templates MAY add additional thresholds (e.g. Lighthouse scores).
   baseline doubles as a measured refactor priority list
 - Pin the tool version when the baseline file format is
   version-sensitive
+
+---
+
+## Mutation testing, where the suite is mature enough to earn it
+
+[ID: quality-gates-mutation]
+
+The coverage gate answers how much code a run exercised. It cannot answer
+whether the assertions hold anything down, and a suite can sit at eighty
+per cent coverage with toothless assertions while coverage reports the
+same number either way. Mutation testing injects small faults and asks
+whether the suite notices, which measures the tests rather than their
+reach. That matters most where merges ride on green CI, because there the
+gate is only as strong as the tests behind it.
+
+- Mutation testing is OPT-IN. It reruns the suite once per mutant, so its
+  cost is suite runtime times mutant count, and it buys least on an
+  immature suite where nearly everything survives and the report is a
+  backlog rather than a signal
+- Adopt it where the suite is already mature and the code is
+  consequential — a parser, a permission check, a money path — rather
+  than across the whole tree
+- The score MUST be introduced as a baseline with a ratchet, never as a
+  hard cliff. A first run on real code lands far below any figure worth
+  publishing, so a cliff set there is unreachable and a cliff set below
+  it is meaningless. Record the measured score and require that it not
+  fall, the way `quality-gates-retrofit-ratchet` freezes instances
+- Say which scope produced any score recorded. A diff-scoped
+  pull-request run and a whole-module audit answer different questions,
+  and a figure with no scope attached is read as a baseline by whoever
+  finds it next
+- A surviving mutant is a question, not a defect. Some mutants are
+  semantically equivalent to the original and cannot be killed, so the
+  project MUST be able to record one as accepted with its reason.
+  Without that, the ratchet is a gate nobody can satisfy and the first
+  equivalent mutant retires it
 
 ---
 
@@ -4941,6 +4982,9 @@ records and asserts Y-equality across them.
   practical sweet spot
 - **Commit message format** — enforce in PR title via repository settings,
   not per-commit hooks; allow messy WIP commits on feature branches
+- **Mutation score as a universal gate** — it is opt-in and advanced
+  (see `quality-gates-mutation`); requiring it tree-wide spends the
+  budget of a full suite rerun on the modules least likely to need it
 
 ---
 
