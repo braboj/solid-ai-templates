@@ -103,7 +103,52 @@ for wheel in wheels:
   before the first command that imports the package. Any instruction to
   run from the repository root is a symptom of the layout the move is
   undoing, not a workaround for it
-- All public API exported from `__init__.py`
+- All public API exported from `__init__.py`. Re-exporting a symbol runs
+  its module at import time, so a package whose surface spans a cheap
+  core and an expensive edge charges the edge's cost to every caller,
+  including those that never touch it. Faced with that, a project
+  usually picks between dropping the symbol from the root and breaking
+  the rule, or re-exporting eagerly and taxing everyone
+- A third option keeps both: bind the name on first access with a module
+  `__getattr__`, so `from pkg import Thing` works and `import pkg` costs
+  nothing extra. The `TYPE_CHECKING` import hands the checker the real
+  class, without which the public API degrades to `Any` — which this
+  template forbids
+
+```python
+from importlib import import_module
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .heavy import Thing
+
+_DEFERRED = {"Thing": "heavy"}
+
+
+def __getattr__(name: str) -> object:
+    submodule = _DEFERRED.get(name)
+
+    if submodule is None:
+        raise AttributeError(name)
+
+    return getattr(import_module("." + submodule, __name__), name)
+```
+
+- The default stays eager. Deferral answers a measured cost, never a
+  suspected one, and most packages never earn the indirection. Measure
+  with `python -X importtime` first
+- Record the measured number next to the mechanism, so the next reader
+  re-measures rather than trusting it. A figure recorded once ages: one
+  library's 70% import penalty re-measured at 38% on a later
+  interpreter — half the recorded value, still real, and the difference
+  is what decides whether the mechanism is still earning its place
+- Pair the deferral with a test that a plain import loads neither the
+  submodule nor its heavy dependency, or it regresses to eager the first
+  time someone tidies the file. Check:
+  `python -c "import pkg, sys; assert 'pkg.heavy' not in sys.modules"`,
+  which MUST exit 0. Run it in a fresh interpreter — inside the suite
+  the submodule is usually imported already, so the assertion passes or
+  fails on unrelated state
 - No `setup.py` — use `pyproject.toml` only
 
 ---
