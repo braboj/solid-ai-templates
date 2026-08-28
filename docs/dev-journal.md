@@ -4086,3 +4086,93 @@ it.
 no labels, so the repository's label conformance check returns `[1204]`
 rather than `[]`. Left for its author, since choosing its type and
 severity is a triage decision rather than a correction.
+
+## 2026-08-28 -- The run that proves nothing
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**v2.60.0 shipped 9 issues across 8 pull requests, the first cut scoped
+straight from the backlog rather than from the A-to-H order, which v2.59
+exhausted.** One shape ran through all of them: a check or a record that
+ran, came back clean, and answered about a different moment or a
+different subject than the claim it was used for.
+
+**The timing rule had one home, and it was the wrong one.** "Run the
+staleness comparison AFTER the edit" existed once, scoped to regenerated
+artifacts, while two other checks in this same cut needed it and
+inherited nothing. It is now `quality-gates-check-timing`, the fourth
+member of the family beside pair-check, procedure-steps and check-runs --
+a constraint with no check, an unenforced step beside an enforced one, a
+check never run, and now a check run at the wrong moment.
+
+**The off-limits false clean was demonstrated on the branch that fixed
+it.** With the edit sitting uncommitted, the shipped check reported
+`files changed: 0`; after the commit, 18. The check compares
+`origin/main...HEAD`, so the natural moment to run it -- while writing
+the change -- is the one moment it is guaranteed to report nothing. Its
+pass condition named a wrong base and an empty branch and not that.
+
+**The staleness gate repaired what it inspected, measured both ways.**
+A planted line inside a generated marker, then `--check` twice, tracking
+the file's digest. Before the fix: run 1 printed `SYNC`, exited 1 and
+restored the digest; run 2 printed `All files in sync` and exited 0.
+After: both runs print `STALE`, both exit 1, the digest never moves.
+SYS-09 pins it.
+
+**The escape loss struck again, and Python caught it this time.** A
+two-character backslash-n written inside a heredoc-embedded Python string
+arrived in `run_smoke.py` as a real newline, producing an unterminated
+string literal. The fix is the one already recorded: put a token in the
+text and substitute the backslash at the very end, so no backslash
+appears anywhere in the editing script. It was used for both new checks
+after that, and the literals were read back out of the file each time.
+
+**Two negative controls, and only the second one mattered.** SYS-09 run
+against the pre-fix tool failed on the signature -- a weak control, since
+it says nothing about behaviour. Run against a tool that accepts
+`check_mode` and ignores it, the shape a careless later edit takes, it
+failed with the message that matters. The same discipline applied to
+SYS-10, where the pre-fix whole-file scan extracts both the backticked
+occurrence and the fenced one.
+
+**A fix that changes nothing measurable needs a control to be visible at
+all.** Restricting the DEPENDS ON extraction to the file header is a
+no-op on the current tree: with the old whole-file scan planted back,
+SYS-01 and SYS-04 still pass, because nothing in the tree quotes the
+directive any more. The workaround held by accident, and SYS-10 is the
+only thing that now demonstrates the fix is load-bearing. The
+restriction is exact rather than approximate -- all 41 declarations
+across 75 template files sit on line 2, 3 or 4, and none appears twice.
+
+**A cross-file rule reference costs reach, twice caught.**
+`core/git.md` resolves into 17 chains and `workflow/quality-gates.md`
+into 12, so a reference from the first to a rule ID in the second dangles
+for five chains. Both drafts that carried one had it removed and the
+substance stated inline.
+
+**Editing a template made seven committed examples stale, and nothing
+reports it.** The end-of-session audit moved its journal item to
+second-from-last, in the template and in this repository's own CLAUDE.md,
+which carried the same defect. Seven examples inline that audit with the
+old order. They are agent-generated under ADR-016, so they are
+regenerated rather than edited -- filed as #1220, blocked on an API key.
+SYS-05 asserts the enforcement phrase survives into every example and
+says nothing about item order, so all 25 checks pass with the examples
+disagreeing with the template they came from.
+
+**PRs merged:** #1214, #1216, #1217, #1218, #1219, #1221, #1222, #1223
+
+**Issues closed:** #979, #980, #1192, #1197, #1204, #1208, #1211, #1212,
+#1213
+
+**Issues opened:** #1213, filed and shipped in the same cut since the
+rule it asks for is what the other two checks needed; and #1220, for the
+seven examples now stale against the reordered audit.
+
+**Also this session:** v2.59.0 was cut earlier in the day, then the
+backlog was groomed -- three of the four deferred issues turned out to
+have fired triggers, two of them since v2.45, and #979 and #980 came into
+this cut because of it. Four issues arrived from a parallel session
+(#1204, #1211, #1212, #1215) and were labelled on the way past; #1215
+proposes a sixth shape for the verifying-a-filed-issue section and is
+unmilestoned.
