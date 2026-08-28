@@ -5021,6 +5021,30 @@ not after deployment.
 - All dependencies MUST be tracked for known vulnerabilities and license risks
 - SCA MUST run on every deployment to QA, staging, and production
 - A SBOM (Software Bill of Materials) MUST be generated per release
+- The SBOM MUST describe what a consumer installs, not what CI built
+  with. Every generator's most convenient mode reads an environment
+  (`cyclonedx-py environment`, `pip-audit` against the active venv,
+  `syft` on a directory), and in CI the environment at hand is the build
+  environment — the one that just ran the tests. Install the artifact
+  into a clean environment and scan that. The shape is not
+  Python-specific: a `node_modules` tree after an install carries
+  devDependencies, and a Go build cache carries test-only modules
+- A misdirected SBOM is worse than shipping none. It is schema-valid and
+  passes every check, so a consumer scanning artifacts gets a
+  machine-readable answer naming components their install will never
+  contain, and a CVE in a lint tool reads as a CVE in the product
+- Assert the component set before attaching it — the check is below. A
+  generator pointed at the wrong environment succeeds, so the check is
+  on content: the set MUST match the declared runtime dependency
+  closure, and a library with no runtime dependencies MUST list exactly
+  one component. The tell is size — on one zero-dependency library the
+  correct SBOM held one component and the build-environment one held 93
+- Generate it reproducibly where the tool supports it
+  (`cyclonedx-py --output-reproducible`, which drops the time- and
+  random-based values), so the SBOM for a tag can be regenerated and
+  compared byte for byte by anyone rebuilding it. That is a stronger
+  provenance property than an embedded timestamp, which the release
+  record already carries
 - Attach the SBOM to the per-tag release record as a durable,
   per-version asset — a CI build artifact expires with run retention.
   Once the pipeline creates a release record on a tag, upload the SBOM
@@ -5030,6 +5054,32 @@ not after deployment.
   erases the release — the scan job reaches forward to the release,
   never the reverse. Needs `contents: write` at job scope
 - Dependencies with unacceptable licenses MUST NOT be merged
+
+The component-set check, run from the repository root against the
+generated document. It is left flush with the margin rather than indented
+under the bullet: an indented heredoc terminator does not close the
+heredoc, so a reader copying it verbatim gets a shell that never returns.
+
+```bash
+py - <<'EOF'
+import json, sys
+
+sys.stdout.reconfigure(encoding="utf-8")
+
+doc = json.load(open("sbom.json", encoding="utf-8"))
+names = sorted(c["name"] for c in doc.get("components", []))
+
+print("components: %d" % len(names))
+for name in names:
+    print("  %s" % name)
+EOF
+```
+
+Pass condition: the printed set equals the declared runtime dependency
+closure, and for a library with no runtime dependencies it is the library
+alone. A count of zero is a failure rather than a clean result — it means
+the document carries no `components` key, not that the product has no
+dependencies.
 
 ## Scan by actionability
 
