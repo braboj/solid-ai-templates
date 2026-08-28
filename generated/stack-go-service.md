@@ -4765,6 +4765,87 @@ State the known cost rather than discovering it later: a file-level freeze
 does not newly gate an existing file when it is edited. Line-level would,
 and no widely available linter offers it.
 
+### The suppression beside the table
+
+The freeze answers "this file was already broken on adoption day". It does
+not answer "this rule is wrong at this one line", and the two are different
+claims. A project holding only the first has one mechanism for both, and
+the rule forbidding a file being added to the table to make a gate pass
+correctly blocks it — leaving an undocumented escape as the only move.
+
+- A finding that is genuinely wrong at one site MUST be suppressed at that
+  site, not by adding the file to the freeze table. Adding the file
+  suppresses the rule for every other line in it, including lines nobody
+  has written yet
+- A site-local suppression MUST name the specific rule — `# noqa: B017`,
+  `//nolint:errcheck`, `// eslint-disable-next-line no-unused-vars` — and
+  MUST NOT be bare. A bare suppression silently absorbs every rule that
+  later applies to the line; a named one keeps failing on the next
+  finding, and that is the property that makes the escape safe to allow
+- The reason MUST sit directly above the line, where `base-quality` puts a
+  block comment. The directive itself is the one comment that trails to
+  the right of code, which is why the reason cannot travel with it
+- A config-level disable is reserved for a decision that is genuinely
+  tree-wide. Reaching for it to settle one site is the global ignore the
+  freeze exists to avoid, arriving by a different door
+
+The case that shows the two are not interchangeable: a test deliberately
+asserts on a broad exception because the narrower class varies by
+interpreter version, which is what the testing rules ask for — where a test
+asserts a misuse fails, assert that it fails, not how. The linter asks for
+the opposite and is wrong there. Narrowing the assertion reintroduces the
+platform dependence the rule exists to prevent, and freezing the file
+suppresses the check for every other assertion in it. Only the site-local
+escape resolves it, and only a named one keeps the line gated afterwards.
+
+Pair the rule with a check, since a bare suppression is one character
+shorter than a named one and decays toward the shorter form:
+
+```bash
+py - <<'EOF'
+import pathlib, re
+
+SUPPRESSIONS = (
+    ("noqa", re.compile(r"noqa(?![:])")),
+    ("nosec", re.compile(r"nosec(?![:]|[ ][A-Z][0-9])")),
+    ("nolint", re.compile(r"nolint(?![:])")),
+    ("eslint-disable-next-line",
+     re.compile(r"eslint-disable-next-line(?![ ]*[a-zA-Z@])")),
+)
+
+HASH = (".py", ".sh", ".rb", ".yml", ".yaml")
+files = [p for p in pathlib.Path(".").rglob("*")
+         if p.is_file() and p.suffix in (".py", ".js", ".ts", ".go", ".jsx", ".tsx")]
+print("files scanned: %d" % len(files))
+total = 0
+bare = []
+for path in files:
+    marker = "#" if path.suffix in HASH else "//"
+    for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        # Only the comment half of the line can hold a directive. Scanning
+        # the whole line makes the check match its own pattern table.
+        if marker not in line:
+            continue
+        comment = line.split(marker, 1)[1]
+        for name, pattern in SUPPRESSIONS:
+            if name in comment:
+                total += 1
+                if pattern.search(comment):
+                    bare.append("%s:%d: %s" % (path.as_posix(), i, line.strip()))
+print("suppressions found: %d" % total)
+print("bare (naming no rule): %d" % len(bare))
+for entry in bare:
+    print("  %s" % entry)
+EOF
+```
+
+Pass condition: the check prints how many files it scanned and how many
+suppressions it found, then `bare (naming no rule): 0`. A scanned count of
+zero is a failure rather than a clean tree — it means the suffix list does
+not match the project's languages, and every suppression in it went
+unread. A found count of zero on a project that has adopted the freeze is
+worth confirming rather than accepting.
+
 ---
 
 ## Editing a test moves the standard, not the work
