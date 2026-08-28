@@ -3711,6 +3711,52 @@ answer for the wrong reason is the same failure in a cheaper form.
   approver before the change can land
 
 
+<!-- templates/base/language/python.md -->
+# Base — Python
+[ID: base-python]
+[DEPENDS ON: templates/base/core/quality.md]
+
+Per-language tool selection for Python. `base-quality-gates` states which
+categories a project MUST gate and at which layer; this file names the
+Python tool that satisfies each. Stack templates add only the tools their
+shape changes — a library's build and publish step, a service's runtime
+checks — and do not re-declare the bindings below.
+
+## Tooling
+[ID: base-python-tooling]
+
+| Category              | Tool                        | Config                    |
+| --------------------- | --------------------------- | ------------------------- |
+| Commit-hook framework | `pre-commit`                | `.pre-commit-config.yaml` |
+| Lint                  | `ruff`                      | `pyproject.toml`          |
+| Format                | `ruff format`               | `pyproject.toml`          |
+| Type check            | `mypy` (strict)             | `pyproject.toml`          |
+| Cognitive complexity  | `complexipy`                | `pyproject.toml`          |
+| Security (SAST)       | `bandit`                    | `pyproject.toml`          |
+| Tests                 | `pytest`                    | `pyproject.toml`          |
+| Coverage              | `pytest-cov`                | `pyproject.toml`          |
+| Docstrings            | `ruff` `D` rules            | `pyproject.toml`          |
+| Package manifest      | `pyproject.toml`            | —                         |
+
+- `ruff` MUST be the single lint and format tool. It subsumes flake8,
+  isort, pyupgrade and most of pylint, so a project carrying those
+  alongside it runs overlapping rule sets that disagree at the margins
+- Cognitive complexity MUST be gated by a separate tool. `ruff` has no
+  cognitive-complexity rule — its `C901` is McCabe, which measures a
+  different thing — so the category has no Python binding without
+  `complexipy`
+- Tool configuration MUST live in `pyproject.toml`. Splitting it across
+  `setup.cfg`, `tox.ini` or `.flake8` gives one tool two config sources
+  whose precedence is tool-specific, and a rule edited in the losing file
+  reads as applied
+- `mypy` runs in strict mode. A non-strict run passes on unannotated
+  code, so the gate reports success over the code least covered by it
+- The coverage tool is named here; the threshold is not. The number and
+  its escalation policy belong to `quality-gates-thresholds`, which
+  governs every language
+
+
+
 <!-- templates/base/core/config.md -->
 # Base — Configuration
 [ID: base-config]
@@ -4873,7 +4919,7 @@ exception, it has skipped the seam.
 
 <!-- templates/stack/python-lib.md -->
 # Stack — Python Library / CLI
-[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
+[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/language/python.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
 
 A Python library, CLI tool, or shared package intended to be imported or
 installed. No web server, no frontend. May be published to PyPI.
@@ -5088,19 +5134,23 @@ twine check dist/*        # validate wheel/sdist metadata
 ## Quality gates
 [EXTEND: base-quality-gates]
 
-| Category | Layer 1 (editor) | Layer 2 (pre-commit) | Layer 3 (CI) | Config |
-|----------|-----------------|---------------------|-------------|--------|
-| Lint | Ruff | Ruff | Ruff | `pyproject.toml` |
-| Format | Ruff | Ruff format | Ruff format --check | `pyproject.toml` |
-| Type check | Pyright / mypy | mypy | mypy --strict | `pyproject.toml` |
-| Docstrings | Ruff `D` rules | Ruff `D` rules | Ruff `D` rules | `pyproject.toml` (Google convention, `tests/**` exempt) |
-| Security | — | — | Bandit + platform SAST | — |
-| Secrets | — | gitleaks | gitleaks | `.pre-commit-config.yaml` |
-| Tests | — | — | pytest | `pyproject.toml` |
-| Coverage | — | — | pytest-cov ≥ 80% | `pyproject.toml` |
-| Build | — | — | `python -m build` + `twine check dist/*` | `pyproject.toml` |
+`base-python-tooling` names the tool for every category Python binds. This
+section adds only what the library shape changes, and the layer each tool
+runs at where it differs from the category default.
 
-- Hook framework: `pre-commit` — config in `.pre-commit-config.yaml`
+| Category   | Layer 1 (editor) | Layer 2 (pre-commit) | Layer 3 (CI)                             |
+| ---------- | ---------------- | -------------------- | ---------------------------------------- |
+| Docstrings | Ruff `D` rules   | Ruff `D` rules       | Ruff `D` rules                           |
+| Security   | —                | —                    | Bandit + platform SAST                   |
+| Secrets    | —                | gitleaks             | gitleaks                                 |
+| Build      | —                | —                    | `python -m build` + `twine check dist/*` |
+
+- Secret detection is not language-specific, so it binds here rather than
+  in `base-python`: `gitleaks`, configured in `.pre-commit-config.yaml`
+- A library's Build gate MUST validate distribution metadata, not only
+  that the package compiles. `python -m build` produces the wheel and
+  sdist; `twine check dist/*` is what fails on the metadata a package
+  index would reject, and nothing else in the chain reads it
 - Docstring convention: Google — enforced via Ruff `D` rules with
   `convention = "google"` in `pyproject.toml`
 - Exempt the test suite from the `D` rules —

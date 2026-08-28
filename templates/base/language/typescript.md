@@ -47,3 +47,29 @@
 - Data validation tests SHOULD flag boolean fields where one branch (`true`
   or `false`) has zero occurrences across the dataset — this is a data
   smell that can silently break sorting, filtering, and UI logic
+
+## Tooling
+[ID: base-typescript-tooling]
+
+`base-quality-gates` states which categories a project MUST gate; this
+table names the TypeScript tool that satisfies each. Stack templates add
+only the tools their shape changes.
+
+| Category              | Tool                     | Config              |
+| --------------------- | ------------------------ | ------------------- |
+| Commit-hook framework | `husky` + `lint-staged`  | `.husky/`           |
+| Lint                  | `eslint`                 | `eslint.config.js`  |
+| Format                | `prettier`               | `.prettierrc`       |
+| Type check            | `tsc --noEmit`           | `tsconfig.json`     |
+| Cognitive complexity  | `eslint-plugin-sonarjs`  | `eslint.config.js`  |
+| Package manifest      | `package.json`           | —                   |
+
+- `husky` installs the git hook; `lint-staged` scopes each check to the
+  staged files. Neither alone is the Layer-2 gate — a `husky` hook that
+  lints the whole tree is slow enough that contributors bypass it
+- Cognitive complexity MUST be gated by `eslint-plugin-sonarjs`. Core
+  ESLint has no cognitive-complexity rule, so the category has no
+  TypeScript binding without the plugin
+- `tsc` runs with `strict: true`, per `base-typescript-strictness`. The
+  type gate and the editor's checker MUST be the same tool at the same
+  strictness, per `quality-gates-layers`

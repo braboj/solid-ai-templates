@@ -1,5 +1,5 @@
 # Stack — Python Library / CLI
-[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
+[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/language/python.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
 
 A Python library, CLI tool, or shared package intended to be imported or
 installed. No web server, no frontend. May be published to PyPI.
@@ -214,19 +214,23 @@ twine check dist/*        # validate wheel/sdist metadata
 ## Quality gates
 [EXTEND: base-quality-gates]
 
-| Category | Layer 1 (editor) | Layer 2 (pre-commit) | Layer 3 (CI) | Config |
-|----------|-----------------|---------------------|-------------|--------|
-| Lint | Ruff | Ruff | Ruff | `pyproject.toml` |
-| Format | Ruff | Ruff format | Ruff format --check | `pyproject.toml` |
-| Type check | Pyright / mypy | mypy | mypy --strict | `pyproject.toml` |
-| Docstrings | Ruff `D` rules | Ruff `D` rules | Ruff `D` rules | `pyproject.toml` (Google convention, `tests/**` exempt) |
-| Security | — | — | Bandit + platform SAST | — |
-| Secrets | — | gitleaks | gitleaks | `.pre-commit-config.yaml` |
-| Tests | — | — | pytest | `pyproject.toml` |
-| Coverage | — | — | pytest-cov ≥ 80% | `pyproject.toml` |
-| Build | — | — | `python -m build` + `twine check dist/*` | `pyproject.toml` |
+`base-python-tooling` names the tool for every category Python binds. This
+section adds only what the library shape changes, and the layer each tool
+runs at where it differs from the category default.
 
-- Hook framework: `pre-commit` — config in `.pre-commit-config.yaml`
+| Category   | Layer 1 (editor) | Layer 2 (pre-commit) | Layer 3 (CI)                             |
+| ---------- | ---------------- | -------------------- | ---------------------------------------- |
+| Docstrings | Ruff `D` rules   | Ruff `D` rules       | Ruff `D` rules                           |
+| Security   | —                | —                    | Bandit + platform SAST                   |
+| Secrets    | —                | gitleaks             | gitleaks                                 |
+| Build      | —                | —                    | `python -m build` + `twine check dist/*` |
+
+- Secret detection is not language-specific, so it binds here rather than
+  in `base-python`: `gitleaks`, configured in `.pre-commit-config.yaml`
+- A library's Build gate MUST validate distribution metadata, not only
+  that the package compiles. `python -m build` produces the wheel and
+  sdist; `twine check dist/*` is what fails on the metadata a package
+  index would reject, and nothing else in the chain reads it
 - Docstring convention: Google — enforced via Ruff `D` rules with
   `convention = "google"` in `pyproject.toml`
 - Exempt the test suite from the `D` rules —
