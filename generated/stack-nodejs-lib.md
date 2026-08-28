@@ -469,6 +469,43 @@ condition that gives the result meaning is what fails.
   without probing, which burns time and risks regressing unrelated
   calibrated anchors
 
+### A detector's precision is not its cost
+
+- A false-positive rate says how often the verdict is wrong and nothing
+  about what a wrong verdict destroys. A heuristic that gates an
+  expensive fallback MUST be evaluated on both, because a detector with
+  an excellent rate can still be unshippable
+- Ask first whether a positive verdict discards the cheap result or
+  holds it. Where the cheap tier returns a sentinel instead of its body,
+  the result is destroyed at the moment the heuristic fires, and the
+  fallback's availability becomes part of the heuristic's correctness
+  rather than an operational detail
+- Ask what the system returns when the fallback cannot run — an optional
+  dependency absent from a default install is the common deployment, not
+  the rare one. Where the answer is "nothing", the heuristic's failure
+  mode is data loss, and that is not the precision bar of a heuristic
+  which merely costs time
+- Prefer preserving the cheap result, so an unavailable fallback
+  degrades to a result plus a warning rather than to nothing. That is
+  also what returns the question to one about latency, where the
+  false-positive rate is the right measure
+- No amount of tuning finds this. It is a property of the surrounding
+  control flow, and it can invert a decision that looked like a
+  threshold problem
+
+### A spike reports the corpus it did not have
+
+- A spike that cannot clear its own evidentiary bar with the available
+  data records the corpus gap as its finding, rather than lowering the
+  bar to produce a shippable answer
+- A rule that survives every case in a set the rule's own author wrote
+  is fitted to that set, not measured against it. Count the cases that
+  were captured independently of the rule; that count is the evidence,
+  and the rest is illustration
+- "The evidence does not exist yet, and here is exactly what would have
+  to be captured" is a deliverable. State that it is one, because it
+  reads as a non-answer otherwise
+
 ### Calibration aids MUST NOT depict the system's own output
 
 - Any artifact that informs a human-verifies-machine signal (a human
