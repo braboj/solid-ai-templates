@@ -6556,6 +6556,39 @@ A rule states intent; its paired check is what makes the intent hold.
 
 ---
 
+## An ungated step beside a gated one reads as enforced
+
+[ID: quality-gates-procedure-steps]
+
+`quality-gates-pair-check` covers a constraint with no check, and
+`quality-gates-check-runs` covers a check that was written and never
+run. Neither covers a documented *procedure* whose steps are enforced
+unevenly. Here the constraint is stated, the neighbouring check exists
+and runs correctly, and what fails is the reader's inference across
+steps — so no artifact is wrong until much later.
+
+An operator runs the sequence top to bottom. One step's gate fires,
+fails, is fixed, and passes, which is felt as the procedure checking the
+work. The ungated step is simply not done and nothing reports it. A
+procedure with no gates at all invites care; a procedure with one gate
+invites trust in all of it.
+
+- Enforcement is not transitive between adjacent steps. A gate covers
+  the step it is attached to and says nothing about its neighbours,
+  however the sequence reads
+- Audit a procedure step by step, not procedure by procedure, recording
+  against each step the check that enforces it or the fact that nothing
+  does
+- Either gate the remainder, or mark each unenforced step as unenforced
+  where it is written, so an operator's confidence matches what is
+  actually being verified
+- Gate first the step whose omission cannot be corrected afterwards. The
+  cost is asymmetric — re-cutting a published release to repair an
+  omitted step is worse than the gap, so the archive keeps the gap
+  permanently
+
+---
+
 ## Run the check in the form it ships
 
 [ID: quality-gates-check-runs]
