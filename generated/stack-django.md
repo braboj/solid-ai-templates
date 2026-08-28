@@ -6689,7 +6689,9 @@ for wheel in wheels:
   ruff `extend-exclude`) for patterns that now match new package
   directories, and anchor them (`"./name"`). Verify by comparing
   scanned-file counts before and after — a colliding pattern silently
-  drops a whole sub-package from the scan while CI stays green
+  drops a whole sub-package from the scan while CI stays green. This is
+  one direction of the anchoring rule; `python-lib-packaging` states the
+  other, for the include patterns of a build target
 - When adopting `src/`, delete every `sys.path` manipulation from the
   test suite rather than repointing it — importing the package under
   test is the installation's job. Check: `grep -rn "sys.path" tests/`,
@@ -6786,6 +6788,28 @@ for wheel in wheels:
   default: SHA pins there MUST keep moving
 - Dev/test dependencies in `[project.optional-dependencies]` or
   `[dependency-groups]`
+- Anchor every include pattern of a build target to the project root.
+  A build backend reads an include the way git reads a `.gitignore`
+  line, so a pattern carrying no separator matches at any depth:
+  `include = ["src/pkg", "tests", "README.md", "LICENSE"]` looks exact
+  and is not, because three of those four also select the same names
+  inside any vendored directory or submodule. This is the exclude rule
+  of `python-lib-structure` seen from the other side — an unanchored
+  exclude over-matches and silently drops files from a scan, an
+  unanchored include over-matches and silently adds files to an artifact
+- No gate catches an over-matching include. Lint, types, tests and
+  coverage are unchanged by it, `twine check` passes, and the wheel is
+  usually correct because its `packages` entry already carries a
+  separator. Only the sdist carries the extra files, and only listing it
+  shows them
+- Check: `python -m build`, then `tar -tzf dist/*.tar.gz` — the listing
+  MUST contain no path under a vendored directory or submodule. Run it
+  from a working checkout with submodules populated. A release workflow
+  that checks out without submodules finds an empty directory, so the
+  unanchored pattern selects nothing and the check passes while
+  measuring nothing; adding `submodules: recursive` to that job for an
+  SBOM or a docs build then ships the leak on the next tag, and nothing
+  connects the two changes
 - Lock the dev and test toolchain for reproducibility. The lock MUST be
   either universal — resolved across the whole `requires-python` range
   and every target platform, which is what `uv lock`, `poetry.lock` and
