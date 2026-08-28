@@ -48,6 +48,7 @@ STK_TESTS = [
             "pydantic-settings",
             "feat:",
         ],
+
         # these are raw template placeholders — if any appear, the agent
         # failed to substitute the interview answers into the output
         "forbidden": ["[your project]", "[owner]", "[repo]", "[platform]"],
@@ -184,6 +185,7 @@ STK_TESTS = [
             "go.sum",
             "feat:",
         ],
+
         # go-lib is a library, not a deployable service
         "forbidden": ["Dockerfile", "Deployment"],
     },
@@ -227,6 +229,7 @@ STK_TESTS = [
             "pytest",
             "feat:",
         ],
+
         # python-service is framework-agnostic
         "forbidden": ["FastAPI", "Flask", "Django"],
     },
@@ -255,7 +258,9 @@ STK_TESTS = [
     {
         "id": "STK-15",
         "spec": "SAIT-E2E-STK-15-001A",
-        "canary": True,  # smallest chain (~12K tokens) — default live test
+
+        # smallest chain (~12K tokens) — default live test
+        "canary": True,
         "stack": "templates/stack/python-lib.md",
         "answers": {
             "Project name": "validify",
@@ -271,6 +276,7 @@ STK_TESTS = [
             "docstring",
             "feat:",
         ],
+
         # python-lib is a library, not a deployable service
         "forbidden": ["Dockerfile", "Deployment"],
     },
@@ -313,6 +319,7 @@ STK_TESTS = [
             "vitest",
             "feat:",
         ],
+
         # node-lib is a library, not a deployable service
         "forbidden": ["Dockerfile", "Deployment"],
     },
@@ -336,6 +343,7 @@ STK_TESTS = [
             "Alpine",
             "feat:",
         ],
+
         # HTMX is server-rendered hypermedia — SPA patterns must not appear
         "forbidden": ["JSON API", "SPA routing"],
     },
@@ -424,6 +432,7 @@ FMT_TESTS = [
             "Python", "FastAPI",
             "feat:",
         ],
+
         # CLAUDE.md has no Cursor-specific directives
         "forbidden": ["alwaysApply", "applyTo", "globs:"],
     },
@@ -444,6 +453,7 @@ FMT_TESTS = [
             "Python", "FastAPI",
             "feat:",
         ],
+
         # AGENTS.md has no Cursor-specific directives
         "forbidden": ["alwaysApply", "applyTo", "frontmatter"],
     },
@@ -517,6 +527,7 @@ DPL_TESTS = [
             "Deployment",
             "cloud",
         ],
+
         # cloud target — private CA and air-gap must not appear
         "forbidden": ["private CA", "air-gap", "offline"],
     },

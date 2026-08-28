@@ -32,6 +32,7 @@ import sys
 from difflib import SequenceMatcher
 
 from resolve import load_manifest, resolve_chain, read_file
+
 # Set the output encoding at the boundary rather than inheriting the
 # console default, which mangles any non-ASCII this program prints.
 for _stream in (sys.stdout, sys.stderr):
@@ -111,7 +112,8 @@ def parse_sections(rel_path):
                 current["overrides"].append(value)
             continue
 
-        if "|" in raw:  # skip table rows
+        # skip table rows
+        if "|" in raw:
             continue
         m = BULLET.match(raw)
         if m:
@@ -184,7 +186,9 @@ def find_near(sections, supersedes):
     across non-override section pairs in different files. Candidate pairs
     are prefiltered to those sharing a token of length >= 6, keeping the
     comparison count tractable on large chains."""
-    rules = []  # (fp, idx)
+
+    # (fp, idx)
+    rules = []
     for i, s in enumerate(sections):
         for fp in s["rules"]:
             rules.append((fp, i))
@@ -196,7 +200,8 @@ def find_near(sections, supersedes):
 
     candidates = set()
     for hits in token_index.values():
-        if len(hits) > 80:  # skip ubiquitous tokens
+        # skip ubiquitous tokens
+        if len(hits) > 80:
             continue
         for a in range(len(hits)):
             for b in range(a + 1, len(hits)):
@@ -224,7 +229,9 @@ def find_near(sections, supersedes):
 def collect(core_ids, entries, stacks, want_near=False):
     """Run exact (and optionally near) detection over every stack,
     aggregating each unique finding to the set of chains it affects."""
-    exact = {}  # key -> {"original", "sites", "chains"}
+
+    # key -> {"original", "sites", "chains"}
+    exact = {}
     near = {}
     for stack in stacks:
         sid = stack["id"]

@@ -106,7 +106,8 @@ def parse_args(argv):
         elif arg.startswith("--area="):
             area = arg.split("=", 1)[1].upper()
         elif arg.startswith("--"):
-            pass  # ignore unknown flags
+            # ignore unknown flags
+            pass
         else:
             filter_ids.append(arg)
 

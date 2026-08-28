@@ -36,6 +36,7 @@ from cases import ALL_TESTS, CANARY_TESTS
 # Import shared resolver from tools/
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 from resolve import load_manifest, resolve_chain, read_file  # noqa: E402
+
 # Set the output encoding at the boundary rather than inheriting the
 # console default, which mangles any non-ASCII this program prints.
 for _stream in (sys.stdout, sys.stderr):

@@ -28,6 +28,7 @@ import sys
 
 from lib import ROOT, PASS, FAIL, ERR, write_report
 from cases import ALL_TESTS
+
 # Set the output encoding at the boundary rather than inheriting the
 # console default, which mangles any non-ASCII this program prints.
 for _stream in (sys.stdout, sys.stderr):
@@ -916,12 +917,14 @@ def check_adr_01():
     if not os.path.isdir(decisions_dir):
         return failures
 
-    parsed = {}  # id (str) -> (rel_path, frontmatter dict)
+    # id (str) -> (rel_path, frontmatter dict)
+    parsed = {}
 
     for name in sorted(os.listdir(decisions_dir)):
         m = ADR_FILENAME.match(name)
         if not m:
-            continue  # TEMPLATE.md and any non-numbered files are skipped
+            # TEMPLATE.md and any non-numbered files are skipped
+            continue
         filepath = os.path.join(decisions_dir, name)
         rel = os.path.relpath(filepath, ROOT).replace(os.sep, "/")
         content = read(filepath)
@@ -933,6 +936,7 @@ def check_adr_01():
 
         expected_id = m.group(1)
         adr_id = data.get("id")
+
         # id MUST be a quoted string in the YAML — otherwise leading-zero
         # values (010) are parsed by YAML 1.1 as octal integers (010 -> 8).
         # Detect this case explicitly so the error message points at the
@@ -1207,6 +1211,7 @@ def check_sys_06():
 # file inside it MUST use the dated YYYY-MM-DD-360.md name.
 
 _AUDIT_DIR = "docs/audits"
+
 # An audit report file: the prohibited single-file form (360-audit*.md) or a
 # dated report (*-360.md). The 360.md template itself matches neither.
 _AUDIT_NAME = re.compile(r"(?:360-audit.*|.*-360)\.md$")
