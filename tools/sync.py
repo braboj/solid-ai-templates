@@ -277,8 +277,13 @@ MARKER_RE = re.compile(
 )
 
 
-def _update_file(path, replacements):
-    """Replace content between markers. Returns True if changed."""
+def _update_file(path, replacements, check_mode=False):
+    """Replace content between markers. Returns True if the file differs.
+
+    In check mode the comparison is made and nothing is written. A gate
+    that repairs what it inspects reports clean on its second run, so
+    only the first invocation would carry information.
+    """
     text = io.open(path, encoding="utf-8").read()
     original = text
 
@@ -302,7 +307,8 @@ def _update_file(path, replacements):
         )
 
     if text != original:
-        io.open(path, "w", encoding="utf-8").write(text)
+        if not check_mode:
+            io.open(path, "w", encoding="utf-8").write(text)
         return True
     return False
 
@@ -337,9 +343,9 @@ def main():
         if not path.exists():
             print(f"  SKIP  {path.name} (not found)")
             continue
-        if _update_file(path, replacements):
+        if _update_file(path, replacements, check_mode):
             changed.append(path.name)
-            print(f"  SYNC  {path.name}")
+            print(f"  {'STALE' if check_mode else 'SYNC '} {path.name}")
         else:
             print(f"  OK    {path.name}")
 

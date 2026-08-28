@@ -1271,6 +1271,66 @@ def check_sys_08():
 
 
 # ---------------------------------------------------------------------------
+# SYS-09 — sync.py --check inspects without writing
+# ---------------------------------------------------------------------------
+# A gate that repairs what it inspects reports clean on its second run, so
+# only its first invocation carries information. This runs against a
+# temporary copy and asserts both directions: check mode reports the
+# difference and leaves the bytes alone, plain mode writes. Without the
+# second assertion a function that did nothing at all would pass.
+
+
+def check_sys_09():
+    import tempfile
+
+    tools_dir = os.path.join(ROOT, "tools")
+    if tools_dir not in sys.path:
+        sys.path.insert(0, tools_dir)
+    try:
+        import sync as sync_tool
+    except ImportError as error:
+        return [f"  tools/sync.py could not be imported: {error}"]
+
+    marker = "demo"
+    stale = (
+        "before\n"
+        f"<!-- generated:{marker} -->\n"
+        "STALE CONTENT\n"
+        f"<!-- /generated:{marker} -->\n"
+        "after\n"
+    )
+    failures = []
+
+    with tempfile.TemporaryDirectory() as tmp:
+        target = os.path.join(tmp, "target.md")
+
+        io.open(target, "w", encoding="utf-8").write(stale)
+        changed = sync_tool._update_file(target, {marker: "FRESH"}, True)
+        after = io.open(target, encoding="utf-8").read()
+        if not changed:
+            failures.append(
+                "  sync.py --check did not report a difference it should see"
+            )
+        if after != stale:
+            failures.append(
+                "  sync.py --check wrote to the file it was inspecting — the "
+                "first invocation repairs the tree and the second reports "
+                "clean"
+            )
+
+        io.open(target, "w", encoding="utf-8").write(stale)
+        sync_tool._update_file(target, {marker: "FRESH"})
+        written = io.open(target, encoding="utf-8").read()
+        if "FRESH" not in written:
+            failures.append(
+                "  sync.py without --check did not write; the read-only "
+                "assertion above would pass on a no-op"
+            )
+
+    return failures
+
+
+# ---------------------------------------------------------------------------
 # Test registry
 # ---------------------------------------------------------------------------
 
@@ -1317,6 +1377,8 @@ CHECKS = [
      "title": "Every base template has at least one [ID:] tag", "fn": check_tpl_08},
     {"id": "TPL-09", "spec": "SAIT-SMK-TPL-09-001A",
      "title": "No empty [ID:] sections", "fn": check_tpl_09},
+    {"id": "SYS-09", "spec": "SAIT-SMK-SYS-09-001A",
+     "title": "sync.py --check inspects without writing", "fn": check_sys_09},
     {"id": "ADR-01", "spec": "SAIT-SMK-ADR-01-001A",
      "title": "ADR frontmatter matches the ADR-010 schema", "fn": check_adr_01},
     {"id": "E2E-01", "spec": "SAIT-SMK-E2E-01-001A",
