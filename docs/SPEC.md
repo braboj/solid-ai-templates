@@ -513,6 +513,10 @@ templates/base/core/git.md
 templates/base/core/docs.md
 templates/base/core/readme.md
 templates/base/core/testing.md
+templates/base/core/review.md
+templates/base/security/security.md
+templates/frontend/ux.md
+templates/frontend/quality.md
 templates/frontend/static-site.md
 templates/base/language/typescript.md
 templates/base/core/config.md
@@ -532,6 +536,7 @@ templates/base/core/git.md
 templates/base/core/docs.md
 templates/base/core/readme.md
 templates/base/core/testing.md
+templates/base/core/review.md
 templates/base/core/config.md
 templates/backend/http.md
 templates/backend/database.md
@@ -544,7 +549,12 @@ templates/backend/features.md
 templates/backend/messaging.md
 templates/base/infra/cicd.md
 templates/base/security/devsecops.md
+templates/base/data/data-modeling.md
+templates/base/data/data-quality.md
+templates/base/language/python.md
+templates/base/core/cli.md
 templates/base/workflow/quality-gates.md
+templates/base/core/examples.md
 templates/stack/python-lib.md
 templates/stack/python-service.md
 templates/stack/python-flask.md
