@@ -502,7 +502,17 @@ Release — there is no `chore: release` branch, commit, or PR.
    `templates/base/core/git.md` — anything merged between the release
    commit and the tag ships inside the release with no note naming it,
    and both pull requests stay green in either order
-4. Create and push the tag **annotated**, naming the commit it belongs
+4. Cut `CHANGELOG.md` — reconcile the `Unreleased` section against the
+   commits the release carries with the changelog-completeness check in
+   `templates/base/core/git.md`, then rename that section to
+   `## [A.B.C] - YYYY-MM-DD` and open an empty `Unreleased` above it.
+   This repo has no version manifest to carry the cut, so it is its own
+   pull request, and it MUST merge before the tag below — a tag placed
+   first names a tree whose changelog does not mention the release.
+   The check's two counts are not required to match: a commit touching
+   no template carries no entry, so a journal or tooling change is
+   expected to appear in the carried list with nothing answering it
+5. Create and push the tag **annotated**, naming the commit it belongs
    to rather than whatever `main` points at — `tag-guard.yml` fails a
    pushed lightweight `v*` tag, and `gh release create` makes a
    lightweight one when the tag does not already exist:
@@ -513,19 +523,19 @@ Release — there is no `chore: release` branch, commit, or PR.
    Naming the commit is what keeps the journal step below true. Tagging
    `main` puts a journal or unrelated pull request merged in between
    inside the release, and nothing reports it
-5. Cut the release from the existing tag with a bare-version title and
+6. Cut the release from the existing tag with a bare-version title and
    auto-generated notes:
    ```bash
    gh release create vA.B.C --verify-tag --title vA.B.C --generate-notes
    ```
    `--verify-tag` aborts rather than creating the tag, so the release
-   can only ever attach to the annotated tag pushed in step 4. Notes
+   can only ever attach to the annotated tag pushed in step 5. Notes
    are built from the PRs merged since the previous tag. The title is
    the bare version and carries no theme — the annotated tag's message
    and the milestone's description both carry it already, and a release
    list mixing the two forms reads as two conventions rather than one
-6. Close the `vA.B.C` milestone once the release is published
-7. Record that the session owes a `docs/dev-journal.md` entry — do not
+7. Close the `vA.B.C` milestone once the release is published
+8. Record that the session owes a `docs/dev-journal.md` entry — do not
    write it here. The entry is written at the end-of-session audit item
    that owns it, which is the last item for a reason: it is the only one
    whose output is a record of the others, and items above it file
@@ -536,14 +546,14 @@ Release — there is no `chore: release` branch, commit, or PR.
    `docs(journal): ...` PR with **no milestone**, not part of the
    release. A release cut without a wrap-up still owes the entry;
    publishing the release does not discharge it
-8. Verify the release exists before closing the session. This is last
-   rather than part of step 5 on purpose: a check inside a step is
+9. Verify the release exists before closing the session. This is last
+   rather than part of step 6 on purpose: a check inside a step is
    skipped whenever the step is:
    ```bash
    gh release view vA.B.C --json tagName,name,isDraft --jq '.tagName, .name, .isDraft'
    ```
    Pass condition: prints the tag, the bare-version title, and `false`.
-   `release not found` means step 5 did not happen — and every other
+   `release not found` means step 6 did not happen — and every other
    artifact of the release, the tag and the closed milestone and the
    journal entry, is present either way, so nothing else surfaces it
 
@@ -555,13 +565,14 @@ Which of those steps are actually enforced, audited per step as
 | 1 | `py tests/run_smoke.py`, plus the milestone's own issue list |
 | 2 | the milestone-coverage check in `base/core/git.md` |
 | 3 | the release-ordering check in `base/core/git.md` |
-| 4 | `tag-guard.yml`, which fails a pushed lightweight `v*` tag |
-| 5 | step 8, and nothing before it |
-| 6 | nothing — an open milestone after a published release is silent |
-| 7 | nothing — a missing entry surfaces at the next wrap-up, or never. The entry itself is gated by the audit item that writes it |
-| 8 | nothing; it is the closing check, so it is the one to run by hand |
+| 4 | the changelog-completeness check in `base/core/git.md` |
+| 5 | `tag-guard.yml`, which fails a pushed lightweight `v*` tag |
+| 6 | step 9, and nothing before it |
+| 7 | nothing — an open milestone after a published release is silent |
+| 8 | nothing — a missing entry surfaces at the next wrap-up, or never. The entry itself is gated by the audit item that writes it |
+| 9 | nothing; it is the closing check, so it is the one to run by hand |
 
-Step 5 is the one to protect first, because its omission cannot be
+Step 6 is the one to protect first, because its omission cannot be
 repaired afterwards: publishing the release later dates it after the
 release that followed it, and a mis-ordered release list is worse than a
 visibly absent entry. `v2.57.0` is the instance — tagged, milestoned and

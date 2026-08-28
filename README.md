@@ -158,6 +158,7 @@ See `templates/base/core/agents.md` for structure, models, and formatting rules.
 ## Links
 
 - [System design and composition rules](docs/SPEC.md)
+- [Changelog](CHANGELOG.md)
 - [Project status and roadmap](https://github.com/braboj/solid-ai-templates/milestones)
 - [Example generated context files](examples/)
 - [Onboarding guide](docs/ONBOARDING.md)

@@ -515,6 +515,21 @@ first, each with a version and a date, grouped under Added, Changed,
 Deprecated, Removed, Fixed and Security. An `Unreleased` section at the top
 collects work since the last release.
 
+A per-version record published by the code host does NOT discharge this.
+Generated release notes are derived from merged pull request titles, so
+their entry form is whatever those titles were: no grouping, no bound, and
+no statement of what a reader must do. A pull request title is written for
+a reviewer who has the diff; a changelog entry is written for someone
+outside the project deciding whether to upgrade. They are different
+audiences, which is the same distinction this section draws between the
+changelog and the journal — so the requirement is a committed file, and a
+release page is where it may additionally be published, never where it may
+instead live.
+
+The committed file also outlives the host. It is present in a clone, a
+mirror, a vendored copy and an offline archive, and it is versioned
+alongside the code it describes; a release page is none of those things.
+
 - An entry states **what changed and what a reader must do about it**, and
   nothing else. It is the one document in the set whose reader is outside
   the project and is deciding whether to upgrade
@@ -527,6 +542,19 @@ collects work since the last release.
   style preference: past roughly that length an entry has started
   explaining rather than stating, and the reader deciding whether to
   upgrade has to finish a paragraph to find out
+- The `Unreleased` section is maintained by the change that causes it. A
+  change that a reader outside the project would want to know about adds
+  its entry in the same pull request that makes it, and a change that
+  needs no entry says so in the pull request rather than staying silent —
+  silence and "not notable" look identical at release time, and only one
+  of them is true
+- A project adopting the changelog after it has already published versions
+  starts its first section at the version being released next, and records
+  the earlier ones by naming where they are published. It MUST NOT
+  reconstruct them from pull request titles: that is the reviewer-facing
+  form this section rejects, and a file of it would satisfy the check while
+  failing the rule's premise. Every version released after adoption gets
+  its own section, so the reference covers a closed set that never grows
 
 This is the one document class where an unspecified rule does not stay
 unspecified. Where a document class carries no rules and a neighbouring
@@ -547,29 +575,73 @@ A rule bounding a form needs a check, or the bound decays to advice:
 
 ```bash
 py - <<'EOF'
-import pathlib
+import pathlib, subprocess
 
 LIMIT = 40
 path = pathlib.Path("CHANGELOG.md")
+
+# A missing file means two different things. Ask the repository which,
+# rather than skipping both alike.
+tags = subprocess.run(["git", "tag"], capture_output=True,
+                      text=True).stdout.split()
+print("release tags found: %d" % len(tags))
+
 if not path.is_file():
-    print("no CHANGELOG.md - nothing to check")
+    if tags:
+        raise SystemExit("%d versions published and no CHANGELOG.md"
+                         % len(tags))
+    print("no versions published and no CHANGELOG.md - nothing to check")
     raise SystemExit(0)
 
-lines = path.read_text(encoding="utf-8").splitlines()
-entries = [(i, l) for i, l in enumerate(lines, 1) if l.startswith("- ")]
+# An entry is a bullet plus the lines it wraps onto. Measuring physical
+# lines instead reads only the first line of a wrapped entry, and a file
+# wrapped to any column then reports every entry as under any limit.
+entries, current = [], None
+for number, line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), 1):
+    if line.startswith("- "):
+        if current:
+            entries.append(current)
+        current = [number, line[2:].strip()]
+    elif current and line.strip() and not line.startswith(("#", "-")):
+        current[1] += " " + line.strip()
+    elif not line.strip():
+        if current:
+            entries.append(current)
+        current = None
+if current:
+    entries.append(current)
+
 print("changelog entries measured: %d" % len(entries))
 print("word limit: %d" % LIMIT)
-over = [(i, len(l.split()) - 1, l) for i, l in entries if len(l.split()) - 1 > LIMIT]
+over = [(n, len(t.split()), t) for n, t in entries if len(t.split()) > LIMIT]
 print("entries over the limit: %d" % len(over))
-for i, count, text in over:
-    print("  line %d: %d words - %s..." % (i, count, text[:60]))
+for number, count, text in over:
+    print("  line %d: %d words - %s..." % (number, count, text[:60]))
 EOF
 ```
 
-Pass condition: the check prints how many entries it measured and the
-limit it applied, then `entries over the limit: 0`. A measured count of
-zero is a failure rather than a clean file — it means the entry marker did
-not match the file's bullet style, and every entry went unread.
+Pass condition: the check prints the tag count, how many entries it
+measured and the limit it applied, then `entries over the limit: 0`. A
+measured count of zero is a failure rather than a clean file — it means the
+entry marker did not match the file's bullet style, and every entry went
+unread.
+
+The tag count is what separates the two absences. A project that has
+published nothing legitimately has no changelog; one that has published
+versions and has no changelog is in breach, and before this line both
+printed the same skip and exited clean. An absent file is the one state a
+check is most likely to wave through, because there is nothing in it to
+find fault with.
+
+The unit is the entry, not the line. A word bound measured against
+physical lines is defeated by wrapping: in a file wrapped to any column
+the first line of every entry falls under any limit, and the check reports
+a clean file while reading a fraction of each entry it counted. The first
+changelog written against this rule had three entries of 45, 41 and 42
+words and the line-based measurement reported none of them. A check whose
+unit is finer than the rule's unit does not under-report by a little — it
+reports the wrong thing entirely, at full confidence.
 
 ## Development journal
 
