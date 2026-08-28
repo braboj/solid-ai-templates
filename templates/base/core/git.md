@@ -521,6 +521,30 @@ When NOT to close-and-resubmit:
      tag is pushed, but choose — the default is whichever happens to
      land first
 
+Which of these steps are enforced, audited one step at a time.
+Enforcement is not transitive between neighbours: a step's gate covers
+that step and says nothing about the one below it, however the sequence
+reads. Four of the seven carry no pass condition:
+
+| Step | Enforced by |
+| --- | --- |
+| 1 | `git branch --no-merged main`, run by hand. Command, no pass condition — "investigate any results" is a judgement |
+| 2 | `git fsck --unreachable --no-reflogs`, run by hand. Same shape as step 1 |
+| 3 | nothing. Conditional on the project using `base-360`, and no pass condition either way |
+| 4 | the milestone check below |
+| 5 | the workflow-history check below |
+| 6 | **nothing**, and it is the step to gate first |
+| 7 | the ordering check below |
+
+Step 6 is unenforced and unrecoverable, which is the combination the rule
+says to address first: its own text records that a tag on a public
+repository cannot be taken back cleanly, so a first pipeline execution
+that ships is not an execution that can be retried. Until it carries a
+check, the release proposal MUST name each pipeline step run by hand and
+the result it produced. That record is what makes its absence visible —
+an operator who skipped step 6 writes nothing, and nothing else reports
+it.
+
 The check for step 4, run from the repository root. It is left flush with
 the margin rather than indented under the step: a renderer strips a fenced
 block's own indentation, and an indent deeper than the code's first level
