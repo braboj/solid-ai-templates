@@ -758,6 +758,12 @@ self-check it.
 - When the constraint guards a committed generated artifact, wire its
   check into CI as a required status check (see
   `quality-gates-staleness`)
+- A check written against a pattern will find that pattern in its own
+  source wherever the scan can reach the file it lives in, reporting
+  findings that are not defects or absorbing ones that are. The failure
+  and the test that catches it are stated once, in
+  `quality-cross-validation` — it applies to every check a project
+  carries, not only to the ones a gate runs
 
 A rule states intent; its paired check is what makes the intent hold.
 

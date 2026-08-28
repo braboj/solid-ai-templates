@@ -566,6 +566,42 @@ maintainer time on phantom fixes.
   verification semantics pull in opposite directions, and the naive
   implementation looks correct until run against real data
 
+### A check whose own source is in scope will match itself
+
+A check that scans for a pattern carries that pattern in its own source.
+Where the scan can reach the file the check lives in — a repository-wide
+walk, a script written into the tree it inspects, a rule quoted in the
+documentation being linted — the check reports on itself.
+
+Every other control in this file is about a check reaching far enough: did
+it run, did it load the corpus, would it fail if the defect were present. A
+count of zero is a failure precisely because it means the check reached
+nothing. Self-match is the opposite failure, and each of those controls
+reports healthy while it happens.
+
+- Two shapes, and only the first is visible without looking for it. A
+  self-match that **inflates** adds findings that are not defects, so the
+  check fails loudly on a clean tree and someone investigates. One that
+  **absorbs** is worse: a conformance check finding its own example of the
+  correct form counts a pass, and reports a clean tree having verified
+  nothing about the project
+- Test it by running the check from a tree that contains the check's own
+  source, and comparing against a run from a tree that does not. Pass
+  condition: the count of inputs inspected RISES, proving the check read
+  its own source, and the findings are IDENTICAL. A count that does not
+  rise means the test did not exercise anything
+- Fix it by constraining the scan to where the pattern can legitimately
+  appear rather than by excluding a path — a comment directive is found by
+  reading the comment half of a line, not by skipping the file that lists
+  the directives. An exclusion is the fallback, and it MUST name what it
+  excludes and why, because a path exclusion silently grows to cover real
+  findings as the tree changes
+- Constrain by the narrowest property that separates a real occurrence from
+  a quoted one. An exemption written against a broader property absorbs
+  true findings — one written to skip a pattern's *neighbourhood* rather
+  than the pattern's *position* is the absorbing shape arriving by a
+  different route
+
 ## Code style
 
 - Encode every committed file in UTF-8
@@ -7053,6 +7089,12 @@ self-check it.
 - When the constraint guards a committed generated artifact, wire its
   check into CI as a required status check (see
   `quality-gates-staleness`)
+- A check written against a pattern will find that pattern in its own
+  source wherever the scan can reach the file it lives in, reporting
+  findings that are not defects or absorbing ones that are. The failure
+  and the test that catches it are stated once, in
+  `quality-cross-validation` — it applies to every check a project
+  carries, not only to the ones a gate runs
 
 A rule states intent; its paired check is what makes the intent hold.
 
