@@ -499,8 +499,8 @@ listing was truncated and the check reported on part of the set.
 The check covers open issues only. A triage label is terminal, so a
 closed issue's labels are a record rather than a live claim.
 
-Output MUST be `[]`. Each reported entry names the issue and its actual
-type and priority counts. The type alternation is the project's own
-taxonomy; the `P[0-3]` pattern is fixed, and matches the whole priority
-scale — the check does not filter on the milestone field, so a deferred
-issue passes on its labels like any other.
+Each reported entry names the issue and its actual type and priority
+counts. The type alternation is the project's own taxonomy; the
+`P[0-3]` pattern is fixed, and matches the whole priority scale — the
+check does not filter on the milestone field, so a deferred issue
+passes on its labels like any other.
