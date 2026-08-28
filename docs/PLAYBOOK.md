@@ -397,12 +397,46 @@ Release — there is no `chore: release` branch, commit, or PR.
    gh release create vA.B.C --verify-tag --title vA.B.C --generate-notes
    ```
    `--verify-tag` aborts rather than creating the tag, so the release
-   can only ever attach to the annotated tag pushed in step 3. Notes
-   are built from the PRs merged since the previous tag
+   can only ever attach to the annotated tag pushed in step 4. Notes
+   are built from the PRs merged since the previous tag. The title is
+   the bare version and carries no theme — the annotated tag's message
+   and the milestone's description both carry it already, and a release
+   list mixing the two forms reads as two conventions rather than one
 6. Close the `vA.B.C` milestone once the release is published
 7. Add the session's `docs/dev-journal.md` entry **separately** — its
    own `docs(journal): ...` PR with **no milestone**, not part of the
    release
+8. Verify the release exists before closing the session. This is last
+   rather than part of step 5 on purpose: a check inside a step is
+   skipped whenever the step is:
+   ```bash
+   gh release view vA.B.C --json tagName,name,isDraft --jq '.tagName, .name, .isDraft'
+   ```
+   Pass condition: prints the tag, the bare-version title, and `false`.
+   `release not found` means step 5 did not happen — and every other
+   artifact of the release, the tag and the closed milestone and the
+   journal entry, is present either way, so nothing else surfaces it
+
+Which of those steps are actually enforced, audited per step as
+`quality-gates-procedure-steps` requires:
+
+| Step | Enforced by |
+| --- | --- |
+| 1 | `py tests/run_smoke.py`, plus the milestone's own issue list |
+| 2 | the pre-release check in `base/core/git.md` |
+| 3 | the ordering check in `base/core/git.md` |
+| 4 | `tag-guard.yml`, which fails a pushed lightweight `v*` tag |
+| 5 | step 8, and nothing before it |
+| 6 | nothing — an open milestone after a published release is silent |
+| 7 | nothing — a missing entry surfaces at the next wrap-up, or never |
+| 8 | nothing; it is the closing check, so it is the one to run by hand |
+
+Step 5 is the one to protect first, because its omission cannot be
+repaired afterwards: publishing the release later dates it after the
+release that followed it, and a mis-ordered release list is worse than a
+visibly absent entry. `v2.57.0` is the instance — tagged, milestoned and
+journalled, never published, and deliberately left absent for that
+reason.
 
 Projects with a version manifest (`package.json`, `pyproject.toml`,
 etc.) instead follow the branch → bump → PR → merge → tag flow; see
