@@ -4000,3 +4000,89 @@ checking.
 precedent -- a shipped check producing a false positive is a defect, not a
 task -- which returned the repository's own label conformance check to
 `[]`.
+
+## 2026-08-28 -- What nobody is watching
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Cut H shipped as v2.59.0 -- 13 issues, 9 pull requests, and the last of
+the eight proposed cuts.** One shape ran through all of them: a condition
+written down once and then never read again. A revisit trigger with
+nothing polling it. A deferral whose trigger had already fired when the
+issue was written. An issue overtaken by an open pull request, and by a
+decision accepted after it was filed. An unenforced step standing beside
+a gated one. A comment naming a construct that was wrong everywhere. A
+sweep bounded by its inputs rather than by what it had created.
+
+**Three of nine placements went somewhere other than where the issue
+asked, each decided by one measurement.** `resolve.py` puts
+`workflow/ai-workflow.md` in 0 of 17 chains, `workflow/scope.md` and
+`workflow/issues.md` in 1 each, and every core-tier file in all 17. So
+the rejected-mechanism sweep went to `quality.md` rather than to
+`ai-workflow-read-edit-site`, plan-first to `review.md` rather than to
+`scope.md`, and the trigger-watcher cluster split in two -- the general
+obligation into `quality.md`, the issue-body mechanics into `issues.md`,
+with no sentence living in both. The correct-but-partial case stayed in
+`ai-workflow.md` regardless, because it is the third case of a
+three-case contrast and the other two are there.
+
+**The cut's own rule found its own instance within the hour.** The new
+`quality-gates-procedure-steps` says a procedure mixing gated and
+ungated steps reads as enforced throughout, and asks for a step-by-step
+audit. Run against this repository's release runbook, that audit found
+four of eight steps enforced by nothing -- and the failure had already
+happened. `v2.57.0` was tagged, its milestone closed, its journal entry
+written, and the release never cut. Step 5 alone was missed, which is
+invisible precisely because every other artifact of that release is
+present.
+
+**v2.57.0 stays absent, deliberately.** Its tag is timestamped 36
+minutes before v2.58.0's release was published, so cutting it now would
+place it above v2.58.0 in a list ordered by publication date, and a
+mis-ordered release list is worse than a visibly absent entry. The
+runbook now carries the reason beside the step that was skipped, and a
+closing step 8 that verifies the release exists -- placed last rather
+than inside step 5, because a check inside a step is skipped whenever
+the step is.
+
+**A guard fired on the extractor rather than on the check.** Pulling the
+pre-release check out of `git.md` to run it, the extractor took the
+first heredoc block in the file and asserted its body defined
+`MILESTONE`. It does not: `git.md` holds three such blocks and the first
+is the numbering-collision check. Selecting by position had found a real
+block that answers a different question, which is the check-selection
+failure the templates already describe. Selecting by content fixed it,
+and the assertion is the only reason it was not run against the wrong
+subject.
+
+**No escape was lost this session, for the first time in several cuts.**
+Every pattern written into a file was chosen to hold no backslash at all
+-- `[0-9]` for a digit, `([^0-9]|$)` for the boundary after an issue
+number, `[Cc]loses` for the case fold. A pattern holding no backslash
+cannot lose one. That last character class earned itself immediately:
+without it, a search for issue 104 matches a body closing 1041.
+
+**Both new checks were extracted from the committed file and run against
+controls.** The pull-request query matched #1198 on a body closing
+#1041, reported the 20 pull requests it had inspected, and did not match
+#104. The decision-record query listed ADR-004, ADR-026 and ADR-027 as
+touched since 2026-08-20; a future date and a mistyped directory printed
+the same nothing, which is why its pass condition asks for one run
+without `--since` to prove the path resolves.
+
+**PRs merged:** #1198, #1199, #1200, #1201, #1202, #1203, #1205, #1206,
+#1207
+
+**Issues closed:** #725, #748, #985, #994, #1000, #1036, #1038, #1041,
+#1052, #1133, #1137, #1195, #1196
+
+**Issues opened:** #1208, for the pre-release checklist in `git.md`,
+which has not had the enforcement audit this cut's own rule requires and
+resolves into all 17 chains; and #1209, for the four deferred issues in
+this repository that name a trigger and no mechanism that would detect
+it.
+
+**Also this session:** #1204 was filed from a parallel session carrying
+no labels, so the repository's label conformance check returns `[1204]`
+rather than `[]`. Left for its author, since choosing its type and
+severity is a triage decision rather than a correction.
