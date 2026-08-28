@@ -4289,3 +4289,112 @@ parked, so the #987 class has not recurred. #1233, #1237 and #1242 are
 unmilestoned. #1242 records that the groom procedure and the sweep are
 both reusable and belong in `base/workflow/issues.md`, not only in this
 repository's PLAYBOOK.
+
+---
+
+## 2026-08-28 -- The instruction its own text cannot show is incomplete
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**v2.62.0 shipped 5 issues across 3 pull requests, plus a decision record
+and this entry.** The theme fell out of the groom rather than being chosen
+first, for the third cut running. Every issue in it was an instruction
+that was incomplete in a way its own text could not reveal: a step that
+fires before the work it records, a number pointing into a different
+document's sequence, a reference to a section the reader's chain does not
+carry, a classification with a branch missing, and three procedures run
+every cut that nobody had written down.
+
+**The runbook wrote the journal before the audit that produces its
+content.** #1212 had already moved the entry to the end of the wrap-up
+audit, because it is the only item whose output is a record of the others.
+The PLAYBOOK reintroduced the same defect one level up: step 7 of *Release
+a new version* wrote the entry, and a session that cut a release then ran
+the audit filed issues the merged entry could not name. Last session that
+forced an in-place amendment. Step 7 now records that the entry is owed
+and names the audit item that writes it, and states that a release without
+a wrap-up still owes one. This entry is the first written under the
+corrected ordering by rule rather than by hand, which is why it can name
+#1248 and #1249 -- both filed at audit item 12, after the release was
+published.
+
+**Two documents numbered the same procedure differently, and one file
+numbered two procedures the same.** The PLAYBOOK runs the release in eight
+steps and `core/git.md` in seven, so "the check for step 7" named
+different steps depending on which document the reader had open. Worse,
+`git.md` carried two checks both labelled "The check for step 5" -- one in
+the release sequence, one under repository migration. Each embedded check
+now has a name (milestone-coverage, pipeline-history, release-ordering,
+security-controls) and both documents refer to it by that name. The rule
+stating why sits above the first check, because a consuming project's
+runbook will not share either numbering. Both release gates for this cut
+were then located by asserting on a distinguishing string in the body,
+which is the method the rule now requires.
+
+**A reference costs reach, and the file that proved it was one I wrote.**
+A rule naming another template's section in running prose is not a
+directive, so nothing resolves or checks it -- but the two files sit at
+different depths in the graph, so it reads correctly in the chains
+carrying both and dangles in the rest. Measured: 15 such references, 3
+dangling. `core/git.md` resolves into 17 chains and `core/examples.md`
+into 11, so a reference between them is unreadable in six. The worst named
+a section in a template that resolves into no chain at all, unreadable in
+all 17 -- and it had been added knowingly, hours after two others were
+removed for exactly this reason. Understanding a constraint is not the
+same as writing it down. It is now ADR-028, SPEC.md, a line in CLAUDE.md,
+and SYS-11.
+
+**The new check caught its own breakage before it caught anything else.**
+SYS-11 counts the chains it resolves and the references it matches before
+reporting, because a check that reaches nothing and a clean tree print the
+same empty result. An early draft keyed section IDs by tuple and compared
+absolute paths against manifest-relative ones, so it reached nothing --
+and the reference count is what reported it. Without that assertion the
+check would have gone green while checking nothing, on its very first run.
+Two negative controls were then run deliberately: a planted dangling
+reference, which fails and names the 12 chains it is absent from; and the
+match pattern altered to `baze-` so it still compiles and matches nothing,
+which fails on the count rather than passing. The second is the shape a
+careless later edit takes and is the control that matters.
+
+**The sixth shape is the one found only by disagreeing with a criterion
+you are meant to satisfy.** `base-review` listed five shapes a filed issue
+takes; all five are found by comparing the issue to the tree. The sixth is
+an issue whose acceptance criteria carry a closed classification -- each
+of these is either A or B, and the Bs are deleted -- meeting a member that
+is neither. Nothing about such an issue is false; the taxonomy is simply
+incomplete, and an absent branch leaves no trace in the text. It is the
+most dangerous of the six because the criteria read as a checklist and a
+checklist invites completion, and forcing a member into the nearest branch
+produces a diff that looks exactly like the intended work.
+
+**A cited command that does not exist reads as a clean gate.** #1242
+proposed re-running `py tools/sync.py --check` and `py tools/resolve.py
+--check` after recovering a branch that went BEHIND. `resolve.py` has no
+`--check`: given one it falls through to `--list`, prints the stack IDs
+and exits 0. The command as filed would have passed while checking
+nothing. `sync.py --check` already covers `generated/` and is the whole
+gate. This is the verify-the-issue's-claims step from the groom procedure
+catching something in the very issue that asked for that step to be
+written down.
+
+**PRs merged:** #1244, #1246, #1247, #1250
+
+**Issues closed:** #1226, #1228, #1237, #1241, #1242
+
+**Issues opened:** #1248, the groom procedure and the merged-commit sweep
+being reusable and having landed only in this repository's PLAYBOOK, which
+#1242's own text asked for and this cut did not do; and #1249, a branch
+that goes BEHIND carrying stale regenerated artifacts while Git reports it
+MERGEABLE -- `base-git` already has the recovery mechanism and not the
+reason it matters. Both from audit item 12.
+
+**Also this session:** the backlog was groomed first, 44 unmilestoned
+issues re-measured against the tree, and two clusters fell out. The one
+not taken -- two templates resolving into one chain and wanting opposite
+things from the same file -- stays intact for the next cut: #1238, #1239,
+#1240, #1230, #1231. Three groom measurements corrected a filed claim:
+#1233 counts 25 trailing comments rather than 31, #1226's dangling set is
+3 of 15 rather than the 5 of 33 recorded earlier, and #1242's cited
+`resolve.py --check` does not exist. ADR-028 was written after the tag,
+so v2.62.0 carries the rule and not its record.
