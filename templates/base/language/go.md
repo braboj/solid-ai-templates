@@ -20,6 +20,7 @@ changes and do not re-declare the bindings below.
 | Security (SAST)       | `govulncheck`                 | —                         |
 | Tests                 | `go test`                     | —                         |
 | Coverage              | `go test -cover`              | —                         |
+| Mutation testing      | `gremlins`                    | `.gremlins.yaml`          |
 | Package manifest      | `go.mod`                      | —                         |
 
 - Cognitive complexity binds through `golangci-lint` rather than a
@@ -35,3 +36,7 @@ changes and do not re-declare the bindings below.
 - `gofmt` settles formatting; Go projects MUST NOT carry a formatter
   choice or a style config. Its output is canonical, which is why the
   Format category needs no options here
+- Mutation testing is opt-in per `quality-gates-mutation`, and a project
+  that has not adopted it carries no `.gremlins.yaml`. Prefer `gremlins`
+  over `go-mutesting`: it reports a per-package score a ratchet can be
+  written against, where `go-mutesting` reports diffs for a reader

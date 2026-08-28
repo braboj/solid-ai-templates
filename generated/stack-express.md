@@ -3834,6 +3834,7 @@ only the tools their shape changes.
 | Format                | `prettier`               | `.prettierrc`       |
 | Type check            | `tsc --noEmit`           | `tsconfig.json`     |
 | Cognitive complexity  | `eslint-plugin-sonarjs`  | `eslint.config.js`  |
+| Mutation testing      | `stryker`                | `stryker.conf.json` |
 | Package manifest      | `package.json`           | —                   |
 
 - `husky` installs the git hook; `lint-staged` scopes each check to the
@@ -3848,6 +3849,10 @@ only the tools their shape changes.
 - `tsc` runs with `strict: true`, per `base-typescript-strictness`. The
   type gate and the editor's checker MUST be the same tool at the same
   strictness, per `quality-gates-layers`
+- Mutation testing is opt-in per `quality-gates-mutation`, and a project
+  that has not adopted it carries no `stryker.conf.json`. `stryker` runs
+  the project's existing runner, so the binding is a config file rather
+  than a second way to execute the suite
 
 ### sonarjs rules to enable
 
