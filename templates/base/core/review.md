@@ -181,12 +181,28 @@ What you owe a finding depends on how it was produced.
 ### From a measurement
 
 A tool that runs cleanly and returns a plausible number is the most convincing
-way to be wrong.
+way to be wrong, and a zero is the most convincing number it can return — a
+silent failure and a real absence print the same thing.
 
 - [ ] Confirm the tool measures the unit the rule is written in — bytes are
       not characters, `wc -c` is not `wc -m`, disk size is not size on disk
+- [ ] Confirm the tool measured the **scope** the claim is about. Many tools
+      silently narrow to a diff, a changed-files set, a sample, or one
+      partition when run in a pull-request or incremental context, and report
+      a count that is correct for that subset. A baseline claim about a whole
+      codebase MUST come from a whole-codebase run
+- [ ] Record which mode produced any number you keep. A figure with no scope
+      attached is read as a baseline by whoever finds it next, and an
+      incremental run reporting zero on a tree nobody has ever scanned is
+      evidence that no baseline exists, not evidence that it is clean
 - [ ] Hand-check one flagged item. If the hand-count disagrees with the tool,
       the tool is measuring something else
+- [ ] Produce a count that carries a finding twice, by different means.
+      Agreement between two tools is the check; one tool run twice is not
+- [ ] Verify a zero by finding one positive by hand, and prefer a tool whose
+      failures are loud over one that can exit clean on an unsupported
+      feature. Nothing in the output separates a silent tool failure from a
+      genuine absence, and the absence is the more alarming finding of the two
 
 ### From an extraction
 
@@ -201,6 +217,25 @@ traverse the structure X lives in".
 - [ ] Scope the claim to what was inspected: "not verifiable from the
       extract", never "missing". Absence of evidence from a lossy tool is not
       evidence of absence
+
+### From a probe running as the wrong principal
+
+A request's result depends on who makes it. A probe run anonymously, or with a
+different credential type than the real consumer uses, answers a different
+question than the finding claims to answer, and the obvious follow-up check
+usually confirms the wrong answer rather than exposing it.
+
+- [ ] Name the principal the finding is about — anonymous visitor, signed-in
+      user, service account, CI runner — and confirm the probe ran as that
+      principal, not merely as something authenticated
+- [ ] Check the credential **type** matches, not only its presence. Cookie
+      sessions, bearer tokens, signed URLs and mTLS are not interchangeable,
+      and an endpoint honouring one commonly ignores another. A token added to
+      a cookie-authenticated endpoint reproduces the anonymous result and
+      reads like confirmation
+- [ ] Where the probe cannot assume the consumer's identity, scope the claim
+      to the principal tested — "returns 404 to an anonymous client", never
+      "is broken"
 
 ### From an agent or subagent
 
