@@ -55,23 +55,10 @@
 - A function's name must make reading its body unnecessary — if you need to
   read the implementation to understand what a call site does, the function
   needs a better name or needs to be split
-- Cognitive complexity ≤ 15 per function — enforced by static analysis
-  (SonarQube, Codacy, or `eslint-plugin-sonarjs` for ESLint); each
-  nesting level and decision point increases the score
+- Cognitive complexity ≤ 15 per function — enforced by static analysis;
+  each nesting level and decision point increases the score. The tool is
+  bound per ecosystem in `base-<language>-tooling`, not here
 
-### eslint-plugin-sonarjs rules (if applicable)
-
-| sonarjs rule | Enforces |
-|---|---|
-| `cognitive-complexity` | Cognitive complexity ≤ 15 per function |
-| `no-nested-conditional` | Maximum nesting depth |
-| `no-duplicated-branches` | DRY — identical branches in if/switch |
-| `no-identical-expressions` | DRY — same expression on both sides of operator |
-| `no-identical-functions` | DRY — duplicated function bodies |
-| `no-collapsible-if` | KISS — collapse nested ifs |
-| `no-redundant-jump` | No dead code — unnecessary return/continue/break |
-| `no-unused-collection` | No dead code — collection populated but never read |
-| `no-inverted-boolean-check` | Readability — avoid negative conditions |
 - Maximum nesting depth of three levels — use early returns and guard clauses
   to reduce indentation rather than adding else branches
 - No boolean flag parameters — they force the caller to read the implementation
@@ -3783,10 +3770,27 @@ only the tools their shape changes.
   lints the whole tree is slow enough that contributors bypass it
 - Cognitive complexity MUST be gated by `eslint-plugin-sonarjs`. Core
   ESLint has no cognitive-complexity rule, so the category has no
-  TypeScript binding without the plugin
+  TypeScript binding without the plugin. The plugin also catches
+  duplicate branches, identical expressions and other smells core ESLint
+  misses, so it SHOULD be enabled on any TypeScript or JavaScript
+  project rather than only where the complexity gate is wanted
 - `tsc` runs with `strict: true`, per `base-typescript-strictness`. The
   type gate and the editor's checker MUST be the same tool at the same
   strictness, per `quality-gates-layers`
+
+### sonarjs rules to enable
+
+| sonarjs rule | Enforces |
+|---|---|
+| `cognitive-complexity` | Cognitive complexity ≤ 15 per function |
+| `no-nested-conditional` | Maximum nesting depth |
+| `no-duplicated-branches` | DRY — identical branches in if/switch |
+| `no-identical-expressions` | DRY — same expression on both sides of operator |
+| `no-identical-functions` | DRY — duplicated function bodies |
+| `no-collapsible-if` | KISS — collapse nested ifs |
+| `no-redundant-jump` | No dead code — unnecessary return/continue/break |
+| `no-unused-collection` | No dead code — collection populated but never read |
+| `no-inverted-boolean-check` | Readability — avoid negative conditions |
 
 
 <!-- templates/base/core/examples.md -->

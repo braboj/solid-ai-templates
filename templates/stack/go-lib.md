@@ -1,5 +1,5 @@
 # Stack — Go Library / CLI
-[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/core/testing.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
+[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/language/go.md, templates/base/core/testing.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
 
 Base Go conventions for any Go module — library, CLI tool, or service.
 Never used directly for services — always extended by
@@ -116,14 +116,17 @@ staticcheck ./...     # additional static analysis
 ## Quality gates
 [EXTEND: base-quality-gates]
 
-| Category | Layer 1 (editor) | Layer 2 (pre-commit) | Layer 3 (CI) | Config |
-|----------|-----------------|---------------------|-------------|--------|
-| Lint | golangci-lint | golangci-lint | golangci-lint | `.golangci.yml` |
-| Format | gofmt | gofmt | gofmt -l | built-in |
-| Type check | built-in | built-in | go vet | — |
-| Security | — | — | govulncheck + platform SAST | — |
-| Secrets | — | gitleaks | gitleaks | `.pre-commit-config.yaml` |
-| Tests | — | — | go test ./... | — |
-| Coverage | — | — | go test -cover ≥ 80% | — |
+`base-go-tooling` names the tool for every category Go binds. This
+section adds only what the module shape changes, and the tools that are
+not language-specific.
 
+| Category | Layer 1 (editor) | Layer 2 (pre-commit) | Layer 3 (CI) |
+| -------- | ---------------- | -------------------- | ------------ |
+| Secrets  | —                | gitleaks             | gitleaks     |
+
+- Secret detection is not language-specific, so it binds here rather than
+  in `base-go`: `gitleaks`, configured in `.pre-commit-config.yaml`
+- The SAST scanner `base-go` binds runs alongside the hosted analysis the
+  platform template supplies; neither replaces the other, and a platform
+  that supplies none leaves the local scanner as the whole gate
 - Hook framework: `pre-commit` or Makefile

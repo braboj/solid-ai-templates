@@ -218,15 +218,19 @@ twine check dist/*        # validate wheel/sdist metadata
 section adds only what the library shape changes, and the layer each tool
 runs at where it differs from the category default.
 
-| Category   | Layer 1 (editor) | Layer 2 (pre-commit) | Layer 3 (CI)                             |
-| ---------- | ---------------- | -------------------- | ---------------------------------------- |
-| Docstrings | Ruff `D` rules   | Ruff `D` rules       | Ruff `D` rules                           |
-| Security   | —                | —                    | Bandit + platform SAST                   |
-| Secrets    | —                | gitleaks             | gitleaks                                 |
-| Build      | —                | —                    | `python -m build` + `twine check dist/*` |
+| Category | Layer 1 (editor) | Layer 2 (pre-commit) | Layer 3 (CI)                             |
+| -------- | ---------------- | -------------------- | ---------------------------------------- |
+| Secrets  | —                | gitleaks             | gitleaks                                 |
+| Build    | —                | —                    | `python -m build` + `twine check dist/*` |
 
 - Secret detection is not language-specific, so it binds here rather than
   in `base-python`: `gitleaks`, configured in `.pre-commit-config.yaml`
+- The SAST scanner `base-python` binds runs alongside the hosted analysis
+  the platform template supplies; neither replaces the other, and a
+  platform that supplies none leaves the local scanner as the whole gate
+- Docstrings are enforced at every layer, by the `D` rules of the linter
+  `base-python` already binds — the category needs configuration here,
+  not another tool
 - A library's Build gate MUST validate distribution metadata, not only
   that the package compiles. `python -m build` produces the wheel and
   sdist; `twine check dist/*` is what fails on the metadata a package

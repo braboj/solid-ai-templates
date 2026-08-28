@@ -130,12 +130,6 @@ deliberately does not want.
 This governs what a compliant implementation looks like when a named tool
 is genuinely unreachable. It relaxes no category from MUST.
 
-### Recommended lint plugins
-
-- **eslint-plugin-sonarjs** — detects cognitive complexity, duplicate
-  branches, identical expressions, and other code smells that standard
-  ESLint rules miss; SHOULD be added to any TypeScript/JavaScript project
-
 ### Lint-rule bumps: fix the source on its own PR first
 
 When a dependency bump adds a lint rule that flags existing source:
@@ -193,9 +187,12 @@ Stack templates MAY add additional thresholds (e.g. Lighthouse scores).
   The two metrics genuinely disagree in practice: McCabe flags flat,
   linear section emitters while passing deeply nested logic — the
   opposite of what a readability standard is after
-- Tools: `complexipy` for Python (ruff has no cognitive-complexity
-  rule); `eslint-plugin-sonarjs` for TypeScript/JavaScript (see
-  Recommended lint plugins)
+- The gate MUST name a tool, and the language layer is where it is
+  named. A category whose tool is chosen per ecosystem does not belong
+  to this file; `base-<language>-tooling` binds it
+- Where a language's lint tool has no cognitive-complexity rule, the
+  gate needs a second tool rather than a waiver. Stating the gate
+  without one leaves a SHOULD nothing can satisfy
 - Retrofit onto an existing codebase via a ratchet: commit a baseline
   that freezes current offenders at their recorded values; CI fails
   only when an over-threshold function is new or has increased. The
