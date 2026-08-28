@@ -817,8 +817,7 @@ regeneration never ran.
   so an author editing a source meets the obligation without having to
   know the build graph
 - MUST run the staleness comparison AFTER the edit. Run before it, the
-  comparison reports the previous state and reads as a pass — the same
-  class of error as writing a check and never running it:
+  comparison reports the previous state and reads as a pass:
 
 ```bash
 <regenerate-command>
@@ -5801,6 +5800,37 @@ and how many lines end in a continuation, then lists them. A non-zero
 count is not a failure — it is the set to read against what was written.
 Zero blocks inspected is a failure, since it means the pattern drifted
 rather than the files carrying no checks.
+
+---
+
+## A check reports the moment it ran
+
+[ID: quality-gates-check-timing]
+
+`quality-gates-check-runs` requires that the check be run. It does not
+say when, and a check reports on the state at the instant it executes.
+Run before the change it gates, it reports the state before the change,
+and nothing in that output distinguishes it from a run against finished
+work: the clean result is evidence about a tree that no longer exists.
+
+- Run a check AFTER the change it gates, never before. Where the check's
+  subject is committed history, "after" means after committing rather
+  than after editing — a branch whose work is staged and uncommitted
+  reports exactly what a compliant branch reports
+- A check that repairs, rewrites or otherwise alters its own subject
+  answers differently on its second run, and only the first invocation
+  is honest. Fix it to inspect without mutating; until then, every
+  negative control of it MUST specify a single fresh invocation, or the
+  control measures the repair rather than the defect
+- State the moment where the operator reads the result — in the pass
+  condition beside the command, not only in the prose around it. A pass
+  condition that enumerates the causes of an empty result MUST include
+  "the change is not in the subject yet", which is the cause a reader
+  hits while writing the change rather than after it
+- The failure is silent by construction, so it does not show up as
+  flakiness. A gate that passed early and a gate that passed on the
+  finished work are the same line of output, and the second run that
+  would have contradicted it is the run nobody makes
 
 ---
 
