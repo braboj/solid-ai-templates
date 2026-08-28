@@ -5214,6 +5214,16 @@ driver, a maintenance script that outlives the afternoon it was written
 in. The rules below are ecosystem-neutral; the concrete argument parser
 and exit mechanism are named in the language layer.
 
+A file under the examples directory is outside this scope, even though it
+is executable and a reader runs it directly. `base-examples` governs it,
+and the two want opposite shapes: the rules below factor shared plumbing
+out of a fleet of drivers, which is correct for drivers and wrong for a
+directory whose value is that each file is read whole. An example that
+grows a shared module, a configuration layer or an `argv` seam has been
+made worse at the only job it has. Where a project genuinely promotes an
+example to a supported entry point, it moves out of that directory first,
+and these rules apply to it there.
+
 ## Driver shape
 [ID: base-cli-main]
 
