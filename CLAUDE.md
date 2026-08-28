@@ -202,6 +202,10 @@ base/ ──┬── frontend/ ──┐
   resolves into every chain carrying yours — state the substance inline
   instead; SYS-11 checks it per chain (see SPEC.md "Naming another file's
   section in prose")
+- When a rule could live in either of two templates, measure both files'
+  chain reach first and put it in the wider one, leaving the narrower to
+  defer — the reverse gives the consumers in the gap a deferral and no
+  rule (ADR-028)
 - Stack templates follow the canonical section structure (ADR-017):
   MUST sections are Stack, Commands, Project structure (pure
   libraries exempt from the last); see ADR-017 for SHOULD/MAY tiers,
