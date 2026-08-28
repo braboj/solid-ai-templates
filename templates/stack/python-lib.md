@@ -1,5 +1,5 @@
 # Stack — Python Library / CLI
-[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/language/python.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
+[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/language/python.md, templates/base/core/cli.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
 
 A Python library, CLI tool, or shared package intended to be imported or
 installed. No web server, no frontend. May be published to PyPI.
