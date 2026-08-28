@@ -70,8 +70,7 @@ genericity before it becomes template content:
    or domain. Strip project-specific nouns (entity, tool, and metric
    names)
 2. Pick the target by **measured chain reach**, not by the home the
-   issue suggests. A rule in a template no chain resolves reaches no
-   generated context file:
+   issue suggests — and know which kind of template you are measuring:
 
    ```bash
    # how many of the 17 stacks resolve a candidate file?
@@ -80,11 +79,27 @@ genericity before it becomes template content:
    done | wc -l
    ```
 
+   A **chain template** carries rules the generated project follows.
+   Reach is the criterion for it, and a rule in one that no chain
+   resolves reaches no generated context file.
+
+   A **pipeline template** carries rules about generating or consuming a
+   context file, and `templates/INTERVIEW.md` reads it directly rather
+   than any stack resolving it. Its chain reach is structurally 0 and
+   says nothing about whether the rule lands: `base/core/agents.md`
+   measures 0/17 and shapes every file the pipeline generates. Recognise
+   one by asking what reads it — a stack, or INTERVIEW.md. `platform/`
+   templates sit outside the chain for a third reason: a project picks
+   one regardless of stack.
+
    A filed issue's suggested home is a hypothesis — it is usually
    written from the downstream project, without running this. Where a
    rule needs universal reach but applies only sometimes, put it in a
    high-reach template behind an `(if applicable)` heading rather than
-   in a low-reach one
+   in a low-reach one. Where a rule is one case of a contrast whose
+   other cases live in a low-reach file, it stays with them: a case that
+   cannot be read without the ones it is defined against is not made
+   more useful by moving it somewhere better resolved
 3. If the kernel is genuinely cross-cutting, add it to the relevant
    `base/` or layer template per "Add a new base or layer template"
 4. If a fragment only applies to one stack or domain, fold it as an
