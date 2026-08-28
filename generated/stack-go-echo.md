@@ -55,23 +55,10 @@
 - A function's name must make reading its body unnecessary — if you need to
   read the implementation to understand what a call site does, the function
   needs a better name or needs to be split
-- Cognitive complexity ≤ 15 per function — enforced by static analysis
-  (SonarQube, Codacy, or `eslint-plugin-sonarjs` for ESLint); each
-  nesting level and decision point increases the score
+- Cognitive complexity ≤ 15 per function — enforced by static analysis;
+  each nesting level and decision point increases the score. The tool is
+  bound per ecosystem in `base-<language>-tooling`, not here
 
-### eslint-plugin-sonarjs rules (if applicable)
-
-| sonarjs rule | Enforces |
-|---|---|
-| `cognitive-complexity` | Cognitive complexity ≤ 15 per function |
-| `no-nested-conditional` | Maximum nesting depth |
-| `no-duplicated-branches` | DRY — identical branches in if/switch |
-| `no-identical-expressions` | DRY — same expression on both sides of operator |
-| `no-identical-functions` | DRY — duplicated function bodies |
-| `no-collapsible-if` | KISS — collapse nested ifs |
-| `no-redundant-jump` | No dead code — unnecessary return/continue/break |
-| `no-unused-collection` | No dead code — collection populated but never read |
-| `no-inverted-boolean-check` | Readability — avoid negative conditions |
 - Maximum nesting depth of three levels — use early returns and guard clauses
   to reduce indentation rather than adding else branches
 - No boolean flag parameters — they force the caller to read the implementation
@@ -3711,6 +3698,46 @@ answer for the wrong reason is the same failure in a cheaper form.
   approver before the change can land
 
 
+<!-- templates/base/language/go.md -->
+# Base — Go
+[ID: base-go]
+[DEPENDS ON: templates/base/core/quality.md]
+
+Per-language tool selection for Go. `base-quality-gates` states which
+categories a project MUST gate and at which layer; this file names the Go
+tool that satisfies each. Stack templates add only the tools their shape
+changes and do not re-declare the bindings below.
+
+## Tooling
+[ID: base-go-tooling]
+
+| Category              | Tool                          | Config                    |
+| --------------------- | ----------------------------- | ------------------------- |
+| Commit-hook framework | `pre-commit`                  | `.pre-commit-config.yaml` |
+| Lint                  | `golangci-lint`               | `.golangci.yml`           |
+| Format                | `gofmt`                       | built-in                  |
+| Type check            | `go vet`                      | —                         |
+| Cognitive complexity  | `gocognit` via `golangci-lint`| `.golangci.yml`           |
+| Security (SAST)       | `govulncheck`                 | —                         |
+| Tests                 | `go test`                     | —                         |
+| Coverage              | `go test -cover`              | —                         |
+| Package manifest      | `go.mod`                      | —                         |
+
+- Cognitive complexity binds through `golangci-lint` rather than a
+  separate binary — `gocognit` ships as one of its linters, so the gate
+  needs a config entry rather than another dependency
+- `gocognit` MUST be named explicitly in `.golangci.yml`. It is not in
+  the default linter set, so a config that omits it runs no complexity
+  check at all while the lint gate still reports success — the gate
+  passes because it measured nothing
+- Prefer `gocognit` over `gocyclo`. `gocyclo` is a McCabe branch count,
+  which `quality-gates-complexity` states is the metric a readability
+  standard is not after
+- `gofmt` settles formatting; Go projects MUST NOT carry a formatter
+  choice or a style config. Its output is canonical, which is why the
+  Format category needs no options here
+
+
 <!-- templates/base/core/config.md -->
 # Base — Configuration
 [ID: base-config]
@@ -4019,12 +4046,6 @@ deliberately does not want.
 This governs what a compliant implementation looks like when a named tool
 is genuinely unreachable. It relaxes no category from MUST.
 
-### Recommended lint plugins
-
-- **eslint-plugin-sonarjs** — detects cognitive complexity, duplicate
-  branches, identical expressions, and other code smells that standard
-  ESLint rules miss; SHOULD be added to any TypeScript/JavaScript project
-
 ### Lint-rule bumps: fix the source on its own PR first
 
 When a dependency bump adds a lint rule that flags existing source:
@@ -4082,9 +4103,12 @@ Stack templates MAY add additional thresholds (e.g. Lighthouse scores).
   The two metrics genuinely disagree in practice: McCabe flags flat,
   linear section emitters while passing deeply nested logic — the
   opposite of what a readability standard is after
-- Tools: `complexipy` for Python (ruff has no cognitive-complexity
-  rule); `eslint-plugin-sonarjs` for TypeScript/JavaScript (see
-  Recommended lint plugins)
+- The gate MUST name a tool, and the language layer is where it is
+  named. A category whose tool is chosen per ecosystem does not belong
+  to this file; `base-<language>-tooling` binds it
+- Where a language's lint tool has no cognitive-complexity rule, the
+  gate needs a second tool rather than a waiver. Stating the gate
+  without one leaves a SHOULD nothing can satisfy
 - Retrofit onto an existing codebase via a ratchet: commit a baseline
   that freezes current offenders at their recorded values; CI fails
   only when an over-threshold function is new or has increased. The
@@ -4873,7 +4897,7 @@ exception, it has skipped the seam.
 
 <!-- templates/stack/go-lib.md -->
 # Stack — Go Library / CLI
-[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/core/testing.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
+[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/language/go.md, templates/base/core/testing.md, templates/base/workflow/quality-gates.md, templates/base/core/examples.md]
 
 Base Go conventions for any Go module — library, CLI tool, or service.
 Never used directly for services — always extended by
@@ -4990,16 +5014,19 @@ staticcheck ./...     # additional static analysis
 ## Quality gates
 [EXTEND: base-quality-gates]
 
-| Category | Layer 1 (editor) | Layer 2 (pre-commit) | Layer 3 (CI) | Config |
-|----------|-----------------|---------------------|-------------|--------|
-| Lint | golangci-lint | golangci-lint | golangci-lint | `.golangci.yml` |
-| Format | gofmt | gofmt | gofmt -l | built-in |
-| Type check | built-in | built-in | go vet | — |
-| Security | — | — | govulncheck + platform SAST | — |
-| Secrets | — | gitleaks | gitleaks | `.pre-commit-config.yaml` |
-| Tests | — | — | go test ./... | — |
-| Coverage | — | — | go test -cover ≥ 80% | — |
+`base-go-tooling` names the tool for every category Go binds. This
+section adds only what the module shape changes, and the tools that are
+not language-specific.
 
+| Category | Layer 1 (editor) | Layer 2 (pre-commit) | Layer 3 (CI) |
+| -------- | ---------------- | -------------------- | ------------ |
+| Secrets  | —                | gitleaks             | gitleaks     |
+
+- Secret detection is not language-specific, so it binds here rather than
+  in `base-go`: `gitleaks`, configured in `.pre-commit-config.yaml`
+- The SAST scanner `base-go` binds runs alongside the hosted analysis the
+  platform template supplies; neither replaces the other, and a platform
+  that supplies none leaves the local scanner as the whole gate
 - Hook framework: `pre-commit` or Makefile
 
 
