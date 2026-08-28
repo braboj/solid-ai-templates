@@ -3653,10 +3653,15 @@ a neighbouring issue, sometimes because the rule it argues from never existed
 in this project at all. An issue describing a gap is evidence the gap existed
 when it was filed, not that it exists now.
 
-Neither shape means the issue was wrong to file. Both produce subtly wrong
-work when implemented from the text alone, and the wrongness is invisible
-afterwards: the change is coherent, the tests pass, and it addresses
-something that was not the problem.
+The tree is not the only thing that moves. A decision accepted since the
+filing date can relocate the rule the issue proposes, and another session can
+already be implementing it — neither is visible from the issue, and neither is
+a defect in the issue.
+
+None of these shapes means the issue was wrong to file. Each produces subtly
+wrong work when implemented from the text alone, and the wrongness is
+invisible afterwards: the change is coherent, the tests pass, and it addresses
+something that was not the problem — or re-does something already in review.
 
 - [ ] Re-read the target file for existing coverage before writing anything.
       A rule that landed since the filing date may already say most of it
@@ -3669,14 +3674,50 @@ something that was not the problem.
       an under-enforced one
 - [ ] Restate the scope before starting if it moved. Narrower than filed
       finishes sooner; wider needs saying before the work rather than after
+- [ ] Check the open pull requests for one that already closes it. An issue
+      stays open and unassigned while a complete implementation sits in
+      review, and the only link between them is in the pull request body
+- [ ] List the decision records accepted since the filing date and confirm
+      none of them moves what the issue proposes. An issue is correct as of
+      its filing date, and the tree it was measured against is not the tree
+      it will land in
 
-Three shapes, all of which change what gets built:
+Five shapes, all of which change what gets built:
 
 | Shape | What it looks like |
 |-------|--------------------|
 | Narrower than filed | The section already covers most of it; the work is two bullets, not a rewrite |
 | Wider than filed | The defect the issue names is present in two siblings it does not mention |
 | Wrong as filed | The rule it proposes, run against the tree, flags code that is correct |
+| Already in flight | The issue is open and unassigned while a complete implementation sits in an open pull request |
+| Superseded as filed | A decision accepted since the filing date moved the rule, the home, or the mechanism it names |
+
+The last two shapes are mechanically checkable, and both fail the same way:
+an empty result reads as a clear field whether the query found nothing or
+reached nothing.
+
+```bash
+gh pr list --state open --limit 100 --json number,body --jq 'length as $n | "open pull requests inspected: " + ($n|tostring), (.[] | select(.body | test("[Cc]loses #<N>([^0-9]|$)")) | "already in flight: #" + (.number|tostring))'
+```
+
+Pass condition: the reported count matches the open pull requests the tracker
+shows, and nothing follows it. A count of zero where the tracker lists open
+pull requests means the query or the repository context is wrong rather than
+the field being clear. The trailing character class is load-bearing — without
+it, a search for issue 104 matches a body closing 1041.
+
+```bash
+git log --since=<filing date> --name-only --format= -- docs/decisions/ | sort -u
+```
+
+Pass condition: the command lists the decision records added or amended since
+the issue was filed, and none of them moves the rule, the home, or the
+mechanism the issue names. Run it once without `--since` to confirm the path
+resolves, because a mistyped directory and a genuinely quiet window print the
+same empty listing. Where a record does move it, implement the decision and
+state the deviation from the filed acceptance criteria in the pull request:
+the issue is not wrong and does not need re-filing, its criteria need reading
+against the record that superseded them.
 
 ## Verifying a finding before reporting it
 
