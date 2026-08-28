@@ -817,8 +817,7 @@ regeneration never ran.
   so an author editing a source meets the obligation without having to
   know the build graph
 - MUST run the staleness comparison AFTER the edit. Run before it, the
-  comparison reports the previous state and reads as a pass — the same
-  class of error as writing a check and never running it:
+  comparison reports the previous state and reads as a pass:
 
 ```bash
 <regenerate-command>
