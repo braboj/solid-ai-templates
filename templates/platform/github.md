@@ -468,9 +468,14 @@ LIMIT = 500
 TYPES = re.compile(r"^(bug|epic|task|spike|incident)$")
 PRIORITIES = re.compile(r"^P[0-3]$")
 
+# Decode as UTF-8 rather than the locale encoding. `gh` emits UTF-8; on
+# a console whose code page is not, text=True alone mangles every
+# non-ASCII label name, and on a code page that does not map every byte
+# it raises UnicodeDecodeError instead.
 raw = subprocess.run(["gh", "issue", "list", "--state", "open",
                       "--limit", str(LIMIT), "--json", "number,labels"],
-                     capture_output=True, text=True).stdout
+                     capture_output=True, text=True,
+                     encoding="utf-8").stdout
 issues = json.loads(raw) if raw.strip() else []
 
 print("issues inspected: %d" % len(issues))
