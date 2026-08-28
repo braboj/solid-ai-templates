@@ -639,15 +639,16 @@ for name in tracked:
   audit the references in the same change — `rg "#<number>"` (or the tracker
   URL) over the repo lists them, and the audit is done when none point at the
   stale item
-- In code comments and docstrings, go further: never cite a ticket, PR,
-  or ADR *number* at all — code outlives the tracker, so state the
-  substance instead (name the descriptor, source, or derivation, not
-  "see #123" or "per ADR 0002"). Markdown docs (README, ADRs, the dev
-  journal) are the opposite: cross-referencing issues and ADRs by number
-  is their job. One exception in code: non-obvious or scientific logic
-  MAY name a *source* (author + year + method — "Rappé 1992"), which
-  ages gracefully where an issue number does not. Enforce with a test
-  that greps comments/docstrings for `#\d+` / `ADR\s*\d+`
+- In code comments, docstrings and commented configuration, go further:
+  never cite a ticket, PR, or ADR *number* at all — code outlives the
+  tracker, so state the substance instead (name the descriptor, source,
+  or derivation, not "see #123" or "per ADR 0002"). Markdown docs
+  (README, ADRs, the dev journal) are the opposite: cross-referencing
+  issues and ADRs by number is their job. One exception in code:
+  non-obvious or scientific logic MAY name a *source* (author + year +
+  method — "Rappé 1992"), which ages gracefully where an issue number
+  does not. Enforce with a test that greps comments, docstrings and
+  commented configuration for `#\d+` / `ADR\s*\d+`
 - A block comment MUST sit directly above the item it documents: never
   trailing to the right of code (tool directives like `# noqa` / `# nosec`
   are excepted), and never separated from that item by a blank line
@@ -657,6 +658,41 @@ for name in tracked:
   limit as code. Enforce this for commented configuration files
   (`pyproject.toml`, YAML, CI workflows) too, even where the linter does not
   scan them
+- Check — comment layout, for the two violations that are mechanically
+  visible: a comment block with code directly above it and no blank line
+  between them, and an aside to the right of code that is not a tool
+  directive. Scope: Python sources, read through `tokenize` — a line-based
+  grep reports the `#` in a usage example inside a docstring, which is not
+  a comment at all. Whether a comment sits above the *right* item is not
+  mechanical and stays declarative; wrap width is the formatter's. Pass
+  condition: the command reports how many files it checked and prints
+  nothing after that:
+
+  ```bash
+  py - <<'EOF'
+import io, pathlib, tokenize
+DIRECTIVES = ("noqa", "nosec", "type:", "pragma:", "pylint:", "fmt:", "mypy:")
+SKIP = (".venv", "venv", "build", "dist", ".git", ".tox")
+paths = [p for p in sorted(pathlib.Path(".").rglob("*.py"))
+         if not any(part in SKIP for part in p.parts)]
+print("Python files checked: %d" % len(paths))
+for path in paths:
+    src = path.read_text(encoding="utf-8").splitlines()
+    with io.open(str(path), "rb") as fh:
+        for tok in tokenize.tokenize(fh.readline):
+            if tok.type != tokenize.COMMENT:
+                continue
+            row, col = tok.start
+            if src[row - 1][:col].strip():
+                if not tok.string.lstrip("#").strip().startswith(DIRECTIVES):
+                    print("%s:%d: aside to the right of code"
+                          % (path.as_posix(), row))
+            elif row > 1 and src[row - 2].strip():
+                if not src[row - 2].strip().startswith("#"):
+                    print("%s:%d: comment block with code directly above it"
+                          % (path.as_posix(), row))
+  EOF
+  ```
 
 ## Debug code
 
