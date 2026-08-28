@@ -5900,7 +5900,29 @@ for wheel in wheels:
   default: SHA pins there MUST keep moving
 - Dev/test dependencies in `[project.optional-dependencies]` or
   `[dependency-groups]`
-- Lock file for reproducibility: `requirements-dev.lock` or equivalent
+- Lock the dev and test toolchain for reproducibility. The lock MUST be
+  either universal — resolved across the whole `requires-python` range
+  and every target platform, which is what `uv lock`, `poetry.lock` and
+  `pdm.lock` produce — or one file per CI matrix leg, generated with an
+  explicit target (`pip-compile --python-version`) and selected by the
+  leg that matches
+- A single `pip freeze` output MUST NOT be used where either a version
+  matrix or a cross-platform contributor exists. Its markers are already
+  resolved, so conditional dependencies are baked in or absent: on a
+  `requires-python = ">=3.10"` project with a 3.10/3.13 matrix, `tomli`
+  is present on one leg and absent on the other, and transitive pins
+  diverge. The file installs on the leg that produced it and
+  misrepresents the rest, which surfaces as a marker error that reads
+  like a dependency bug
+- CI MUST install from the lock with the flag that refuses a stale one —
+  `uv sync --locked`, `poetry install` against a stale lock, `npm ci`,
+  `cargo build --locked`. A lock nothing installs from records a
+  resolution nobody runs: a dependency edit that skipped the relock
+  installs a set the lock does not describe, and the committed file
+  decays into decoration while still looking current
+- Name what refreshes the lock, and when. An unrefreshed lock pins an
+  ageing toolchain and emits no signal that it has aged, so the gate
+  keeps passing against versions nobody chose
 - If `__version__` derives from `importlib.metadata.version(...)`, an
   editable install reports a stale version after a `[project].version`
   bump until `pip install -e .` is rerun. Built artifacts (wheel, image)
