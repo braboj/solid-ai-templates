@@ -6354,6 +6354,14 @@ project fails there, where nobody wrote it and nobody can debug it.
   it catches, confirm each one is flagged, and confirm that a valid input
   is not. A negative control that silently matches nothing has tested
   nothing
+- The step that plants a break MUST itself be verified. Planting is an
+  edit, and an edit that matched nothing exits zero and prints nothing, so
+  a break that never landed and a check that never fired produce identical
+  evidence — one says the check is blind, the other says it is fine.
+  Confirm the planted input differs from the clean one, by a diff, a
+  re-read, or a fixture the edit returns, before reading the run. Prefer
+  planting into a throwaway copy whose clean state is known, so the
+  confirmation is a comparison rather than an inspection
 - Prefer a form that survives being copied. A heredoc whose delimiter is
   quoted passes escapes through untouched; an inline `-c` string loses
   them to shell expansion and arrives as a `SyntaxError`. Do not write the
