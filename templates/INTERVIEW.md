@@ -34,6 +34,9 @@ a stack. Always state your preference as the default. Examples:
   I'd go with Python + FastAPI for a backend service like this."
 - "Solo project or a team? I ask because it affects how much convention
   detail to include - I'd assume solo for now."
+- "Any paths I should treat as off-limits without asking first - auth,
+  payments, database migrations, secrets handling, CI workflows? I'd
+  default to those five, and to proposing a plan before touching any."
 
 ---
 
