@@ -372,7 +372,8 @@ reference from the first to the second is unreadable in six.
 State the substance inline instead. Where a cross-file reference is
 genuinely wanted, the declaring file MUST be present in every chain that
 carries the referencing one — SYS-11 checks this per chain, because the
-defect is invisible from either file on its own.
+defect is invisible from either file on its own. See ADR-028 for the full
+rationale.
 
 ---
 
