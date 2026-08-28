@@ -494,13 +494,21 @@ code reads as though there is one counter.
   reached as well as the hits:
 
   ```bash
-  grep -rcE 'type[(]self[)][.][A-Za-z_]* *[+]=' tests/ | wc -l
-  grep -rnE 'type[(]self[)][.][A-Za-z_]* *[+]=' tests/
+  grep -rcE '^[^#]*type[(]self[)][.][A-Za-z_]* *[+]=' tests/ | wc -l
+  grep -rnE '^[^#]*type[(]self[)][.][A-Za-z_]* *[+]=' tests/
   ```
 
   The first line counts the files inspected and MUST be non-zero; the
   second MUST print nothing. A zero count means the path is wrong, not
   that the suite is clean
+- The `^[^#]*` prefix keeps the scan on lines where the pattern is used
+  rather than discussed, so a comment naming it is not a hit. A trailing
+  comment on a real allocation still is one, because the `#` falls after
+  the match. Without the prefix the check lands on compliance: a project
+  that never had the defect has nothing to say about it and passes, while
+  one that hit it, fixed it, and left the reasoning at the fixture is the
+  one reported. A rule that bans a pattern has to exclude the regions
+  where the pattern is the subject rather than the instrument
 
 ---
 
