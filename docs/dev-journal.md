@@ -3831,3 +3831,79 @@ separately, against v2.45
 
 **Issues opened:** #1164, for the last `gh` call decoding with the locale
 encoding, fixed in the same cut.
+
+## 2026-08-28 -- Where a tool name belongs
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Cut F shipped as v2.57.0 -- 8 issues, 7 pull requests, establishing
+`base/language/` as the home for per-language tool selection and adding
+`base/core/cli.md`.** The gate model already said stack templates map a
+category to a concrete tool, then named `complexipy` and
+`eslint-plugin-sonarjs` itself. `base/language/` existed for exactly this
+and held one file, `typescript.md`, carrying style rules and no tooling
+section at all.
+
+**One dependency edge reached a whole family.** `stack-python-lib` is the
+root every Python stack resolves through -- `python-service` through it,
+`flask`/`fastapi`/`django` through `python-service`, `grpc-python`
+directly -- so declaring `base-python` once reached 6/17. `stack-go-lib`
+has the same shape and reached 4/17. Measuring the graph before choosing
+the wiring turned what looked like six edits into one.
+
+**The abstract layer's worst offender was not the file the issue named.**
+#750 pointed at `quality-gates.md`. `base/core/quality.md` carried the
+same inversion at core tier -- a nine-row table of TypeScript-only lint
+rules that all seventeen chains resolved, including C and Go. Fixed in
+the same pass, because leaving it would have contradicted ADR-027 the
+moment it merged.
+
+**A closed issue is not a delivered one.** #749 asked for a Go
+complexity tool and was closed as a duplicate of #753 on the basis that
+its tooling table would carry a Go row. It did not; #753 shipped Python
+and TypeScript only. Stripping the abstract layer without adding
+`base/language/go.md` would have left the Go stacks with a gate whose own
+text says a tool MUST be named and nothing naming one.
+
+**Running the example is what found it was broken.** The PEP 562 snippet
+for #1077 compiled clean and raised `NameError` the moment it ran as a
+real package `__init__` -- it used `TYPE_CHECKING` and `import_module`
+without importing either, in the template and in the issue that proposed
+it. `py_compile` passing is not the check; executing it is. The archive
+listing for #1058 and the import assertion for #1077 were both run
+against a deliberately broken case first, so each was shown to fail
+before being trusted to pass.
+
+**A shortcut re-created the hole the shipped check was written to
+avoid.** Ad-hoc release-gate query read `milestone` off
+`closingIssuesReferences`, a field that sub-object does not carry, and
+reported `NONE` for all eight issues -- a uniform false negative. The
+gate in `base/core/git.md` does a second `gh issue view` per issue for
+precisely this reason. Extracting and running the committed one reported
+9 pull requests and no mismatch.
+
+**Two corrections landed mid-cut.** PR #1172 thinned `python-lib.md` but
+left `Docstrings` and `Security` rows naming tools `base-python` already
+bound, which is the re-declaration ADR-027 forbids; #1173 removed them
+and the `go-lib.md` equivalent. Earlier in the same PR, thinning the
+table first dropped the `gitleaks` row -- and since gitleaks is
+language-agnostic, no language file owns it and nothing else in the chain
+bound it. Restored to the stack with a line saying why it lives there.
+
+**Template feedback:** all reusable, nothing project-specific.
+`base/core/cli.md` is deliberately not core tier -- wired to the three
+library roots that ship entry points, reaching 11/17. The six stacks
+without it (htmx, astro, tutorial, express, nestjs, c-embedded) have no
+entry point of this kind.
+
+**Releases:** v2.57.0 -- Language and packaging, 8 issues, 7 pull
+requests. The tag names 67e451a, the release commit, so this entry sits
+outside the release it describes.
+
+**PRs merged:** #1172, #1173, #1175, #1176, #1177, #1178, #1179
+
+**Issues closed:** #750, #753, #755, #757, #815, #1034, #1058, #1077
+
+**Issues opened:** #1174, for `c-embedded` having no quality-gates
+section and C no language file -- the only stack family left without one
+after this cut.
