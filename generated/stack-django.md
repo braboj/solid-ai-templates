@@ -6037,6 +6037,55 @@ and no widely available linter offers it.
 
 ---
 
+## Editing a test moves the standard, not the work
+
+[ID: quality-gates-test-edit-boundary]
+
+`quality-gates-retrofit-ratchet` bans turning a red gate green by narrowing
+what it evaluates. Where the tests are the source of truth for correctness,
+the same move is available one level up, and a merge-on-green policy does
+not see it: the tests are both the standard and a set of files the change
+may edit. A suite that was weakened still reports green, and that green
+proves only that the code matches whatever the tests were reduced to — not
+that the behaviour they guarded still works.
+
+The boundary is between proposing work and redefining the standard the work
+is measured against. Strengthening the specification needs no ceremony;
+weakening it is a different act and takes a person.
+
+- A change MAY strengthen the specification without escalation. Adding a
+  test, or tightening an assertion, can only narrow what passes, so a green
+  run afterwards means more than it did before
+- A change that deletes, loosens or rewrites an existing test MUST state
+  why, and MUST NOT merge on a green suite alone. It changes what correct
+  means, and the suite cannot report that it has
+- Where merges ride on green CI, separate the two mechanically: a diff
+  touching an existing test file loses auto-merge or lenient-review
+  eligibility, and a diff that only adds test files keeps it. The filter is
+  the enforceable half; the stated reason is the half a reviewer reads
+- Put the invariants that must not be renegotiated under code ownership —
+  safety, authentication, authorisation — so weakening one needs the owner
+  rather than the author
+
+Classify a change against the project's test root, reporting what it
+inspected as well as what it found:
+
+```bash
+git diff --name-status origin/main...HEAD -- 'tests/*' | wc -l
+git diff --name-status origin/main...HEAD -- 'tests/*' | grep -vE '^A'
+```
+
+The first line counts the test-file changes inspected. The second lists
+every one that is not a pure addition, and MUST be empty for a change to
+keep the lenient path. Unlike a coverage scan, a zero here is a real
+answer and not a broken path — it means the change touched no tests at
+all, which needs no escalation.
+
+This is governance, not a new pass/fail metric: it adds no threshold and
+changes nothing about which gates run.
+
+---
+
 ## Skip noisy gates when input is unchanged
 
 [ID: quality-gates-skip-equivalent]
