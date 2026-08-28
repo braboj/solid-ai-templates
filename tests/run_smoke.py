@@ -148,22 +148,43 @@ def read(path):
 
 
 # ---------------------------------------------------------------------------
+# DEPENDS ON extraction
+# ---------------------------------------------------------------------------
+# A DEPENDS ON declaration is only meaningful in the file header, and every
+# one in the tree sits on line 2, 3 or 4 -- before the first section heading,
+# measured across all template files. Consumer-facing sections legitimately
+# quote the directive syntax to explain the composition model, so extracting
+# it from the whole file reads that prose as a declaration and fails against
+# a file that does not exist, naming a path nobody wrote.
+
+HEADER_END_RE = re.compile(r"^## ")
+DEPENDS_RE = re.compile(r"\[DEPENDS ON:\s*([^\]]+)\]")
+
+
+def depends_on_refs(content):
+    """Return the paths declared by the header's DEPENDS ON directive."""
+    refs = []
+    for line in content.splitlines():
+        if HEADER_END_RE.match(line):
+            break
+        for match in DEPENDS_RE.finditer(line):
+            refs.extend(ref.strip() for ref in match.group(1).split(","))
+    return refs
+
+
+# ---------------------------------------------------------------------------
 # SYS-01 — DEPENDS ON paths resolve to existing files
 # ---------------------------------------------------------------------------
 
 def check_sys_01():
     failures = []
-    pattern = re.compile(r'\[DEPENDS ON:\s*([^\]]+)\]')
 
     for filepath in all_template_files():
-        content = read(filepath)
-        for match in pattern.finditer(content):
-            refs = [r.strip() for r in match.group(1).split(',')]
-            for ref in refs:
-                ref_path = os.path.join(ROOT, ref)
-                if not os.path.isfile(ref_path):
-                    rel = os.path.relpath(filepath, ROOT)
-                    failures.append(f"  {rel}: DEPENDS ON '{ref}' — file not found")
+        for ref in depends_on_refs(read(filepath)):
+            ref_path = os.path.join(ROOT, ref)
+            if not os.path.isfile(ref_path):
+                rel = os.path.relpath(filepath, ROOT)
+                failures.append(f"  {rel}: DEPENDS ON '{ref}' — file not found")
 
     return failures
 
@@ -275,11 +296,8 @@ def _collect_chain(rel_path, visited=None):
     abs_path = os.path.join(ROOT, rel_path)
     if not os.path.isfile(abs_path):
         return visited
-    content = read(abs_path)
-    pattern = re.compile(r'\[DEPENDS ON:\s*([^\]]+)\]')
-    for match in pattern.finditer(content):
-        for dep in [r.strip() for r in match.group(1).split(',')]:
-            _collect_chain(dep, visited)
+    for dep in depends_on_refs(read(abs_path)):
+        _collect_chain(dep, visited)
     return visited
 
 
@@ -746,7 +764,6 @@ def check_sys_04():
                         dep_files.add(dep_file)
                 file_manifest_deps[entry["file"]] = dep_files
 
-    dep_pattern = re.compile(r'\[DEPENDS ON:\s*([^\]]+)\]')
     failures = []
 
     for filepath in all_template_files():
@@ -754,10 +771,7 @@ def check_sys_04():
         content = read(filepath)
 
         # Collect file paths from DEPENDS ON headers
-        header_files = set()
-        for match in dep_pattern.finditer(content):
-            for ref in match.group(1).split(","):
-                header_files.add(ref.strip())
+        header_files = set(depends_on_refs(content))
 
         manifest_deps = file_manifest_deps.get(rel, set())
 
@@ -1331,6 +1345,46 @@ def check_sys_09():
 
 
 # ---------------------------------------------------------------------------
+# SYS-10 — a quoted DEPENDS ON directive in prose is not a declaration
+# ---------------------------------------------------------------------------
+# Consumer-facing sections quote the directive syntax to explain the
+# composition model, and reading that prose as a declaration fails the tree
+# against a file nobody wrote. The extraction is restricted to the header,
+# which is where every real declaration in the tree sits. This asserts both
+# directions on a synthetic document: the header is read, and a backticked or
+# fenced occurrence in the body is not. Without the positive case, an
+# extractor that returned nothing at all would pass.
+
+
+def check_sys_10():
+    document = (
+        "# Base — Example\n"
+        "[ID: base-example]\n"
+        "[DEPENDS ON: templates/base/core/git.md]\n"
+        "\n"
+        "## Composition\n"
+        "\n"
+        "Governance resolves through `[DEPENDS ON: ...]` in each file.\n"
+        "\n"
+        "```\n"
+        "[DEPENDS ON: templates/does-not-exist.md]\n"
+        "```\n"
+    )
+
+    refs = depends_on_refs(document)
+    failures = []
+
+    if refs != ["templates/base/core/git.md"]:
+        failures.append(
+            f"  header declaration not read as the only one: {refs!r} — a "
+            f"backticked or fenced directive in body prose is documentation, "
+            f"not a declaration, and reading it names a file nobody wrote"
+        )
+
+    return failures
+
+
+# ---------------------------------------------------------------------------
 # Test registry
 # ---------------------------------------------------------------------------
 
@@ -1379,6 +1433,9 @@ CHECKS = [
      "title": "No empty [ID:] sections", "fn": check_tpl_09},
     {"id": "SYS-09", "spec": "SAIT-SMK-SYS-09-001A",
      "title": "sync.py --check inspects without writing", "fn": check_sys_09},
+    {"id": "SYS-10", "spec": "SAIT-SMK-SYS-10-001A",
+     "title": "A quoted DEPENDS ON in prose is not a declaration",
+     "fn": check_sys_10},
     {"id": "ADR-01", "spec": "SAIT-SMK-ADR-01-001A",
      "title": "ADR frontmatter matches the ADR-010 schema", "fn": check_adr_01},
     {"id": "E2E-01", "spec": "SAIT-SMK-E2E-01-001A",
