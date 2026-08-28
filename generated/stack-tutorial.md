@@ -5758,6 +5758,13 @@ project fails there, where nobody wrote it and nobody can debug it.
   it catches, confirm each one is flagged, and confirm that a valid input
   is not. A negative control that silently matches nothing has tested
   nothing
+- The break a control plants MUST be behavioural, leaving the interface
+  intact. A control that trips on a signature, an import or a missing file
+  has exercised the harness rather than the check: it fires convincingly
+  and says nothing about whether the check detects the condition. Where
+  the fix added a parameter, the control that discriminates is a version
+  that accepts the parameter and ignores it — the shape a careless later
+  edit takes — not one that removes it and raises a type error
 - The step that plants a break MUST itself be verified. Planting is an
   edit, and an edit that matched nothing exits zero and prints nothing, so
   a break that never landed and a check that never fired produce identical
@@ -5766,6 +5773,18 @@ project fails there, where nobody wrote it and nobody can debug it.
   re-read, or a fixture the edit returns, before reading the run. Prefer
   planting into a throwaway copy whose clean state is known, so the
   confirmation is a comparison rather than an inspection
+- A fix with no observable effect on the tree it lands in MUST ship a
+  check against a synthetic subject reproducing the condition. A
+  preventive fix changes nothing measurable where nothing currently
+  triggers it, so the suite prints the same output on both sides of it and
+  a passing run is evidence for neither. Without the synthetic subject the
+  fix is indistinguishable from a no-op — including to whoever later reads
+  it as unnecessary and removes it
+- Where the working tree can be put into the failing state, demonstrate
+  the defect on the branch that fixes it. A check reporting zero with the
+  fix's own edit still uncommitted, and the true count once it is
+  committed, is the defect and its repair in one pair of runs over real
+  inputs, at no cost beyond running the command twice
 - Prefer a form that survives being copied. A heredoc whose delimiter is
   quoted passes escapes through untouched; an inline `-c` string loses
   them to shell expansion and arrives as a `SyntaxError`. Do not write the
