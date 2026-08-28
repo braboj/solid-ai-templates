@@ -4182,3 +4182,110 @@ this cut because of it. Four issues arrived from a parallel session
 (#1204, #1211, #1212, #1215) and were labelled on the way past; #1215
 proposes a sixth shape for the verifying-a-filed-issue section and is
 unmilestoned.
+
+## 2026-08-28 -- Where the rule stops short
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**v2.61.0 shipped 6 issues across 4 pull requests, scoped from a groom
+rather than from a theme chosen first.** One shape ran through all of
+them: a rule that is correct, and whose reach ends one step before its
+own apparatus -- three MUSTs that name no check while the bullet above
+them does, a continuation rule that governs writing such a line but not
+quoting one, a floor-sizing rule that does not reach the control's own
+floor.
+
+**Grooming changed four issues before a line was written.** #1215 cites
+a shapes table as having three rows; it has five, two added since it was
+filed, so it lands as a sixth row rather than a fourth -- and the issue
+is a live instance of the defect it describes, since its citation was
+accurate when written and still resolves. #303's recorded blocker was
+wrong. #727 claims library and service chains get no OOP guidance, and
+all eight service chains resolve it; the omission is libraries, gRPC and
+c-embedded. #976 cites a step number that has moved. Four of the
+forty-one unmilestoned issues, found by measuring rather than reading.
+
+**The unreachable set is 21 templates, not the five on record, and they
+are not orphans.** 17 are named in no DEPENDS ON header anywhere. But
+`docs/SPEC.md` already declares such templates orthogonal by design and
+excluded from reachability checks, so the check #303 asks for is not
+blocked on the orthogonality spike. It is blocked on the exclusion list
+existing in machine-readable form: the manifest carries no orthogonal
+marker, and SPEC's prose list names 8 of the 21. This also explains the
+sharpest instance in #1226. `core/git.md` naming `base-360` dangles in
+all 17 chains because `360.md` is orthogonal, so no chain can ever
+resolve it and the fix is to inline the substance rather than adjust
+reach.
+
+**The first version of the new check was wrong, and the rule that caught
+it is already in the templates.** The comment-layout check began as a
+line scan and flagged fifteen usage examples inside module docstrings,
+where a hash is prose in a string and not a comment. `review.md`
+requires running what an issue proposes against the tree before adopting
+it, on the grounds that a rule flagging correct code is a wrong rule
+rather than an under-enforced one. Rewritten over `tokenize`, which is
+the reasoning the ASCII-identifier rule in the same section already
+gives for its own check. It then found 31 true positives here.
+
+**Extending a rule falsified a claim inside it.** The continuation rule
+asserted it covered the one break mode that fails neither loudly nor
+closed, and that every other break mode announces itself. A vanished
+word boundary does neither: it compiles, runs, and silently matches
+wider than written. The uniqueness claim went and the confirmation
+generalised to the family. A rule can be right about what to do and
+wrong about how far it reaches, and the second half is the part nothing
+re-reads.
+
+**The file's own checks broke the rule the file was gaining.** Both
+embedded checks in `quality-gates.md` depended on escapes surviving: two
+patterns whose loss would have matched a literal letter at line start,
+and three string escapes equally quiet. All five are now written without
+a backslash, so neither check can lose one. Proved behaviour-neutral by
+output diff rather than by the suite staying green, at 14 embedded
+checks and 126 fenced blocks before and after, byte-identical. A
+substitution inside a working check has to show it changed nothing, and
+a passing suite does not show that.
+
+**This repository fails two of the checks it ships.** Running the
+community-health check out of `templates/base/core/docs.md`, to validate
+an extraction pattern before copying it, reported SECURITY.md and
+CONTRIBUTING.md absent. That is #1147, open since 26 August, now with an
+embedded gate demonstrating it rather than a rule citing it. The
+comment-layout check found 31 violations in `tests/` and `tools/`, filed
+as #1233. Both were kept out of their pull requests: the concern was
+giving a rule its check, not fixing what the check then found.
+
+**The check-selection trap reproduced exactly as recorded.**
+`core/git.md` holds three heredoc blocks and only one defines MILESTONE,
+so the pre-release and ordering checks had to be located by asserting on
+a distinguishing string in the body. Both release gates were extracted
+that way. It also surfaced why: the file labels its checks against its
+own seven-step sequence while the PLAYBOOK numbers the same release in
+eight, and two labels inside the one file both say step 5 for different
+sequences. Filed as #1237.
+
+**The journal was written last on purpose, and that is why this entry
+can name #1242.** #1228 is open: the PLAYBOOK writes the entry at
+release step 7, before the wrap-up audit runs, so audit items that file
+issues land after it is merged. Last session that forced an in-place
+amendment. Writing it after the audit instead cost nothing and needed no
+second record.
+
+**PRs merged:** #1232, #1234, #1235, #1236
+
+**Issues closed:** #989, #1004, #1138, #1149, #1225, #1227
+
+**Issues opened:** #1233, this repository breaking the comment-layout
+rule it ships across 31 sites; #1237, the release runbook and its checks
+numbering the same procedure two ways; and #1242, three workflows the
+PLAYBOOK does not carry, including grooming. The last two came from the
+wrap-up audit that ran before this entry was written.
+
+**Also this session:** the backlog was groomed first and the cut fell
+out of it, with 41 unmilestoned issues re-measured against the tree and
+24 annotated with what was found. A sweep of every commit subject in
+history for issues still open returned one hit, already correctly
+parked, so the #987 class has not recurred. #1233, #1237 and #1242 are
+unmilestoned. #1242 records that the groom procedure and the sweep are
+both reusable and belong in `base/workflow/issues.md`, not only in this
+repository's PLAYBOOK.
