@@ -1,5 +1,5 @@
 # Stack — Node.js Library / CLI
-[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/language/typescript.md, templates/base/core/examples.md]
+[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/language/typescript.md, templates/base/core/cli.md, templates/base/core/examples.md]
 
 A Node.js library or CLI tool written in TypeScript. Intended to be
 published to npm or used as a shared internal package. No web server,

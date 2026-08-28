@@ -55,6 +55,10 @@ base:
   - id: base-readme
     file: templates/base/core/readme.md
     description: README structure, badges, quick start, contribution guide
+  - id: base-cli
+    file: templates/base/core/cli.md
+    description: Entry-point architecture - thin main(argv), shared plumbing, durable output
+    depends_on: [base-quality, base-config]
   - id: base-examples
     file: templates/base/core/examples.md
     description: Examples directory — contents, index, offline rule, smoke job
@@ -258,6 +262,7 @@ stacks:
       - base-docs
       - base-quality
       - base-python
+      - base-cli
       - base-quality-gates
       - base-examples
 
@@ -319,6 +324,7 @@ stacks:
       - base-docs
       - base-quality
       - base-go
+      - base-cli
       - base-testing
       - base-quality-gates
       - base-examples
@@ -433,6 +439,7 @@ stacks:
       - base-docs
       - base-quality
       - base-typescript
+      - base-cli
       - base-examples
 
   - id: stack-c-embedded

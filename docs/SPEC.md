@@ -58,6 +58,7 @@ base/
 │   ├── agents.md       # Output structure, models (inline/reference/hybrid), formatting rules
 │   ├── skills.md       # Skill authoring — when to write one, frontmatter, triggering, structure, scripts
 │   ├── readme.md       # README structure, badges, quick start, contribution guide
+│   ├── cli.md          # Entry-point architecture - thin main(argv), shared plumbing, durable output
 │   ├── examples.md     # Examples directory — contents, index, offline rule, smoke job
 │   └── oop.md          # SOLID, OOP, GoF design patterns, AOP guidance
 ├── security/
