@@ -3724,3 +3724,110 @@ outside the release it describes.
 #1076
 
 **Issues opened:** none.
+
+---
+
+## 2026-08-28 -- What the rule does not say
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**Cut G shipped as v2.56.0 -- 6 issues, 6 pull requests, across
+`platform/github.md`, `base/core/git.md` and `base/security/devsecops.md`.**
+The six shared a shape: a rule that names a destination and not its
+substance, or that contradicts another file. Where to attach an SBOM but
+not what it must describe. A pass condition left behind by the check it
+described. A release step assuming a milestone the platform rule forbids.
+A link-check note covering the built-output case only. A concept no
+template defined.
+
+**Grooming against the tree changed three of the six before they were
+built, and that is now the norm rather than the exception.** #1150
+proposed retiring two clauses; running the committed check showed only
+one was stale, because the rewritten check does still name each offender
+and its counts. #1051's example passed a bare `./**/*.md`, which the
+external-links note three paragraphs below already forbids -- and
+`--exclude-path` turned out to take regular expressions rather than
+paths, so a bare `docs` excludes every path containing that substring.
+#724 asked for the security template and flagged the placement as open;
+measurement moved it.
+
+**A rule's home is decided by reach, and the topically obvious file was
+wrong again.** `base/security/security.md` reaches 12 of 17 chains and
+misses `python-lib`, `go-lib`, `nodejs-lib` and `c-embedded` -- exactly
+the stacks where an unsupervised edit to a release workflow or a publish
+config does its damage. It is also application security end to end:
+input validation, authn, sessions, headers. Off-limits paths are agent
+change-control, and they went to `base/core/git.md`, which is core tier
+and already owns the one operation forbidden without escalation.
+
+**The step-4 gate was not implementing the sentence above it.** It read
+"verify that every issue closed since the previous tag carries the
+milestone being released" and asked only whether an issue carried *a*
+milestone, so an issue milestoned to a different release passed. Giving
+it the declared milestone to compare against exposed a second defect
+underneath.
+
+**`gh` output was being decoded with the locale encoding, and it took a
+title comparison to surface it.** `gh` emits UTF-8; `subprocess(text=True)`
+decodes with the console code page. The same milestone title arrived as
+34 characters with `U+2014` from a heredoc literal and an environment
+variable, and as 36 characters with `U+0432 U+0402 U+201D` from `gh`. The
+check reported a mismatch between a string and itself. Every call in the
+step-4 check now passes `encoding="utf-8"`, and the one remaining call in
+the chain -- the label conformance check -- was filed as #1164 and fixed
+in the same cut. It is latent rather than harmless: measured against
+`vuejs/core`, a non-ASCII label name comes back as four cp1251 characters
+instead of one codepoint.
+
+**An issue sat open for eleven releases because a pull request title used
+a bare `#N`.** #987 was delivered in full by #990 and shipped in v2.45.0;
+all three of its proposals are in `base-examples-index` today. The title
+read `(#987, #988)`, and a bare `#987` is a reference rather than a
+closing keyword -- the exact case `base/core/git.md` documents under
+"Repeat the closing keyword before each issue number". It was closed
+against v2.45, the release that actually shipped it, rather than the one
+being cut. A sweep of every open issue against merged commit subjects
+found one other mention, #618, which is a consumer deviation and
+correctly open.
+
+**The escape-eating class caught me twice more, in one session.** An
+outer heredoc terminated early on the inner `EOF` of the check it was
+carrying, and a `"\n"` needle written to replace a line did not survive
+into the running script and matched zero times. The second was fixed by
+building the needle with `chr(92)`, and the check it was editing now uses
+`splitlines()` so it holds no backslash at all. The standing rule already
+says a pattern holding no backslash cannot lose one; the new evidence is
+that the rule applies to the throwaway script doing the edit, not only to
+the check being shipped.
+
+**A control that reaches nothing looks exactly like a control that
+passes, twice.** A `gh.cmd` shim on `PATH` was resolved by
+`shutil.which` and ignored by `subprocess.run`, because Windows
+`CreateProcess` appends only `.exe` -- the check reported the same
+`issues inspected: 81` with and without it. Driving it with `GH_REPO`
+instead exercised it as it ships. Separately, the off-limits check
+reported `files changed: 0` before its branch was committed, which is
+what its own pass condition names a failure.
+
+**One correction landed in this session's own record.** A pull request
+body claimed six subprocess calls still decoded with the locale encoding;
+a grep whose alternation matched each line twice produced the figure, and
+the real count was one. Corrected in the body and in the squash message
+before merge.
+
+**Template feedback:** all reusable, nothing project-specific.
+`base/core/git.md` is core tier, so off-limits paths and the release-gate
+scoping reach 17/17. `devsecops.md` reaches 10/17 and `platform/github.md`
+is orthogonal, chosen per project.
+
+**Releases:** v2.56.0 -- What the rule does not say, 6 issues, 6 pull
+requests. The tag names 14d6168, the release commit, so this entry sits
+outside the release it describes.
+
+**PRs merged:** #1162, #1163, #1165, #1166, #1167, #1169
+
+**Issues closed:** #724, #1035, #1051, #1127, #1150, #1164; and #987
+separately, against v2.45
+
+**Issues opened:** #1164, for the last `gh` call decoding with the locale
+encoding, fixed in the same cut.
