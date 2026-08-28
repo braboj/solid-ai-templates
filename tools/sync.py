@@ -10,6 +10,7 @@ import io
 import re
 import sys
 from pathlib import Path
+
 # Set the output encoding at the boundary rather than inheriting the
 # console default, which mangles any non-ASCII this program prints.
 for _stream in (sys.stdout, sys.stderr):
@@ -137,6 +138,7 @@ def _base_tree(entries):
     for e in entries:
         # file: templates/base/<subfolder>/<name>.md
         parts = Path(e["file"]).parts
+
         # parts: ('templates', 'base', '<subfolder>', '<name>.md')
         subfolder = parts[2] if len(parts) > 3 else ""
         groups.setdefault(subfolder, []).append(e)
@@ -172,6 +174,7 @@ def _base_tree(entries):
 def _spec_sections(manifest):
     """Generate SPEC.md directory listings."""
     parts = []
+
     # base gets special subfolder treatment
     base_entries = manifest.get("base", [])
     if base_entries:
@@ -184,6 +187,7 @@ def _spec_sections(manifest):
         entries = manifest.get(section, [])
         if entries:
             parts.append("```\n" + _tree(entries, dirname) + "\n```")
+
     # stacks get a simpler listing
     stacks = manifest.get("stacks", [])
     lines = ["stack/"]
@@ -251,6 +255,7 @@ def _spec_chain_examples():
         if stack_id not in known:
             raise SystemExit("sync: unknown stack in examples: " + stack_id)
         files = resolve_chain(stack_id, core_ids, entries)
+
         # An empty chain would render an empty fence that reads as a real
         # result, which is the drift this generator exists to prevent.
         if not files:
@@ -298,6 +303,7 @@ def _update_file(path, replacements, check_mode=False):
             + r" -->)",
             re.DOTALL,
         )
+
         # A function replacement, not a template string: generated
         # content is data, and a backslash in it would otherwise be
         # read as a group reference and silently rewrite the block.
