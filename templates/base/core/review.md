@@ -164,7 +164,7 @@ something that was not the problem — or re-does something already in review.
       its filing date, and the tree it was measured against is not the tree
       it will land in
 
-Five shapes, all of which change what gets built:
+Six shapes, all of which change what gets built:
 
 | Shape | What it looks like |
 |-------|--------------------|
@@ -173,10 +173,42 @@ Five shapes, all of which change what gets built:
 | Wrong as filed | The rule it proposes, run against the tree, flags code that is correct |
 | Already in flight | The issue is open and unassigned while a complete implementation sits in an open pull request |
 | Superseded as filed | A decision accepted since the filing date moved the rule, the home, or the mechanism it names |
+| Classification does not cover every member | The acceptance criteria sort a set into named branches, and a member falls outside all of them |
 
-The last two shapes are mechanically checkable, and both fail the same way:
-an empty result reads as a clear field whether the query found nothing or
-reached nothing.
+The sixth is the one that resists checking, and it is the most dangerous
+of the six. The other five are found by comparing the issue to the tree.
+This one is found only by disagreeing with a criterion you are meant to
+satisfy: acceptance criteria carrying a closed classification — each of
+these is either A or B, and the Bs are deleted — read as a checklist, and
+a checklist invites completion. Nothing about the issue is false. The
+members it named are classified correctly and the tree has not moved; the
+taxonomy is simply incomplete, and an absent branch leaves no trace in the
+text. It surfaces only at the member that needs it.
+
+- [ ] Treat a closed classification in acceptance criteria as a claim to
+      verify, not a frame to work inside. Sort the members yourself before
+      acting on any of them, and count what each branch caught — a branch
+      that caught everything is the finding
+- [ ] Where a member fits no branch, name it, state which branch it fails
+      and why, and decide it separately. Forcing it into the nearest branch
+      is what produces the damage, and the diff looks exactly like the
+      intended work afterwards
+
+That last point is why this shape is worth its row. Satisfying such a
+criterion literally can destroy something: one issue asked for abandoned
+scripts to be classified as entry points or throwaway probes, with probes
+removed rather than reshaped. Five were probes. The sixth was a walkthrough
+whose docstring held the only statement in that repository of why a
+checksum goes onto the wire low byte first — not an entry point, so the
+first branch missed it; not throwaway, so the second would have deleted it.
+
+"Wrong as filed" is the closest of the other five and does not fit: the
+rule the issue proposes does not flag correct work, and every member it
+named was classified correctly.
+
+The two mechanically checkable shapes are already in flight and superseded
+as filed, and both fail the same way: an empty result reads as a clear
+field whether the query found nothing or reached nothing.
 
 ```bash
 gh pr list --state open --limit 100 --json number,body --jq 'length as $n | "open pull requests inspected: " + ($n|tostring), (.[] | select(.body | test("[Cc]loses #<N>([^0-9]|$)")) | "already in flight: #" + (.number|tostring))'
