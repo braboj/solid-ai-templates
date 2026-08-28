@@ -1718,6 +1718,7 @@ levels. Every rule MUST use one of these words:
 | `docs/PLAYBOOK.md`    | Operational reference for common tasks                                 |
 | `docs/dev-journal.md` | Development history and session log (MUST for agent-assisted projects) |
 | `docs/SPEC.md`        | System design, architecture rules, composition model (SHOULD for complex projects) |
+| `CHANGELOG.md`        | Released versions and what changed in each (MUST for a project that publishes versions) |
 
 Guide-doc filenames follow a deliberate casing split: single-word guide
 docs use SHOUT-case (`README.md`, `CLAUDE.md`, `ONBOARDING.md`,
@@ -1741,6 +1742,42 @@ kebab-case (`dev-journal.md`). This is intentional, not drift.
 - `SECURITY.md` names a private disclosure route and the versions that
   receive fixes. A public issue tracker is not a disclosure route, since
   filing there IS the disclosure
+
+#### SECURITY.md structure
+
+`base-readme` gives the other front-door document nine required sections
+in a stated order. Both files are read by a stranger arriving at the
+repository, and a required document with no stated structure is one whose
+quality varies by author. These are the sections, in order:
+
+1. **Disclosure route** — MUST. Where to send a report privately, and
+   explicitly that the tracker is not it
+2. **Supported versions** — MUST. Which versions receive fixes, as a
+   rule a reader can apply to their own version rather than a list that
+   goes stale
+3. **Scope** — MUST for a project with any deliberate unsafe surface,
+   SHOULD otherwise. Absent a scope section every report is in scope,
+   including reports about behaviour the project offers on purpose. A
+   library exposing weak settings as explicit test arguments will be told
+   they exist, and has nothing to point at when declining
+4. **Acknowledgement expectation** — MUST, stated as a duration the
+   project chooses rather than a number inherited from here. A finder who
+   has heard nothing for a week cannot tell a slow maintainer from a dead
+   channel, and public disclosure is the documented next step in most
+   disclosure norms
+5. **What a report should contain** — SHOULD. Version or commit,
+   reproduction, impact. Cheap to state, and the difference between a
+   report that can be triaged and one that needs three round trips
+
+A private repository, or one with no external attack surface, is held to
+the first two only — the rest describe a relationship with outside
+finders that such a project does not have.
+
+The placement check above stays a placement check. It verifies each file
+resolves to exactly one recognised location and deliberately does not
+read inside them: section presence is a different question, and folding
+it in would make a passing placement check mean something it was not
+written to mean.
 - Code hosts recognise three locations, in this precedence: `.github/`,
   then the repository root, then `docs/`. Put the files at the root by
   default — a first-contact document belongs where a visitor lands
@@ -2153,6 +2190,70 @@ is a correction and is made in place with no marker.
   cover this. That rule chases surviving instructions to APPLY a retired
   concept and explicitly settles for historical records; a record is exactly
   what carries the content here
+
+## Release changelog
+
+A project that publishes versions MUST carry `CHANGELOG.md`. Follow Keep a
+Changelog over semver headings: one section per released version, newest
+first, each with a version and a date, grouped under Added, Changed,
+Deprecated, Removed, Fixed and Security. An `Unreleased` section at the top
+collects work since the last release.
+
+- An entry states **what changed and what a reader must do about it**, and
+  nothing else. It is the one document in the set whose reader is outside
+  the project and is deciding whether to upgrade
+- Reasoning belongs in a decision record, the session belongs in the
+  development journal, and the review belongs in the pull request. An entry
+  MAY point at any of them; it MUST NOT reproduce them
+- A breaking change MUST say what breaks and name the migration, not only
+  that the interface moved
+- An entry MUST NOT exceed 40 words. That is a bound on the form, not a
+  style preference: past roughly that length an entry has started
+  explaining rather than stating, and the reader deciding whether to
+  upgrade has to finish a paragraph to find out
+
+This is the one document class where an unspecified rule does not stay
+unspecified. Where a document class carries no rules and a neighbouring
+class is specified in detail, the unspecified one inherits the neighbour's
+voice, because the neighbour is the only model available to whoever writes
+the first entry. The development journal below is specified in detail and
+sits one section away. A changelog drifting toward journal prose is the
+predictable outcome, and it was the observed one: across 37 entries in a
+downstream project, 16 ran over 40 words and the longest two were 108 and
+142 words — paragraphs of reasoning about why a change was made, in a
+document whose reader wanted to know whether to upgrade.
+
+The two are not the same document. The journal records a session and is
+fixed once written; the changelog records a release and is read by someone
+outside the project. Neither may be generated from the other.
+
+A rule bounding a form needs a check, or the bound decays to advice:
+
+```bash
+py - <<'EOF'
+import pathlib
+
+LIMIT = 40
+path = pathlib.Path("CHANGELOG.md")
+if not path.is_file():
+    print("no CHANGELOG.md - nothing to check")
+    raise SystemExit(0)
+
+lines = path.read_text(encoding="utf-8").splitlines()
+entries = [(i, l) for i, l in enumerate(lines, 1) if l.startswith("- ")]
+print("changelog entries measured: %d" % len(entries))
+print("word limit: %d" % LIMIT)
+over = [(i, len(l.split()) - 1, l) for i, l in entries if len(l.split()) - 1 > LIMIT]
+print("entries over the limit: %d" % len(over))
+for i, count, text in over:
+    print("  line %d: %d words - %s..." % (i, count, text[:60]))
+EOF
+```
+
+Pass condition: the check prints how many entries it measured and the
+limit it applied, then `entries over the limit: 0`. A measured count of
+zero is a failure rather than a clean file — it means the entry marker did
+not match the file's bullet style, and every entry went unread.
 
 ## Development journal
 
