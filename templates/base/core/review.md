@@ -201,6 +201,28 @@ state the deviation from the filed acceptance criteria in the pull request:
 the issue is not wrong and does not need re-filing, its criteria need reading
 against the record that superseded them.
 
+## Plan before implementing
+
+A plan is the cheapest artifact to review. Reading one costs minutes and
+can still change the design; reading the implementation costs hours and
+mostly changes details. An agent makes code cheap to produce, which by
+default moves the expensive review later rather than earlier.
+
+- Before implementing a feature or a non-trivial change, produce the
+  plan: the files to create or modify, the function signatures or
+  section outline, the edge cases, and the assumptions being made
+  explicit
+- Do NOT write implementation code until that plan is approved. The
+  assumptions are the part worth reading — a plan stating none is not a
+  plan, it is the request restated
+- Exempt: single-line fixes, typo corrections, and changes the requester
+  has already specified in full. Applying the rule to those costs more
+  than it saves
+- After approval, stay inside the plan. Where a constraint invalidates
+  it, stop and re-surface the options instead of re-planning silently
+  mid-implementation: the approval covered a plan that has since become
+  wrong
+
 ## Verifying a finding before reporting it
 
 A finding is a hypothesis until it is demonstrated. Reporting a hypothesis as
