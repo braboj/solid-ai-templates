@@ -17,9 +17,12 @@ nothing from this template.
 - One file per pattern or user journey — not one per API surface, and
   not one per feature listed in the README. Split on the seams a
   consumer meets, not on the table of contents
-- `examples/` is maintained; `scripts/` is throwaway probes and
-  benchmarks and is not shipped. A file nobody would run twice belongs
-  in `scripts/`
+- `examples/` is maintained and demonstrates a pattern to a reader.
+  `scripts/` is the other kind of unshipped file: maintained tooling
+  nobody reads for instruction. Neither is where throwaway work lives —
+  a file nobody would run twice is deleted with the change that used it,
+  not filed. What may stay in `scripts/` permanently, and the check for
+  it, belong to the project's quality rules for that directory
 - Examples MUST be excluded from the built artifact, the same way tests
   are
 - A design document references an example rather than duplicating its
