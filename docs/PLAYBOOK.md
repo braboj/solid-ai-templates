@@ -370,7 +370,11 @@ Release — there is no `chore: release` branch, commit, or PR.
 2. Confirm the inverse — every issue closed since the previous tag
    carries the milestone being released. Step 1 reads the milestone
    and cannot see work merged without one. Run the pre-release check
-   in `templates/base/core/git.md`
+   in `templates/base/core/git.md`, setting its `MILESTONE` to the
+   milestone being released. Left unset it reports that the check does
+   not apply — correct for a routine release on a project that scopes
+   some cuts and not others, and a silent pass here, where every cut is
+   milestoned
 3. Confirm nothing else is ready to merge, or decide which side of the
    tag it lands on. Run the ordering check in
    `templates/base/core/git.md` — anything merged between the release
