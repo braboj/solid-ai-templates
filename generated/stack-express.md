@@ -1277,10 +1277,10 @@ reads. Four of the seven carry no pass condition:
 | 1 | `git branch --no-merged main`, run by hand. Command, no pass condition — "investigate any results" is a judgement |
 | 2 | `git fsck --unreachable --no-reflogs`, run by hand. Same shape as step 1 |
 | 3 | nothing. Conditional on the project using `base-360`, and no pass condition either way |
-| 4 | the milestone check below |
-| 5 | the workflow-history check below |
+| 4 | the milestone-coverage check below |
+| 5 | the pipeline-history check below |
 | 6 | **nothing**, and it is the step to gate first |
-| 7 | the ordering check below |
+| 7 | the release-ordering check below |
 
 Step 6 is unenforced and unrecoverable, which is the combination the rule
 says to address first: its own text records that a tag on a public
@@ -1291,10 +1291,21 @@ the result it produced. That record is what makes its absence visible —
 an operator who skipped step 6 writes nothing, and nothing else reports
 it.
 
-The check for step 4, run from the repository root. It is left flush with
-the margin rather than indented under the step: a renderer strips a fenced
-block's own indentation, and an indent deeper than the code's first level
-turns a nested line into a shallower one.
+Each check below carries a name, and every document that sends an operator
+to one MUST refer to it by that name. A step number identifies a check only
+within the sequence that numbers it: this file holds two sequences that both
+have a step 5, and a consuming project's runbook numbers its own release
+differently again, so a cross-document step number points at whichever
+sequence the reader assumes. Selecting a check by position fails the same
+way — this file holds several `py - <<'EOF'` blocks, and taking the first
+one finds a real, runnable check answering a different question. Locate a
+check by asserting on something only it contains.
+
+**The milestone-coverage check** — step 4 of the sequence above. Run it
+from the repository root. It is left flush with the margin rather than
+indented under the step: a renderer strips a fenced block's own
+indentation, and an indent deeper than the code's first level turns a
+nested line into a shallower one.
 
 ```bash
 py - <<'EOF'
@@ -1371,9 +1382,10 @@ routine release was cut deliberately without one. Distinguish it from a
 finding before running anything — a milestone-scoped release left at
 `None` reports "does not apply" and proves nothing.
 
-The check for step 5. Name the release workflow explicitly rather than
-reading whichever run finished last — a repository with more than one
-workflow answers a different question otherwise.
+**The pipeline-history check** — step 5 of the sequence above. Name the
+release workflow explicitly rather than reading whichever run finished
+last — a repository with more than one workflow answers a different
+question otherwise.
 
 ```bash
 gh run list --workflow <release-workflow>.yml --limit 100 --json databaseId --jq 'length'
@@ -1387,12 +1399,13 @@ own, and it means the tag about to be pushed is the workflow's first
 execution and step 6 applies. An error naming an unknown workflow means
 the filename drifted, which is a failure rather than an absence of runs.
 
-The check for step 7, run from the release commit before the tag is
-pushed. Nothing else reports this: both pull requests are green, both are
-mergeable in either order, and on a repository whose protection does not
-require branches be up to date neither goes stale when the other lands.
-The post-release check does not reach it either — it compares the manifest
-version against the tag, which agrees in both orderings.
+**The release-ordering check** — step 7 of the sequence above. Run it from
+the release commit before the tag is pushed. Nothing else reports this:
+both pull requests are green, both are mergeable in either order, and on a
+repository whose protection does not require branches be up to date,
+neither goes stale when the other lands. The post-release check does not
+reach it either — it compares the manifest version against the tag, which
+agrees in both orderings.
 
 ```bash
 previous=$(git describe --tags --abbrev=0)
@@ -1470,10 +1483,11 @@ than a set of tasks:
   6. Re-verify the open issue cohort as a batch — see below
   7. Publish
 
-The check for step 5. Repository-level security controls are
-per-repository and a new repository does not inherit them, so a
-repository created to carry a clean history comes up with every control
-off:
+**The security-controls check** — step 5 of the migration sequence above,
+a different sequence from the release one. Repository-level security
+controls are per-repository and a new repository does not inherit them,
+so a repository created to carry a clean history comes up with every
+control off:
 
 ```bash
 for repo in <source-owner>/<source-repo> <dest-owner>/<dest-repo>; do
