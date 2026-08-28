@@ -146,8 +146,11 @@ CLAUDE.md
 [ID: nodejs-lib-publishing]
 
 - Semantic versioning — `MAJOR.MINOR.PATCH` per semver.org
-- `CHANGELOG.md` updated on every release — use Conventional Commits
-  to automate with `release-it` or `changesets`
+- `CHANGELOG.md` updated on every release, in the form the base
+  documentation rules give it — this stack adds only the tooling: use
+  Conventional Commits to automate with `release-it` or `changesets`.
+  A generator produces the grouping, not the entries; a tool that emits
+  commit subjects verbatim still owes each entry the base form
 - Publish to npm from CI only — never from a local machine
 - Use `npm publish --dry-run` in CI on PRs to catch packaging errors early
 - Tag releases `vX.Y.Z` in git before publishing
