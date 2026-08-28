@@ -4166,8 +4166,14 @@ disagreeing with the template they came from.
 #1213
 
 **Issues opened:** #1213, filed and shipped in the same cut since the
-rule it asks for is what the other two checks needed; and #1220, for the
-seven examples now stale against the reordered audit.
+rule it asks for is what the other two checks needed; #1220, for the
+seven examples now stale against the reordered audit; and, from the
+wrap-up audit that ran after this entry was first written, #1226 (a rule
+naming another file's section ID can be unreadable in chains that resolve
+it — 33 such references measured, 5 dangling, one of them written in this
+very cut), #1227 (a negative control can fire and still prove nothing)
+and #1228 (the runbook writes the journal before the wrap-up audit runs,
+which is why this line needed extending at all).
 
 **Also this session:** v2.59.0 was cut earlier in the day, then the
 backlog was groomed -- three of the four deferred issues turned out to
