@@ -191,12 +191,10 @@ summarize — visible sequential execution prevents missed steps.
    shipped this session, from the tracker rather than memory, and close
    what is done (verify auto-close worked)
 3. **Epic checklists** — update epic checklists if relevant
-4. **Dev journal** — add a session entry to `docs/dev-journal.md`
-   (date, tool, key changes, PRs merged, issues closed/created)
-5. **ADRs** — record any architectural decisions in `docs/decisions/`.
+4. **ADRs** — record any architectural decisions in `docs/decisions/`.
    Check: were any new directories created or content moved between
    documents? Each one needs an ADR.
-6. **CLAUDE.md** — for each new convention/rule, apply the doc-placement
+5. **CLAUDE.md** — for each new convention/rule, apply the doc-placement
    decision tree in `ai-workflow.md` (Doc placement decision tree
    section): evaluate code → ADR → README → PLAYBOOK → CLAUDE.md →
    memory in order. CLAUDE.md is the home ONLY if the agent MUST
@@ -206,18 +204,18 @@ summarize — visible sequential execution prevents missed steps.
    per-feature progress, or session logs. Each rule fits on one line;
    if it needs a paragraph, write an ADR and leave a one-line pointer
    here. Evaluate items individually; do not batch-dismiss.
-7. **README.md** — for each new command, dependency, or structural
+6. **README.md** — for each new command, dependency, or structural
    change, is it reflected? Name the section.
-8. **ONBOARDING.md** — ensure `docs/ONBOARDING.md` exists and covers
+7. **ONBOARDING.md** — ensure `docs/ONBOARDING.md` exists and covers
    each new tool, prerequisite, or setup step. Create it if missing;
    name the section. A missing doc is work to do here, not a gap to
    report.
-9. **PLAYBOOK.md** — ensure `docs/PLAYBOOK.md` exists and covers each
+8. **PLAYBOOK.md** — ensure `docs/PLAYBOOK.md` exists and covers each
    new command, script, or workflow added. Create it if missing; name
    the section. A missing doc is work to do here, not a gap to report.
-10. **Submodules** — check if upstream submodules need updates
-    (`git submodule update --remote`); commit the pointer bump if needed
-11. **Template feedback** — for each new pattern or convention
+9. **Submodules** — check if upstream submodules need updates
+   (`git submodule update --remote`); commit the pointer bump if needed
+10. **Template feedback** — for each new pattern or convention
     introduced, state whether it is project-specific or reusable. If
     reusable, name the upstream template file and file an issue on the
     upstream repo (not a downstream note) — naming a candidate is not
@@ -237,6 +235,13 @@ summarize — visible sequential execution prevents missed steps.
       engineering-notes doc is produced, reconcile the whole accumulated
       convention set against the resolved template chain — a once-missed
       pattern is swept eventually, not lost forever
+11. **Dev journal** — add a session entry to `docs/dev-journal.md`
+    (date, tool, key changes, PRs merged, issues closed/created). This
+    item is last because it is the only one whose output is a record of
+    the others: written earlier, its merged-pull-request, issue and
+    upstream lines are incomplete by construction, and a journal entry's
+    account is fixed once written, so the correction costs a second entry
+    for one session
 12. **Flag gaps** — if any item cannot be completed this session, report
     it as pending (never as done) before closing — including deferred
     cross-repo work, such as an upstream contribution that was flagged

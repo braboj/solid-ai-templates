@@ -389,13 +389,11 @@ summarize — visible sequential execution prevents missed steps.
 2. **Close issues** — close completed issues (verify auto-close
    worked)
 3. **Epic checklists** — update epic checklists if relevant
-4. **Dev journal** — add a session entry to `docs/dev-journal.md`
-   (date, tool, key changes, PRs merged, issues closed/created)
-5. **ADRs** — record any architectural decisions in
+4. **ADRs** — record any architectural decisions in
    `docs/decisions/`
-6. **Smoke tests** — run `py tests/run_smoke.py` and confirm all
+5. **Smoke tests** — run `py tests/run_smoke.py` and confirm all
    checks pass
-7. **CLAUDE.md** — for each new convention/rule, apply the
+6. **CLAUDE.md** — for each new convention/rule, apply the
    doc-placement decision tree in
    `templates/base/workflow/ai-workflow.md` (Doc placement decision
    tree section): evaluate code → ADR → README → PLAYBOOK →
@@ -407,26 +405,33 @@ summarize — visible sequential execution prevents missed steps.
    fits on one line; if it needs a paragraph, write an ADR and
    leave a one-line pointer here. Evaluate items individually; do
    not batch-dismiss.
-8. **README.md** — for each new command, dependency, or structural
+7. **README.md** — for each new command, dependency, or structural
    change, is it reflected? Name the section.
-9. **docs/SPEC.md** — for each change to composition model or ID
+8. **docs/SPEC.md** — for each change to composition model or ID
    system, is it reflected? Name the section.
-10. **templates/manifest.yaml** — for each template added, removed,
-    or re-depended, is it registered? Name the entry.
-11. **docs/ONBOARDING.md** — for each new tool, prerequisite, or
+9. **templates/manifest.yaml** — for each template added, removed,
+   or re-depended, is it registered? Name the entry.
+10. **docs/ONBOARDING.md** — for each new tool, prerequisite, or
     setup step, is it documented? Name the section.
-12. **docs/PLAYBOOK.md** — for each new command, script, or
+11. **docs/PLAYBOOK.md** — for each new command, script, or
     workflow added, is it documented? Name the section.
-13. **Template feedback** — for each new pattern or convention
+12. **Template feedback** — for each new pattern or convention
     introduced, explicitly state whether it is project-specific
     or reusable; if reusable, name the upstream template file
-14. **Branch cleanup** — delete local branches whose PRs have merged,
+13. **Branch cleanup** — delete local branches whose PRs have merged,
     verified against the PR record: `gh pr view <N> --json
     state,headRefOid` must report `MERGED`, then `git branch -D`.
     `git branch --merged` cannot see a squash merge and silently
     matches nothing; a `headRefOid` that differs from the local tip
     usually means `gh pr update-branch` rewrote the remote head, so
     inspect it rather than assume unpushed work
+14. **Dev journal** — add a session entry to `docs/dev-journal.md`
+    (date, tool, key changes, PRs merged, issues closed/created). This
+    item is last because it is the only one whose output is a record of
+    the others: written earlier, its merged-pull-request, issue and
+    upstream lines are incomplete by construction, and a journal entry's
+    account is fixed once written, so the correction costs a second entry
+    for one session
 15. **Flag gaps** — if any of the above cannot be completed, flag
     it to the user before closing
 16. **Summary** — summarize what was done and what's next
