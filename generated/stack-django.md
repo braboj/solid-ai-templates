@@ -6586,6 +6586,24 @@ the `--check` convention from `base-docs`, the `--check` invocation
 MUST be wired into CI as a required status check on the relevant
 paths.
 
+- Ask first whether the content should be generated at all. A block that
+  is derivable tool output — a file listing, a resolved chain, a table of
+  counts — and was written by hand is not stale in this gate's sense. It
+  sits outside the gate's subject, so the gate reports nothing about it
+  while looking as though it governs the file. Put it behind a marker and
+  generate it, and the gate covers it from then on
+- A gate MUST account for what it covers, not only for what it found. One
+  file can hold a generated section and a hand-maintained block
+  reproducing tool output, and `--check` reports that file in sync while
+  the hand-written half is wrong. Enumerate the derivable blocks inside
+  each artifact, not just the artifacts in the repository. This is
+  `quality-gates-check-runs`'s "state what it inspected, not only what it
+  found" one level up, applied to a gate rather than to a command
+- A worked example is where this lands most often: a document explaining
+  a tool by showing its output, in a file whose other sections are
+  generated. The example is reproducible by one call and reads as prose,
+  so nobody wires it up, and it drifts from the moment the tool's output
+  changes
 - A banner naming the regenerate command is decorative without the
   gate — a stale file looks identical to a fresh one, and the
   regenerator can silently break for months unnoticed
