@@ -726,6 +726,72 @@ for path in paths:
   not the script — review the diff, then delete the probe before the
   commit
 
+### The scripts directory
+
+A probe never lands, so `scripts/` is not where throwaway work lives — a
+directory cannot be the home for files that must not be committed. What it
+holds is maintained tooling that is not shipped: unshipped is a packaging
+fact, not a licence to leave a file unowned.
+
+- A file under `scripts/` MUST be eligible on one of three grounds:
+  invoked by a command the documentation names, executed by CI, or
+  imported by a file that is. The third is a real branch and not a
+  courtesy — a helper module nothing invokes directly is still live, and
+  a rule with only the first two deletes it
+- A file eligible on none of the three MUST be deleted rather than
+  reshaped. Its findings, if any, were supposed to have moved into source
+  comments, a decision record or the docs when the change that used them
+  landed
+- Where the project keeps a persistent `scripts/`, every file in it is
+  covered by the same review and formatting rules as shipped source. A
+  directory exempt from them accumulates files nobody will open
+
+No automated gate reaches these files on its own. An unshipped script is
+outside the packaged artifact, so the packaging checks say nothing; it
+carries no tests, so coverage says nothing; and where a project froze lint
+findings per file on adoption, it sits inside the freeze and the linter
+says nothing either. That combination is why the directory accumulates,
+and why this rule needs a check rather than a convention:
+
+```bash
+py - <<'EOF'
+import pathlib, subprocess
+
+SCRIPTS = pathlib.Path("scripts")
+files = sorted(p for p in SCRIPTS.rglob("*")
+               if p.is_file() and p.suffix in (".py", ".sh", ".ts", ".js"))
+print("scripts inspected: %d" % len(files))
+if not files:
+    print("no scripts directory, or it holds none - nothing to check")
+    raise SystemExit(0)
+
+tracked = subprocess.run(["git", "ls-files"], capture_output=True, text=True).stdout.split()
+corpus = []
+for name in tracked:
+    if name.startswith("scripts/"):
+        continue
+    try:
+        corpus.append(pathlib.Path(name).read_text(encoding="utf-8", errors="ignore"))
+    except OSError:
+        pass
+print("files searched for a reference: %d" % len(corpus))
+blob = chr(10).join(corpus)
+
+dead = [f.as_posix() for f in files if f.as_posix() not in blob and f.name not in blob]
+print("unreferenced: %d" % len(dead))
+for name in dead:
+    print("  %s" % name)
+EOF
+```
+
+Pass condition: the check prints how many scripts it inspected and how many
+files it searched for a reference, then `unreferenced: 0`. Both counts are
+load-bearing — a searched count of zero means the corpus never loaded, and
+reports the same clean result as a directory where everything is
+referenced. A name appearing anywhere in the corpus counts, which
+deliberately under-reports: it flags only a file nothing mentions at all,
+so every hit is a real finding rather than a judgement call.
+
 ## Automated enforcement
 
 - Quality conventions in this document are enforced automatically via
@@ -5506,9 +5572,12 @@ nothing from this template.
 - One file per pattern or user journey — not one per API surface, and
   not one per feature listed in the README. Split on the seams a
   consumer meets, not on the table of contents
-- `examples/` is maintained; `scripts/` is throwaway probes and
-  benchmarks and is not shipped. A file nobody would run twice belongs
-  in `scripts/`
+- `examples/` is maintained and demonstrates a pattern to a reader.
+  `scripts/` is the other kind of unshipped file: maintained tooling
+  nobody reads for instruction. Neither is where throwaway work lives —
+  a file nobody would run twice is deleted with the change that used it,
+  not filed. What may stay in `scripts/` permanently, and the check for
+  it, belong to the project's quality rules for that directory
 - Examples MUST be excluded from the built artifact, the same way tests
   are
 - A design document references an example rather than duplicating its
