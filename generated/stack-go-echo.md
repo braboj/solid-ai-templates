@@ -2844,6 +2844,19 @@ Python-only. Coverage is the part no failing test reports.
 - Where the corpus has a known floor, assert the floor rather than mere
   non-emptiness. A set that should hold nineteen members and holds one
   passes a non-empty check while measuring almost nothing
+- The floor is a threshold, so it is sized from a measurement and carries
+  its derivation beside the constant. It cannot be derived from the corpus
+  it guards, because comparing a set against its own size is vacuous. An
+  append-only corpus — decision records, changelog entries, migrations,
+  anything immutable once merged — takes its measured count, which only
+  ever rises; a churning one — tracked files, modules, routes — takes a
+  stated margin below it, so an ordinary deletion cannot fail an unrelated
+  rule
+- The margin is for legitimate shrinkage, not for the failure the floor
+  catches. Every way an enumeration breaks returns nothing at all rather
+  than a fraction, so any floor above zero catches all of them and the
+  margin costs no detection. That is what makes a generous margin cheap
+  and a missing derivation expensive
 - Expect the enumeration to break in ways the assertion cannot see. A
   pattern anchored at the start of a line matches nothing where the lines
   are indented, as commands inside a block are; an enumeration that reads
