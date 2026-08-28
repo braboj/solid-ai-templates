@@ -1463,8 +1463,15 @@ public with weaker protection than the one it replaced.
   restriction that lives only in a reviewer's head is not one
 - Offer this as the default set and let the project cut it down: auth
   and session code, payment and billing code, database migrations,
-  `.env*` and anything else handling secrets, and CI/CD workflow
-  definitions
+  `.env*` and anything else handling secrets, CI/CD workflow
+  definitions, and — where the project vendors its governing rules — the
+  pointer to the submodule carrying them
+- That last member earns its place differently from the others, so state
+  why beside it. The rest are dangerous for what they execute or what
+  they hold; a pointer executes nothing, so no linter, suite or gate
+  reads it and the diff is a pair of hashes. One line replaces every rule
+  the project binds, which is a wider blast radius than a workflow file,
+  and a malformed workflow at least fails loudly
 - A change inside an off-limits path MUST be proposed before it is
   made, and the proposal MUST carry a rollback strategy and the test
   coverage that would catch a regression. The approval is for that
@@ -1473,9 +1480,11 @@ public with weaker protection than the one it replaced.
   summary, naming the path. The reviewer's attention is the control,
   and it is only allocated if the summary spends it
 
-The check, run from the repository root before opening a pull request.
-Keep `OFF_LIMITS` beside the declared list so the rule and its check
-cannot drift apart:
+The check, run from the repository root after committing and before
+opening a pull request. Its subject is committed history, so a run
+against staged but uncommitted work reports exactly what a compliant
+branch reports. Keep `OFF_LIMITS` beside the declared list so the rule
+and its check cannot drift apart:
 
 ```bash
 py - <<'EOF'
@@ -1504,10 +1513,13 @@ EOF
 ```
 
 Pass condition: the command reports how many files it compared. Zero is
-a failure rather than a clean branch — it means the base is wrong or the
-branch is empty, and an unreached diff reports the same nothing a clean
-one does. Every `off-limits:` line is an escalation trigger rather than a
-failure: it says this change needs the proposal above before it merges.
+a failure rather than a clean branch, and the likeliest cause is that the
+change is not committed yet — the natural moment to run a
+pre-pull-request check is while writing it, and that run is guaranteed to
+report nothing. The other causes are a wrong base and an empty branch. An
+unreached diff reports the same nothing a clean one does. Every
+`off-limits:` line is an escalation trigger rather than a failure: it
+says this change needs the proposal above before it merges.
 
 ## `.gitignore`
 - Every repository MUST have a `.gitignore` file
