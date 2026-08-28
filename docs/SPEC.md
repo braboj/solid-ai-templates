@@ -78,6 +78,7 @@ base/
 │   ├── containers.md   # Dockerfile, runtime security, resource limits, Kubernetes
 │   └── deployment.md   # Deployment targets (cloud/hybrid/offline), certs, LB, registries, secrets
 ├── language/
+│   ├── python.md       # Per-language tool selection for Python - lint, types, complexity, tests
 │   └── typescript.md   # Type design, naming, strictness — applies to all TypeScript projects
 └── data/
     ├── data-quality.md # Data sourcing, completeness, freshness, research, scoring — data-heavy projects

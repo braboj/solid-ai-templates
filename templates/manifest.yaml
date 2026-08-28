@@ -61,6 +61,10 @@ base:
   - id: base-deployment
     file: templates/base/infra/deployment.md
     description: Deployment targets (cloud/hybrid/offline), certs, LB, registries, secrets
+  - id: base-python
+    file: templates/base/language/python.md
+    description: Per-language tool selection for Python - lint, types, complexity, tests
+    depends_on: [base-quality]
   - id: base-typescript
     file: templates/base/language/typescript.md
     description: Type design, naming, strictness — applies to all TypeScript projects
@@ -249,6 +253,7 @@ stacks:
       - base-git
       - base-docs
       - base-quality
+      - base-python
       - base-quality-gates
       - base-examples
 
