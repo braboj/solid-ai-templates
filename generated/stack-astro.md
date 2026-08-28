@@ -1336,6 +1336,61 @@ public with weaker protection than the one it replaced.
 - Treat every repository as if it were public — no secrets,
   credentials, or sensitive information in source files or history
 
+## Off-limits paths
+- Some paths carry consequences a diff does not show. The change reads
+  as ordinary and its blast radius is not local, so the usual signals —
+  a small diff, a green suite — say nothing about it
+- The project's context file MUST declare an **Off-limits** section
+  listing paths that MUST NOT be modified without explicit approval. A
+  restriction that lives only in a reviewer's head is not one
+- Offer this as the default set and let the project cut it down: auth
+  and session code, payment and billing code, database migrations,
+  `.env*` and anything else handling secrets, and CI/CD workflow
+  definitions
+- A change inside an off-limits path MUST be proposed before it is
+  made, and the proposal MUST carry a rollback strategy and the test
+  coverage that would catch a regression. The approval is for that
+  plan, not for the area
+- A diff touching an off-limits path MUST say so at the top of its
+  summary, naming the path. The reviewer's attention is the control,
+  and it is only allocated if the summary spends it
+
+The check, run from the repository root before opening a pull request.
+Keep `OFF_LIMITS` beside the declared list so the rule and its check
+cannot drift apart:
+
+```bash
+py - <<'EOF'
+import subprocess, sys
+
+sys.stdout.reconfigure(encoding="utf-8")
+
+BASE = "origin/main"
+
+# Prefixes rather than patterns: a path holds no regex metacharacter to
+# escape, so nothing can be lost on the way into the file.
+OFF_LIMITS = [".github/workflows/", ".env", "migrations/"]
+
+out = subprocess.run(["git", "diff", "--name-only", BASE + "...HEAD"],
+                     capture_output=True, text=True,
+                     encoding="utf-8").stdout
+changed = [path for path in out.splitlines() if path]
+
+print("files changed: %d" % len(changed))
+
+for path in changed:
+    for prefix in OFF_LIMITS:
+        if path.startswith(prefix) or ("/" + prefix) in path:
+            print("  off-limits: %s (matches %s)" % (path, prefix))
+EOF
+```
+
+Pass condition: the command reports how many files it compared. Zero is
+a failure rather than a clean branch — it means the base is wrong or the
+branch is empty, and an unreached diff reports the same nothing a clean
+one does. Every `off-limits:` line is an escalation trigger rather than a
+failure: it says this change needs the proposal above before it merges.
+
 ## `.gitignore`
 - Every repository MUST have a `.gitignore` file
 - Ignore at minimum:
