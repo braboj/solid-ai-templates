@@ -521,11 +521,18 @@ When NOT to close-and-resubmit:
      is ready before cutting the release branch, or hold it until the
      tag is pushed, but choose — the default is whichever happens to
      land first
+  8. Where the project keeps a changelog, reconcile its `Unreleased`
+     section against what merged since the previous tag — the check is
+     below. The release cuts that section into a dated entry, and the
+     cut assumes each merged change added its line. Nothing else
+     verifies that it did: each pull request is individually fine,
+     omitting an entry breaks no gate, and the reviewer is reading a
+     diff that has no changelog hunk whose absence they could notice
 
 Which of these steps are enforced, audited one step at a time.
 Enforcement is not transitive between neighbours: a step's gate covers
 that step and says nothing about the one below it, however the sequence
-reads. Four of the seven carry no pass condition:
+reads. Four of the eight carry no pass condition:
 
 | Step | Enforced by |
 | --- | --- |
@@ -536,6 +543,7 @@ reads. Four of the seven carry no pass condition:
 | 5 | the pipeline-history check below |
 | 6 | **nothing**, and it is the step to gate first |
 | 7 | the release-ordering check below |
+| 8 | the changelog-completeness check below. Conditional on the project keeping a changelog |
 
 Step 6 is unenforced and unrecoverable, which is the combination the rule
 says to address first: its own text records that a tag on a public
@@ -680,34 +688,74 @@ warning — merge it into this release and record it, or hold it until the
 tag is pushed. A carried count of zero is a failure rather than a clean
 result: it means the tag would land on the same commit as its predecessor.
 
+**The changelog-completeness check** — step 8 of the sequence above. Run it
+from the release commit before the `Unreleased` section is cut. The failure
+it catches has no signal anywhere else: each pull request is individually
+fine, the release is individually fine because the block gets cut and the
+entry gets dated, and a gate asserting the entry EXISTS passes on an entry
+describing almost nothing. Afterwards the entry is published and immutable
+in practice, and reconstructing what the release contained means reading
+the commit range by hand — the work the changelog existed to save.
+
+```bash
+previous=$(git describe --tags --abbrev=0)
+echo "commits since $previous: $(git log --format='%s' "$previous..HEAD" | wc -l)"
+echo "entries in Unreleased: $(awk '/^## /{ n++ } n==1 && /^- /' CHANGELOG.md | wc -l)"
+git log --format='  carried: %s' "$previous..HEAD"
+```
+
+Pass condition: the command prints both counts and lists every carried
+commit, and the operator confirms each carried commit is either represented
+by an entry or is deliberately not notable. The two counts are NOT required
+to match — not every commit earns an entry — but a run reporting commits
+carried and **zero** entries is a failure, and so is a count of entries
+that the listed commits cannot account for. Read the two numbers together:
+the observed failure this check exists for was 37 commits against 2
+entries, which no single-sided assertion detects.
+
+The check runs at release time and is the backstop, not the mechanism. The
+entry is added by the change that causes it, per `base-docs`; a project
+relying on this check to reconstruct the block at release time has already
+lost the information it needs to do so.
+
 ### Projects with a version manifest
-  8. `git checkout -b chore/release-vX.Y.Z`
-  9. Bump version in the project manifest (`package.json`,
-     `pyproject.toml`, `Cargo.toml`, or equivalent) to `X.Y.Z`
-  10. `git commit -m "chore: release vX.Y.Z"`
-  11. Push, open PR, merge
-  12. `git checkout main && git pull`
-  13. `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
+  9. `git checkout -b chore/release-vX.Y.Z`
+  10. Bump version in the project manifest (`package.json`,
+     `pyproject.toml`, `Cargo.toml`, or equivalent) to `X.Y.Z`, and
+     where the project keeps a changelog, cut its `Unreleased` section
+     into a dated `X.Y.Z` section in the same commit — the manifest
+     version and the changelog heading name the same release, so they
+     go stale together or not at all
+  11. `git commit -m "chore: release vX.Y.Z"`
+  12. Push, open PR, merge
+  13. `git checkout main && git pull`
+  14. `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
      — release tags MUST be annotated (`-a`/`-s`); a lightweight
      `git tag vX.Y.Z` is invisible to `git describe`, which reports
      a stale version to submodule/`describe` consumers
-  14. SHOULD create a GitHub Release from the tag:
+  15. SHOULD create a GitHub Release from the tag:
       `gh release create vX.Y.Z --title "vX.Y.Z" --generate-notes`
       — a pushed tag alone does NOT create a Releases page entry.
 
 ### Post-release verification
-  15. Verify the manifest version matches the tag — e.g.
+  16. Verify the manifest version matches the tag — e.g.
       `grep '"version"' package.json` matches `git describe --tags`
-  16. A mismatch means the bump was missed or the wrong commit was
+  17. A mismatch means the bump was missed or the wrong commit was
       tagged — fix before announcing the release
 
 ### Projects without a version manifest (no-build)
-  8. `git checkout main && git pull`
-  9. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
+  9. Where the project keeps a changelog, cut its `Unreleased` section
+     into a dated `X.Y.Z` section and merge that through a pull request
+     first. There is no version bump here to carry it, so the cut is
+     the release commit — and the tag below MUST land on it or later,
+     or the tagged tree holds a changelog that does not name its own
+     release
+  10. `git checkout main && git pull`
+  11. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
      — the `-a` is mandatory: a lightweight `git tag` is skipped by
      `git describe`, so consumers report a stale version
-  10. `git push origin vX.Y.Z`
-  11. Create a GitHub Release with auto-generated notes:
+  12. `git push origin vX.Y.Z`
+  13. Create a GitHub Release with auto-generated notes:
      `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>"
      --generate-notes`
 

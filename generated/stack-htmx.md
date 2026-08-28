@@ -1380,11 +1380,18 @@ When NOT to close-and-resubmit:
      is ready before cutting the release branch, or hold it until the
      tag is pushed, but choose — the default is whichever happens to
      land first
+  8. Where the project keeps a changelog, reconcile its `Unreleased`
+     section against what merged since the previous tag — the check is
+     below. The release cuts that section into a dated entry, and the
+     cut assumes each merged change added its line. Nothing else
+     verifies that it did: each pull request is individually fine,
+     omitting an entry breaks no gate, and the reviewer is reading a
+     diff that has no changelog hunk whose absence they could notice
 
 Which of these steps are enforced, audited one step at a time.
 Enforcement is not transitive between neighbours: a step's gate covers
 that step and says nothing about the one below it, however the sequence
-reads. Four of the seven carry no pass condition:
+reads. Four of the eight carry no pass condition:
 
 | Step | Enforced by |
 | --- | --- |
@@ -1395,6 +1402,7 @@ reads. Four of the seven carry no pass condition:
 | 5 | the pipeline-history check below |
 | 6 | **nothing**, and it is the step to gate first |
 | 7 | the release-ordering check below |
+| 8 | the changelog-completeness check below. Conditional on the project keeping a changelog |
 
 Step 6 is unenforced and unrecoverable, which is the combination the rule
 says to address first: its own text records that a tag on a public
@@ -1539,34 +1547,74 @@ warning — merge it into this release and record it, or hold it until the
 tag is pushed. A carried count of zero is a failure rather than a clean
 result: it means the tag would land on the same commit as its predecessor.
 
+**The changelog-completeness check** — step 8 of the sequence above. Run it
+from the release commit before the `Unreleased` section is cut. The failure
+it catches has no signal anywhere else: each pull request is individually
+fine, the release is individually fine because the block gets cut and the
+entry gets dated, and a gate asserting the entry EXISTS passes on an entry
+describing almost nothing. Afterwards the entry is published and immutable
+in practice, and reconstructing what the release contained means reading
+the commit range by hand — the work the changelog existed to save.
+
+```bash
+previous=$(git describe --tags --abbrev=0)
+echo "commits since $previous: $(git log --format='%s' "$previous..HEAD" | wc -l)"
+echo "entries in Unreleased: $(awk '/^## /{ n++ } n==1 && /^- /' CHANGELOG.md | wc -l)"
+git log --format='  carried: %s' "$previous..HEAD"
+```
+
+Pass condition: the command prints both counts and lists every carried
+commit, and the operator confirms each carried commit is either represented
+by an entry or is deliberately not notable. The two counts are NOT required
+to match — not every commit earns an entry — but a run reporting commits
+carried and **zero** entries is a failure, and so is a count of entries
+that the listed commits cannot account for. Read the two numbers together:
+the observed failure this check exists for was 37 commits against 2
+entries, which no single-sided assertion detects.
+
+The check runs at release time and is the backstop, not the mechanism. The
+entry is added by the change that causes it, per `base-docs`; a project
+relying on this check to reconstruct the block at release time has already
+lost the information it needs to do so.
+
 ### Projects with a version manifest
-  8. `git checkout -b chore/release-vX.Y.Z`
-  9. Bump version in the project manifest (`package.json`,
-     `pyproject.toml`, `Cargo.toml`, or equivalent) to `X.Y.Z`
-  10. `git commit -m "chore: release vX.Y.Z"`
-  11. Push, open PR, merge
-  12. `git checkout main && git pull`
-  13. `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
+  9. `git checkout -b chore/release-vX.Y.Z`
+  10. Bump version in the project manifest (`package.json`,
+     `pyproject.toml`, `Cargo.toml`, or equivalent) to `X.Y.Z`, and
+     where the project keeps a changelog, cut its `Unreleased` section
+     into a dated `X.Y.Z` section in the same commit — the manifest
+     version and the changelog heading name the same release, so they
+     go stale together or not at all
+  11. `git commit -m "chore: release vX.Y.Z"`
+  12. Push, open PR, merge
+  13. `git checkout main && git pull`
+  14. `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
      — release tags MUST be annotated (`-a`/`-s`); a lightweight
      `git tag vX.Y.Z` is invisible to `git describe`, which reports
      a stale version to submodule/`describe` consumers
-  14. SHOULD create a GitHub Release from the tag:
+  15. SHOULD create a GitHub Release from the tag:
       `gh release create vX.Y.Z --title "vX.Y.Z" --generate-notes`
       — a pushed tag alone does NOT create a Releases page entry.
 
 ### Post-release verification
-  15. Verify the manifest version matches the tag — e.g.
+  16. Verify the manifest version matches the tag — e.g.
       `grep '"version"' package.json` matches `git describe --tags`
-  16. A mismatch means the bump was missed or the wrong commit was
+  17. A mismatch means the bump was missed or the wrong commit was
       tagged — fix before announcing the release
 
 ### Projects without a version manifest (no-build)
-  8. `git checkout main && git pull`
-  9. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
+  9. Where the project keeps a changelog, cut its `Unreleased` section
+     into a dated `X.Y.Z` section and merge that through a pull request
+     first. There is no version bump here to carry it, so the cut is
+     the release commit — and the tag below MUST land on it or later,
+     or the tagged tree holds a changelog that does not name its own
+     release
+  10. `git checkout main && git pull`
+  11. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
      — the `-a` is mandatory: a lightweight `git tag` is skipped by
      `git describe`, so consumers report a stale version
-  10. `git push origin vX.Y.Z`
-  11. Create a GitHub Release with auto-generated notes:
+  12. `git push origin vX.Y.Z`
+  13. Create a GitHub Release with auto-generated notes:
      `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>"
      --generate-notes`
 
@@ -2246,6 +2294,21 @@ first, each with a version and a date, grouped under Added, Changed,
 Deprecated, Removed, Fixed and Security. An `Unreleased` section at the top
 collects work since the last release.
 
+A per-version record published by the code host does NOT discharge this.
+Generated release notes are derived from merged pull request titles, so
+their entry form is whatever those titles were: no grouping, no bound, and
+no statement of what a reader must do. A pull request title is written for
+a reviewer who has the diff; a changelog entry is written for someone
+outside the project deciding whether to upgrade. They are different
+audiences, which is the same distinction this section draws between the
+changelog and the journal — so the requirement is a committed file, and a
+release page is where it may additionally be published, never where it may
+instead live.
+
+The committed file also outlives the host. It is present in a clone, a
+mirror, a vendored copy and an offline archive, and it is versioned
+alongside the code it describes; a release page is none of those things.
+
 - An entry states **what changed and what a reader must do about it**, and
   nothing else. It is the one document in the set whose reader is outside
   the project and is deciding whether to upgrade
@@ -2258,6 +2321,19 @@ collects work since the last release.
   style preference: past roughly that length an entry has started
   explaining rather than stating, and the reader deciding whether to
   upgrade has to finish a paragraph to find out
+- The `Unreleased` section is maintained by the change that causes it. A
+  change that a reader outside the project would want to know about adds
+  its entry in the same pull request that makes it, and a change that
+  needs no entry says so in the pull request rather than staying silent —
+  silence and "not notable" look identical at release time, and only one
+  of them is true
+- A project adopting the changelog after it has already published versions
+  starts its first section at the version being released next, and records
+  the earlier ones by naming where they are published. It MUST NOT
+  reconstruct them from pull request titles: that is the reviewer-facing
+  form this section rejects, and a file of it would satisfy the check while
+  failing the rule's premise. Every version released after adoption gets
+  its own section, so the reference covers a closed set that never grows
 
 This is the one document class where an unspecified rule does not stay
 unspecified. Where a document class carries no rules and a neighbouring
@@ -2278,29 +2354,73 @@ A rule bounding a form needs a check, or the bound decays to advice:
 
 ```bash
 py - <<'EOF'
-import pathlib
+import pathlib, subprocess
 
 LIMIT = 40
 path = pathlib.Path("CHANGELOG.md")
+
+# A missing file means two different things. Ask the repository which,
+# rather than skipping both alike.
+tags = subprocess.run(["git", "tag"], capture_output=True,
+                      text=True).stdout.split()
+print("release tags found: %d" % len(tags))
+
 if not path.is_file():
-    print("no CHANGELOG.md - nothing to check")
+    if tags:
+        raise SystemExit("%d versions published and no CHANGELOG.md"
+                         % len(tags))
+    print("no versions published and no CHANGELOG.md - nothing to check")
     raise SystemExit(0)
 
-lines = path.read_text(encoding="utf-8").splitlines()
-entries = [(i, l) for i, l in enumerate(lines, 1) if l.startswith("- ")]
+# An entry is a bullet plus the lines it wraps onto. Measuring physical
+# lines instead reads only the first line of a wrapped entry, and a file
+# wrapped to any column then reports every entry as under any limit.
+entries, current = [], None
+for number, line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), 1):
+    if line.startswith("- "):
+        if current:
+            entries.append(current)
+        current = [number, line[2:].strip()]
+    elif current and line.strip() and not line.startswith(("#", "-")):
+        current[1] += " " + line.strip()
+    elif not line.strip():
+        if current:
+            entries.append(current)
+        current = None
+if current:
+    entries.append(current)
+
 print("changelog entries measured: %d" % len(entries))
 print("word limit: %d" % LIMIT)
-over = [(i, len(l.split()) - 1, l) for i, l in entries if len(l.split()) - 1 > LIMIT]
+over = [(n, len(t.split()), t) for n, t in entries if len(t.split()) > LIMIT]
 print("entries over the limit: %d" % len(over))
-for i, count, text in over:
-    print("  line %d: %d words - %s..." % (i, count, text[:60]))
+for number, count, text in over:
+    print("  line %d: %d words - %s..." % (number, count, text[:60]))
 EOF
 ```
 
-Pass condition: the check prints how many entries it measured and the
-limit it applied, then `entries over the limit: 0`. A measured count of
-zero is a failure rather than a clean file — it means the entry marker did
-not match the file's bullet style, and every entry went unread.
+Pass condition: the check prints the tag count, how many entries it
+measured and the limit it applied, then `entries over the limit: 0`. A
+measured count of zero is a failure rather than a clean file — it means the
+entry marker did not match the file's bullet style, and every entry went
+unread.
+
+The tag count is what separates the two absences. A project that has
+published nothing legitimately has no changelog; one that has published
+versions and has no changelog is in breach, and before this line both
+printed the same skip and exited clean. An absent file is the one state a
+check is most likely to wave through, because there is nothing in it to
+find fault with.
+
+The unit is the entry, not the line. A word bound measured against
+physical lines is defeated by wrapping: in a file wrapped to any column
+the first line of every entry falls under any limit, and the check reports
+a clean file while reading a fraction of each entry it counted. The first
+changelog written against this rule had three entries of 45, 41 and 42
+words and the line-based measurement reported none of them. A check whose
+unit is finer than the rule's unit does not under-report by a little — it
+reports the wrong thing entirely, at full confidence.
 
 ## Development journal
 
