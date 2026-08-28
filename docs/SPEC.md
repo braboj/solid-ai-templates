@@ -359,6 +359,21 @@ Rules:
 - A section MUST NOT be empty — at least one content line (heading,
   bullet, paragraph, table, or code block) MUST follow the tags
 
+#### Naming another file's section in prose
+
+A rule that names another section in running prose — "`base-quality-gates`
+states which categories a project MUST gate" — is not a directive and is
+not resolved. It costs reach instead: the referencing file and the
+referenced one sit at different depths in the graph, so the reference
+reads correctly in the chains carrying both and dangles in the rest.
+`base-git` resolves into all 17 chains and `base-examples` into 11, so a
+reference from the first to the second is unreadable in six.
+
+State the substance inline instead. Where a cross-file reference is
+genuinely wanted, the declaring file MUST be present in every chain that
+carries the referencing one — SYS-11 checks this per chain, because the
+defect is invisible from either file on its own.
+
 ---
 
 ## Precedence rules

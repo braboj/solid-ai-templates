@@ -1385,6 +1385,96 @@ def check_sys_10():
 
 
 # ---------------------------------------------------------------------------
+# SYS-11 — a prose reference to another file's section ID resolves in every
+# chain that carries the referencing file
+# ---------------------------------------------------------------------------
+# TPL-04 and TPL-06 cover EXTEND/OVERRIDE directives. A rule that names
+# another section in running prose -- "`base-quality-gates` states which
+# categories a project MUST gate" -- is checked by neither, and it costs
+# reach: the referencing file and the referenced one sit at different depths
+# in the graph, so the reference resolves in the chains that carry both and
+# dangles in the rest. A reader of a dangling one is sent to a section their
+# context file does not contain.
+#
+# The failure is invisible from either file. It appears only per chain, which
+# is why this check resolves every stack rather than reading the two files.
+
+_PROSE_ID_REF = re.compile(r"`((?:base|backend|frontend|platform|stack)-[a-z0-9-]+)`")
+
+
+def check_sys_11():
+    if not HAS_YAML:
+        return ["  PyYAML not installed — run: pip install pyyaml"]
+
+    core_ids, entries, _ = _load_manifest()
+
+    # The third value from _load_manifest is file_to_id, not the stack list.
+    # A stack is an entry under templates/stack/, the same selector MNF-02
+    # uses -- reading the whole entry table instead resolves layer templates
+    # as though they were stacks and inflates every count.
+    chains = {}
+    for entry in entries.values():
+        if not entry["file"].startswith("templates/stack/"):
+            continue
+        files, _ = _resolve_stack(entry["id"], core_ids, entries)
+        chains[entry["id"]] = set(f.replace(os.sep, "/") for f in files)
+
+    # all_template_files() returns absolute paths; the manifest names files
+    # repo-relative, and the chains are built from the manifest. Normalise to
+    # the manifest's form or nothing matches and every chain looks empty.
+    def rel_of(path):
+        return os.path.relpath(path, ROOT).replace(os.sep, "/")
+
+    defined_in = {}
+    for path in all_template_files():
+        for section_id, _line in iter_id_declarations(read(path)):
+            defined_in.setdefault(section_id, set()).add(rel_of(path))
+
+    references = 0
+    failures = []
+
+    for path in all_template_files():
+        rel = rel_of(path)
+        content = read(path)
+        own = set(sid for sid, _line in iter_id_declarations(content))
+        for match in sorted(set(_PROSE_ID_REF.findall(content))):
+            if match in own:
+                continue
+            homes = defined_in.get(match)
+            if not homes:
+                failures.append(
+                    f"  {rel}: names `{match}`, which no template declares"
+                )
+                continue
+            references += 1
+            carrying = [s for s, f in chains.items() if rel in f]
+            missing = [s for s in carrying if not (homes & chains[s])]
+            if missing:
+                failures.append(
+                    f"  {rel}: names `{match}`, declared in "
+                    f"{'/'.join(sorted(homes))}, which is absent from "
+                    f"{len(missing)} of the {len(carrying)} chains carrying "
+                    f"this file ({', '.join(sorted(missing)[:3])}"
+                    f"{', ...' if len(missing) > 3 else ''}) — state the "
+                    f"substance inline instead of naming a section the "
+                    f"reader's context file does not have"
+                )
+
+    # An empty result and a check that reached nothing look identical, so the
+    # inputs are counted. Zero chains or zero references is a failure.
+    if not chains:
+        failures.append("  resolved no chains — the check reached nothing")
+    if references == 0:
+        failures.append(
+            "  found no cross-file prose ID references — either the pattern "
+            "stopped matching or every reference was removed; both need "
+            "looking at rather than reading as a pass"
+        )
+
+    return failures
+
+
+# ---------------------------------------------------------------------------
 # Test registry
 # ---------------------------------------------------------------------------
 
@@ -1436,6 +1526,9 @@ CHECKS = [
     {"id": "SYS-10", "spec": "SAIT-SMK-SYS-10-001A",
      "title": "A quoted DEPENDS ON in prose is not a declaration",
      "fn": check_sys_10},
+    {"id": "SYS-11", "spec": "SAIT-SMK-SYS-11-001A",
+     "title": "Prose ID references resolve in every chain carrying the file",
+     "fn": check_sys_11},
     {"id": "ADR-01", "spec": "SAIT-SMK-ADR-01-001A",
      "title": "ADR frontmatter matches the ADR-010 schema", "fn": check_adr_01},
     {"id": "E2E-01", "spec": "SAIT-SMK-E2E-01-001A",
