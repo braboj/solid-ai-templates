@@ -208,9 +208,13 @@ CHECKS = [
      "title": "A suppression names the rule it suppresses", "do": RUN,
      "expect": ["nonzero", "any", "zero"]},
 
+    # The rule states that this is governance rather than a pass/fail
+    # metric: it decides review eligibility, not whether the build is
+    # green. Reported, not scored -- and every template change owes a
+    # disposition here, so scoring it would fail each one on arrival.
     {"file": "base/workflow/quality-gates.md",
      "find": "'tests/*'", "title": "A change to an existing test is visible",
-     "do": RUN, "expect": ["any"], "grep": True},
+     "do": RUN, "expect": MANUAL, "grep": True},
 
     {"file": "base/workflow/quality-gates.md",
      "find": "A shipped check is a heredoc inside a fenced block",
