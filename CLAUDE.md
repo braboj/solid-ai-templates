@@ -232,7 +232,7 @@ base/ ──┬── frontend/ ──┐
 | `docs/SPEC.md` | System design, composition rules, inheritance model, precedence |
 | `templates/manifest.yaml` | Machine-readable dependency graph for all templates (single source of truth for descriptions, labels, layers) |
 | `docs/ONBOARDING.md` | Onboarding guide for new contributors |
-| `docs/PLAYBOOK.md` | Operational reference — how to add templates, run interviews, validate output |
+| `docs/PLAYBOOK.md` | Operational reference — how to add templates, run interviews, validate output |
 | `CHANGELOG.md` | Released versions and what changed in each; versions up to v2.63.0 are in the GitHub Releases (ADR-029) |
 
 #### Documentation rules
