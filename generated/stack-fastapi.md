@@ -6793,8 +6793,16 @@ SUPPRESSIONS = (
 )
 
 HASH = (".py", ".sh", ".rb", ".yml", ".yaml")
+
+# Vendored and installed code is not this project's to suppress in. Left
+# in scope it dominates the count -- an environment directory carries
+# thousands of files and hundreds of third-party suppressions, and the
+# project's own handful is invisible among them.
+SKIP = (".venv", "venv", "node_modules", "build", "dist", ".git", ".tox",
+        "vendor", "site-packages")
 files = [p for p in pathlib.Path(".").rglob("*")
-         if p.is_file() and p.suffix in (".py", ".js", ".ts", ".go", ".jsx", ".tsx")]
+         if p.is_file() and p.suffix in (".py", ".js", ".ts", ".go", ".jsx", ".tsx")
+         and not any(part in SKIP for part in p.parts)]
 print("files scanned: %d" % len(files))
 total = 0
 bare = []

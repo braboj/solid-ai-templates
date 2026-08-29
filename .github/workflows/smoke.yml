@@ -13,7 +13,11 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
+      # The conformance runner reads the tag history to reconcile a
+      # release against its changelog, so a shallow clone fails it.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -21,6 +25,10 @@ jobs:
         run: pip install pyyaml
       - name: Run smoke tests
         run: python tests/run_smoke.py
+      - name: Run the templates' own checks against this repository
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python tests/run_conformance.py
       - name: Check generated docs are up to date
         run: python tools/sync.py --check
       - name: Check generated/ files are up to date

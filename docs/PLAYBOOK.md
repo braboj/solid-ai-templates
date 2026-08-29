@@ -286,6 +286,8 @@ any entry that no longer applies.
 
 ```bash
 py tests/run_smoke.py              # structural checks — seconds
+py tests/run_conformance.py        # the templates' own checks, run here
+py tests/run_conformance.py --list # dispositions only, run nothing
 py tests/run_e2e.py                # canary test (python-lib)
 py tests/run_e2e.py --all          # all agent tests
 py tests/run_e2e.py STK-01 FMT-01  # specific tests only
@@ -295,6 +297,13 @@ py tests/run_e2e.py --dry-run      # build prompts, skip agent calls
 See `tests/CODIFICATION.md` for the ID scheme and `tests/INDEX.md` for the
 full list of specs. Requires `py -m pip install pyyaml` for the manifest
 check.
+
+`run_smoke.py` checks that the templates COMPOSE. `run_conformance.py`
+checks that this repository OBEYS them — it extracts every fenced check in
+`templates/` and either runs it here or records why it does not apply.
+Adding a fenced check to a template without a disposition in
+`tests/conformance.py` fails the run, which is what stops a new check from
+arriving unexamined. Checks reaching GitHub need `gh` authenticated.
 
 ---
 
