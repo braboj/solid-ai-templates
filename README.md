@@ -164,6 +164,8 @@ See `templates/base/core/agents.md` for structure, models, and formatting rules.
 - [Onboarding guide](docs/ONBOARDING.md)
 - [Operational playbook](docs/PLAYBOOK.md)
 - [Architecture decision records](docs/decisions/)
+- [How to contribute](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
 - [Report an issue](https://github.com/braboj/solid-ai-templates/issues)
 
 ## License
