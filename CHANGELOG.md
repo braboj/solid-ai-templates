@@ -17,6 +17,23 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- `base-quality-gates` states the form a shipped check must take: the
+  command sits in a fenced block, and prose carries the pass condition
+  beside it. A command typed into a sentence cannot be extracted, counted
+  or run, so the rule that names it is unenforceable by any tool.
+- `base-quality-gates` names the case the fence rule alone does not reach
+  — a sentence that describes an action without naming a command states
+  no check at all, and an author who wrote no command sees nothing to
+  fence.
+- `base-quality-gates` requires a tool reporting how many checks it ran to
+  report how many it could not see, and gains a check that finds a
+  command-plus-pass-condition stated outside a fence.
+- `base-quality`'s line-ending rule and `base-examples`' smoke-job rule
+  state their checks in the runnable form. The first was prose; the second
+  named no command.
+
 ### Changed
 
 - `base-docs` makes `CODE_OF_CONDUCT.md` optional. It was recommended,

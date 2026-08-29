@@ -60,6 +60,14 @@ CHECKS = [
      "title": "Risk and technical-debt identifiers stay in their owning doc",
      "do": RUN, "expect": MANUAL},
 
+    # -- base/core/examples.md ---------------------------------------------
+
+    {"file": "base/core/examples.md", "find": "example failed: $f",
+     "title": "Every example runs against a consumer install", "do": SKIP,
+     "reason": "Placeholder runner. This repository's `examples/` holds generated "
+               "context files rather than executable programs, so there is nothing "
+               "to execute."},
+
     # -- base/core/git.md -------------------------------------------------
 
     {"file": "base/core/git.md", "find": "<regenerate-command>",
@@ -128,6 +136,10 @@ CHECKS = [
      "reason": "This repository has no `scripts/` directory. Its permanent "
                "tooling lives in `tools/`, which the rule's own text scopes "
                "out. Re-examine if `scripts/` is ever added."},
+
+    {"file": "base/core/quality.md", "find": "i/crlf\" { print }",
+     "title": "No committed file carries CRLF", "do": RUN,
+     "expect": SILENT},
 
     # -- base/core/review.md ----------------------------------------------
 
@@ -208,6 +220,11 @@ CHECKS = [
     {"file": "base/workflow/quality-gates.md", "find": "blocks, risky = 0, []",
      "title": "A shipped check is safe to run where it is documented",
      "do": RUN, "expect": MANUAL},
+
+    {"file": "base/workflow/quality-gates.md",
+     "find": "checks stated outside a fence",
+     "title": "Every stated check is in a form a tool can extract",
+     "do": RUN, "expect": ["nonzero", "zero"]},
 
     # -- base/workflow/scope.md -------------------------------------------
 

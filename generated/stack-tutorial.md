@@ -656,8 +656,16 @@ for name in tracked:
   guarantee that no CRLF is committed, covering files written by any
   tool, editor, or contributor without an EditorConfig plugin.
   EditorConfig normalizes editor-side only; `.gitattributes` enforces
-  the LF rule at commit and checkout. Verify with `git ls-files --eol`
-  — no committed file reports `i/crlf`
+  the LF rule at commit and checkout
+
+```bash
+git ls-files --eol | awk '$1 == "i/crlf" { print }'
+```
+
+  Pass condition: the command prints nothing. Every committed text blob
+  reports `i/lf` on the index side, whatever the checkout convention
+  is; a path reporting `i/crlf` was committed with CRLF, and no editor
+  setting undoes that after the fact
 - Prefer self-documenting code — if a comment feels necessary, treat it as a
   signal that the code needs restructuring before the comment is added
 - Add comments only where the intent cannot be expressed in code
@@ -6165,6 +6173,21 @@ self-check it.
   tooling file the generated project never receives. The rule and its
   check MUST travel together, so every artifact generated from the
   template inherits both
+- The command MUST sit in a fenced block. The fence is what makes a
+  check extractable: a tool can count the checks a document states, run
+  them, and reconcile the two counts, and none of that reaches a command
+  typed into a sentence. Prose introduces the check and carries its pass
+  condition beside the fence; the runnable form lives inside one
+- Naming no command states no check. A sentence describing an action
+  ("install the project, then execute every file under the examples
+  directory") reads as a check and is not one, and the fence rule does
+  not reach it because there is nothing to move. An author who has
+  written no command sees nothing to fence, so write the command first
+- A tool reporting how many checks it ran MUST also report how many it
+  could not see. A count taken over the parseable form alone is complete
+  only by assumption, and that assumption is what fails: a green run
+  over every extractable check coexists with a violated rule whose check
+  was typed in prose, and nothing in the run says so
 - A constraint that is inherently subjective (imperative tone, "no
   explanatory prose", heading-case judgment) stays declarative and
   relies on review. Do NOT invent a brittle check to satisfy this rule
@@ -6178,6 +6201,67 @@ self-check it.
   and the test that catches it are stated once, in
   `quality-cross-validation` — it applies to every check a project
   carries, not only to the ones a gate runs
+
+The unrunnable form is mechanically findable. A verification phrase and a
+backticked command on one line of running prose, with no fence beside it
+to hold the runnable form, is a check no tool can extract:
+
+```bash
+py - <<'EOF'
+import io, os, re
+
+# Point ROOTS at the directories holding the project's rule documents --
+# templates, context files, contributor guides. Anywhere a rule may state
+# a check.
+ROOTS = ["templates"]
+
+# A stated check pairs a verification phrase with a command. This finds
+# that pair in running prose: outside a fence, not inside a table cell,
+# and with no fence within five lines to hold the runnable form.
+PHRASE = re.compile(
+    r"verify with|pass condition|check with|confirm with", re.IGNORECASE)
+COMMAND = re.compile(r"[`][^`]+[`]")
+WINDOW = 5
+
+# Written rather than spelled literally: three backticks at the start of a
+# line would close the block this check is quoted inside. Fenced lines are
+# skipped, so the check does not match its own source either way.
+FENCE = "`" * 3
+
+inspected, findings = 0, []
+for root in ROOTS:
+    for parent, _, names in os.walk(root):
+        for name in sorted(names):
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(parent, name)
+            lines = io.open(path, encoding="utf-8").read().splitlines()
+            marks = [n for n, line in enumerate(lines, 1)
+                     if line.lstrip().startswith(FENCE)]
+            fenced = False
+            for number, line in enumerate(lines, 1):
+                if line.lstrip().startswith(FENCE):
+                    fenced = not fenced
+                    continue
+                if fenced or line.lstrip().startswith("|"):
+                    continue
+                inspected += 1
+                if not (PHRASE.search(line) and COMMAND.search(line)):
+                    continue
+                near = min([abs(m - number) for m in marks] or [WINDOW + 1])
+                if near > WINDOW:
+                    findings.append("%s:%d %s" % (path, number, line.strip()))
+
+print("prose lines inspected: %d" % inspected)
+print("checks stated outside a fence: %d" % len(findings))
+for finding in findings:
+    print("  " + finding)
+EOF
+```
+
+Pass condition: the inspected count is above zero and the finding count is
+zero. An inspected count of zero means `ROOTS` named nothing that exists,
+which is the check reaching no input rather than a clean tree.
 
 A rule states intent; its paired check is what makes the intent hold.
 
