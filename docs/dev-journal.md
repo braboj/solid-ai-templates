@@ -4658,3 +4658,89 @@ which is a decision rather than work. #1262, on which audit pass owns the
 journal entry when a session runs the checklist twice, was left out of
 scope and is still open -- this session ran the audit once, so the question
 did not arise.
+
+## 2026-08-29 -- The rule it broke was one it ships
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**The session released the two pull requests held for review, cut v2.64.0,
+and violated a rule the release itself carries.** #1269 and #1270 had been
+open since the previous session, the first held deliberately because
+`SECURITY.md` makes commitments on the maintainer's behalf. Three of those
+were the maintainer's to make and all three were answered: enable GitHub
+private vulnerability reporting, keep the 5-business-day acknowledgement
+window, and settle `CODE_OF_CONDUCT.md` by discussion rather than by
+default. Private reporting is now enabled, so the advisory link the file
+names resolves instead of returning 404.
+
+**Merging the base of a stack with a delete-branch flag closed the pull
+request stacked on it.** #1270 targeted #1269's branch. `gh pr merge 1269
+--squash --delete-branch` deleted that branch as a separate step from the
+merge, and GitHub closed #1270 rather than retargeting it. Neither repair
+was available on its own: reopening a pull request requires its base ref to
+exist, and retargeting requires the pull request to be open. Recovery was to
+recreate the base ref at a commit still reachable from the stacked branch,
+reopen, retarget to `main`, then delete the ref again -- no force-push, no
+lost review history, and the pull request kept its number and its ADR.
+
+**`base-git` already forbids exactly this, in a section named `Merging a
+stack`.** It states the rule -- MUST NOT pass a delete-branch flag while any
+pull request still targets the branch -- and it states the recovery, which
+matches step for step what was improvised. The template resolves into all 17
+chains, this repository's own included. So the failure was not a missing
+rule, and not a rule that had to be discovered by being broken: it was a
+rule present, shipped, and unread at the moment it applied. Every earlier
+instance this milestone found was an absence -- no `SECURITY.md`, no
+`CHANGELOG.md`, no `.gitattributes`. This one is the inverse and it is worse,
+because nothing about the repository's state was wrong.
+
+**The check that exists for it cannot fail.** It runs `gh api
+repos/<owner>/<repo> --jq '.delete_branch_on_merge'` and passes on "the
+command prints the setting"; `true` and `false` both print, so no
+configuration is a finding. The conformance runner skips it besides, its
+disposition recorded as reported by the platform settings audit rather than
+by a per-tree check. And the setting here is `true` -- which the rule
+describes as the path that retargets the dependent pull request. That is
+true of automatic deletion only: passing the flag explicitly still takes the
+unsafe path, so a reader who runs the check, sees `true` and types the flag
+anyway loses the pull request having followed the check. Filed as #1279, and
+deliberately not fixed in isolation: it is the same question #1274 and #1260
+ask about what a shipped check must assert, and answering it for one check
+leaves the class.
+
+**v2.64.0 is the first release this project cut with a changelog.** The
+procedure's new step held: `Unreleased` was cut into `[2.64.0] - 2026-08-29`
+in its own pull request, #1276, which merged before the tag so the tagged
+tree names its own release. The changelog-completeness check reported 12
+commits against 7 entries, and the gap is the point -- three of the twelve
+touch a template and the other nine touch only this repository's own files,
+which a consuming project never receives. The tag is annotated at the
+changelog commit rather than at `main`, the release title is the bare
+version, and the milestone closed at 7 of 7.
+
+**`CODE_OF_CONDUCT.md` moved from SHOULD to MAY.** The rule had been a SHOULD,
+which under this project's RFC 2119 table obliges every consuming project
+that declines the file to record a justification -- for a document whose
+absence degrades nothing operational, where a project without one still has
+a disclosure route and a contribution path. Three options were weighed:
+carry the file, record a deviation in an ADR, or change the keyword. The ADR
+was the tempting one and the worst: it would have had this repository
+decline a SHOULD on grounds any consumer could recite verbatim, demoting the
+rule to MAY in practice while leaving it written as SHOULD. Changing the
+keyword says the same thing honestly and costs one line. #1147 is discharged
+with nothing recorded, because MAY leaves nothing to record.
+
+**A milestone was created to keep the release gate honest, not to plan a
+cut.** #1277 merged after the v2.64.0 tag, so it sat unreleased and
+unmilestoned, which is precisely what the milestone-coverage check reports
+at the next cut. `v2.65 -- The strength a rule claims and the work it
+obliges` now carries it, and the check re-run against v2.65 is clean at one
+pull request. The theme is provisional and was named from two issues rather
+than from a groom; the groom still has to happen before the cut is scoped.
+
+**What is left.** #1279 joins #1273 and #1274 as findings this repository
+made about itself and has not yet fixed. #1262 -- which audit pass owns the
+journal entry when a session runs the checklist twice -- did not arise
+again: the release wrote no entry, the audit ran once afterwards, and this
+entry is written last, after the items that filed #1279 and created the
+milestone it names.
