@@ -17,6 +17,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.65.0] - 2026-08-29
+
 ### Added
 
 - `base-quality-gates` states the form a shipped check must take: the
