@@ -17,6 +17,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.64.0] - 2026-08-29
+
 ### Added
 
 - `base-quality` names the failure where a check matches its own source.
