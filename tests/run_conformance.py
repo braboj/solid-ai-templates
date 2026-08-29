@@ -159,6 +159,15 @@ def verdict(entry, code, out):
     return []
 
 
+def passed(result):
+    """Render a passing check, carrying the output a manual one produced."""
+    if not result["output"]:
+        return ["### %s  %s" % (result["status"], result["id"]), ""]
+    return (["### %s  %s — %s" % (result["status"], result["id"],
+                                  result["title"]), ""]
+            + ["```"] + result["output"] + ["```", ""])
+
+
 def main():
     started_at = datetime.datetime.now()
     args = sys.argv[1:]
@@ -254,6 +263,12 @@ def main():
                 continue
 
             failures = verdict(entry, code, out)
+
+            # A manual check has no automatic verdict, so its output IS the
+            # result. Carry it to the log and the report, or the check runs
+            # and tells nobody what it saw.
+            reported = out if entry.get("expect") == MANUAL else []
+
             if failures:
                 print("  %s  %s" % (FAIL, title))
                 print("        %s" % where)
@@ -262,10 +277,13 @@ def main():
                 results[FAIL] += 1
             else:
                 print("  %s  %s" % (PASS, title))
+                for line in reported:
+                    print("        %s" % line)
                 results[PASS] += 1
             run_results.append({"id": where, "title": title,
                                 "status": FAIL if failures else PASS,
-                                "failures": failures, "error": ""})
+                                "failures": failures, "error": "",
+                                "output": reported})
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
 
@@ -290,6 +308,7 @@ def main():
         SKIPPED: lambda r: ["### %s  %s — %s" % (r["status"], r["id"],
                                                  r["title"]), "",
                             r["error"], ""],
+        PASS: passed,
     })
 
     sys.exit(1 if results[FAIL] or results[ERR] else 0)
