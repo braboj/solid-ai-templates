@@ -234,6 +234,8 @@ base/ ──┬── frontend/ ──┐
 | `docs/ONBOARDING.md` | Onboarding guide for new contributors |
 | `docs/PLAYBOOK.md` | Operational reference — how to add templates, run interviews, validate output |
 | `CHANGELOG.md` | Released versions and what changed in each; versions up to v2.63.0 are in the GitHub Releases (ADR-029) |
+| `SECURITY.md` | Private disclosure route, supported versions, scope, acknowledgement window |
+| `CONTRIBUTING.md` | What a change is checked against — gates, manifest duty, authoring rules, branch and commit form |
 
 #### Documentation rules
 
