@@ -407,17 +407,43 @@ Rules:
 - MUST read which of the two paths the repository actually takes before
   merging a stack. It is a repository setting, not a property of the
   merge command, so the command a maintainer types looks identical either
-  way and the safe path is only available where the setting is on:
+  way, and the safe path is only available where the setting is on. A
+  setting that is off is the finding, not the reading:
 
 ```bash
-gh api repos/<owner>/<repo> --jq '.delete_branch_on_merge'
+py - <<'EOF'
+import json, subprocess
+
+# Only the automatic path is safe: it retargets a dependent pull request
+# as it removes the branch. Where the setting is off nothing deletes a
+# merged head branch, so every deletion is the manual kind, which closes
+# the dependent instead of moving it.
+raw = subprocess.run(["gh", "repo", "view", "--json", "deleteBranchOnMerge"],
+                     capture_output=True, text=True).stdout
+settings = json.loads(raw or "{}")
+
+print("repository settings read: %d" % len(settings))
+
+unsafe = [name for name, value in settings.items() if value is not True]
+print("settings leaving no safe deletion path: %d" % len(unsafe))
+for name in unsafe:
+    print("  %s is %r -- nothing deletes a merged head branch, so every "
+          "deletion is the manual kind, which closes any pull request "
+          "targeting it" % (name, settings[name]))
+EOF
 ```
 
-  Pass condition: the command prints the setting for the named
-  repository. `true` means the merge itself deletes the head branch and
-  retargets the dependent PR. `false` means nothing deletes it, the
-  branch survives the merge, and any later deletion is the separate step
-  that closes the dependent PR permanently — so retarget first
+  Pass condition: the first count is above zero, proving the settings
+  were read rather than the command failing quietly, and the second is
+  zero. Reading the setting is not by itself a check — both values print,
+  so on the older form no configuration was ever a finding
+- The setting licenses nothing. `true` describes what an *automatic*
+  deletion does. Passing a delete-branch flag explicitly takes the manual
+  path on a `true` repository exactly as it does on a `false` one, and
+  closes the dependent either way — measured here, by losing a pull
+  request that way on a repository configured `true`. A maintainer who
+  reads the setting, sees `true` and types the flag has followed the
+  reading and lost the pull request
 - To recover: recreate the deleted ref from the base branch, reopen the
   PR, retarget it, delete the ref again, then update the branch
 
