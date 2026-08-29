@@ -198,6 +198,10 @@ base/ ──┬── frontend/ ──┐
 - A mechanically-checkable output constraint MUST name its
   agent-runnable check (command + pass condition); subjective
   constraints stay declarative (see `quality-gates-pair-check`)
+- A shipped check states its command in a fenced block, with the pass
+  condition in prose beside it — a command typed into a sentence cannot
+  be extracted, counted or run. A sentence naming no command states no
+  check at all (ADR-031)
 - Never name another file's section ID in running prose unless that file
   resolves into every chain carrying yours — state the substance inline
   instead; SYS-11 checks it per chain (see SPEC.md "Naming another file's
