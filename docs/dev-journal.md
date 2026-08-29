@@ -4555,3 +4555,106 @@ README.md, docs/ONBOARDING.md or templates/manifest.yaml -- no command,
 prerequisite or template registration changed across either cut -- and that
 CLAUDE.md 6.3 and the rewritten PLAYBOOK step 7 now agree on when the
 journal is written.
+
+---
+
+## 2026-08-29 -- The rules turned on their author
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**The session groomed the backlog, scoped v2.64 from what the groom found,
+and shipped five of its seven issues.** No cut was pre-scoped going in --
+v2.62 and v2.63 had exhausted both clusters the v2.62 groom produced -- so
+the PLAYBOOK's groom procedure ran first and the theme fell out of it
+rather than being chosen: this repository is a consumer of its own base
+tier, and nothing had ever run the rules it publishes against it.
+
+**Key changes.** `base-quality` gained the self-match failure and its test,
+and its comment-layout check stopped flagging a comment placed first inside
+a block or a bracketed literal. `base-docs` settled whether generated
+release notes discharge the `CHANGELOG.md` requirement -- they do not --
+and gained the clause for a project adopting the file after it has already
+published versions. `base-git` gained a changelog-completeness check and
+now names the changelog in both release sequences. This repository's own
+comment layout came into conformance in 29 places, and it carries a
+`CHANGELOG.md` for the first time across 65 tags.
+
+**PRs merged:** #1264, #1265, #1266, #1268 for the cut; #1271 and #1272
+from the wrap-up audit. **PRs open and deliberately unmerged:** #1269,
+which needs the owner's word on a disclosure route, an acknowledgement
+window and whether to carry a code of conduct, and #1270, stacked on it so
+the conformance runner lands green.
+
+**Issues closed:** #1245, #1233, #1260, #1257, #1254. **Issues created:**
+#1273 and #1274, both from the audit. **Decisions:** ADR-029 on the
+changelog, merged; ADR-030 on running the shipped checks here, waiting on
+#1270.
+
+**The groom is what made the cut coherent, and one measurement changed the
+plan.** #1233 was filed as 31 comment-layout violations. Re-measured, 31
+reproduced but only 29 were real -- the other two were #1245's
+false-positive shape, present in this tree. So #1245 had to land first;
+applied in the other order the conformance fix would have inserted blank
+lines after `if val == "":` and `for e in entries:`, moving two correct
+comments into the shape the rule forbids everywhere else. Two issues that
+looked independent were strictly ordered, and only measuring showed it.
+
+**The same measurement nearly went wrong in the other direction.** A first
+pass at classifying #1245's false positives treated any trailing comma as
+the same shape and reported 11. Nine of those were real -- the `],` then
+comment shape that #1233 itself quotes as its commonest true positive. An
+exemption written against trailing punctuation rather than an opening
+bracket would have absorbed nine findings silently. The rule that landed
+therefore says to constrain by the pattern's position, not its
+neighbourhood.
+
+**Lesson: an extraction that under-counts is indistinguishable from a clean
+one.** Measuring the corpus of embedded checks for #1258, the first run
+anchored its fence pattern to column 0 and missed every indented block --
+32 where the real number is 44, a 26% shortfall. It produced no symptom: a
+plausible total, a plausible per-file table, and a correct top entry. It
+was caught only because a second extraction for a different purpose
+disagreed about one file. So #1258's acceptance criterion was strengthened
+before it was implemented: reporting how many checks you extracted is not
+enough, because the wrong run reports its count with equal confidence. The
+runner now parses fenced blocks in every language and reconciles the
+runnable subset against that wider total.
+
+**Lesson: a check whose unit is finer than its rule's unit reports the
+wrong thing at full confidence.** The changelog rule bounds an entry at 40
+words and its shipped check measured physical lines. Against the first
+changelog ever written to that rule -- this repository's -- it reported
+`entries over the limit: 0` while three entries ran to 45, 41 and 42 words.
+Any file wrapped to any column defeats it. The unit is now the entry plus
+its continuation lines.
+
+**The conformance runner earned its place on its first run.** The
+bare-suppression check in `base-quality-gates` had no exclusion list, so it
+walked `.venv`: 3586 files, 467 suppressions, 80 of them bare, essentially
+all third-party. Its sibling in `base-quality` had excluded those
+directories all along. Scoped, this repository scans 10 files with one
+suppression and none bare.
+
+**And then the audit found the fourth instance of the pattern the runner
+was built to end.** `base-quality` requires a `.gitattributes` and this
+repository has none, which is why a wrap-up edit to `CLAUDE.md` could
+convert the whole file to CRLF -- 451 lines rewritten for a 7-line change,
+plus a stray doubled CR -- and pass review, CI, smoke, sync and the
+redundancy audit. It was the only text blob in the repository with CRLF.
+#1272 repaired the file; #1273 tracks the missing `.gitattributes`.
+
+**The reason the runner missed it is the more interesting half.** It
+extracts fenced blocks, and `base-quality` states the line-ending check
+inline: "Verify with `git ls-files --eol` -- no committed file reports
+`i/crlf`". That is a command and a pass condition, which is what the
+pair-check rule asks for; it simply is not in a fence. So a green
+conformance run -- 19 passed, 0 failed -- coexisted with a violated rule on
+the same tree, which is the runner's own failure mode one level up. Filed
+as #1274. Fencing that one check would fix the instance and leave the
+class, so the issue asks which form a shipped check must take.
+
+**What is left.** v2.64 is not cut: two issues remain open behind #1269,
+which is a decision rather than work. #1262, on which audit pass owns the
+journal entry when a session runs the checklist twice, was left out of
+scope and is still open -- this session ran the audit once, so the question
+did not arise.
