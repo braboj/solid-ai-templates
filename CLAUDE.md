@@ -233,6 +233,9 @@ base/ ──┬── frontend/ ──┐
 | `templates/manifest.yaml` | Machine-readable dependency graph for all templates (single source of truth for descriptions, labels, layers) |
 | `docs/ONBOARDING.md` | Onboarding guide for new contributors |
 | `docs/PLAYBOOK.md` | Operational reference — how to add templates, run interviews, validate output |
+| `CHANGELOG.md` | Released versions and what changed in each; versions up to v2.63.0 are in the GitHub Releases (ADR-029) |
+| `SECURITY.md` | Private disclosure route, supported versions, scope, acknowledgement window |
+| `CONTRIBUTING.md` | What a change is checked against — gates, manifest duty, authoring rules, branch and commit form |
 
 #### Documentation rules
 
@@ -248,6 +251,11 @@ base/ ──┬── frontend/ ──┐
   - `docs/PLAYBOOK.md` — if the workflow for generating or
     validating changes
   - `docs/ONBOARDING.md` — if prerequisites or first steps change
+  - `CHANGELOG.md` — add an `Unreleased` entry for any change a
+    consuming project would notice, in the same PR that makes it. A
+    change needing no entry says so in the PR body rather than staying
+    silent; a template change almost always needs one, and a change to
+    this repo's own tooling or tests usually does not
 - Do not duplicate content across documents — cross-reference
   instead
 - Write in present tense — past or future tense indicates
