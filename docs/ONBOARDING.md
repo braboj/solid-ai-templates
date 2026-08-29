@@ -25,9 +25,13 @@ Read `docs/SPEC.md` for the full composition model before contributing.
 
 - Git
 - A Markdown editor (any)
-- Python 3.x — for running the structural smoke tests
-- GitHub CLI (`gh`) — for the issue, pull-request and release steps
-  in `docs/PLAYBOOK.md`
+- Python 3.x — for running the structural smoke tests and the
+  conformance runner
+- GitHub CLI (`gh`), authenticated — for the issue, pull-request and
+  release steps in `docs/PLAYBOOK.md`, and for the conformance checks
+  that read milestones, labels and workflow runs. Without it those
+  checks fail rather than skip, since a check that cannot reach its
+  subject has not verified it
 - An AI agent for validation (Claude Code recommended) — for E2E tests
 
 ## First steps
