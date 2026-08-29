@@ -50,9 +50,13 @@ kebab-case (`dev-journal.md`). This is intentional, not drift.
   `CONTRIBUTING.md`. What makes it required is the issue tracker or pull
   requests being open to people without commit rights, not the repository
   being public
-- `CODE_OF_CONDUCT.md` SHOULD accompany a public interaction surface —
+- `CODE_OF_CONDUCT.md` MAY accompany a public interaction surface —
   issues, discussions. It is a governance choice rather than a safety
-  one, which is why it is recommended and the other two are required
+  one, and a project without it still has a disclosure route and a
+  contribution path, which is not true of the two above it. Declining
+  it owes no recorded justification. A project adopting it names who
+  enforces it, since a code of conduct nobody enforces is a commitment
+  the project has not met
 - A private repository with no outside contributors needs none of the
   three
 - `SECURITY.md` names a private disclosure route and the versions that
