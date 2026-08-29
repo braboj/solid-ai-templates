@@ -656,8 +656,16 @@ for name in tracked:
   guarantee that no CRLF is committed, covering files written by any
   tool, editor, or contributor without an EditorConfig plugin.
   EditorConfig normalizes editor-side only; `.gitattributes` enforces
-  the LF rule at commit and checkout. Verify with `git ls-files --eol`
-  — no committed file reports `i/crlf`
+  the LF rule at commit and checkout
+
+```bash
+git ls-files --eol | awk '$1 == "i/crlf" { print }'
+```
+
+  Pass condition: the command prints nothing. Every committed text blob
+  reports `i/lf` on the index side, whatever the checkout convention
+  is; a path reporting `i/crlf` was committed with CRLF, and no editor
+  setting undoes that after the fact
 - Prefer self-documenting code — if a comment feels necessary, treat it as a
   signal that the code needs restructuring before the comment is added
 - Add comments only where the intent cannot be expressed in code
@@ -4918,9 +4926,24 @@ exception, it has skipped the seam.
   NOT be able to block a merge by being slow or down
 - That leg MUST still be watched. A non-blocking leg left permanently
   red is a deleted example with extra steps
-- Check: install the project alone, then execute every file under
-  `examples/`. Pass condition — the gating leg covers at least one file
-  and every file it runs exits zero
+- The check runs against an install of the project alone, with no dev,
+  test or optional extras present:
+
+```bash
+# Replace <run> with the project's own way of executing one example
+# file: python "$f", node "$f", go run "$f".
+count=0
+for f in examples/*; do
+  count=$((count + 1))
+  <run> "$f" || { echo "example failed: $f"; exit 1; }
+done
+echo "examples executed: $count"
+```
+
+  Pass condition: the loop exits zero, and the count it prints is at
+  least one. A count of zero means the glob matched nothing, so the leg
+  ran no example and reported success -- report what was inspected, not
+  only what failed
 
 
 <!-- templates/stack/nodejs-lib.md -->

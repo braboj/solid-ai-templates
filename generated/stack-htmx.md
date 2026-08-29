@@ -656,8 +656,16 @@ for name in tracked:
   guarantee that no CRLF is committed, covering files written by any
   tool, editor, or contributor without an EditorConfig plugin.
   EditorConfig normalizes editor-side only; `.gitattributes` enforces
-  the LF rule at commit and checkout. Verify with `git ls-files --eol`
-  — no committed file reports `i/crlf`
+  the LF rule at commit and checkout
+
+```bash
+git ls-files --eol | awk '$1 == "i/crlf" { print }'
+```
+
+  Pass condition: the command prints nothing. Every committed text blob
+  reports `i/lf` on the index side, whatever the checkout convention
+  is; a path reporting `i/crlf` was committed with CRLF, and no editor
+  setting undoes that after the fact
 - Prefer self-documenting code — if a comment feels necessary, treat it as a
   signal that the code needs restructuring before the comment is added
 - Add comments only where the intent cannot be expressed in code
