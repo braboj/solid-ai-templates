@@ -4744,3 +4744,101 @@ journal entry when a session runs the checklist twice -- did not arise
 again: the release wrote no entry, the audit ran once afterwards, and this
 entry is written last, after the items that filed #1279 and created the
 milestone it names.
+
+## 2026-08-29 -- The check that could not fail
+
+**Tool:** Claude Code (Opus 5 [1M]).
+
+**The session groomed the backlog, scoped v2.65 from the cluster the groom
+found, shipped it, and cut the release.** Going in, `v2.65` existed as a
+milestone holding one closed issue and one open one, themed from those two
+rather than from a groom. The groom changed the theme. Three issues -- #1274,
+#1279 and #1273 -- turned out to be the same finding from three directions,
+and two of them said so in their own bodies: #1279 recorded that it "belongs
+with #1274 rather than being fixed alone". The milestone was retitled to what
+the groom actually produced, `A rule is worth what its check can establish`,
+and #1277 fitted it in retrospect -- a SHOULD whose check could not tell a
+recorded decision from neglect.
+
+**Grooming moved a claim, which is the point of grooming.** #1274 was filed
+as "the runner cannot see a check stated inline", naming one instance. A scan
+for a verification phrase paired with a backticked command outside a fence
+returned five candidates, of which three were not defects: two were
+pass-condition prose sitting directly under a fence the runner already reads,
+which is the intended form, and one was a table row auditing which release
+steps carry a pass condition. The two real ones were *different shapes*.
+`base-quality`'s line-ending rule stated a real command in prose.
+`base-examples`' smoke-job rule stated `Check: install the project alone,
+then execute every file under examples/` -- where the command is prose, so
+there was nothing to move into a fence at all. That second shape is why
+"fence that one check" could never have closed the class, and it is what the
+issue as filed did not reach.
+
+**Key changes.** `base-quality-gates` now states the form a shipped check
+must take: the command sits in a fence, prose carries the pass condition
+beside it, a sentence naming no command states no check, and a tool
+reporting how many checks it ran must report how many it could not see. It
+carries its own check for the last part. `base-git`'s delete-branch check
+stopped printing a setting and started asserting one -- its old pass
+condition was "the command prints the setting", which both values satisfy,
+so no configuration was ever a finding. `base-git` also now says that the
+setting licenses nothing: `true` describes what an automatic deletion does,
+and passing the flag explicitly takes the manual path either way, which is
+how #1270 was lost during the previous session.
+
+**The repository stopped violating a fourth rule it ships.** `base-quality`
+requires a `.gitattributes` and there was none, which is how a script
+rewrote `CLAUDE.md` to CRLF in v2.64 -- 451 lines for a seven-line change,
+past review, CI, smoke, sync and the redundancy audit. The file is committed
+with `* text=auto eol=lf`; `git add --renormalize .` afterwards changed no
+path but the new file itself. It earned its place within the hour: `sync.py`
+wrote CRLF working copies on the very next branch and Git normalised them to
+LF on `add`.
+
+**CI caught the branch with the branch's own rule, and the fix was two
+levels deep.** The `A change to an existing test is visible` check fired on
+`M tests/conformance.py`. That is the check working -- the file was modified,
+not added -- but its disposition *scored* it, while the rule it belongs to
+says in its own text that it is "governance, not a new pass/fail metric".
+Since `CLAUDE.md` 6.2 obliges a disposition edit for every new fenced block,
+every conforming template change from then on would have failed it. Moving it
+to the runner's `manual` disposition looked like the fix and was not: the
+runner reported manual output nowhere, so the check would have run, seen the
+modified file, and told nobody -- while its own docstring claimed the
+operator reads that output. Both halves were fixed, and the reusable rule
+behind them was filed as #1287, because it landed only in this repository's
+runner.
+
+**The release gate could not read three of its five commits.** The
+milestone-coverage check resolves every `(#N)` in a commit subject as a pull
+request. Three subjects carried issue numbers instead, because the merges
+passed `gh pr merge --subject`, which replaces the title and suppresses the
+number GitHub would otherwise append. `CLAUDE.md` puts the issue number in
+the pull request title, so the intended subject carries both, and v2.64 has
+one that does. Coverage was verified by hand -- it was complete -- and the
+gate's defect filed as #1285. The check printed "pull requests merged since:
+5" while reading two of them, which is the same shape as everything else
+this cut is about.
+
+**v2.65.0 shipped** with four issues closed, four content pull requests and
+the changelog cut. The tag is annotated at the changelog commit, the title is
+the bare version, the milestone closed at 4 of 4, and the tag guard passed.
+Conformance went from 44 registered blocks to 47 and from 19 checks run to
+22, because removing a placeholder from the delete-branch check let it run
+here for the first time.
+
+**ADR-031 records the decision rather than only the rule.** ADR-030 had
+already decided that the runner reconciles the runnable subset against every
+fenced block, because an extraction that under-counts looks identical to a
+clean one -- but that reconciliation is bounded by the fence and cannot
+report a check it has no way to count. The rejected alternative is the half
+worth keeping: parsing inline prose is more faithful to what authors write,
+and it trades a countable gap for an uncountable one.
+
+**What is left.** #1285 and #1287 are this session's own findings about
+itself, unfixed, joining a pattern now four cuts old. No cut is pre-scoped:
+the groom consumed the cluster it found, and the next one starts from the
+unmilestoned set again. #1262 -- which audit pass owns the entry when a
+session runs the checklist twice -- did not arise: the release wrote no
+entry, the audit ran once, and this entry is written last, after the items
+that filed #1285, #1287 and ADR-031.
