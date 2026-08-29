@@ -17,6 +17,14 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Changed
+
+- `base-docs` makes `CODE_OF_CONDUCT.md` optional. It was recommended,
+  which obliged a project declining it to record a justification; the
+  file governs conduct rather than safety, and a project without it
+  still has a disclosure route and a contribution path. A project
+  adopting it now names who enforces it.
+
 ## [2.64.0] - 2026-08-29
 
 ### Added
