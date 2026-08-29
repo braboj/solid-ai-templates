@@ -36,6 +36,15 @@ alters no template carries no entry.
 
 ### Changed
 
+- `base-git`'s delete-branch check asserts the configuration instead of
+  printing it. The old pass condition was "the command prints the
+  setting", which both values satisfy, so no configuration was a finding;
+  a repository where nothing deletes a merged head branch now fails it,
+  and so does a command that returns nothing.
+- `base-git` states that the setting licenses nothing. `true` describes
+  what an automatic deletion does, and passing a delete-branch flag takes
+  the manual path either way — a maintainer who reads the setting, sees
+  `true` and types the flag loses the dependent pull request.
 - `base-docs` makes `CODE_OF_CONDUCT.md` optional. It was recommended,
   which obliged a project declining it to record a justification; the
   file governs conduct rather than safety, and a project without it

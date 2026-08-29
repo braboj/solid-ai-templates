@@ -93,10 +93,10 @@ CHECKS = [
      "reason": "Runs only during an unresolved merge conflict, against the "
                "conflicting path."},
 
-    {"file": "base/core/git.md", "find": "delete_branch_on_merge",
-     "title": "Merged branches are deleted automatically", "do": SKIP,
-     "reason": "Placeholder owner/repo. Reported by the platform settings "
-               "audit rather than by a per-tree check."},
+    {"file": "base/core/git.md",
+     "find": "settings leaving no safe deletion path",
+     "title": "A merged head branch has a safe deletion path", "do": RUN,
+     "expect": ["nonzero", "zero"]},
 
     {"file": "base/core/git.md", "find": "MILESTONE",
      "title": "Every issue closed since the previous tag carries the "
