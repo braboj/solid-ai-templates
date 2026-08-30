@@ -4842,3 +4842,72 @@ unmilestoned set again. #1262 -- which audit pass owns the entry when a
 session runs the checklist twice -- did not arise: the release wrote no
 entry, the audit ran once, and this entry is written last, after the items
 that filed #1285, #1287 and ADR-031.
+
+---
+
+## 2026-08-30 — A rename measured before it was agreed to
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**No release was cut.** The session opened on a clean tree at v2.65.0 and
+stayed there: four issues filed, one pull request merged, one issue from
+the parallel session labelled. Everything below is tracker and audit work.
+
+**The request was to file a ticket renaming `PLAYBOOK.md` to `RUNBOOK.md`,
+and to say whether I agreed.** I did not, and the disagreement was worth
+more than the ticket. All twenty sections of `docs/PLAYBOOK.md` are tasks a
+contributor chooses to perform; a runbook is what an operator reaches for
+when a running system misbehaves, and this project has no running system.
+Exactly one section, "Release a new version", is runbook-shaped -- and the
+tracker already calls it that, in #1228 and #1237, while the file
+containing it does not. So the friction was real and the proposed fix was
+aimed one level too high.
+
+**Two objections to the same filename were open at once.** #714 has asked
+since July whether the guide docs should drop SHOUT-case. Answering the
+noun now and the casing later renames the same file twice in every
+consuming project, so #1291 folds both into one spike and #714 is left open
+pending a deliberate close as its duplicate.
+
+**The cost is downstream, and nobody had measured it.** `base/core/docs.md`
+resolves into 17 of 17 chains, so its document table is inherited by every
+generated project. A survey across both accounts found 14 repositories
+carrying `docs/PLAYBOOK.md` -- this one and 13 consumers -- 13 carrying
+`ONBOARDING.md`, and only this one carrying `docs/SPEC.md`. Measured on the
+two local clones, a consumer holds around 50 references across 5 or 6
+files, so roughly three quarters of the rename lands outside this
+repository, in trees `tools/sync.py` never touches. #1292 carries that
+rollout as a checklist, and pushes one question back into #1291 that it did
+not originally ask: whether existing projects migrate at all, or only newly
+generated ones take the new name. Those two answers differ by about 650
+edits.
+
+**The first survey was wrong and looked right.** Probing each repository
+with `gh api repos/<r>/contents/<path> --jq '.name' 2>/dev/null` reported a
+hit on all sixteen, including repositories with no `docs/` directory. `gh
+api` prints the 404 body to stdout, where `2>/dev/null` cannot reach it,
+and the jq read of that error object is a non-empty string. Nothing in the
+output looked wrong -- a uniform positive is the only symptom. CLAUDE.md
+6.2 already told the agent to check the working directory on an unexpected
+negative; #1294 adds the inverse, which is to validate a uniform result
+against a control that must fail. #1296 proposes the reusable half beside
+`ai-workflow-pwd-on-negative`, the sibling rule it belongs with.
+
+**The new rule earned its keep within the hour.** Measuring where that
+upstream rule should go produced a reach of 0 of 17 chains for
+`ai-workflow.md`, which reads like an orphaned template. It is not:
+SPEC.md's "Orthogonal templates" names `ai-workflow` explicitly as opt-in
+and excluded from reachability checks. Seven other files score zero for the
+same documented reason. That was checked before it was reported, which is
+the whole content of the rule.
+
+**What is left.** #1290 arrived from the parallel session unlabelled and
+was labelled `task` + `P2` on the way past; #1293 arrived from the same
+place already labelled, and needed nothing. It makes five issues -- #1267,
+#1285, #1287, #1288, #1290 -- all saying that a check reports something
+other than what it establishes, which is a stronger cut theme than anything
+else in the backlog and still unscoped. #1295 records that the PLAYBOOK has
+no procedure for measuring downstream reach before a required document
+changes; it was filed rather than written, because the procedure is only
+needed if #1291 decides to rename. Backlog closed at 59 open issues, label
+conformance empty, smoke 26 of 26, sync clean, conformance 22 of 22.
