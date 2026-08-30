@@ -404,6 +404,13 @@ Run `py tests/run_smoke.py` before every PR. It checks:
   unexpected empty/negative, FIRST verify the working directory
   (`pwd`) — shell tool cwd persists across commands and an earlier
   `cd` may make "from the repo root" diagnostics false-negative
+- The inverse holds too: when a probe returns an unexpected *uniform*
+  positive — every repository carries the file, every case passes —
+  validate it against a control that MUST fail before believing it. A
+  failed call is not always visible in the output: `gh api` prints the
+  404 body to stdout, so `gh api <missing-path> --jq '.name'
+  2>/dev/null` yields a non-empty string and reads as a hit for every
+  input
 
 ### 6.3 End of session
 
