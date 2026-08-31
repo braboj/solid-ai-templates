@@ -28,6 +28,9 @@ alters no template carries no entry.
 - `base-testing` covers a check whose failure message names another check.
   The reference is a claim that decays: before narrowing what a check
   examines, search the suite for the module's own name.
+- `base-ai-workflow` states the inverse of its working-directory rule: a
+  probe returning a uniform positive across many inputs is validated
+  against a control that must fail, before it is believed.
 
 ### Changed
 
