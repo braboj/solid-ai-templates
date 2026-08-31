@@ -311,6 +311,39 @@ During investigative work where the conclusion depends on a
 negative result, SHOULD use absolute paths for path-based queries
 to remove ambient-directory dependence entirely.
 
+### Validate a uniform positive against a control that must fail
+[ID: ai-workflow-control-on-uniform-positive]
+
+The rule above has an inverse, and it is the quieter of the two. A
+probe run across many inputs can return a uniform POSITIVE -- every
+repository carries the file, every case passes, every name resolves --
+and nothing in the output looks wrong. An unexpected negative invites a
+second look; a clean sweep invites a report.
+
+The failure is not specific to one tool: any probe whose failure mode
+writes to the success channel reads as a hit for every input, and
+uniformity is the only symptom. Surveying which of sixteen repositories
+carried a given document, a probe asking after the file per repository
+and reading the answer as a string reported all sixteen, including
+repositories with no such directory -- the client prints its 404 body
+to standard output, where a redirect of standard error cannot reach it,
+and the field selector reads the error object as a non-empty value. The
+survey was believed and reported before a control caught it.
+
+- When a probe run across many inputs returns a uniform result, the
+  agent MUST validate it against a control input known to fail, before
+  reporting or acting on it. A control that answers the same as a real
+  input is the whole finding, and it costs one call
+- Ask the exit status rather than whether output arrived. Output is not
+  evidence that a call succeeded, and a tool that reports an error
+  loudly on a terminal often reports it into the pipe just as loudly
+- Prefer a probe whose success is a value rather than a string: fetch
+  the listing once and test membership in it, rather than asking after
+  each item and reading back whatever arrives
+- A uniform result is the signal to run the control, not proof of a
+  defect. Sixteen of sixteen is a plausible answer; it is just not one
+  a probe of unknown fidelity has established
+
 ### Survey prior art before inventing domain logic
 [ID: ai-workflow-survey-prior-art]
 
