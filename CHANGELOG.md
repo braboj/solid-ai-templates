@@ -29,8 +29,7 @@ alters no template carries no entry.
 
 - `base-quality-gates` states the form a shipped check must take: the
   command sits in a fenced block, and prose carries the pass condition
-  beside it. A command typed into a sentence cannot be extracted, counted
-  or run, so the rule that names it is unenforceable by any tool.
+  beside it. A command typed into a sentence cannot be extracted or run.
 - `base-quality-gates` names the case the fence rule alone does not reach
   — a sentence that describes an action without naming a command states
   no check at all, and an author who wrote no command sees nothing to
@@ -45,19 +44,14 @@ alters no template carries no entry.
 ### Changed
 
 - `base-git`'s delete-branch check asserts the configuration instead of
-  printing it. The old pass condition was "the command prints the
-  setting", which both values satisfy, so no configuration was a finding;
-  a repository where nothing deletes a merged head branch now fails it,
-  and so does a command that returns nothing.
-- `base-git` states that the setting licenses nothing. `true` describes
-  what an automatic deletion does, and passing a delete-branch flag takes
-  the manual path either way — a maintainer who reads the setting, sees
-  `true` and types the flag loses the dependent pull request.
+  printing it. A repository where nothing deletes a merged head branch
+  now fails it, and so does a command that returns nothing.
+- `base-git` states that the setting licenses nothing: a delete-branch
+  flag takes the manual path whatever the setting says, and deletes a head
+  branch a dependent pull request still needs.
 - `base-docs` makes `CODE_OF_CONDUCT.md` optional. It was recommended,
-  which obliged a project declining it to record a justification; the
-  file governs conduct rather than safety, and a project without it
-  still has a disclosure route and a contribution path. A project
-  adopting it now names who enforces it.
+  which obliged a project declining it to record a justification. A
+  project adopting it now names who enforces it.
 
 ## [2.64.0] - 2026-08-29
 
