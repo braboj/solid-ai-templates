@@ -25,6 +25,9 @@ alters no template carries no entry.
 - `base-git` states that the squash subject is not replaced at merge
   time. The default appends the pull request number, and a check reading
   the log resolves it back to the work and the issues it closed.
+- `base-testing` covers a check whose failure message names another check.
+  The reference is a claim that decays: before narrowing what a check
+  examines, search the suite for the module's own name.
 
 ### Changed
 
