@@ -1073,6 +1073,13 @@ remaining commits are silently lost.
 - MUST NOT mix unrelated changes on a single branch
 - MUST verify that all branch commits are accounted for before
   deleting a branch — compare the squash diff against the branch diff
+- MUST NOT replace the squash subject at merge time. The default is
+  the pull request title with its number appended, and a check
+  reading the log resolves that number back to the merged work and
+  the issues it closed. A supplied subject keeps the title and drops
+  the append, so the reference is absent from the only record such a
+  check reads — and the commit looks correct, because the half a
+  human reads is the half that survived
 - SHOULD enable "automatically delete head branches" in repository
   settings to prevent stale branches from accumulating. It fires on
   merge only — a PR closed without merging leaves its branch behind
@@ -1533,42 +1540,94 @@ previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0"],
                           **RUN).stdout.strip()
 subjects = subprocess.run(["git", "log", "--format=%s", previous + "..HEAD"],
                           **RUN).stdout
-merged = sorted({int(n) for n in re.findall(r"\(#(\d+)\)\s*$", subjects, re.M)})
+
+# A subject carries the issue number, the pull request number, or both:
+# the title convention puts the issue at the end and the squash appends
+# the pull request. Read every reference in that trailing run rather than
+# the last one alone, and assume nothing about which kind a number names.
+references = set()
+for subject in subjects.splitlines():
+    trailing = re.search(r"((?:\s*\(#\d+\))+)\s*$", subject)
+    if trailing:
+        references.update(int(n) for n in re.findall(r"\d+",
+                                                     trailing.group(1)))
+merged = sorted(references)
 print("previous tag: %s" % previous)
-print("pull requests merged since: %d" % len(merged))
+print("references in subjects since: %d" % len(merged))
 if not merged:
-    print("no pull requests found since %s; either nothing is unreleased "
+    print("no references found since %s; either nothing is unreleased "
           "or the commit subject format drifted" % previous)
-mismatched = []
-for pr in merged:
-    raw = subprocess.run(["gh", "pr", "view", str(pr), "--json",
-                          "closingIssuesReferences"], **RUN).stdout
-    if not raw.strip():
-        print("pull request %d could not be read" % pr)
+
+findings, seen = [], set()
+
+
+def covered(issue, whose):
+    """Record the milestone an issue carries, if it is not this release's."""
+    if issue in seen:
+        return
+    seen.add(issue)
+    detail = subprocess.run(["gh", "issue", "view", str(issue), "--json",
+                             "milestone"], **RUN)
+    if detail.returncode != 0:
+        findings.append("issue %d could not be read" % issue)
+        return
+    found = (json.loads(detail.stdout).get("milestone") or {}).get("title")
+    if found != MILESTONE:
+        carries = "no milestone" if found is None else "milestone %s" % found
+        findings.append("%s issue %d, which carries %s"
+                        % (whose, issue, carries))
+
+
+kinds = {"pull request": 0, "issue": 0}
+for number in merged:
+    # The issues endpoint answers for either kind and says which: a pull
+    # request carries a `pull_request` key and an issue does not. Ask it
+    # rather than sending every number to `gh pr view`, which fails on an
+    # issue and establishes nothing about the release.
+    proc = subprocess.run(
+        ["gh", "api", "repos/{owner}/{repo}/issues/%d" % number], **RUN)
+
+    # `gh api` prints an error body to stdout, so output is not evidence
+    # that the call succeeded. Ask the exit status.
+    if proc.returncode != 0:
+        findings.append("reference %d could not be read" % number)
         continue
-    for ref in json.loads(raw).get("closingIssuesReferences") or []:
-        issue = ref["number"]
-        detail = subprocess.run(["gh", "issue", "view", str(issue), "--json",
-                                 "milestone"], **RUN).stdout
-        if not detail.strip():
-            print("issue %d could not be read" % issue)
-            continue
-        found = (json.loads(detail).get("milestone") or {}).get("title")
-        if found != MILESTONE:
-            mismatched.append((pr, issue, found))
-for pr, issue, found in mismatched:
-    carries = "no milestone" if found is None else "milestone %s" % found
-    print("pull request %d closed issue %d, which carries %s"
-          % (pr, issue, carries))
+
+    if json.loads(proc.stdout).get("pull_request") is None:
+        kinds["issue"] += 1
+        covered(number, "a subject names")
+        continue
+
+    kinds["pull request"] += 1
+    raw = subprocess.run(["gh", "pr", "view", str(number), "--json",
+                          "closingIssuesReferences"], **RUN)
+    if raw.returncode != 0:
+        findings.append("pull request %d could not be read" % number)
+        continue
+    for ref in json.loads(raw.stdout).get("closingIssuesReferences") or []:
+        covered(ref["number"], "pull request %d closed" % number)
+
+print("resolved: %d pull request(s), %d issue(s)"
+      % (kinds["pull request"], kinds["issue"]))
+for finding in findings:
+    print(finding)
 EOF
 ```
 
 Pass condition: with `MILESTONE` set, the command reports the previous
-tag and the number of pull requests merged since it, then prints nothing.
-An empty result is a failure too, since no pull requests found means
-either nothing is unreleased or the commit subject format drifted. A
-deferred *open* issue correctly carries no milestone — this covers only
-issues closed by merged work sitting between two tags.
+tag, how many references it found in the subjects since, and how many of
+those resolved to a pull request and how many to an issue — then prints
+nothing. An empty result is a failure too, since no references found
+means either nothing is unreleased or the commit subject format drifted.
+A reference it cannot read is a finding rather than a silent skip: the
+gate establishes nothing about a number it did not resolve. A deferred
+*open* issue correctly carries no milestone — this covers only issues
+closed by merged work sitting between two tags.
+
+The two counts are the check reading the history this convention actually
+produces. A subject may name the issue, the pull request, or both, so a
+resolver assuming one kind reports on the subset it happens to fit and
+prints a healthy total while doing it.
 
 With `MILESTONE` left at `None` the command reports that the check does
 not apply, which is a pass and not a skip: the line is the record that a

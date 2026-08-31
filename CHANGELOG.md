@@ -22,6 +22,15 @@ alters no template carries no entry.
 - `base-quality` states how a check with no automatic verdict is wired: it
   reports what it inspected, and a governance signal is reported rather
   than scored.
+- `base-git` states that the squash subject is not replaced at merge
+  time. The default appends the pull request number, and a check reading
+  the log resolves it back to the work and the issues it closed.
+
+### Fixed
+
+- `base-git`'s milestone-coverage check resolves a reference naming an
+  issue as well as one naming a pull request, and reports which it found.
+  A reference it cannot read is now a finding rather than a silent skip.
 
 ## [2.65.0] - 2026-08-29
 
