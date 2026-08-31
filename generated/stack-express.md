@@ -90,7 +90,27 @@ that has since lifted reads exactly like a live one.
 - Maximum nesting depth of three levels — use early returns and guard clauses
   to reduce indentation rather than adding else branches
 - No boolean flag parameters — they force the caller to read the implementation
-  to understand what `true` means; use an enum or two named functions instead
+  to understand what `true` means; use an enum or two named functions instead.
+  That replacement fits a flag selecting what the code DOES; a flag selecting
+  how many RULES to apply takes the shape below instead
+- Where a flag selects how many rules to apply, replace it with an operation
+  returning the findings, each naming the rule it came from. An enum answers
+  "how strict"; the caller usually asks "which rule did this break", and a
+  setting carries no name to answer with. The names are what the caller
+  needed, and an enum is where they go to be lost
+- Pair that operation with a guard that raises when the findings are not
+  empty, so a caller who only wants to be stopped is not made to handle a
+  list to get it. The guard is one line over the first and takes the verb
+  any existing guards already use, rather than a new one — an exception
+  carries a message rather than data, and it stops at the first problem, so
+  a caller asserting which rule broke needs the findings and not the raise
+- The tell is a proposed enum member that can only be described by what it
+  permits rather than by what it does. A member documented as "allows
+  unusual values" names no set, so nothing can be asserted against it. With
+  findings instead, the strict and permissive callers both fall out — one
+  refuses a non-empty list, the other filters it by rule name — without
+  either being a mode, and the member permitting everything stops existing,
+  because nothing was checking in the first place
 - Name a pluggable tier for what it requires of the caller, not for the
   library behind it — a public enum member, CLI flag, or result
   discriminator MUST be named for the capability or requirement it

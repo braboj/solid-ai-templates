@@ -17,6 +17,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- `base-quality` separates two kinds of boolean flag. One selects what the
+  code does and takes an enum; one selects how many rules to apply and
+  takes an operation returning findings that name the rule broken.
+
 ## [2.67.0] - 2026-08-31
 
 ### Added
