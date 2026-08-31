@@ -6168,8 +6168,14 @@ import pathlib, re
 # The files that carry rules and their checks.
 ROOTS = ["templates"]
 
-FENCE = re.compile(r"^([ ]*)```")
-blocks, risky = 0, []
+# A continuation only matters where a reader copies the block and runs
+# it. The languages a check is written in are the corpus; a fenced
+# workflow or a table of output is an example, and a line ending in a
+# continuation is valid where it sits.
+CHECK_LANGUAGES = ("bash", "sh", "python", "py")
+
+FENCE = re.compile(r"^([ ]*)```(\w*)")
+blocks, inspected, risky = 0, 0, []
 for root in ROOTS:
     for path in sorted(pathlib.Path(root).rglob("*.md")):
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -6179,30 +6185,47 @@ for root in ROOTS:
             if not opened:
                 n += 1
                 continue
-            indent, n = len(opened.group(1)), n + 1
+            indent, language = len(opened.group(1)), opened.group(2)
+            n += 1
             blocks += 1
+            runnable = language in CHECK_LANGUAGES
+            inspected += 1 if runnable else 0
             while n < len(lines) and not FENCE.match(lines[n]):
                 line = lines[n]
                 body = line[indent:] if not line[:indent].strip() else line
-                if body.rstrip().endswith(chr(92)):
+                if runnable and body.rstrip().endswith(chr(92)):
                     risky.append((path, n + 1))
                 n += 1
             n += 1
 
-print("fenced blocks inspected: %d" % blocks)
+print("fenced blocks found: %d" % blocks)
+print("blocks in a check language: %d" % inspected)
 print("lines ending in a continuation: %d" % len(risky))
 for path, number in risky:
     print("%s:%d" % (path, number))
 if not blocks:
     print("no fenced blocks found; the extraction pattern drifted")
+elif not inspected:
+    print("no block is in a check language; the language filter drifted")
 EOF
 ```
 
-Pass condition: the command reports how many fenced blocks it inspected
-and how many lines end in a continuation, then lists them. A non-zero
-count is not a failure — it is the set to read against what was written.
-Zero blocks inspected is a failure, since it means the pattern drifted
-rather than the files carrying no checks.
+Pass condition: the command reports how many fenced blocks it found, how
+many of those are in a language a check is written in, and how many lines
+in that subset end in a continuation, then lists them. A non-zero
+continuation count is not a failure — it is the set to read against what
+was written. Zero on either of the first two counts is a failure: the
+first means the fence pattern drifted, the second means the language
+filter did, and neither means the files carry no checks.
+
+The two counts are separate because the narrowing is deliberate and has
+to stay visible. The check's subject is a line a reader might copy and
+run, so a fenced workflow or a table of output is not in scope and a
+backslash in one is valid where it sits — this check reported two such
+lines inside a documented `run:` step for as long as it scanned every
+language. Collapsing the two counts into one would hide the exemption,
+and an exemption nobody can see is indistinguishable from a pattern that
+quietly stopped matching.
 
 ---
 

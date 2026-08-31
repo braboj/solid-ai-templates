@@ -227,7 +227,7 @@ CHECKS = [
      "title": "A shipped rule states its check", "do": RUN,
      "expect": MANUAL},
 
-    {"file": "base/workflow/quality-gates.md", "find": "blocks, risky = 0, []",
+    {"file": "base/workflow/quality-gates.md", "find": "CHECK_LANGUAGES = (",
      "title": "A shipped check is safe to run where it is documented",
      "do": RUN, "expect": MANUAL},
 
