@@ -17,57 +17,34 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.67.0] - 2026-08-31
+
 ### Added
 
-- `base-quality` states that a check whose question is tied to a moment —
-  a release being prepared, a branch open for review — MUST detect that
-  the moment is not in progress and report that it does not apply, rather
-  than emitting a count whose pass condition assumes it is. It adds that
-  the moment is what gets detected, never the emptiness: the two coincide
-  often enough to be confused, and a count that reads zero today can read
-  one tomorrow with nothing fixed in between.
+- `base-quality` requires a check whose question is tied to a moment — a
+  release, an open branch — to detect that the moment is not in progress
+  and report that it does not apply, rather than emitting a count.
+- `base-docs` covers an observation stated as a command and its output. A
+  command ranging over `HEAD` or the working tree is falsified when the
+  record is committed; scope it to the commit the claim is about.
 
 ### Changed
 
 - `base-quality-gates` and `platform-github` state the corpus beside the
-  count in three checks that reported only a number. The test-visibility
-  check reported a bare `0`, which said neither what it read nor what it
-  found; it now reports the range total, the test-file subset and the
-  loosened count, so a range with no test changes reads differently from
-  a range the check never reached. The extraction check adds the file
-  count its found total is measured against, and the workflow-run check
-  names the commit and the number of runs instead of printing rows for
-  the reader to count.
-- `base-git` applies the moment rule to two of its own checks. The
-  release-ordering check reports that no release is in preparation when
-  the tag is already at HEAD, instead of the failure-shaped zero its pass
-  condition describes. The off-limits-path check separates three states
-  it used to collapse into one count: uncommitted work, which it names in
-  those words; no branch open, which does not apply; and a real branch,
-  which reads as before.
+  count in three checks that reported only a number. A range with no test
+  changes now reads differently from a range the check never reached.
+- `base-git` applies the moment rule to two checks. Release ordering
+  reports that no release is in preparation when the tag is at HEAD; the
+  off-limits check separates uncommitted work, no open branch, and a real
+  branch.
 - `base-docs`' register-identifier check asks whether the project declares
-  a register at all before reporting drift. A register is opt-in, so zero
-  ids means either that the convention was never adopted or that it broke,
-  and only the second is a finding; the check now reports a chapter count
-  beside the id count and names which of the two it found. Ids in use with
-  no chapter declaring them is a third state it used to miss.
+  a register before reporting drift. A register is opt-in, so zero
+  identifiers means either never adopted or broken, and only the second is
+  a finding.
 - `base-quality-gates`' continuation-safety check scans only the languages
-  a check is written in. Its subject is a line a reader might copy and run,
-  and scanning every fenced block made it report valid shell inside a
-  documented workflow example — two standing findings against something
-  the rule does not forbid. It now reports the blocks found and the subset
-  in a check language as separate counts, so the narrowing is visible
-  rather than silent.
-
-### Added
-
-- `base-docs` "Dated reports" covers an observation stated as a command
-  and its output. Where the command ranges over a moving reference —
-  `HEAD`, the working tree — committing the record changes its answer, so
-  the record and the commit that refutes it are the same commit. The
-  remedy is scoping the command to the commit or tag the claim is about;
-  no addendum is owed, because nothing about the world moved and the
-  claim was wrong when written.
+  a check is written in. Scanning every fenced block reported valid shell
+  inside a documented workflow example. The narrowed corpus is reported as
+  its own count.
 
 ## [2.66.0] - 2026-08-31
 
