@@ -305,6 +305,13 @@ Adding a fenced check to a template without a disposition in
 `tests/conformance.py` fails the run, which is what stops a new check from
 arriving unexamined. Checks reaching GitHub need `gh` authenticated.
 
+A check whose verdict is a judgement reports `REVIEW` rather than `PASS`,
+and the summary counts it as awaiting a reading. It does not fail the run
+— the exit status answers whether a verdict was reached and was negative —
+so a run ending `0 failed  12 awaiting a reading` is not a clean run until
+someone has read those twelve. Recording them as passes is what let four
+over-long changelog entries sit inside a green report for two sessions.
+
 ---
 
 ## Regenerate pre-resolved files
