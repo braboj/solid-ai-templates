@@ -51,6 +51,13 @@ alters no template carries no entry.
   and only the second is a finding; the check now reports a chapter count
   beside the id count and names which of the two it found. Ids in use with
   no chapter declaring them is a third state it used to miss.
+- `base-quality-gates`' continuation-safety check scans only the languages
+  a check is written in. Its subject is a line a reader might copy and run,
+  and scanning every fenced block made it report valid shell inside a
+  documented workflow example — two standing findings against something
+  the rule does not forbid. It now reports the blocks found and the subset
+  in a check language as separate counts, so the narrowing is visible
+  rather than silent.
 
 ## [2.66.0] - 2026-08-31
 
