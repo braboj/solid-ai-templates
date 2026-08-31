@@ -769,15 +769,25 @@ future reader has. Two fields carry it:
   in `.editorconfig` under the Markdown section, not both. A second
   copy drifts from the first and nothing says which one won
 - The exemptions travel with the declaration. Which of fenced blocks,
-  table rows, headings and unbreakable link targets are excused is
-  part of the configured rule, not a convention each author infers
-- One exemption is structural rather than configured, because the
-  line cannot be wrapped at all: a bracketed single-line directive a
-  parser reads whole, such as a template's dependency header.
-  Wrapping it changes what it means, so the check skips it wherever
-  the width came from. Write such a directive's name in prose rather
-  than its bracket form -- a parser scanning for the form finds it in
-  the sentence describing it, backticks and all
+  table rows and headings are excused is part of the configured rule,
+  not a convention each author infers
+- Two exemptions are structural rather than configured, because the
+  line cannot be wrapped at all and no configuration expresses that.
+  The first is a bracketed single-line directive a parser reads whole,
+  such as a template's dependency header. Wrapping it changes what it
+  means, so the check skips it wherever the width came from. Write
+  such a directive's name in prose rather than its bracket form -- a
+  parser scanning for the form finds it in the sentence describing it,
+  backticks and all
+- The second is an unbreakable token: a bare URL, or a Markdown link an
+  author does not break across lines. A line is exempt when such a token
+  plus its indentation does not fit the width, since no wrapping
+  shortens it. Measure the token, not the line with the token deleted:
+  the second test excuses every long line that happens to carry a link.
+  State the exemption in the check rather than leaving it a convention,
+  or the rule grants an excuse the check reports anyway -- and a report
+  whose one standing finding is the one everybody dismisses stops being
+  read
 - A project that declares no width has no rule, whatever its documents
   happen to look like. Near-total compliance kept by hand is the
   signature of an unwritten rule: it looks healthy and decays at the
@@ -787,11 +797,14 @@ future reader has. Two fields carry it:
   that. A project with no width configured fails it, because an unstated
   width is the defect and not a gap to fill with a default. A count of
   zero is a failure too: the enumeration reads the index, so a document
-  that is not staged yet is invisible to it:
+  that is not staged yet is invisible to it. The exemption narrows the
+  findings and never the corpus — every tracked file is still read, so a
+  line held up only by an unbreakable token stops being reported while an
+  over-long line of prose beside it does not:
 
   ```bash
   py - <<'EOF'
-import json, pathlib, subprocess
+import json, pathlib, re, subprocess
 
 # The width and its exemptions come from project configuration, never
 # from this check. A project that declares no width fails here, because
@@ -830,6 +843,25 @@ def is_directive(text):
             and ":" in text.split("]")[0])
 
 
+# The two tokens no wrapping shortens: a Markdown link, which an author
+# does not break across lines, and a bare URL.
+UNBREAKABLE = re.compile(r"!?\[[^\]]*\]\([^)\s]+\)|<?https?://[^\s>)]+>?")
+
+
+def is_unwrappable(text, limit):
+    """True where no wrapping brings the line under the limit.
+
+    Measure the longest unbreakable token against the width, not the line
+    with its tokens removed. The second test excuses any long line that
+    merely contains a link, because deleting the link makes the rest fit;
+    the first excuses only a line whose overflow survives every wrap.
+    """
+    indent = len(text) - len(text.lstrip())
+    longest = max((len(m.group()) for m in UNBREAKABLE.finditer(text)),
+                  default=0)
+    return indent + longest > limit
+
+
 tracked = subprocess.run(["git", "ls-files", "*.md"], capture_output=True,
                          text=True).stdout.split()
 # git ls-files reads the index, so a document not yet staged is invisible
@@ -853,7 +885,7 @@ for name in tracked:
             continue
         if is_directive(line):
             continue
-        if len(line) > width:
+        if len(line) > width and not is_unwrappable(line, width):
             print("%s:%d %d > %d (%s)" % (name, number, len(line), width, source))
   EOF
   ```
