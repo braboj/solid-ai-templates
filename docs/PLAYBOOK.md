@@ -308,9 +308,15 @@ arriving unexamined. Checks reaching GitHub need `gh` authenticated.
 A check whose verdict is a judgement reports `REVIEW` rather than `PASS`,
 and the summary counts it as awaiting a reading. It does not fail the run
 — the exit status answers whether a verdict was reached and was negative —
-so a run ending `0 failed  12 awaiting a reading` is not a clean run until
-someone has read those twelve. Recording them as passes is what let four
+so a run ending `0 failed  8 awaiting a reading` is not a clean run until
+someone has read those eight. Recording them as passes is what let four
 over-long changelog entries sit inside a green report for two sessions.
+
+A check only earns that status where nothing in its output can be decided.
+The changelog bound declares a limit and counts against it, so it is a
+scored verdict now, and each check that stays a judgement carries a
+`reason` in `tests/conformance.py` naming what about it takes a person.
+The runner refuses a judgement disposition that states none.
 
 ---
 

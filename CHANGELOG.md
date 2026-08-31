@@ -17,6 +17,13 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- `base-quality` bounds what a judgement verdict is. A threshold the
+  check declares, counted against, reaches an automatic verdict; a
+  judgement disposition records what takes a person; and a check's
+  output is reported however its verdict was reached.
+
 ## [2.68.0] - 2026-08-31
 
 ### Added
