@@ -796,10 +796,21 @@ the commit range by hand — the work the changelog existed to save.
 
 ```bash
 previous=$(git describe --tags --abbrev=0)
+if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
+  echo "HEAD is $previous; no release is in preparation, so this check does not apply"
+  exit 0
+fi
 echo "commits since $previous: $(git log --format='%s' "$previous..HEAD" | wc -l)"
 echo "entries in Unreleased: $(awk '/^## /{ n++ } n==1 && /^- /' CHANGELOG.md | wc -l)"
 git log --format='  carried: %s' "$previous..HEAD"
 ```
+
+Its moment is the release commit before the `Unreleased` section is cut,
+so it answers first whether that moment is in progress. With the tag
+already at HEAD it reports that it does not apply and stops: two zeros
+there mean no commits and an uncut section, which is what every ordinary
+day after a release looks like, and its pass condition below reads a zero
+entry count as a failure.
 
 Pass condition: the command prints both counts and lists every carried
 commit, and the operator confirms each carried commit is either represented
