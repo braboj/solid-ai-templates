@@ -386,7 +386,13 @@ quarterly.
    docs(spec): update backend layer listing
    ```
 5. Push and open a PR — one concern per PR
-6. After merge: delete the branch and pull `main`
+6. Merge with the default squash subject — `gh pr merge <number>
+   --squash`, with no `--subject`. GitHub composes that subject from
+   the title and appends the pull request number; supplying one
+   replaces both. The milestone-coverage gate reads those numbers
+   back out of the log, so a hand-typed subject removes the reference
+   it resolves, and the gate reports on the commits it can still read
+7. After merge: delete the branch and pull `main`
 
 Where a cut carries more than one pull request, every branch after the
 first goes `BEHIND`. Each merge regenerates `generated/`, so the second
