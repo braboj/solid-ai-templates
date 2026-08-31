@@ -17,6 +17,18 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Changed
+
+- `base-quality-gates` and `platform-github` state the corpus beside the
+  count in three checks that reported only a number. The test-visibility
+  check reported a bare `0`, which said neither what it read nor what it
+  found; it now reports the range total, the test-file subset and the
+  loosened count, so a range with no test changes reads differently from
+  a range the check never reached. The extraction check adds the file
+  count its found total is measured against, and the workflow-run check
+  names the commit and the number of runs instead of printing rows for
+  the reader to count.
+
 ## [2.66.0] - 2026-08-31
 
 ### Added
