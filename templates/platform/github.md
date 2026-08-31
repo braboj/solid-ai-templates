@@ -148,16 +148,22 @@ gate categories to GitHub Actions workflows and GitHub-native features.
   indistinguishable from a commit whose runs have not started:
 
 ```bash
-gh run list --commit "$(git rev-parse HEAD)" --json workflowName,conclusion
+SHA=$(git rev-parse HEAD)
+echo "commit inspected: $SHA"
+gh run list --commit "$SHA" --json workflowName,conclusion --jq '"workflow runs found: \(length)"'
+gh run list --commit "$SHA" --json workflowName,conclusion --jq '.[] | select(.conclusion != "success") | "\(.workflowName): \(.conclusion // "still running")"'
 ```
 
-  Pass condition: the command reports a row per workflow that ran on that
-  commit. An empty result means either the query was malformed or nothing
-  has run, and the command cannot tell you which — resolve that before
-  reading it either way. A poll waiting on an abbreviated SHA waits out
-  its whole budget and reports silence, which reads as a workflow that
-  never fired; a one-shot check reads as "no CI on this commit", which
-  invites calling a push good because nothing came back red
+  Pass condition: the command names the commit it inspected and how many
+  runs it found there, then lists every run that did not succeed. A found
+  count of zero means either the query was malformed or nothing has run,
+  and the command cannot tell you which — resolve that before reading it
+  either way. Printing the rows alone, as this check once did, left the
+  reader to count them and left a zero looking like a clean result. A
+  poll waiting on an abbreviated SHA waits out its whole budget and
+  reports silence, which reads as a workflow that never fired; a one-shot
+  check reads as "no CI on this commit", which invites calling a push
+  good because nothing came back red
 - **Read every row.** Selecting by position — `--limit 1`, the latest, the
   first — is correct only while exactly one workflow exists. Once a second
   is added for an unrelated reason, a positional selector reports whichever

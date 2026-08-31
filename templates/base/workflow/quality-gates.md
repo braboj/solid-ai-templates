@@ -418,15 +418,25 @@ Classify a change against the project's test root, reporting what it
 inspected as well as what it found:
 
 ```bash
-git diff --name-status origin/main...HEAD -- 'tests/*' | wc -l
-git diff --name-status origin/main...HEAD -- 'tests/*' | grep -vE '^A'
+ALL=$(git diff --name-status origin/main...HEAD)
+TESTS=$(git diff --name-status origin/main...HEAD -- 'tests/*')
+LOOSENED=$(echo "$TESTS" | grep -vE '^A' || true)
+echo "files changed in range: $(echo "$ALL" | grep -c . || true)"
+echo "test-file changes inspected: $(echo "$TESTS" | grep -c . || true)"
+echo "changes that are not pure additions: $(echo "$LOOSENED" | grep -c . || true)"
+echo "$LOOSENED" | grep . || true
 ```
 
-The first line counts the test-file changes inspected. The second lists
-every one that is not a pure addition, and MUST be empty for a change to
-keep the lenient path. Unlike a coverage scan, a zero here is a real
-answer and not a broken path — it means the change touched no tests at
-all, which needs no escalation.
+Pass condition: the three counts are the reading and the last count MUST
+be zero; anything printed after them is the list of loosened changes, and
+a change keeps the lenient path only while that list is empty.
+
+The first count is what separates the two zeros. A test-file count of
+zero under a non-zero range total is a real answer — the change touched
+no tests, which needs no escalation. A range total of zero says the range
+itself is empty, so the check inspected nothing and its second count
+establishes nothing either. Reporting only the second, as this check once
+did, makes those two indistinguishable.
 
 This is governance, not a new pass/fail metric: it adds no threshold and
 changes nothing about which gates run.
@@ -1010,9 +1020,10 @@ ROOTS = ["templates"]
 # indented under a list item, and a renderer strips that indent -- so
 # strip it here too, or the extracted body will not compile.
 FENCE = re.compile(r"^([ ]*)```")
-found, broken = 0, []
+found, broken, scanned = 0, [], 0
 for root in ROOTS:
     for path in sorted(pathlib.Path(root).rglob("*.md")):
+        scanned += 1
         lines = path.read_text(encoding="utf-8").splitlines()
         n = 0
         while n < len(lines):
@@ -1038,7 +1049,9 @@ for root in ROOTS:
             except SyntaxError as error:
                 broken.append((path, error.lineno, error.msg))
 
+print("markdown files scanned: %d" % scanned)
 print("embedded checks found: %d" % found)
+print("checks that do not compile: %d" % len(broken))
 for path, lineno, msg in broken:
     print("%s: extracted body line %s does not compile: %s"
           % (path, lineno, msg))
@@ -1047,9 +1060,12 @@ if not found:
 EOF
 ```
 
-Pass condition: the command reports the number of checks found and prints
-nothing after it. An empty result is a failure too, since no checks found
-means the extraction pattern drifted rather than the files being clean.
+Pass condition: the first two counts MUST be non-zero and the third MUST
+be zero; anything printed after them names a check that does not compile.
+The scanned count is what makes the found count readable — twenty checks
+found across two hundred files and twenty found across two are different
+readings, and without the corpus the second is indistinguishable from an
+extraction pattern that has drifted onto a subset.
 
 A companion locator for the continuation rule. It cannot detect a
 continuation that was already lost — once joined, the line is

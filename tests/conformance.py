@@ -220,7 +220,7 @@ CHECKS = [
     # disposition here, so scoring it would fail each one on arrival.
     {"file": "base/workflow/quality-gates.md",
      "find": "'tests/*'", "title": "A change to an existing test is visible",
-     "do": RUN, "expect": MANUAL, "grep": True},
+     "do": RUN, "expect": MANUAL},
 
     {"file": "base/workflow/quality-gates.md",
      "find": "A shipped check is a heredoc inside a fenced block",
