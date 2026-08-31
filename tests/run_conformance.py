@@ -10,6 +10,13 @@ Usage:
     py tests/run_conformance.py            # every registered check
     py tests/run_conformance.py --list     # dispositions, run nothing
     py tests/run_conformance.py <find>     # one check, by its find string
+
+A check reaches one of four results. PASS and FAIL are automatic
+verdicts; ERR is a check that could not run; REVIEW is a check whose
+verdict is a judgement, and its output is the result a person reads.
+REVIEW is counted on its own line rather than among the passes, and it
+does not fail the run -- the exit status answers whether a verdict was
+reached and was negative.
 """
 
 import datetime
@@ -27,6 +34,12 @@ from conformance import CHECKS, RUN, SKIP, SILENT, MANUAL
 from lib import PASS, FAIL, SKIP as SKIPPED, ROOT, write_report
 
 ERR = "ERR"
+
+# A check whose verdict is a judgement gets its own status. Recording it
+# as a pass folds a finding into a count that says there is nothing to
+# look at: a run that surfaced the output and then contradicted it in
+# the summary.
+REVIEW = "REVIEW"
 
 TEMPLATES = os.path.join(ROOT, "templates")
 
@@ -228,7 +241,7 @@ def main():
             print("nothing matched: %s" % wanted)
             sys.exit(1)
 
-    results = {PASS: 0, FAIL: 0, SKIPPED: 0, ERR: 0}
+    results = {PASS: 0, FAIL: 0, SKIPPED: 0, ERR: 0, REVIEW: 0}
     run_results = []
     workdir = tempfile.mkdtemp(prefix="sait-conformance-")
 
@@ -240,7 +253,7 @@ def main():
 
             if entry["do"] == SKIP:
                 if not listing:
-                    print("  %s  %s" % (SKIPPED, title))
+                    print("  %-6s %s" % (SKIPPED, title))
                     print("        %s -- %s" % (where, entry["reason"]))
                 results[SKIPPED] += 1
                 run_results.append({"id": where, "title": title,
@@ -255,7 +268,7 @@ def main():
             try:
                 code, out = run_block(block[3], block[2], workdir)
             except Exception as exc:
-                print("  %s  %s\n        %s -- %s" % (ERR, title, where, exc))
+                print("  %-6s %s\n        %s -- %s" % (ERR, title, where, exc))
                 results[ERR] += 1
                 run_results.append({"id": where, "title": title,
                                     "status": ERR, "failures": [],
@@ -263,38 +276,56 @@ def main():
                 continue
 
             failures = verdict(entry, code, out)
+            judgement = entry.get("expect") == MANUAL
 
             # A manual check has no automatic verdict, so its output IS the
             # result. Carry it to the log and the report, or the check runs
             # and tells nobody what it saw.
-            reported = out if entry.get("expect") == MANUAL else []
+            reported = out if judgement else []
+
+            # A judgement check that printed nothing reported nothing. That
+            # is a defect in the check rather than a reading for the
+            # operator, so it fails rather than joining the review pile.
+            if judgement and not failures and not reported:
+                failures = ["printed nothing -- a judgement check reports "
+                            "what it inspected"]
 
             if failures:
-                print("  %s  %s" % (FAIL, title))
-                print("        %s" % where)
-                for f in failures:
-                    print("        %s" % f)
-                results[FAIL] += 1
+                status = FAIL
+            elif judgement:
+                status = REVIEW
             else:
-                print("  %s  %s" % (PASS, title))
-                for line in reported:
-                    print("        %s" % line)
-                results[PASS] += 1
+                status = PASS
+
+            print("  %-6s %s" % (status, title))
+            if status == FAIL:
+                print("        %s" % where)
+            for line in failures or reported:
+                print("        %s" % line)
+            results[status] += 1
             run_results.append({"id": where, "title": title,
-                                "status": FAIL if failures else PASS,
-                                "failures": failures, "error": "",
-                                "output": reported})
+                                "status": status, "failures": failures,
+                                "error": "", "output": reported})
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
 
     if listing:
         return
 
-    ran = results[PASS] + results[FAIL] + results[ERR]
+    ran = (results[PASS] + results[FAIL] + results[ERR]
+           + results[REVIEW])
     print("\n%d block(s) registered - %d ran, %d skipped as not applicable"
           % (len(CHECKS), ran, results[SKIPPED]))
-    print("%d passed  %d failed  %d errors" % (results[PASS], results[FAIL],
-                                               results[ERR]))
+    print("%d passed  %d failed  %d errors  %d awaiting a reading"
+          % (results[PASS], results[FAIL], results[ERR],
+             results[REVIEW]))
+
+    # The count alone reads as a tally of things that went fine. Say what
+    # the operator still owes, beside it.
+    if results[REVIEW]:
+        print("%d check(s) produced a reading no rule can judge. Read "
+              "them above before calling the run clean."
+              % results[REVIEW])
 
     if ran == 0:
         print("\nFAIL: ran nothing. Every check reported as not applicable "
@@ -309,6 +340,7 @@ def main():
                                                  r["title"]), "",
                             r["error"], ""],
         PASS: passed,
+        REVIEW: passed,
     })
 
     sys.exit(1 if results[FAIL] or results[ERR] else 0)

@@ -54,6 +54,15 @@ def write_report(run_results, started_at, runner_name, columns):
     errored = sum(1 for r in run_results if r["status"] == ERR)
     total   = len(run_results)
 
+    # A runner may carry a status of its own -- a check whose verdict is a
+    # judgement rather than a pass. Count it by name rather than dropping
+    # it, so the summary's parts add up to the total it states.
+    named = {PASS, FAIL, SKIP, ERR}
+    other = {}
+    for r in run_results:
+        if r["status"] not in named:
+            other[r["status"]] = other.get(r["status"], 0) + 1
+
     elapsed = (datetime.datetime.now() - started_at).total_seconds()
 
     lines = [
@@ -73,6 +82,8 @@ def write_report(run_results, started_at, runner_name, columns):
         parts.append(f"  {skipped} skipped")
     if errored:
         parts.append(f"  {errored} errors")
+    for status in sorted(other):
+        parts.append(f"  {other[status]} {status.strip().lower()}")
     lines.append("".join(parts))
     lines.extend(["", "---", "", "## Results", ""])
 
