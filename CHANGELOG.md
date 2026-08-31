@@ -22,6 +22,9 @@ alters no template carries no entry.
 - `base-quality` separates two kinds of boolean flag. One selects what the
   code does and takes an enum; one selects how many rules to apply and
   takes an operation returning findings that name the rule broken.
+- `base-quality` forbids a variadic parameter on an abstract or overridable
+  operation, which states no contract a subtype can honour or break. A
+  capability only a mid-hierarchy class offers gets its own name instead.
 
 ## [2.67.0] - 2026-08-31
 

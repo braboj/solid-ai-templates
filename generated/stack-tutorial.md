@@ -136,6 +136,33 @@ that has since lifted reads exactly like a live one.
   modules B, C, and D to understand the impact, the coupling is too high
 - Changes to one module's internals must not require changes in unrelated
   modules — if they do, the abstraction boundary is wrong
+- An abstract or overridable operation MUST NOT declare a variadic
+  parameter — `**kwargs`, `*args`, or the equivalent in any language with
+  variadics. A variadic in a base states no contract a subtype can honour
+  or break: it guarantees only that the call compiles, so every subtype
+  narrows what the base promised and a caller holding the abstract type
+  cannot invoke the operation without knowing the concrete class, which is
+  the abstraction inverted. This is the contravariance rule on parameters
+  (Liskov and Wing, 1994); what a codebase lacks is not the principle but
+  the tell
+- Nothing reports it. A linter has no rule for it, review reads one class
+  at a time and each reads fine alone, and the tests pass because they
+  instantiate concrete classes. In one project the divergence went unseen
+  until a type checker was wired years later and reported 122 of them in a
+  single module
+- Where a class part-way down a hierarchy offers a capability its own
+  subtypes MUST NOT offer, that capability MUST get its own name rather
+  than a widened parameter list on the shared operation. Widening the
+  shared contract hands every subtype a capability that breaks it, and
+  having the subtypes drop the parameter is the divergence above. A
+  subtype declining a differently-named method breaks nothing; a subtype
+  declining a parameter its supertype promised breaks every caller holding
+  the supertype
+- The check is a strict type checker's override rule — the tool is bound
+  per ecosystem in `base-<language>-tooling`, not here. Where a project
+  freezes such findings rather than fixing them, the variadic ones are the
+  entries to shrink first: they are not missing annotations, they are the
+  abstraction not holding
 - Before removing or renaming a public symbol, mark it deprecated with a
   comment referencing the replacement; remove it in a follow-up change
 - When retiring a concept — a label, a lane, a flag, a convention — sweep
