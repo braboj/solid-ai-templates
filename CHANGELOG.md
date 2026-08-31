@@ -45,6 +45,12 @@ alters no template carries no entry.
   it used to collapse into one count: uncommitted work, which it names in
   those words; no branch open, which does not apply; and a real branch,
   which reads as before.
+- `base-docs`' register-identifier check asks whether the project declares
+  a register at all before reporting drift. A register is opt-in, so zero
+  ids means either that the convention was never adopted or that it broke,
+  and only the second is a finding; the check now reports a chapter count
+  beside the id count and names which of the two it found. Ids in use with
+  no chapter declaring them is a third state it used to miss.
 
 ## [2.66.0] - 2026-08-31
 

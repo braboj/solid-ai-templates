@@ -3053,9 +3053,17 @@ general writing-style and diagram rules above still apply.
   weakness, and the register is then the only surface that will ever
   raise it again — which is a choice, and is made deliberately
 - Check — every register id occurs in the chapter that defines it. Pass
-  condition: the command reports how many ids it found and prints
-  nothing after that. A count of zero is a failure, not a clean set: it
-  means the id convention drifted and the check is reading nothing:
+  condition: the command reports how many register chapters it found and
+  how many ids, then prints nothing after that. Zero ids means two
+  different things and the two counts are what separate them: with no
+  chapter declaring a register the project never adopted the convention
+  and the check does not apply, while a declared chapter holding no ids
+  is the convention having drifted. The register is opt-in, so its
+  absence is not a finding — a check reporting drift against a
+  convention a project never took up prints a defect that does not exist
+  on every run, and a standing finding is one a reader learns to
+  dismiss. Ids in use with no chapter declaring them is the third case,
+  and each is listed:
 
   ```bash
   py - <<'EOF'
@@ -3063,19 +3071,29 @@ import pathlib, re
 IDS = re.compile("(?<![A-Za-z0-9])(?:R|TD)[0-9]{2}(?![0-9])")
 OWNS = re.compile("^#{1,3} .*(?:risk|technical debt)", re.I)
 docs = sorted(pathlib.Path("docs").rglob("*.md"))
-found, stray = 0, []
+found, stray, owners = 0, [], []
 for path in docs:
     lines = path.read_text(encoding="utf-8").splitlines()
     defines = any(OWNS.match(line) for line in lines)
+    if defines:
+        owners.append(path)
     for number, line in enumerate(lines, 1):
         for hit in IDS.findall(line):
             found += 1
             if not defines:
                 stray.append("%s:%d cites %s outside the register"
                              % (path, number, hit))
-print("register ids found: %d in %d document(s)" % (found, len(docs)))
-if not found:
-    print("no register ids found; the id convention drifted")
+print("register chapters found: %d in %d document(s)"
+      % (len(owners), len(docs)))
+print("register ids found: %d" % found)
+if not owners and not found:
+    print("no register chapter is declared and no ids are in use; "
+          "this check does not apply")
+elif not owners:
+    print("ids are in use but no document declares a register chapter")
+elif not found:
+    print("a register chapter is declared but holds no ids; the id "
+          "convention drifted")
 for line in stray:
     print(line)
   EOF
