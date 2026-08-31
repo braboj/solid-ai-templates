@@ -602,6 +602,44 @@ reports healthy while it happens.
   than the pattern's *position* is the absorbing shape arriving by a
   different route
 
+### A check whose verdict is a judgement is reported, not scored
+
+Some checks have no automatic verdict. The signal is real and the call on
+it takes a person: whether a change deserved a test, whether a documented
+step was skipped for a good reason, whether an entry reads as the document
+class it sits in. A runner wires such a check one of two ways, and each
+fails silently from the opposite direction.
+
+**Scoring it fires on compliance.** A governance signal wired as a build
+gate fails every conforming change once the project's own rules oblige the
+change that trips it — a rule requiring a registration edit for each new
+check makes every conforming change trip a gate that scores registration
+edits. A gate that every conforming change trips measures nothing, and
+what broke is the wiring rather than the signal.
+
+**Silencing it fires on nothing.** A runner that records the check as
+passing without surfacing what it printed has run a check that told
+nobody. The output reaches no reader, the summary counts a pass, and the
+result is what not running it would have produced, with a green tick
+attached.
+
+- A check whose verdict is a judgement MUST report what it inspected and
+  what it found, in the record a person actually reads
+- A run's summary MUST separate the checks awaiting a reading from the
+  checks a verdict was reached on. Folding both into one count of passes
+  is the silencing failure arriving through the summary rather than
+  through the body — a finding filed under a total that says there is
+  nothing to look at
+- A governance signal MUST NOT be wired as a build gate where the
+  project's own rules oblige the change that trips it. Report it where a
+  reviewer reads it; the merge decision is the half that takes a person
+- Neither failure is repaired by changing the rule behind the check.
+  Weakening the rule to make a gate green, and dropping the signal to
+  quiet one, both answer a question nobody asked
+- Which signals are governance, and where a reviewer reads them, are
+  project judgements: this constraint stays declarative, and inventing a
+  score for it is the first failure above arriving by a shorter route
+
 ## Code style
 
 - Encode every committed file in UTF-8
