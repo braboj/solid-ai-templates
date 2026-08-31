@@ -120,7 +120,7 @@ CHECKS = [
      "reason": "Placeholder owner/repo pairs, run once during a migration."},
 
     {"file": "base/core/git.md", "find": "BASE = \"origin/main\"",
-     "title": "Security controls survive a migration", "do": RUN,
+     "title": "A diff touching an off-limits path says so", "do": RUN,
      "expect": MANUAL},
 
     # -- base/core/quality.md ---------------------------------------------
