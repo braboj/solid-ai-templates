@@ -59,6 +59,16 @@ alters no template carries no entry.
   in a check language as separate counts, so the narrowing is visible
   rather than silent.
 
+### Added
+
+- `base-docs` "Dated reports" covers an observation stated as a command
+  and its output. Where the command ranges over a moving reference —
+  `HEAD`, the working tree — committing the record changes its answer, so
+  the record and the commit that refutes it are the same commit. The
+  remedy is scoping the command to the commit or tag the claim is about;
+  no addendum is owed, because nothing about the world moved and the
+  claim was wrong when written.
+
 ## [2.66.0] - 2026-08-31
 
 ### Added
