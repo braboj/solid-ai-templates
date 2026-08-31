@@ -314,6 +314,55 @@ over-long changelog entries sit inside a green report for two sessions.
 
 ---
 
+## Control-test a check you are changing
+
+A check that stopped reporting a finding and a check that can no longer
+report one produce the same clean result. Before believing a narrowed or
+newly-forked check, drive it through a fixture that MUST be reported and
+one that must not.
+
+Where the fixture can live outside `templates/`, write it, run the single
+check by a string from its body, and delete it:
+
+```bash
+py tests/run_conformance.py "<string from the check body>"
+```
+
+Where the fixture must live UNDER `templates/` — anything the check scans
+by walking that tree — the runner refuses to execute: an unregistered
+fenced block in the fixture is a missing disposition, which it reports
+before running anything. Call its extraction directly instead, which skips
+the registry reconciliation:
+
+```bash
+py - <<'EOF'
+import sys, tempfile
+sys.path.insert(0, "tests")
+from run_conformance import iter_blocks, run_block
+
+body = next(b[3] for b in iter_blocks()
+            if b[0] == "base/core/docs.md" and any("<find>" in l for l in b[3]))
+code, out = run_block(body, "bash", tempfile.mkdtemp())
+print("exit %d" % code)
+for line in out:
+    print("  " + line)
+EOF
+```
+
+Pass condition: the fixture that must be reported is reported, the one
+that must not is not, and the check's own corpus counts MOVE between the
+two runs. A count that does not move means the fixture was never read, so
+neither result answers anything — the uniform-positive trap in
+`CLAUDE.md`, arriving through a check instead of a shell probe.
+
+The same shape drives a check that takes an argument — a milestone, a
+module, a field. Replace the placeholder line in `body` before calling
+`run_block`, and ASSERT the replacement happened rather than trusting it.
+The placeholder is not always what the issue or the prose calls it:
+`MILESTONE = None` rather than an empty string cost a first attempt here.
+
+---
+
 ## Regenerate pre-resolved files
 
 After editing any template or `manifest.yaml`, regenerate the cached

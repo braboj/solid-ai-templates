@@ -259,7 +259,9 @@ base/ ──┬── frontend/ ──┐
     consuming project would notice, in the same PR that makes it. A
     change needing no entry says so in the PR body rather than staying
     silent; a template change almost always needs one, and a change to
-    this repo's own tooling or tests usually does not
+    this repo's own tooling or tests usually does not. Keep each entry
+    within the forty-word bound `base-docs` declares, checked in that PR
+    rather than at the cut
 - Do not duplicate content across documents — cross-reference
   instead
 - Write in present tense — past or future tense indicates
@@ -395,6 +397,9 @@ Run `py tests/run_smoke.py` before every PR. It checks:
   disposition in `tests/conformance.py` — run it here, or skip it with
   the reason it does not apply. `py tests/run_conformance.py` fails on a
   block with no entry
+- A conformance run is NOT clean until its judgement readings are read —
+  `0 failed` counts only the automatic verdicts (PLAYBOOK, "Run the test
+  suite")
 - Run `py tools/sync.py` after any template edit — smoke does not
   read `generated/`, so a stale pre-resolved chain surfaces only in CI
 - If a change affects multiple documents, update all in the same PR
