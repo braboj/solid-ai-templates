@@ -17,6 +17,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- `base-quality` states how a check with no automatic verdict is wired: it
+  reports what it inspected, and a governance signal is reported rather
+  than scored.
+
 ## [2.65.0] - 2026-08-29
 
 ### Added
