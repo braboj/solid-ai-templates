@@ -25,6 +25,10 @@ alters no template carries no entry.
 - `base-quality` forbids a variadic parameter on an abstract or overridable
   operation, which states no contract a subtype can honour or break. A
   capability only a mid-hierarchy class offers gets its own name instead.
+- `base-testing` adds `testing-guard-is-used`: where a guard exists so that
+  other code takes it, the test asserts the taking. A recording wrapper
+  makes the order visible, and one inert primitive is grounds to sweep for
+  its siblings.
 
 ## [2.67.0] - 2026-08-31
 

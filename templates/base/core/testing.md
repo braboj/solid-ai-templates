@@ -491,6 +491,69 @@ covered, and they are covered by a witness that cannot disagree.
 
 ---
 
+## Assert that the guard is taken, not that it exists
+[ID: testing-guard-is-used]
+
+Exercising a guard asks whether it works, and that is a different question
+from whether the code under test USES it. The two look identical from a
+test run and from a coverage report, and only the second is the property
+anyone cares about.
+
+One library shipped both a lock and a stop event in this state, across two
+public classes, with a test module written specifically about those locks.
+Its four tests asserted that each component holds a working lock, that the
+two are not shared, and that both are the same type. All four passed
+against a sender that never acquired its lock.
+
+- The shape is a field constructed, exposed through a public method, and
+  never consulted — a lock built in a constructor and never acquired, a
+  stop event set by a public `stop()` and never read so the call returns
+  having changed nothing a later call can observe, a validator
+  instantiated and never invoked, a rate limiter consulted on one path of
+  three. Every one is invisible to the checks a project already has: the
+  constructor line runs, so it is covered; the field is present and
+  usable, so a test exercising it passes; the public method returns
+  without error, so a test calling it passes. Nothing is red
+- Where a guard's whole purpose is that some other code takes it, the test
+  MUST assert the taking rather than the guard. Substitute a recording
+  wrapper around the real guard — one that keeps its behaviour and appends
+  to a shared log as it is entered and left — then drive the code under
+  test and assert the ORDER. A logging double at the other seam puts both
+  in one log, and the order is what says the work happened inside the
+  guard rather than beside it
+- Prefer a behavioural assertion where one exists. For a stop flag the
+  test is "a stopped component does no work", which pins the promise
+  rather than the mechanism. Reserve the recording wrapper for guards with
+  no externally visible effect, such as mutual exclusion
+- Pair it with a control. A test asserting that a stopped component does
+  nothing passes trivially against a component that never does anything,
+  so the not-stopped counterpart is what makes the first one mean
+  something. This is the same failure `testing-negative-assertion-coverage`
+  describes one level in: there an assertion that a set is empty passes
+  when nothing was examined, here an assertion that a guard is sound
+  passes when nothing uses it
+- One inert primitive is grounds to sweep for its siblings, because the
+  same author wired them the same way on the same afternoon. The sweep
+  runs on a FIELD rather than on a construct, which is what distinguishes
+  it from the rejected-mechanism sweep in `templates/base/core/quality.md`:
+
+  ```bash
+  MODULE=<module-under-review>
+  FIELD=<guard-field-name>
+  echo "references to $FIELD in $MODULE: $(grep -c "$FIELD" "$MODULE" || true)"
+  grep -n "$FIELD" "$MODULE" || true
+  ```
+
+  Pass condition: the count is at least two, and the listed lines show a
+  consumer among them. One reference is the assignment that creates the
+  guard, so a count of one means it is constructed and never consulted.
+  Two references that are an assignment and a bare re-export are the same
+  defect as one. In the library above, the equivalent sweep for `is_set`
+  and `wait(` returned nothing at all, so `stop()` was a no-op on both
+  public classes
+
+---
+
 ## Inject a platform-dependent fault, do not wait for the platform
 [ID: testing-platform-fault-injection]
 

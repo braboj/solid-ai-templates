@@ -163,6 +163,13 @@ CHECKS = [
      "reason": "Takes the module whose scope is narrowing as an argument. "
                "It is run per change, not as a property of the tree."},
 
+    {"file": "base/core/testing.md", "find": "guard-field-name",
+     "title": "A guard field has a consumer, not only an assignment",
+     "do": SKIP,
+     "reason": "Takes the module under review and the guard field as "
+               "arguments. It is run when one inert primitive is found, to "
+               "sweep for its siblings, not as a property of the tree."},
+
     {"file": "base/core/testing.md", "find": "class ServerFixture",
      "title": "Fixture shape for a threaded server", "do": SKIP,
      "reason": "An illustration of the pattern, not a check. It has no pass "
