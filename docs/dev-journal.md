@@ -5130,3 +5130,108 @@ worth doing. #1291's rename decision still gates #1292 and #1295.
 Backlog closed at 57 open issues, label conformance empty, smoke 26 of
 26, sync clean, conformance 10 passed with 12 awaiting a reading and all
 twelve read.
+
+---
+
+## 2026-08-31 — The right diagnosis and the wrong remedy
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**v2.68.0 shipped: four issues, five pull requests, one theme.** Three
+rules named a real defect and prescribed a shape wrong for one class of
+caller, and the fourth was this repository's own debt from the release
+before. The cut was scoped from a groom done during v2.67.0 and shipped
+unchanged, which is the second time planning one release ahead has paid
+and the first time it has done so twice running.
+
+**The flag rule was right about the flag and wrong about the
+replacement.** "No boolean flag parameters — use an enum or two named
+functions instead" fits a flag selecting what the code does. It fails a
+flag selecting how many rules to apply, and a caller following it lands
+on a validation mode: `STRICT`, `PERMISSIVE`, `RAW`. That satisfies the
+letter and fails twice. `PERMISSIVE` names no set, so nothing can be
+asserted against it. And a test wanting to say "this breaks the count
+limit, so the device must reject it with this error" needs the name of
+the limit, which a setting cannot carry. The names were what the caller
+needed and the enum is where they went to be lost. The shape that works
+returns the findings, each naming its rule, with a guard raising when the
+list is not empty — one line over the first, so a caller who only wants
+to be stopped is not made to handle a list.
+
+**The variadic rule ships a tell rather than a principle.** An abstract
+base declaring `serialize(self, **kwargs)` type-checks against every
+subclass and constrains none, and nothing reports it: a linter has no
+rule for it, review reads one class at a time and each reads fine alone,
+and the tests pass because they instantiate concrete classes. In the
+project that prompted it the divergence went unseen until a type checker
+was wired years later and reported 122 in a single module. The templates
+already named Liskov once, in a testing principles list; what they lacked
+was the tell and the named resolution for the legitimate case, where a
+mid-hierarchy class offers a capability its subtypes must not — that
+capability gets its own name and stops being an override.
+
+**A guard that works and a guard that is used look identical from a
+suite.** One library shipped both a lock and a stop event inert across two
+public classes, with a test module written specifically about those
+locks. Four tests asserted each component holds a working lock, that the
+two are not shared, and that both are the same type. All four passed
+against a sender that never acquired its lock. The new rule asks for the
+taking — a recording wrapper around the real guard, driven by the code
+under test, asserted on the order — and pairs it with a control, since "a
+stopped component does no work" passes trivially against a component that
+never does anything.
+
+**Its sibling sweep shipped as a fenced check rather than a sentence.**
+The issue described it as a grep, which under ADR-031 states no check at
+all. It is now a block with a pass condition: at least two references to
+the field, and a consumer among them, because one reference is the
+assignment that creates the guard. Dispositioned as skipped here, since
+it takes the module and the field as arguments.
+
+**The moment rule shipped last release with two of its own siblings
+violating it, and the sweep was the deliverable rather than the two
+fixes.** All 22 executing checks were measured. Two were moment-specific
+and unhandled — changelog completeness and test visibility, both in files
+edited for that rule, both read during that work, neither noticed. Two
+were fixed in v2.67.0, one already reported inapplicability, sixteen
+answer a property of the tree and one a property of the repository. Each
+fix reuses the detector its own neighbour already had rather than
+inventing one, and the test-visibility check inherited the
+uncommitted-work fork too: the natural moment to run a check about a
+change under review is while writing that change, and collapsing that to
+"does not apply" would swallow the case the reader most needs told.
+
+**The changelog word bound needed no trimming at the cut, and that is a
+practice rather than a fix.** Last release six entries shipped between 73
+and 97 words against a bound of 40 and were caught by hand at the cut.
+This time the bound was checked in each pull request as the entry was
+written; two were over on their first draft, at 49 and 43 words, and were
+trimmed before pushing. The mechanism is still owed — #1322 asks whether
+a check declaring a limit and counting against it belongs in the
+judgement pile at all.
+
+**Five of the twelve readings now say "does not apply", and the runner
+counts them as work.** That is the moment rule's own consequence landing
+in the pile it was meant to shrink: the summary asks for twelve readings
+where seven are outstanding. `SKIP` cannot absorb them — it is decided in
+advance, in the dispositions file, about this repository, while these are
+decided at run time by the check about this moment, and next week the same
+check applies. #1329 asks for the sixth result and, more usefully, for the
+signal a check uses to declare it, since matching the phrase "does not
+apply" in output would be a check reading prose.
+
+**PRs merged:** #1324, #1325, #1326, #1327, #1328
+
+**Issues closed:** #1293, #1033, #1267, #1321
+
+**Issues opened:** #1329
+
+**What is left.** #1322 and #1329 are both about the runner's vocabulary
+for a result, and they compose: one asks which checks should stop being
+judgements because they have a threshold, the other asks how a judgement
+check says it has nothing to judge. Together they are the strongest
+candidate for the next cut, and neither is groomed yet. #1291's rename
+decision still gates #1292 and #1295, and remains the user's to make.
+Backlog closed at 54 open issues, label conformance empty, smoke 26 of 26,
+sync clean, conformance 10 passed with 12 awaiting a reading and all
+twelve read.
