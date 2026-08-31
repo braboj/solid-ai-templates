@@ -318,6 +318,60 @@ Python-only. Coverage is the part no failing test reports.
 
 ---
 
+## A remedy naming another check is a claim about that check
+[ID: testing-remedy-cross-reference]
+
+`testing-negative-assertion-coverage` covers a check that reads nothing.
+Neither it nor a rule about a weakened test covers a check whose failure
+message names a sibling as the thing that diagnoses the underlying cause.
+Narrowing the sibling falsifies the message, and nothing reports it: the
+claim lives in a string a passing run never prints, the change is to one
+module and the falsified claim sits in another, so there is no failing
+test, no diff on the file that broke, and no signal to a reviewer.
+
+A line-ending gate reported that a file the version control system
+classifies as binary escapes normalisation, and its remedy said a sibling
+character gate names the offending byte and its line. That was true and
+load-bearing -- one NUL was what made a document store as binary while the
+line-ending gate read clean. Relaxing the character gate to stop holding
+documentation to ASCII is well founded, and the obvious implementation
+drops documentation from it entirely, which leaves the remedy pointing at
+a check that no longer reads the file class the remedy is about. Both
+suites stay green.
+
+- A check MAY name another check in its failure message as what diagnoses
+  the cause. That reference is a claim about the other check, and it
+  decays like any other cross-reference
+- Before narrowing what a check examines, search the suite for the
+  module's own name. A hit in another check's remedy text is a claim to
+  re-verify or re-word in the same change
+- The search is the whole control. The claim lives in a string that a
+  passing run never prints and a failing run prints only for the other
+  check, so no assertion covers it and no diff shows it
+- Report what the search examined, not only what it found. An empty result
+  is a real answer where the module is spelled as the tree spells it, and
+  a mistyped name produces the same empty result from a search that read
+  nothing
+
+```bash
+# The module whose scope is narrowing, spelled as the tree spells it.
+module="<module-under-change>"
+
+scanned=$(git ls-files 'tests/*.py')
+echo "test modules scanned: $(echo "$scanned" | grep -c .)"
+naming=$(echo "$scanned" | grep -v "/${module}[.]" | xargs grep -l "$module")
+echo "modules naming ${module}: $(echo "$naming" | grep -c .)"
+echo "$naming"
+```
+
+Pass condition: the command reports how many test modules it scanned and
+which of them name the module under change, then lists them. Every hit is
+read against the change, since a remedy naming the module is a claim to
+re-verify or re-word alongside it. A scanned count of zero is the failure
+-- the search reached nothing -- while a naming count of zero against a
+non-zero scan is a real answer.
+
+
 ## Tests should name what they pin
 [ID: testing-name-what-pinned]
 

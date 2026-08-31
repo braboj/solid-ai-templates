@@ -157,6 +157,12 @@ CHECKS = [
 
     # -- base/core/testing.md ---------------------------------------------
 
+    {"file": "base/core/testing.md", "find": "module-under-change",
+     "title": "A remedy naming another check is re-read before narrowing it",
+     "do": SKIP,
+     "reason": "Takes the module whose scope is narrowing as an argument. "
+               "It is run per change, not as a property of the tree."},
+
     {"file": "base/core/testing.md", "find": "class ServerFixture",
      "title": "Fixture shape for a threaded server", "do": SKIP,
      "reason": "An illustration of the pattern, not a check. It has no pass "
