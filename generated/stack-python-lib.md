@@ -623,8 +623,28 @@ nobody. The output reaches no reader, the summary counts a pass, and the
 result is what not running it would have produced, with a green tick
 attached.
 
+**Answering it outside its moment fires on a question nobody asked.** Some
+checks are about a moment rather than a tree: a release being prepared, a
+migration under way, a branch open for review. Outside that moment their
+inputs are empty by construction, so they emit a count whose pass
+condition assumes the moment is in progress — the shape of a failure,
+correctly derived, and not a verdict anyone can act on. Executing cleanly
+is not the same as answering something, and a reader who meets the same
+inapplicable line on every run stops reading the report it sits in.
+
 - A check whose verdict is a judgement MUST report what it inspected and
   what it found, in the record a person actually reads
+- A check whose question is tied to a moment MUST detect that the moment
+  is not in progress and report that it does not apply, rather than
+  emitting a count. Inapplicability is a result; a number that only means
+  something during a release is a line the reader must know the calendar
+  to interpret
+- Detect the moment, not the emptiness. The two coincide often enough to
+  be confused and they are not the same state: a release check whose
+  carried count is zero today can read one tomorrow because an unrelated
+  change merged, with nothing fixed and nothing decided in between. Ask
+  what makes the moment identifiable — the tag is at HEAD, the branch is
+  the base, no migration is under way — and answer that
 - A run's summary MUST separate the checks awaiting a reading from the
   checks a verdict was reached on. Folding both into one count of passes
   is the silencing failure arriving through the summary rather than
@@ -1662,6 +1682,10 @@ agrees in both orderings.
 
 ```bash
 previous=$(git describe --tags --abbrev=0)
+if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
+  echo "HEAD is $previous; no release is in preparation, so this check does not apply"
+  exit 0
+fi
 echo "preceding tag: $previous"
 git log --format='  carries: %s' "$previous..HEAD"
 echo "commits carried: $(git log --format='%s' "$previous..HEAD" | wc -l)"
@@ -1677,6 +1701,14 @@ the release record. Each pull request listed as ready is a decision, not a
 warning — merge it into this release and record it, or hold it until the
 tag is pushed. A carried count of zero is a failure rather than a clean
 result: it means the tag would land on the same commit as its predecessor.
+
+That reading only holds while a release is being prepared, which is why
+the command answers that question first. With the tag already at HEAD it
+reports that it does not apply and stops, rather than printing the
+failure-shaped zero its own pass condition describes. The emptiness is
+not the detector: a carried count of zero the day after a release reads
+as one the day after that, because an unrelated change merged, and
+nothing was fixed in between.
 
 **The changelog-completeness check** — step 8 of the sequence above. Run it
 from the release commit before the `Unreleased` section is cut. The failure
@@ -1865,6 +1897,25 @@ BASE = "origin/main"
 # escape, so nothing can be lost on the way into the file.
 OFF_LIMITS = [".github/workflows/", ".env", "migrations/"]
 
+# This check's moment is a branch with commits on it. Run on the base
+# itself the range is empty by construction, so the count below would
+# print the shape of a failure for a question nobody asked.
+here = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True,
+                      text=True, encoding="utf-8").stdout.strip()
+there = subprocess.run(["git", "rev-parse", BASE], capture_output=True,
+                       text=True, encoding="utf-8").stdout.strip()
+if here == there:
+    dirty = subprocess.run(["git", "status", "--porcelain"],
+                           capture_output=True, text=True,
+                           encoding="utf-8").stdout.strip()
+    if dirty:
+        print("HEAD is at %s and the work is uncommitted; commit it and "
+              "run again" % BASE)
+    else:
+        print("HEAD is at %s and the tree is clean; no branch is open, so "
+              "this check does not apply" % BASE)
+    raise SystemExit(0)
+
 out = subprocess.run(["git", "diff", "--name-only", BASE + "...HEAD"],
                      capture_output=True, text=True,
                      encoding="utf-8").stdout
@@ -1883,8 +1934,16 @@ Pass condition: the command reports how many files it compared. Zero is
 a failure rather than a clean branch, and the likeliest cause is that the
 change is not committed yet — the natural moment to run a
 pre-pull-request check is while writing it, and that run is guaranteed to
-report nothing. The other causes are a wrong base and an empty branch. An
-unreached diff reports the same nothing a clean one does. Every
+report nothing. The other cause is a wrong base. An unreached diff
+reports the same nothing a clean one does.
+
+The command separates those two from a third case that is not a failure
+at all, and does it before counting. With HEAD at the base it asks
+whether the tree is dirty: uncommitted work is the forgot-to-commit
+failure above, and said in those words rather than as a zero; a clean
+tree means no branch is open, so the check does not apply. The zero it
+would otherwise print carries the weight of a finding on a tree where
+nothing is being proposed. Every
 `off-limits:` line is an escalation trigger rather than a failure: it
 says this change needs the proposal above before it merges.
 

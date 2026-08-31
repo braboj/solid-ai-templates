@@ -617,8 +617,28 @@ nobody. The output reaches no reader, the summary counts a pass, and the
 result is what not running it would have produced, with a green tick
 attached.
 
+**Answering it outside its moment fires on a question nobody asked.** Some
+checks are about a moment rather than a tree: a release being prepared, a
+migration under way, a branch open for review. Outside that moment their
+inputs are empty by construction, so they emit a count whose pass
+condition assumes the moment is in progress — the shape of a failure,
+correctly derived, and not a verdict anyone can act on. Executing cleanly
+is not the same as answering something, and a reader who meets the same
+inapplicable line on every run stops reading the report it sits in.
+
 - A check whose verdict is a judgement MUST report what it inspected and
   what it found, in the record a person actually reads
+- A check whose question is tied to a moment MUST detect that the moment
+  is not in progress and report that it does not apply, rather than
+  emitting a count. Inapplicability is a result; a number that only means
+  something during a release is a line the reader must know the calendar
+  to interpret
+- Detect the moment, not the emptiness. The two coincide often enough to
+  be confused and they are not the same state: a release check whose
+  carried count is zero today can read one tomorrow because an unrelated
+  change merged, with nothing fixed and nothing decided in between. Ask
+  what makes the moment identifiable — the tag is at HEAD, the branch is
+  the base, no migration is under way — and answer that
 - A run's summary MUST separate the checks awaiting a reading from the
   checks a verdict was reached on. Folding both into one count of passes
   is the silencing failure arriving through the summary rather than

@@ -17,6 +17,16 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- `base-quality` states that a check whose question is tied to a moment —
+  a release being prepared, a branch open for review — MUST detect that
+  the moment is not in progress and report that it does not apply, rather
+  than emitting a count whose pass condition assumes it is. It adds that
+  the moment is what gets detected, never the emptiness: the two coincide
+  often enough to be confused, and a count that reads zero today can read
+  one tomorrow with nothing fixed in between.
+
 ### Changed
 
 - `base-quality-gates` and `platform-github` state the corpus beside the
@@ -28,6 +38,13 @@ alters no template carries no entry.
   count its found total is measured against, and the workflow-run check
   names the commit and the number of runs instead of printing rows for
   the reader to count.
+- `base-git` applies the moment rule to two of its own checks. The
+  release-ordering check reports that no release is in preparation when
+  the tag is already at HEAD, instead of the failure-shaped zero its pass
+  condition describes. The off-limits-path check separates three states
+  it used to collapse into one count: uncommitted work, which it names in
+  those words; no branch open, which does not apply; and a real branch,
+  which reads as before.
 
 ## [2.66.0] - 2026-08-31
 
