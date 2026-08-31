@@ -30,6 +30,13 @@ alters no template carries no entry.
   makes the order visible, and one inert primitive is grounds to sweep for
   its siblings.
 
+### Changed
+
+- `base-git` and `base-quality-gates` apply the moment rule to the two
+  checks that shipped without it. The changelog-completeness check reports
+  that no release is in preparation; the test-visibility check reports
+  that no change is under review.
+
 ## [2.67.0] - 2026-08-31
 
 ### Added
