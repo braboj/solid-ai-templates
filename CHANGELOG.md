@@ -17,6 +17,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.66.0] - 2026-08-31
+
 ### Added
 
 - `base-quality` states how a check with no automatic verdict is wired: it
