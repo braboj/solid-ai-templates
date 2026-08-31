@@ -5017,3 +5017,116 @@ a shape that is wrong for the case the caller has. #1291's rename decision
 still gates #1292 and #1295. Backlog closed at 59 open issues, label
 conformance empty, smoke 26 of 26, sync clean, conformance 10 passed with
 12 awaiting a reading and all twelve read.
+
+---
+
+## 2026-08-31 — The finding a reader learns to dismiss
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**v2.67.0 shipped: five issues, six pull requests, one theme.** All five
+came out of the twelve judgement readings the previous session produced
+and could not act on. Each check executed cleanly and told a reader
+nothing they could act on: a bare count naming neither its corpus nor its
+finding, two standing findings that were simply false, a verdict-shaped
+line printed at a moment when its pass condition could not hold, and a
+gap letting a dated record cite a command its own commit falsifies.
+
+**Verifying the claims before grooming changed two of the five.** #1312
+was filed against `commits carried: 0`, observed minutes after the
+v2.66.0 tag. Re-measured five days later the same check read `1`, then
+`2` once the first pull request merged. Nothing had been fixed — the zero
+holds only in the window between a tag and the next merge. Had the fix
+keyed on the empty count, it would have reported inapplicable inside that
+window and gone back to printing an unreadable verdict outside it. The
+shipped detector asks the question that actually identifies the moment:
+is the tag already at HEAD. #1309's sweep went the other way and got
+smaller — reading all twelve put three checks in the defective shape
+rather than the eleven the issue estimated, and two more state their
+corpus and make silence the finding by their own pass conditions, so they
+were left alone and the decision recorded on the issue.
+
+**One of the five was filed against a check that does not exist.** The
+disposition for `git.md:951` was titled "Security controls survive a
+migration", which is the neighbouring entry's subject; the block it
+selects is the off-limits-path check. That wrong title is what put
+"migration" in #1312's text. The complaint survived — the block is
+moment-specific either way — but the criterion had to be restated before
+it could be discharged. A registry that names a block wrongly is worse
+than one that omits it, because the omission is what `run_conformance.py`
+already refuses to run past.
+
+**The off-limits fix nearly swallowed the signal it was meant to
+sharpen.** The first cut reported inapplicable whenever HEAD was at the
+base, which is also what running the check before committing looks like —
+the failure its pass condition exists to warn about, and the natural
+mistake, since the moment to run a pre-pull-request check is while
+writing it. It now asks whether the tree is dirty and separates three
+states that were one count: uncommitted work, named in those words; no
+branch open, which does not apply; and a real branch, unchanged.
+
+**Every fix was control-tested, and one control paid for all of them.**
+The register check was driven through four fixtures — no chapter and no
+ids, a chapter with no ids, a chapter with ids, and an id outside any
+chapter — because a check that stops reporting drift is indistinguishable
+from one that never could. The continuation check was driven through a
+fixture carrying the same continuation twice, once in a `bash` block and
+once in `yaml`; the bash line is reported, the yaml line is not, and both
+corpus counts moved, so the fixture was read rather than skipped. Its
+narrowed corpus landed on 48, which is exactly the runnable count
+`run_conformance.py` computes independently and without being wired to
+it.
+
+**The release-ordering guard was verified against the live case it was
+filed for.** After the tag was pushed the check reads `HEAD is v2.67.0;
+no release is in preparation, so this check does not apply`, where five
+days earlier it printed the failure-shaped zero that prompted the issue.
+
+**Six over-limit changelog entries survived five pull requests, and the
+run reported them every time.** Each entry ran between 73 and 97 words
+against a declared bound of 40. Every pull request ran the conformance
+suite; every run printed `0 failed` and `12 awaiting a reading`, and the
+summary line was what got read. They were caught at the changelog cut,
+by working through the pile by hand, and trimmed in #1320. The previous
+session's entry describes the same failure with four entries, so this is
+the second occurrence and the first where a fix was available: the check
+declares a limit and counts against it, which is an automatic verdict
+being reported as a judgement. #1322 asks which side each threshold check
+belongs on, and notes the trade-off that kept three of them manual in
+#1309 — the runner carries output only for a manual disposition, so
+reaching a verdict currently costs the reading.
+
+**The rule shipped and two of its own siblings still violate it.** Both
+were read during the work, in files being edited for the rule, and
+neither was noticed: the changelog-completeness check prints two zeros
+after a release, and the test-visibility check prints three on `main`.
+#1321 carries them, and asks for the sweep rather than the two instances
+— a new rule applied to the cases that prompted it, rather than to its
+own reach, is the same containment failure one level up.
+
+**One gap shipped declaratively on purpose.** #1314's rule about a dated
+report citing a moving reference is mechanically checkable only if you
+can identify a dated report, which you cannot; a locator for commands
+naming `HEAD` would report every runbook that correctly tells a reader to
+run one against their own tree. Manufacturing a standing finding in the
+release that exists to remove them would have been a poor trade, and the
+rule says so in its own text rather than leaving it implied. The same
+constraint kept `quality-gates-check-timing` unnamed in the prose:
+`base-docs` reaches 17 chains of 17 and `base-quality-gates` reaches 12,
+so the substance is stated inline.
+
+**PRs merged:** #1315, #1316, #1317, #1318, #1319, #1320
+
+**Issues closed:** #1309, #1310, #1311, #1312, #1314
+
+**Issues opened:** #1321, #1322
+
+**What is left.** #1321 and #1322 are unmilestoned and both are about
+this release's own work. The strongest content cluster remains #1267,
+#1293 and #1033 — a rule recommending a shape that is wrong for the case
+the caller has — and all three were verified against the tree during this
+groom, so the next cut is scoped one release ahead as v2.63 showed to be
+worth doing. #1291's rename decision still gates #1292 and #1295.
+Backlog closed at 57 open issues, label conformance empty, smoke 26 of
+26, sync clean, conformance 10 passed with 12 awaiting a reading and all
+twelve read.
