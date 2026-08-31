@@ -396,7 +396,9 @@ Run `py tests/run_smoke.py` before every PR. It checks:
 - Adding a fenced `bash`/`python` block to a template MUST add its
   disposition in `tests/conformance.py` — run it here, or skip it with
   the reason it does not apply. `py tests/run_conformance.py` fails on a
-  block with no entry
+  block with no entry. A block whose pass condition declares a threshold
+  takes a predicate, not a judgement; a judgement disposition MUST state
+  what takes a person, and the runner fails on one that does not
 - A conformance run is NOT clean until its judgement readings are read —
   `0 failed` counts only the automatic verdicts (PLAYBOOK, "Run the test
   suite")

@@ -673,6 +673,17 @@ correctly derived, and not a verdict anyone can act on. Executing cleanly
 is not the same as answering something, and a reader who meets the same
 inapplicable line on every run stops reading the report it sits in.
 
+**Reading it where a verdict was available fires on the reader.** A check
+that declares a threshold and prints a count measured against it has
+already decided. Wiring it as a reading asks a person to repeat the
+comparison, in a pile where a real finding gets the attention a line
+reporting a corpus size gets. The cost is not hypothetical: six changelog
+entries between 73 and 97 words shipped across five pull requests, every
+one of which ran the suite, read that nothing had failed, and was right
+to. What kept those checks unscored was the runner carrying output for a
+reading and not for a verdict, which makes visibility a reason to leave a
+verdict unreached.
+
 - A check whose verdict is a judgement MUST report what it inspected and
   what it found, in the record a person actually reads
 - A check whose question is tied to a moment MUST detect that the moment
@@ -686,6 +697,19 @@ inapplicable line on every run stops reading the report it sits in.
   change merged, with nothing fixed and nothing decided in between. Ask
   what makes the moment identifiable — the tag is at HEAD, the branch is
   the base, no migration is under way — and answer that
+- A verdict is a judgement only where no line of the check's output can be
+  decided. A threshold the check declares, with a count measured against
+  it, is decided and MUST reach an automatic verdict; the judgement is
+  what remains after that
+- Every judgement disposition MUST record what about the check takes a
+  person, beside the disposition rather than in the review that set it. A
+  judgement with no stated reason is indistinguishable from a verdict
+  nobody got round to writing, and the pile is where that difference stops
+  being visible
+- Reporting what a check saw MUST NOT depend on how its verdict was
+  reached. The counts that say whether a check reached its inputs are what
+  a failure is read against, so dropping them when a verdict is reached
+  drops them exactly when they are needed
 - A run's summary MUST separate the checks awaiting a reading from the
   checks a verdict was reached on. Folding both into one count of passes
   is the silencing failure arriving through the summary rather than

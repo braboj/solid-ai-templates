@@ -25,7 +25,11 @@ SKIP = "skip"
 #             directions, so a single rule for the whole head does not fit
 #   silent    the check prints nothing at all
 #   manual    the check runs and its output is reported, but no automatic
-#             verdict is possible -- the operator reads it
+#             verdict is possible -- the operator reads it. A manual entry
+#             MUST carry "reason", naming what about the check takes a
+#             person; the runner refuses one that does not. A check whose
+#             pass condition declares a threshold and counts against it
+#             has a verdict available and is not manual
 #
 # "grep": True marks a check whose last command is a grep. grep exits 1
 # when it matches nothing, which is the CLEAN result, so the exit code
@@ -46,19 +50,24 @@ CHECKS = [
 
     {"file": "base/core/docs.md", "find": "changelog entries measured",
      "title": "Changelog entries stay within the word bound",
-     "do": RUN, "expect": MANUAL},
+     "do": RUN, "expect": ["nonzero", "nonzero", "any", "zero"]},
 
     {"file": "base/core/docs.md", "find": "entries, fenced = [], False",
      "title": "Development journal entry form", "do": RUN,
-     "expect": MANUAL},
+     "expect": ["nonzero"]},
 
     {"file": "base/core/docs.md", "find": "width, source = None, None",
      "title": "Documentation line width matches the declared one",
-     "do": RUN, "expect": MANUAL},
+     "do": RUN, "expect": ["nonzero"]},
 
     {"file": "base/core/docs.md", "find": "(?:R|TD)[0-9]{2}",
      "title": "Risk and technical-debt identifiers stay in their owning doc",
-     "do": RUN, "expect": MANUAL},
+     "do": RUN, "expect": MANUAL,
+     "reason": "The register is opt-in, so the check reports at run time "
+               "that no chapter declares one and that it does not apply "
+               "here. Its first line ends in a document count in "
+               "parentheses rather than a bare number, which no predicate "
+               "reads."},
 
     # -- base/core/examples.md ---------------------------------------------
 
@@ -100,7 +109,10 @@ CHECKS = [
 
     {"file": "base/core/git.md", "find": "MILESTONE",
      "title": "Every issue closed since the previous tag carries the "
-              "milestone", "do": RUN, "expect": MANUAL},
+              "milestone", "do": RUN, "expect": MANUAL,
+     "reason": "Parameterised by MILESTONE, which is unset here, so the "
+               "check reports that the release is not scoped to a "
+               "milestone and does not apply."},
 
     {"file": "base/core/git.md", "find": "<release-workflow>.yml",
      "title": "The release pipeline has executed before", "do": SKIP,
@@ -109,11 +121,17 @@ CHECKS = [
 
     {"file": "base/core/git.md", "find": "ready but unmerged",
      "title": "Release ordering against other ready pull requests",
-     "do": RUN, "expect": MANUAL},
+     "do": RUN, "expect": MANUAL,
+     "reason": "Each pull request it lists as ready is a decision about "
+               "which side of the tag the work lands on. The check states "
+               "that is not a warning it can score."},
 
     {"file": "base/core/git.md", "find": "entries in Unreleased",
      "title": "The Unreleased section accounts for what the release carries",
-     "do": RUN, "expect": MANUAL},
+     "do": RUN, "expect": MANUAL,
+     "reason": "The two counts are deliberately not required to match. The "
+               "operator confirms each carried commit is either represented "
+               "by an entry or is deliberately not notable."},
 
     {"file": "base/core/git.md", "find": "<source-owner>/<source-repo>",
      "title": "A repository migration preserves both remotes", "do": SKIP,
@@ -121,7 +139,10 @@ CHECKS = [
 
     {"file": "base/core/git.md", "find": "BASE = \"origin/main\"",
      "title": "A diff touching an off-limits path says so", "do": RUN,
-     "expect": MANUAL},
+     "expect": MANUAL,
+     "reason": "The finding is whether the change SAYS SO about the path it "
+               "touches, which is prose in a pull request body and not a "
+               "count."},
 
     # -- base/core/quality.md ---------------------------------------------
 
@@ -221,22 +242,27 @@ CHECKS = [
      "title": "A suppression names the rule it suppresses", "do": RUN,
      "expect": ["nonzero", "any", "zero"]},
 
-    # The rule states that this is governance rather than a pass/fail
-    # metric: it decides review eligibility, not whether the build is
-    # green. Reported, not scored -- and every template change owes a
-    # disposition here, so scoring it would fail each one on arrival.
     {"file": "base/workflow/quality-gates.md",
      "find": "'tests/*'", "title": "A change to an existing test is visible",
-     "do": RUN, "expect": MANUAL},
+     "do": RUN, "expect": MANUAL,
+     "reason": "Governance rather than a pass/fail metric: it decides "
+               "review eligibility, not whether the build is green. Every "
+               "template change owes a disposition in this file, which is "
+               "itself a test edit, so scoring it would fail each "
+               "conforming change on arrival."},
 
     {"file": "base/workflow/quality-gates.md",
      "find": "A shipped check is a heredoc inside a fenced block",
      "title": "A shipped rule states its check", "do": RUN,
-     "expect": MANUAL},
+     "expect": ["nonzero", "nonzero", "zero"]},
 
     {"file": "base/workflow/quality-gates.md", "find": "CHECK_LANGUAGES = (",
      "title": "A shipped check is safe to run where it is documented",
-     "do": RUN, "expect": MANUAL},
+     "do": RUN, "expect": MANUAL,
+     "reason": "A non-zero continuation count is not a failure. It is the "
+               "set to read against what was written, because the check "
+               "cannot tell a continuation that is safe where it sits from "
+               "one a reader would lose."},
 
     {"file": "base/workflow/quality-gates.md",
      "find": "checks stated outside a fence",
@@ -263,7 +289,10 @@ CHECKS = [
 
     {"file": "platform/github.md", "find": "gh run list --commit",
      "title": "A commit's checks have started, not merely not failed",
-     "do": RUN, "expect": MANUAL},
+     "do": RUN, "expect": MANUAL,
+     "reason": "A found count of zero means either a malformed query or a "
+               "workflow that never fired, and the check states it cannot "
+               "tell which."},
 
     {"file": "platform/github.md", "find": "code-scanning/analyses",
      "title": "Code scanning is entitled before the workflow is committed",

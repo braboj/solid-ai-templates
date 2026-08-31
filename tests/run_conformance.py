@@ -17,6 +17,9 @@ verdict is a judgement, and its output is the result a person reads.
 REVIEW is counted on its own line rather than among the passes, and it
 does not fail the run -- the exit status answers whether a verdict was
 reached and was negative.
+
+Every check's output reaches the report, whatever its result. Carrying it
+only for REVIEW made visibility a reason to leave a verdict unreached.
 """
 
 import datetime
@@ -172,13 +175,24 @@ def verdict(entry, code, out):
     return []
 
 
-def passed(result):
-    """Render a passing check, carrying the output a manual one produced."""
-    if not result["output"]:
+def reading(result):
+    """Render a check, carrying what it printed.
+
+    Every result carries its output, a failure included. A failure names
+    the line that broke the predicate and not the counts around it, and
+    those counts are what say whether the check reached its inputs -- so
+    a control run that proves a narrowed check still reads them has
+    nothing to read without this.
+    """
+    body = result.get("output") or []
+    failures = ["- %s" % f for f in result.get("failures") or []]
+    if not body and not failures:
         return ["### %s  %s" % (result["status"], result["id"]), ""]
-    return (["### %s  %s — %s" % (result["status"], result["id"],
-                                  result["title"]), ""]
-            + ["```"] + result["output"] + ["```", ""])
+    head = ["### %s  %s — %s" % (result["status"], result["id"],
+                                 result["title"]), ""]
+    if failures:
+        head += failures + [""]
+    return head + (["```"] + body + ["```", ""] if body else [])
 
 
 def main():
@@ -204,6 +218,13 @@ def main():
     # a check goes unexamined.
     matched, problems = {}, []
     for entry in CHECKS:
+        # A judgement with no stated reason is indistinguishable from a
+        # verdict nobody got round to writing, and the pile is where the
+        # difference stops being visible.
+        if entry.get("expect") == MANUAL and not entry.get("reason"):
+            problems.append("%s: manual with no reason -- %s"
+                            % (entry["file"], entry["title"][:40]))
+
         hits = [b for b in runnable
                 if b[0] == entry["file"] and any(entry["find"] in l
                                                  for l in b[3])]
@@ -278,15 +299,17 @@ def main():
             failures = verdict(entry, code, out)
             judgement = entry.get("expect") == MANUAL
 
-            # A manual check has no automatic verdict, so its output IS the
-            # result. Carry it to the log and the report, or the check runs
-            # and tells nobody what it saw.
+            # A judgement check's output IS its result, so it goes to the
+            # terminal where the operator is. Every check's output goes to
+            # the report: what a check saw MUST NOT depend on how its
+            # verdict was reached, or keeping a reading visible costs a
+            # verdict that was available.
             reported = out if judgement else []
 
             # A judgement check that printed nothing reported nothing. That
             # is a defect in the check rather than a reading for the
             # operator, so it fails rather than joining the review pile.
-            if judgement and not failures and not reported:
+            if judgement and not failures and not out:
                 failures = ["printed nothing -- a judgement check reports "
                             "what it inspected"]
 
@@ -305,7 +328,7 @@ def main():
             results[status] += 1
             run_results.append({"id": where, "title": title,
                                 "status": status, "failures": failures,
-                                "error": "", "output": reported})
+                                "error": "", "output": out})
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
 
@@ -333,14 +356,12 @@ def main():
         sys.exit(1)
 
     write_report(run_results, started_at, "conformance", {
-        FAIL: lambda r: ["### %s  %s — %s" % (r["status"], r["id"],
-                                              r["title"]), ""]
-                        + ["- %s" % f for f in r["failures"]] + [""],
+        FAIL: reading,
         SKIPPED: lambda r: ["### %s  %s — %s" % (r["status"], r["id"],
                                                  r["title"]), "",
                             r["error"], ""],
-        PASS: passed,
-        REVIEW: passed,
+        PASS: reading,
+        REVIEW: reading,
     })
 
     sys.exit(1 if results[FAIL] or results[ERR] else 0)
