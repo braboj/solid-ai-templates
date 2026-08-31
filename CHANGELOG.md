@@ -26,8 +26,17 @@ alters no template carries no entry.
   time. The default appends the pull request number, and a check reading
   the log resolves it back to the work and the issues it closed.
 
+### Changed
+
+- `base-docs` states the unbreakable-token width exemption as structural
+  rather than configured. No Markdown linter expresses it, so listing it
+  among the configured exemptions granted an excuse no check could apply.
+
 ### Fixed
 
+- `base-docs`' width check applies the unbreakable-token exemption its own
+  rule declares. A line is exempt where a URL or Markdown link plus its
+  indentation cannot fit; a long line merely carrying a link is not.
 - `base-git`'s milestone-coverage check resolves a reference naming an
   issue as well as one naming a pull request, and reports which it found.
   A reference it cannot read is now a finding rather than a silent skip.
