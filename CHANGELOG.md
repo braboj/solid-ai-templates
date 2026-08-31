@@ -17,6 +17,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.68.0] - 2026-08-31
+
 ### Added
 
 - `base-quality` separates two kinds of boolean flag. One selects what the
