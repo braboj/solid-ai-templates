@@ -4911,3 +4911,109 @@ no procedure for measuring downstream reach before a required document
 changes; it was filed rather than written, because the procedure is only
 needed if #1291 decides to rename. Backlog closed at 59 open issues, label
 conformance empty, smoke 26 of 26, sync clean, conformance 22 of 22.
+
+## 2026-08-31 — The check that reported and was not read
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**v2.66.0 shipped: seven issues, eight pull requests, one theme.** The
+previous session ended by naming five issues that all said a check reports
+something other than what it establishes, called it a stronger cut theme
+than anything else in the backlog, and left it unscoped. This session
+scoped it, and the groom added two more issues before the first line of
+code was written.
+
+**Verifying the claims before grooming changed one of them.** #1287 was
+filed as two halves; measuring found the first half already shipped in
+#1274, so only the upstream rule remained. The placement question its
+acceptance criteria demanded was answered by measurement rather than by
+adjacency: `quality-gates.md` reaches 12 of 17 chains and `quality.md`
+reaches 17, and naming the sibling rules from the wider file would dangle
+in the 5 chains that carry one without the other. So the rule states its
+substance inline in `quality.md` and names no section. All 17 generated
+chains changed, which is that measurement showing up in the diff.
+
+**The rule's own acceptance criterion was the one thing not delivered.**
+It asked the rule to name its check in the form ADR-031 requires. Every
+mechanical form needs to know how one project's runner classifies a check
+or where it writes its record, and reports here are gitignored, so a
+report-keyed check has nothing to read in CI. That is the brittle check
+`base-quality-gates` tells an author not to invent. The rule ships
+declarative and says so in its last bullet.
+
+**A green run had been hiding a finding for two sessions.** The
+conformance runner recorded every judgement check as `PASS`, because the
+manual disposition never sets a failure. So a run printing four over-limit
+changelog entries and a drifted identifier convention also printed
+`22 passed  0 failed`, and nobody read past the total. The runner now has
+a fourth result: `REVIEW` is counted on its own line, does not fail the
+run, and a judgement check that prints nothing fails outright. The same
+run now reads `10 passed  0 failed  0 errors  12 awaiting a reading`.
+
+**The report header had never added up.** `write_report` counted four
+statuses and dropped anything else, so it announced `47 tests` and then
+listed 35. It now counts unknown statuses by name. Twelve of forty-seven
+results had been in no bucket at all.
+
+**The four over-limit entries were in the section cut the week the bound
+shipped**, and each ended the way the rule predicts: a sentence of
+reasoning appended to a sentence that already said what changed. Trimming
+them lost nothing, because the reasoning was already in ADR-031 and in
+the two 2026-08-29 journal entries. A published changelog section is
+editable in a way a journal entry is not -- `base-docs` fixes the journal
+once written and says of the changelog only that it records a release for
+a reader outside the project.
+
+**The first fix for the width exemption was wrong and a control caught
+it.** The obvious mechanical form -- delete the unbreakable tokens, see
+whether the rest fits -- excuses every long line that happens to carry a
+link, because deleting the link makes the remainder fit. A control line of
+ordinary prose with a short link went unreported. The shipped test
+measures the token instead: a line is exempt where an unbreakable token
+plus its indentation cannot fit at all. Five controls now pin it in both
+directions, and the corpus stayed at 203 files, so the exemption narrowed
+the findings rather than the input.
+
+**The exemption also moved from configured to structural.** `base-docs`
+had listed unbreakable link targets among the exemptions that travel with
+the linter's declaration. No Markdown linter expresses that one, so the
+rule was granting an excuse no configuration could carry -- which is how a
+rule and its check disagree while both look right.
+
+**The release gate was fixed and then used on this release.** Cutting
+v2.65.0 it had reported that three of five references could not be read;
+all three were issue numbers, because the title convention puts the issue
+at the end and a squash appends the pull request number only when the
+subject is left alone. It now resolves each reference through the issues
+endpoint, which answers for either kind and says which, and asks the exit
+status rather than whether output arrived -- `gh api` prints its error
+body to stdout, the trap #1296 is about. Run against v2.65.0..HEAD it read
+18 references, 11 pull requests and 7 issues, and reported nothing. A
+control set to a milestone that does not exist reported every issue and
+what it actually carries, so the clean result is the check agreeing rather
+than the check reaching nothing.
+
+**`--subject` was the cause, and now two documents say so.** `base-git`
+gains a MUST NOT under squash-merge safety and the PLAYBOOK says it at the
+step where the merge happens. The default subject is the form the
+convention wants.
+
+**Reading the twelve judgement checks is now part of the wrap-up, and it
+filed four issues.** #1309 is the sharpest: a check in
+`quality-gates.md` reports a bare `0`, stating neither its corpus nor its
+finding -- the rule this very release shipped, violated one file over.
+#1310 has the register-identifier check calling an unadopted convention a
+drifted one. #1311 has the continuation-safety check flagging valid shell
+inside a documented YAML workflow. #1312 asks what a release-time or
+migration-time check should print when run at neither moment, since both
+currently emit a count whose pass condition assumes the moment is in
+progress.
+
+**What is left.** The four above are unmilestoned and unscoped; three of
+them are the same shape as the cut that just shipped, which suggests the
+theme is not finished. #1267 and #1293 remain the strongest content
+cluster for a next cut, with #1033 -- all three about a rule recommending
+a shape that is wrong for the case the caller has. #1291's rename decision
+still gates #1292 and #1295. Backlog closed at 59 open issues, label
+conformance empty, smoke 26 of 26, sync clean, conformance 10 passed with
+12 awaiting a reading and all twelve read.
