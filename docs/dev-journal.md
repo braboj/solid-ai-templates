@@ -5235,3 +5235,72 @@ decision still gates #1292 and #1295, and remains the user's to make.
 Backlog closed at 54 open issues, label conformance empty, smoke 26 of 26,
 sync clean, conformance 10 passed with 12 awaiting a reading and all
 twelve read.
+
+---
+
+## 2026-08-31 — The wrap-up audit that followed the cut
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**This is the session's second entry, and #1262 is the reason.** The
+v2.68.0 release wrap-up wrote one, naming the issue it had just filed. The
+explicit end-of-session audit then filed another issue, labelled two more,
+and merged a pull request, none of which the first entry can name. Editing
+it in place would change what a written record claims, which `base-docs`
+routes through a new record instead. The open issue asks whether the
+release wrap-up should write an entry at all; until it is answered the
+cost is this — a second entry, for the same session, on the same day.
+
+**Two duties went into CLAUDE.md and one was the wrong shape first.** The
+changelog entry is now kept within the forty-word bound in the pull
+request that writes it rather than at the cut. The second — that a
+conformance run is not clean until its judgement readings are read — was
+drafted as four lines restating the reasoning, and the PLAYBOOK's "Run the
+test suite" already carries that reasoning. CLAUDE.md forbids duplicating
+content across documents, so it ships as one line and a pointer. Both
+rules exist because both were failed this session.
+
+**The PLAYBOOK gained the control-testing procedure, which had been used
+four times and written down nowhere.** The part worth documenting is not
+the idea but the obstruction: where the fixture must live under
+`templates/`, `run_conformance.py` refuses to execute at all, because an
+unregistered fenced block in the fixture is a missing disposition and the
+registry reconciliation runs before any check does. The section carries
+the direct-extraction form that gets past it, the pass condition that
+makes a control worth running, and the placeholder trap — `MILESTONE =
+None` rather than an empty string cost a first attempt.
+
+**CI failed on that pull request for a reason that was not that pull
+request.** The label-conformance check went red because two issues had
+arrived unlabelled from a parallel session between the release and the
+audit. That is the gate working: nothing else surfaces an unlabelled issue,
+and it surfaced this one against an unrelated branch within minutes.
+#1331 and #1332 are labelled `task` / `P2`, each with the precedent
+recorded on the issue, and they are a pair — same provenance, and #1332's
+worked example is the loosening #1331 argues for, so implementing either
+alone leaves the other half-told.
+
+**The session's one unhomed pattern is filed rather than shipped.** Four
+checks were control-tested across the two releases, and the practice that
+made those controls worth anything was requiring the check's own corpus
+count to MOVE between the runs: a fixture the check never reached produces
+exactly the result a correctly-silent check produces. The mechanics are
+project-specific and went to the PLAYBOOK; the rule is not, and has no
+upstream home, so #1334 carries it to `base-testing`.
+
+**PRs merged:** #1333
+
+**Issues opened:** #1334
+
+**Issues labelled:** #1331, #1332 — arrived unlabelled from a parallel
+session
+
+**What is left.** Three unmilestoned issues now cluster around the
+runner's vocabulary for a result — #1322 on which checks should stop being
+judgements, #1329 on how a judgement check says it has nothing to judge,
+and #1334 on what makes a control credible. #1331 and #1332 are a separate
+pair, both from `pyomb`, about a gate whose comparison makes a legitimate
+state unreachable and about what a loosened gate leaves behind. Neither
+cluster is groomed. Backlog closed at 57 open issues, label conformance
+empty, smoke 26 of 26, sync clean, conformance 10 passed with 12 awaiting
+a reading and all twelve read.
