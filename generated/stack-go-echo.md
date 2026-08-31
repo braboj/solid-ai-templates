@@ -2463,6 +2463,36 @@ is a correction and is made in place with no marker.
   MUST NOT be used on an ADR: appending to a merged decision record changes
   what a closed record asserts, and the Decision logs section above already
   routes that correction through a new record instead
+- An observation MAY be stated as a command and its output, and that is
+  the strongest form one takes — a claim a later reader can falsify in a
+  single command. It is also the only form that the act of recording it
+  can refute. Where the command ranges over a moving reference, its
+  answer changes the moment the commit carrying the report lands, so the
+  record and the commit falsifying it are the same commit. `HEAD` and
+  the working tree are the two common ones; "the latest tag" and "the
+  current branch" are the same defect wearing a different name
+- Such a command MUST be scoped so that committing the record cannot
+  change its answer: name the commit or tag the claim is about, never a
+  reference that moves with the record. Where the claim is genuinely
+  about the state before the record landed, it says so and names that
+  commit
+- No addendum is owed for one of these. The addendum above repairs an
+  instruction the world made unfulfillable, and nothing about the world
+  moved here — the claim was wrong when written. The remedy is the
+  scope, and a note explaining a wrong scope leaves the wrong scope in
+  place
+- This governs what a document asserts, not when a check runs. Whether a
+  check is executed before or after the change it gates — and whether it
+  reads committed or staged work — is a property of the run, decided
+  once and observed immediately. A claim written into a report is
+  durable, is read by people who were not there, and is the thing this
+  rule protects
+- Which documents are dated reports is a judgement, so this constraint
+  stays declarative. A locator for commands naming a moving reference
+  would report every procedure and runbook that correctly tells a reader
+  to run one against their own tree, and a finding a reader has to
+  dismiss on every run is the failure the reporting rules exist to
+  prevent
 
 ### Retiring a document
 
