@@ -223,12 +223,10 @@ If the agent cannot run scripts, use the pre-resolved files in
 
 ### Model limitations
 
-| Stack category | Prompt size | Min context window |
-|----------------|-------------|-------------------|
-| Library / CLI | ~12K tokens | 32K |
-| Static site | ~15K tokens | 32K |
-| Backend service | ~25–50K tokens | 128K |
-| Full-stack | ~40–60K tokens | 128K |
+Prompt sizes and the minimum context window per stack category are in
+README's "Model limitations" section, generated from the resolved
+chains by `py tools/sync.py`. A copy here would be a second set of
+figures with no generator behind it, and the copy is what ages.
 
 - Output token limit < 16K: generate section by section
 - Output token limit 32K+: full inline file fits in one pass

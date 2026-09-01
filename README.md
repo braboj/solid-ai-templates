@@ -110,12 +110,29 @@ latest rules.
 
 ## Model limitations
 
-| Stack category | Prompt size | Min context window |
-|----------------|-------------|-------------------|
-| Library / CLI | ~12K tokens | 32K |
-| Static site | ~15K tokens | 32K |
-| Backend service | ~25–50K tokens | 128K |
-| Full-stack | ~40–60K tokens | 128K |
+<!-- generated:readme-model-limits -->
+| Stack category | Stacks | Largest chain | Prompt | Min context |
+|----------------|--------|---------------|--------|-------------|
+| abstract | 2 | `stack-python-service` — 441K chars | ~126K tokens | 200K |
+| backend | 8 | `stack-django` — 455K chars | ~130K tokens | 200K |
+| embedded | 1 | `stack-c-embedded` — 270K chars | ~77K tokens | 128K |
+| hypermedia | 1 | `stack-htmx` — 282K chars | ~81K tokens | 128K |
+| library | 3 | `stack-python-lib` — 368K chars | ~105K tokens | 128K |
+| static | 2 | `stack-tutorial` — 408K chars | ~117K tokens | 200K |
+<!-- /generated:readme-model-limits -->
+
+Measured rather than estimated. Each row takes the largest resolved
+chain in that category — the file under `generated/` an adopter
+attaches — and converts it at 3.5 characters per token, a rate held
+below the four-per-token rule of thumb because Markdown carrying
+tables, fenced code and hyphenated identifiers tokenizes worse than
+prose. The minimum window adds 18K tokens for the interview and the
+file the model has to write back, then rounds up to the next window a
+model actually sells.
+
+`py tools/sync.py` regenerates the table from the chains and
+`py tools/sync.py --check` fails when it drifts, so the figures move
+when a base template grows instead of ageing quietly.
 
 - **Output token limit < 16K** (e.g. GPT-4o default): generated file
   may be truncated — generate section by section or set `max_tokens`
