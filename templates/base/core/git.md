@@ -627,7 +627,7 @@ RUN = dict(capture_output=True, text=True, encoding="utf-8")
 
 if MILESTONE is None:
     print("release not scoped to a milestone; this check does not apply")
-    raise SystemExit(0)
+    raise SystemExit(3)
 
 # Resolve the tag this release follows from the commit under release, not
 # from a position in a list of tags.
@@ -725,8 +725,10 @@ resolver assuming one kind reports on the subset it happens to fit and
 prints a healthy total while doing it.
 
 With `MILESTONE` left at `None` the command reports that the check does
-not apply, which is a pass and not a skip: the line is the record that a
-routine release was cut deliberately without one. Distinguish it from a
+not apply, on exit status 3 — the reserved status for a check answering
+that its question is not live, which is neither a pass nor a skip: the
+line is the record that a routine release was cut deliberately without
+one. Distinguish it from a
 finding before running anything — a milestone-scoped release left at
 `None` reports "does not apply" and proves nothing.
 
@@ -759,7 +761,7 @@ agrees in both orderings.
 previous=$(git describe --tags --abbrev=0)
 if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
   echo "HEAD is $previous; no release is in preparation, so this check does not apply"
-  exit 0
+  exit 3
 fi
 echo "preceding tag: $previous"
 git log --format='  carries: %s' "$previous..HEAD"
@@ -779,8 +781,8 @@ result: it means the tag would land on the same commit as its predecessor.
 
 That reading only holds while a release is being prepared, which is why
 the command answers that question first. With the tag already at HEAD it
-reports that it does not apply and stops, rather than printing the
-failure-shaped zero its own pass condition describes. The emptiness is
+reports that it does not apply and stops on exit status 3, rather than
+printing the failure-shaped zero its own pass condition describes. The emptiness is
 not the detector: a carried count of zero the day after a release reads
 as one the day after that, because an unrelated change merged, and
 nothing was fixed in between.
@@ -798,7 +800,7 @@ the commit range by hand — the work the changelog existed to save.
 previous=$(git describe --tags --abbrev=0)
 if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
   echo "HEAD is $previous; no release is in preparation, so this check does not apply"
-  exit 0
+  exit 3
 fi
 echo "commits since $previous: $(git log --format='%s' "$previous..HEAD" | wc -l)"
 echo "entries in Unreleased: $(awk '/^## /{ n++ } n==1 && /^- /' CHANGELOG.md | wc -l)"
@@ -807,7 +809,8 @@ git log --format='  carried: %s' "$previous..HEAD"
 
 Its moment is the release commit before the `Unreleased` section is cut,
 so it answers first whether that moment is in progress. With the tag
-already at HEAD it reports that it does not apply and stops: two zeros
+already at HEAD it reports that it does not apply and stops on exit
+status 3: two zeros
 there mean no commits and an uncut section, which is what every ordinary
 day after a release looks like, and its pass condition below reads a zero
 entry count as a failure.
@@ -997,10 +1000,10 @@ if here == there:
     if dirty:
         print("HEAD is at %s and the work is uncommitted; commit it and "
               "run again" % BASE)
-    else:
-        print("HEAD is at %s and the tree is clean; no branch is open, so "
-              "this check does not apply" % BASE)
-    raise SystemExit(0)
+        raise SystemExit(0)
+    print("HEAD is at %s and the tree is clean; no branch is open, so "
+          "this check does not apply" % BASE)
+    raise SystemExit(3)
 
 out = subprocess.run(["git", "diff", "--name-only", BASE + "...HEAD"],
                      capture_output=True, text=True,
@@ -1027,9 +1030,9 @@ The command separates those two from a third case that is not a failure
 at all, and does it before counting. With HEAD at the base it asks
 whether the tree is dirty: uncommitted work is the forgot-to-commit
 failure above, and said in those words rather than as a zero; a clean
-tree means no branch is open, so the check does not apply. The zero it
-would otherwise print carries the weight of a finding on a tree where
-nothing is being proposed. Every
+tree means no branch is open, so the check does not apply and exits 3.
+The zero it would otherwise print carries the weight of a finding on a
+tree where nothing is being proposed. Every
 `off-limits:` line is an escalation trigger rather than a failure: it
 says this change needs the proposal above before it merges.
 

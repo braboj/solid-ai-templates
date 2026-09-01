@@ -308,8 +308,12 @@ arriving unexamined. Checks reaching GitHub need `gh` authenticated.
 A check whose verdict is a judgement reports `REVIEW` rather than `PASS`,
 and the summary counts it as awaiting a reading. It does not fail the run
 — the exit status answers whether a verdict was reached and was negative —
-so a run ending `0 failed  8 awaiting a reading` is not a clean run until
-someone has read those eight. Recording them as passes is what let four
+so a run ending `0 failed  2 not applicable  6 awaiting a reading` is not
+a clean run until someone has read those six. The middle count is not
+among them: a check whose moment is not in progress exits 3 and has
+answered, which is why it is counted apart. That is different from a
+`SKIP`, which a person decided in advance about this repository and which
+runs nothing at all. Recording them as passes is what let four
 over-long changelog entries sit inside a green report for two sessions.
 
 A check only earns that status where nothing in its output can be decided.

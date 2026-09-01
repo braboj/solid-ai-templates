@@ -1118,8 +1118,10 @@ general writing-style and diagram rules above still apply.
   how many ids, then prints nothing after that. Zero ids means two
   different things and the two counts are what separate them: with no
   chapter declaring a register the project never adopted the convention
-  and the check does not apply, while a declared chapter holding no ids
-  is the convention having drifted. The register is opt-in, so its
+  and the check does not apply, which it reports with exit status 3 — the
+  reserved status for a check answering that its question is not live
+  here — while a declared chapter holding no ids is the convention having
+  drifted. The register is opt-in, so its
   absence is not a finding — a check reporting drift against a
   convention a project never took up prints a defect that does not exist
   on every run, and a standing finding is one a reader learns to
@@ -1150,6 +1152,7 @@ print("register ids found: %d" % found)
 if not owners and not found:
     print("no register chapter is declared and no ids are in use; "
           "this check does not apply")
+    raise SystemExit(3)
 elif not owners:
     print("ids are in use but no document declares a register chapter")
 elif not found:

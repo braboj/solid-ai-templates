@@ -716,8 +716,20 @@ verdict unreached.
   reached. The counts that say whether a check reached its inputs are what
   a failure is read against, so dropping them when a verdict is reached
   drops them exactly when they are needed
+- A check that determines at run time that it does not apply MUST say so
+  with a reserved exit status, 3, beside the sentence that explains it.
+  The status is what a runner reads: a phrase matched in output is a
+  convention no check declares, and any rewording of the sentence breaks
+  it silently
+- That status is not the disposition a person sets in advance. Skipping a
+  check is a judgement about the project — it cannot apply here at all —
+  made once and recorded where the check is registered. Exit 3 is the
+  check answering, this run, about this moment, and the same check applies
+  next week. Folding the second into the first loses that it ran and
+  answered
 - A run's summary MUST separate the checks awaiting a reading from the
-  checks a verdict was reached on. Folding both into one count of passes
+  checks a verdict was reached on, and both from the checks that answered
+  that they do not apply. Folding both into one count of passes
   is the silencing failure arriving through the summary rather than
   through the body — a finding filed under a total that says there is
   nothing to look at
@@ -1623,7 +1635,7 @@ RUN = dict(capture_output=True, text=True, encoding="utf-8")
 
 if MILESTONE is None:
     print("release not scoped to a milestone; this check does not apply")
-    raise SystemExit(0)
+    raise SystemExit(3)
 
 # Resolve the tag this release follows from the commit under release, not
 # from a position in a list of tags.
@@ -1721,8 +1733,10 @@ resolver assuming one kind reports on the subset it happens to fit and
 prints a healthy total while doing it.
 
 With `MILESTONE` left at `None` the command reports that the check does
-not apply, which is a pass and not a skip: the line is the record that a
-routine release was cut deliberately without one. Distinguish it from a
+not apply, on exit status 3 — the reserved status for a check answering
+that its question is not live, which is neither a pass nor a skip: the
+line is the record that a routine release was cut deliberately without
+one. Distinguish it from a
 finding before running anything — a milestone-scoped release left at
 `None` reports "does not apply" and proves nothing.
 
@@ -1755,7 +1769,7 @@ agrees in both orderings.
 previous=$(git describe --tags --abbrev=0)
 if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
   echo "HEAD is $previous; no release is in preparation, so this check does not apply"
-  exit 0
+  exit 3
 fi
 echo "preceding tag: $previous"
 git log --format='  carries: %s' "$previous..HEAD"
@@ -1775,8 +1789,8 @@ result: it means the tag would land on the same commit as its predecessor.
 
 That reading only holds while a release is being prepared, which is why
 the command answers that question first. With the tag already at HEAD it
-reports that it does not apply and stops, rather than printing the
-failure-shaped zero its own pass condition describes. The emptiness is
+reports that it does not apply and stops on exit status 3, rather than
+printing the failure-shaped zero its own pass condition describes. The emptiness is
 not the detector: a carried count of zero the day after a release reads
 as one the day after that, because an unrelated change merged, and
 nothing was fixed in between.
@@ -1794,7 +1808,7 @@ the commit range by hand — the work the changelog existed to save.
 previous=$(git describe --tags --abbrev=0)
 if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
   echo "HEAD is $previous; no release is in preparation, so this check does not apply"
-  exit 0
+  exit 3
 fi
 echo "commits since $previous: $(git log --format='%s' "$previous..HEAD" | wc -l)"
 echo "entries in Unreleased: $(awk '/^## /{ n++ } n==1 && /^- /' CHANGELOG.md | wc -l)"
@@ -1803,7 +1817,8 @@ git log --format='  carried: %s' "$previous..HEAD"
 
 Its moment is the release commit before the `Unreleased` section is cut,
 so it answers first whether that moment is in progress. With the tag
-already at HEAD it reports that it does not apply and stops: two zeros
+already at HEAD it reports that it does not apply and stops on exit
+status 3: two zeros
 there mean no commits and an uncut section, which is what every ordinary
 day after a release looks like, and its pass condition below reads a zero
 entry count as a failure.
@@ -1993,10 +2008,10 @@ if here == there:
     if dirty:
         print("HEAD is at %s and the work is uncommitted; commit it and "
               "run again" % BASE)
-    else:
-        print("HEAD is at %s and the tree is clean; no branch is open, so "
-              "this check does not apply" % BASE)
-    raise SystemExit(0)
+        raise SystemExit(0)
+    print("HEAD is at %s and the tree is clean; no branch is open, so "
+          "this check does not apply" % BASE)
+    raise SystemExit(3)
 
 out = subprocess.run(["git", "diff", "--name-only", BASE + "...HEAD"],
                      capture_output=True, text=True,
@@ -2023,9 +2038,9 @@ The command separates those two from a third case that is not a failure
 at all, and does it before counting. With HEAD at the base it asks
 whether the tree is dirty: uncommitted work is the forgot-to-commit
 failure above, and said in those words rather than as a zero; a clean
-tree means no branch is open, so the check does not apply. The zero it
-would otherwise print carries the weight of a finding on a tree where
-nothing is being proposed. Every
+tree means no branch is open, so the check does not apply and exits 3.
+The zero it would otherwise print carries the weight of a finding on a
+tree where nothing is being proposed. Every
 `off-limits:` line is an escalation trigger rather than a failure: it
 says this change needs the proposal above before it merges.
 
@@ -3169,8 +3184,10 @@ general writing-style and diagram rules above still apply.
   how many ids, then prints nothing after that. Zero ids means two
   different things and the two counts are what separate them: with no
   chapter declaring a register the project never adopted the convention
-  and the check does not apply, while a declared chapter holding no ids
-  is the convention having drifted. The register is opt-in, so its
+  and the check does not apply, which it reports with exit status 3 — the
+  reserved status for a check answering that its question is not live
+  here — while a declared chapter holding no ids is the convention having
+  drifted. The register is opt-in, so its
   absence is not a finding — a check reporting drift against a
   convention a project never took up prints a defect that does not exist
   on every run, and a standing finding is one a reader learns to
@@ -3201,6 +3218,7 @@ print("register ids found: %d" % found)
 if not owners and not found:
     print("no register chapter is declared and no ids are in use; "
           "this check does not apply")
+    raise SystemExit(3)
 elif not owners:
     print("ids are in use but no document declares a register chapter")
 elif not found:
@@ -6297,10 +6315,10 @@ BASE=origin/main
 if [ "$(git rev-parse HEAD)" = "$(git rev-parse $BASE)" ]; then
   if [ -n "$(git status --porcelain)" ]; then
     echo "HEAD is at $BASE and the work is uncommitted; commit it and run again"
-  else
-    echo "HEAD is at $BASE and the tree is clean; no change is under review, so this check does not apply"
+    exit 0
   fi
-  exit 0
+  echo "HEAD is at $BASE and the tree is clean; no change is under review, so this check does not apply"
+  exit 3
 fi
 ALL=$(git diff --name-status $BASE...HEAD)
 TESTS=$(git diff --name-status $BASE...HEAD -- 'tests/*')
@@ -6313,9 +6331,12 @@ echo "$LOOSENED" | grep . || true
 
 The check's moment is a change under review, so it answers that first. On
 the base with a clean tree there is no change to classify and it reports
-that it does not apply; on the base with an uncommitted one it says so in
-those words, since the natural moment to run this is while writing the
-change and that run would otherwise report three zeros.
+that it does not apply, with exit status 3 — the reserved status for a
+check answering that its moment is not in progress. On the base with an
+uncommitted change it exits clean instead and says so in those words: the
+operator has something to do, and a status meaning no reader is needed
+would be wrong. The natural moment to run this is while writing the
+change, and that run would otherwise report three zeros.
 
 Pass condition: the three counts are the reading and the last count MUST
 be zero; anything printed after them is the list of loosened changes, and

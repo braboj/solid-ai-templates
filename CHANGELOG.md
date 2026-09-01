@@ -23,6 +23,15 @@ alters no template carries no entry.
   check declares, counted against, reaches an automatic verdict; a
   judgement disposition records what takes a person; and a check's
   output is reported however its verdict was reached.
+- `base-quality` reserves exit status 3 for a check reporting at run
+  time that it does not apply, and requires a run's summary to count
+  it apart from the checks awaiting a reading.
+
+### Changed
+
+- `base-docs`, `base-git` and `base-quality-gates` exit 3 from the six
+  checks that report a moment is not in progress, so a runner counts
+  them apart from a reading rather than folding them into it.
 
 ## [2.68.0] - 2026-08-31
 
