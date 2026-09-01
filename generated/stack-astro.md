@@ -707,6 +707,19 @@ verdict unreached.
   decided. A threshold the check declares, with a count measured against
   it, is decided and MUST reach an automatic verdict; the judgement is
   what remains after that
+- That declaration MUST be read from the check's stated pass condition,
+  never from a sample of its output. The output is one run against one
+  tree, and it misleads in both directions: a violation count reading zero
+  today looks like a rule requiring zero, and a count the rule tolerates
+  reads as one it forbids. Where the two disagree the pass condition
+  governs, and the disagreement is itself a finding about the check
+- A check MAY carry a verdict and a reading together, where the reading is
+  addressed to the person the verdict's failure summons rather than to the
+  verdict itself. The prose MUST then say which counts carry the verdict
+  and which are for that reader. Scoring the reader's counts fails a
+  legitimate case twice for one reason, and dropping them sends the
+  escalation with no evidence attached; a check that mixes the two
+  silently is worse than either
 - Every judgement disposition MUST record what about the check takes a
   person, beside the disposition rather than in the review that set it. A
   judgement with no stated reason is indistinguishable from a verdict
@@ -7073,6 +7086,11 @@ project fails there, where nobody wrote it and nobody can debug it.
   that reached zero files and a command that found zero violations print
   the same thing. Report the count of inputs examined. The same rule for
   an assertion inside a test suite is `testing-negative-assertion-coverage`
+- Where a check states both a verdict and a reading, which of its counts
+  carry the verdict and which are for the reader it escalates to is
+  governed by `quality-cross-validation`, together with the rule that a
+  disposition is read from the stated pass condition rather than from a
+  sample of the output
 - Where an empty result means drift rather than health, the check MUST
   report it as a failure — no journal entries found means the heading
   format moved, not that the file is ordered
