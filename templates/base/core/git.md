@@ -829,6 +829,49 @@ entry is added by the change that causes it, per `base-docs`; a project
 relying on this check to reconstruct the block at release time has already
 lost the information it needs to do so.
 
+### A currency gate compares non-strictly
+
+The periodic project-wide audit above is the pre-release step a project
+most often gates, by requiring the dated artifact it names — an audit, a
+review, a sign-off — to be current with respect to the last release. Where
+that artifact carries a date and no time, the comparison MUST admit a
+record dated the release day. Requiring strictly-later makes a second
+release on the day of the first impossible rather than merely unaudited:
+
+```
+previous release   2026-08-31          (shipped this morning)
+newest record      cannot exceed today
+verdict            fail, until tomorrow
+```
+
+Nothing clears it. Writing the artifact does not, because the new artifact
+carries today's date. Declining the step does not either, wherever
+declining is itself a dated record — it carries the same date and fails
+the same comparison.
+
+The strictness has a real motivation, which is what makes it easy to reach
+for: a date with no time cannot separate an artifact written the morning
+before a release from one written the evening after it, and only the
+second covers the release. Refusing both is the cautious reading, and its
+cost is invisible on the day the gate is written. It appears on the first
+day two releases are wanted, and by then the procedure holds a step the
+operator is invited to decline and cannot satisfy in any form — a worse
+state than the ambiguity the strictness guarded against.
+
+Comparing non-strictly leaves the case the gate exists for untouched: a
+record older than the previous release still fails, and a missing record
+still fails. One record then covers two same-day releases, which is the
+intended outcome rather than a side effect. Recording a timestamp rather
+than a date removes the ambiguity properly, and costs a rename of every
+existing artifact plus every check that reads the filename shape — take
+that where the artifacts are few, and loosen the comparison where they
+are not.
+
+Loosening it is a weakening of a gate and carries what attaches to one:
+the same change MUST add an assertion for the same-day case, so a
+comparison tightened back to strictly-later fails something rather than
+passing green.
+
 ### Projects with a version manifest
   9. `git checkout -b chore/release-vX.Y.Z`
   10. Bump version in the project manifest (`package.json`,

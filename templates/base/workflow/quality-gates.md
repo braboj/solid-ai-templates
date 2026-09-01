@@ -406,6 +406,19 @@ weakening it is a different act and takes a person.
 - A change that deletes, loosens or rewrites an existing test MUST state
   why, and MUST NOT merge on a green suite alone. It changes what correct
   means, and the suite cannot report that it has
+- A change that deliberately loosens a gate MUST add an assertion for the
+  case the loosening admits, in the same change. That case usually moves off
+  a break list and onto nothing: it passes because a check stopped firing,
+  not because anything says it should pass. Move it to a positive control
+  rather than deleting it, and the gate keeps a test that fails if the
+  loosening is reverted
+- The assertion's message MUST name why the case is admitted. The stated
+  reason otherwise lives in a pull request body and a decision record, and
+  the suite consults neither; what the next reader meets is a comparison
+  that looks careless — an off-by-one, a `>=` where a `>` was surely meant.
+  Tightening it back is a one-character change that passes the whole suite,
+  so the loosening is indistinguishable from a defect and reverting it is
+  indistinguishable from a fix
 - Where merges ride on green CI, separate the two mechanically: a diff
   touching an existing test file loses auto-merge or lenient-review
   eligibility, and a diff that only adds test files keeps it. The filter is
@@ -430,9 +443,14 @@ fi
 ALL=$(git diff --name-status $BASE...HEAD)
 TESTS=$(git diff --name-status $BASE...HEAD -- 'tests/*')
 LOOSENED=$(echo "$TESTS" | grep -vE '^A' || true)
+NUMSTAT=$(git diff --numstat $BASE...HEAD -- 'tests/*')
+ADDED=$(echo "$NUMSTAT" | awk '{ total += $1 } END { print total + 0 }')
+REMOVED=$(echo "$NUMSTAT" | awk '{ total += $2 } END { print total + 0 }')
 echo "files changed in range: $(echo "$ALL" | grep -c . || true)"
 echo "test-file changes inspected: $(echo "$TESTS" | grep -c . || true)"
 echo "changes that are not pure additions: $(echo "$LOOSENED" | grep -c . || true)"
+echo "test-root lines added: $ADDED"
+echo "test-root lines removed: $REMOVED"
 echo "$LOOSENED" | grep . || true
 ```
 
@@ -443,11 +461,19 @@ check answering that its moment is not in progress. On the base with an
 uncommitted change it exits clean instead and says so in those words: the
 operator has something to do, and a status meaning no reader is needed
 would be wrong. The natural moment to run this is while writing the
-change, and that run would otherwise report three zeros.
+change, and that run would otherwise report five zeros.
 
-Pass condition: the three counts are the reading and the last count MUST
-be zero; anything printed after them is the list of loosened changes, and
-a change keeps the lenient path only while that list is empty.
+Pass condition: the five counts are the reading and the not-pure-additions
+count MUST be zero; anything printed after them is the list of loosened
+changes, and a change keeps the lenient path only while that list is empty.
+
+The two line counts are for the person a non-empty list summons, not for
+the gate. A deliberate loosening fails the pass condition by design, and
+what the reviewer needs next is whether the admitted case was asserted:
+lines removed from the test root exceeding lines added is the shape of a
+weakening that shipped without its replacement. It stays a signal rather
+than a threshold, because a rename or a reformat moves both counts — so it
+is read, not scored.
 
 The first count is what separates the two zeros. A test-file count of
 zero under a non-zero range total is a real answer — the change touched
