@@ -1836,9 +1836,10 @@ releases, so a detector reading it as the moment reports the failure shape
 on almost every day. A check whose ordinary output is its defect output
 trains its reader to skip it.
 
-Pass condition: with `RELEASE` set, the command prints both counts and
-lists every carried commit, and the operator confirms each carried commit
-is either represented by an entry or is deliberately not notable. The two
+Pass condition: the command prints both counts and lists every carried
+commit once `RELEASE` names the release being prepared, and the operator
+confirms each carried commit is either represented by an entry or is
+deliberately not notable. The two
 counts are NOT required to match — not every commit earns an entry. Zero
 entries against commits carried is a failure where any carried commit is
 notable; where every one of them is deliberately not, zero is the correct
