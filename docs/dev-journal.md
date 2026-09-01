@@ -5701,3 +5701,34 @@ precedent of #1367 and #1381, with the precedent commented on the issue.
 passed and 0 failed with all three readings read, 0 open pull requests, no
 stale branches, label conformance `[]`, 72 open issues. Milestone #78 holds
 #1360, #1366 and #1381 — no tag; the cut is half shipped.
+
+## 2026-09-01 — The wrap-up shipped work after the entry that records it
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** Amendment to the entry above, which named three merged
+pull requests and is no longer complete. #1390 merged after it: the
+PLAYBOOK's groom step now says to measure a claim with the extractor the
+check itself uses, not one written for the measurement. A second entry
+rather than an edit, because adding a pull request changes what the record
+claims happened.
+
+**The cause is the wrap-up's own ordering, not the audit running twice.**
+The journal sits at item 14 of sixteen, placed there in v2.62 with the
+reasoning that it is the only item whose output is a record of the others.
+Item 15 follows it, and item 15 produces work whenever a flagged gap has a
+fix small enough to apply on the spot — which is when a wrap-up should
+apply it. Here the doc-placement tree obliged a question about where a
+groom refinement belongs, the answer came back PLAYBOOK, and the pull
+request merged after the entry. Filed as #1391 with three options; moving
+the journal behind item 15 is the smallest.
+
+**Third second-entry in three sessions, first with this cause.** v2.63 and
+v2.71 owed one because the wrap-up audit ran twice. This one owes it
+because the checklist's own sequence guarantees it whenever the last
+reporting item resolves into a change.
+
+**PRs merged:** #1390.
+**Issues opened:** #1391.
+**State at close:** unchanged from the entry above, except 73 open issues
+and `main` at the PLAYBOOK commit.
