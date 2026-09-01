@@ -33,6 +33,12 @@ alters no template carries no entry.
 - `base-git` scopes the pre-release periodic review to minor and major
   releases and ships the check that decides it, so a patch owes neither
   the review nor a record declining it.
+- `base-quality` reads a check's disposition from its stated pass
+  condition rather than a sample of its output, and names the two
+  directions a sample misleads in.
+- `base-quality` lets a check carry a verdict and a reading together,
+  requiring its prose to say which counts carry the verdict and which
+  serve the reader the failure summons.
 
 ## [2.70.0] - 2026-09-01
 
