@@ -76,11 +76,18 @@ add only the tools their shape changes.
   project rather than only where the complexity gate is wanted
 - `tsc` runs with `strict: true`, per `base-typescript-strictness`. The
   type gate and the editor's checker MUST be the same tool at the same
-  strictness, per `quality-gates-layers`
-- Mutation testing is opt-in per `quality-gates-mutation`, and a project
-  that has not adopted it carries no `stryker.conf.json`. `stryker` runs
-  the project's existing runner, so the binding is a config file rather
-  than a second way to execute the suite
+  strictness — one type-checker at one strictness, never two. A bundled
+  editor checker runs its own stricter analysis by default and floods the
+  editor with diagnostics the CI gate is configured to ignore, so
+  contributors chase false positives and green in CI stops meaning green
+  in the editor
+- Mutation testing is OPT-IN. Adopt it where the suite is already mature
+  and the code is consequential, and record the measured score as a
+  baseline with a ratchet rather than a hard cliff — a first run on real
+  code lands far below any figure worth publishing. A project that has
+  not adopted it carries no `stryker.conf.json`. `stryker` runs the
+  project's existing runner, so the binding is a config file rather than
+  a second way to execute the suite
 
 ### sonarjs rules to enable
 

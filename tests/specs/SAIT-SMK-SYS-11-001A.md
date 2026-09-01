@@ -29,7 +29,7 @@ tags: [composition, reach, section-ids]
 | Result | Condition |
 |--------|-----------|
 | PASSED | Every cross-file prose ID reference resolves in all chains carrying the referencing file |
-| FAILED | A reference dangles in at least one chain, or names an ID no template declares |
+| FAILED | A reference dangles in at least one chain, or an ID-shaped token no template declares is named |
 | FAILED | The check resolved no chains, or matched no references at all |
 | SKIPPED | PyYAML not installed |
 | BLOCKED | — |
@@ -50,10 +50,14 @@ tags: [composition, reach, section-ids]
 
 1. Resolve every stack's chain from the manifest
 2. Map each declared section ID to the files declaring it
-3. For each template, find backticked IDs in its prose that it does not
-   declare itself
+3. For each template, find the backticked tokens in its prose that the
+   declared-ID map holds and the file does not declare itself. The set of
+   IDs decides what a reference is — a pattern built from layer prefixes
+   sees file-level IDs and misses the section-level ones the rule is about
 4. For each such reference, compare the chains carrying the referencing
    file against those carrying the declaring file
+5. Report the number of declared IDs, the number named in another file's
+   prose, the references checked and the chains resolved
 
 ### Assertions
 
@@ -63,6 +67,8 @@ tags: [composition, reach, section-ids]
    reports the same empty result as one that found nothing
 3. Assert the reference count is non-zero — a pattern that stopped
    matching is indistinguishable from a clean tree otherwise
+4. Assert the run states how many IDs the check can see, so a pattern
+   that narrows takes a visible number down with it
 
 ### Negative controls
 
@@ -72,12 +78,16 @@ tags: [composition, reach, section-ids]
    the check MUST fail on the reference count rather than pass. This is
    the shape a careless later edit takes, and it is the control the
    assertion in step 3 exists for
+3. Narrow the pattern to a layer-prefix list; the reported reference
+   count MUST drop. A widening that leaves the count unmoved changed
+   nothing, whatever the pattern now reads as
 
 ## Related
 
 - `SAIT-SMK-TPL-04-001A` — covers EXTEND/OVERRIDE directives, which are
   structural; a prose reference is checked by neither it nor TPL-06
 - `SAIT-SMK-TPL-06-001A` — the same reachability question for directives
-- Measured basis, 2026-08-28: 15 cross-file prose references across the
-  tree, of which 3 dangled — one in all 17 chains, because the file
-  declaring it resolves into no chain at all
+- Measured basis, 2026-09-01: 341 declared section IDs, 28 cross-file
+  prose references across the tree, none dangling. The prefix pattern this
+  check used until then saw 100 of those IDs and 14 of those references,
+  and the two it missed in `base-typescript` dangled in three chains
