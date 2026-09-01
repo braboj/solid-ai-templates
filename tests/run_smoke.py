@@ -1709,6 +1709,118 @@ def check_sys_11():
 
 
 # ---------------------------------------------------------------------------
+# SYS-12 — no resolved chain exceeds its recorded ceiling
+# ---------------------------------------------------------------------------
+# Between v2.1.0 and v2.72.0 the corpus went from 387KB to 782KB and from 359
+# RFC-2119 occurrences to 858, while the file count stayed flat at ~75. The
+# growth landed inside the files every chain already carries: five of them
+# carry 82% of the smallest chain, and all five resolve into 17 of 17.
+#
+# sync.py measures chain size for the README's model-limitations table and
+# --check fails when the table drifts from the tree. That keeps the number
+# accurate and never refuses it. A rule added to a 17-chain file updated the
+# table and passed every gate, so the cost of an addition was visible only to
+# a reader who went looking for it.
+#
+# The ceilings are frozen at the measured size rather than given a percentage
+# band. A band lets a chain grow silently until the band is spent, and the
+# point is that the diff states what an addition costs every consumer of that
+# chain. Shrinking passes freely; growth requires raising a number in the
+# same change, where a reviewer sees it. This is the retrofit ratchet the
+# templates already prescribe for a linter, applied to chain size.
+#
+# Sizes count decoded characters, not bytes on disk: read() opens in text
+# mode, so a CRLF working copy and an LF one measure the same tree the same.
+# A byte count would make every ceiling depend on the platform that wrote it.
+
+BUDGET_FILE = "tests/chain-budget.txt"
+
+
+def _measure_chains():
+    """Return {root_id: characters} for every root a project can pick."""
+    core_ids, entries, _ = _load_manifest()
+
+    # Both kinds of root: a stack, and an orthogonal template picked
+    # independently of the stack, which resolves as its own root.
+    # Measuring stacks alone leaves every opt-in root uncapped, and a
+    # fifth of the corpus reaches a consumer only that way.
+    roots = [e["id"] for e in entries.values()
+             if e["file"].startswith("templates/stack/")]
+    roots += _opt_in_roots(core_ids, entries)
+
+    sizes = {}
+    for root in roots:
+        files, _ = _resolve_stack(root, core_ids, entries)
+        sizes[root] = sum(len(read(os.path.join(ROOT, f))) for f in files)
+    return sizes
+
+
+def _read_ceilings():
+    """Return {root_id: ceiling} from the recorded budget."""
+    ceilings = {}
+    for line in read(os.path.join(ROOT, BUDGET_FILE)).splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        parts = stripped.split()
+        if len(parts) == 2 and parts[1].isdigit():
+            ceilings[parts[0]] = int(parts[1])
+    return ceilings
+
+
+def check_sys_12():
+    if not HAS_YAML:
+        return ["  PyYAML not installed — run: pip install pyyaml"]
+
+    if not os.path.exists(os.path.join(ROOT, BUDGET_FILE)):
+        return [f"  {BUDGET_FILE} is missing — no root carries a ceiling and "
+                f"nothing refuses growth"]
+
+    seen = Inspected()
+    measured = seen.count("roots measured", _measure_chains())
+    ceilings = seen.count("ceilings recorded", _read_ceilings())
+    failures = list(seen.failures())
+
+    for root in sorted(measured):
+        size = measured[root]
+        if root not in ceilings:
+            failures.append(
+                f"  {root}: resolves to {size} characters and has no ceiling "
+                f"in {BUDGET_FILE} — add the line `{root} {size}` rather than "
+                f"leaving a root to grow unmeasured"
+            )
+        elif size > ceilings[root]:
+            failures.append(
+                f"  {root}: {size} characters against a ceiling of "
+                f"{ceilings[root]}, {size - ceilings[root]} over. Every "
+                f"project on this chain pays it on every turn. If the "
+                f"addition is worth that, raise the ceiling in "
+                f"{BUDGET_FILE} in this same change so the diff carries "
+                f"the cost"
+            )
+
+    for root in sorted(ceilings):
+        if root not in measured:
+            failures.append(
+                f"  {root}: carries a ceiling and resolves to no chain — the "
+                f"root was renamed or removed and the entry is stale"
+            )
+
+    paired = [r for r in measured if r in ceilings]
+    notes = seen.notes()
+    if measured:
+        widest = max(measured, key=measured.get)
+        notes.append(f"  largest chain: {widest} at {measured[widest]} characters")
+    if paired:
+        tightest = min(paired, key=lambda r: ceilings[r] - measured[r])
+        notes.append(
+            f"  tightest headroom: {ceilings[tightest] - measured[tightest]} "
+            f"characters on {tightest}"
+        )
+    return failures, notes
+
+
+# ---------------------------------------------------------------------------
 # Test registry
 # ---------------------------------------------------------------------------
 
@@ -1763,6 +1875,9 @@ CHECKS = [
     {"id": "SYS-11", "spec": "SAIT-SMK-SYS-11-001A",
      "title": "Prose ID references resolve in every chain carrying the file",
      "fn": check_sys_11},
+    {"id": "SYS-12", "spec": "SAIT-SMK-SYS-12-001A",
+     "title": "No resolved chain exceeds its recorded ceiling",
+     "fn": check_sys_12},
     {"id": "ADR-01", "spec": "SAIT-SMK-ADR-01-001A",
      "title": "ADR frontmatter matches the ADR-010 schema", "fn": check_adr_01},
     {"id": "E2E-01", "spec": "SAIT-SMK-E2E-01-001A",
