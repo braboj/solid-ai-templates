@@ -30,6 +30,9 @@ alters no template carries no entry.
   bare version and names the annotated tag message as the artifact
   carrying the release theme, so a release list does not accumulate two
   title forms.
+- `base-git` scopes the pre-release periodic review to minor and major
+  releases and ships the check that decides it, so a patch owes neither
+  the review nor a record declining it.
 
 ## [2.70.0] - 2026-09-01
 

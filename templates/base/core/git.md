@@ -521,10 +521,12 @@ When NOT to close-and-resubmit:
      — investigate any results before proceeding
   2. Check for orphaned commits: `git fsck --unreachable --no-reflogs
      | grep commit` — verify no unique work is lost
-  3. Where the project runs a periodic project-wide audit, run one
-     before the release — it SHOULD NOT ship with critical findings
-     unresolved. A project with no such audit skips this step rather
-     than inventing one for the release
+  3. Where the project runs a periodic project-wide audit and this
+     release moves the minor or major version, run one before the
+     release — it SHOULD NOT ship with critical findings unresolved. A
+     patch release owes neither the audit nor a record declining it, and
+     a project with no such audit skips this step rather than inventing
+     one for the release. The check is below
   4. Where the release is scoped to a milestone, verify that every issue
      closed since the previous tag carries that milestone — the check is
      below. Confirming a milestone's issues are all closed checks one
@@ -571,7 +573,7 @@ reads. Four of the eight carry no pass condition:
 | --- | --- |
 | 1 | `git branch --no-merged main`, run by hand. Command, no pass condition — "investigate any results" is a judgement |
 | 2 | `git fsck --unreachable --no-reflogs`, run by hand. Same shape as step 1 |
-| 3 | nothing. Conditional on the project running a periodic project-wide audit at all, and no pass condition either way |
+| 3 | the periodic-review-scope check below. Conditional on the project running a periodic project-wide audit at all |
 | 4 | the milestone-coverage check below |
 | 5 | the pipeline-history check below |
 | 6 | **nothing**, and it is the step to gate first |
@@ -894,6 +896,112 @@ Loosening it is a weakening of a gate and carries what attaches to one:
 the same change MUST add an assertion for the same-day case, so a
 comparison tightened back to strictly-later fails something rather than
 passing green.
+
+### A periodic review is owed by the releases that can move it
+
+A project that runs a periodic project-wide audit and gates the release on
+it has attached a review to the release event. Most releases are patches,
+and a patch fixes a defect and changes no interface, so a review whose
+subject is the shape of the project has nothing new to read on one. The
+operator writes a record saying so and the tag proceeds.
+
+That inverts the gate. A gate firing on an event class whose members
+mostly cannot produce a finding trains the operator to produce the
+artifact that clears it, and here the artifact is a document declining the
+work — so the cheapest compliant path stops involving the work at all.
+Nothing in the surrounding rules catches this: the check exists, it runs
+correctly, and every signal available says it is working. The gate is not
+too weak or too strong. It is scoped to the wrong event.
+
+The obligation MUST therefore be scoped to the releases that change what
+the review reads. A minor or major release owes the audit; a patch owes
+nothing, neither report nor decline.
+
+Two details travel with the narrowing, and both are easy to omit:
+
+- A version the gate cannot parse MUST be a finding, never a pass. An
+  unreadable version and an exempt version both mean the comparison does
+  not run, and reading them alike turns a typo in a version literal into
+  a silent exemption
+- Narrowing a gate can retire its own negative controls. Fixtures named
+  with a patch version stop firing the moment the gate skips patches, so
+  the suite stays green while testing nothing. Re-point them at a minor
+  or major version in the same change, and confirm each still fails
+  before believing the narrowed gate
+
+The deferral this replaces MUST NOT be a condition nothing polls. Making
+the next audit due when some backlog reaches zero schedules nothing,
+because no release meets the condition and nothing watches it — a
+deferral with no watcher reads exactly like a live obligation.
+
+**The periodic-review-scope check** — step 3 of the pre-release sequence
+above. It answers whether this release owes the review, and where it does,
+whether the record is current.
+
+```bash
+py - <<'EOF'
+import os, re, subprocess
+
+# The version being released, or empty on an ordinary day. Setting it is
+# the decision the step asks for.
+RELEASE = ""
+
+# Where the project keeps its dated periodic audits, and the date shape
+# its filenames carry.
+AUDITS = "docs/audits"
+DATED = re.compile(r"(\d{4}-\d{2}-\d{2})")
+
+if not RELEASE:
+    print("no release is in preparation; this check does not apply")
+    raise SystemExit(3)
+
+# An unreadable version and an exempt one both mean the comparison does
+# not run. Reading them alike turns a typo in a version literal into a
+# silent exemption, so refuse the version rather than skipping on it.
+parsed = re.match(r"v?(\d+)\.(\d+)\.(\d+)$", RELEASE)
+if parsed is None:
+    print("release %r is not a version this check can read" % RELEASE)
+    raise SystemExit(1)
+
+major, minor, patch = (int(part) for part in parsed.groups())
+if patch:
+    print("%d.%d.%d is a patch release; the periodic review is not owed"
+          % (major, minor, patch))
+    raise SystemExit(3)
+
+previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0"],
+                          capture_output=True, text=True).stdout.strip()
+released = subprocess.run(["git", "log", "-1", "--format=%cs", previous],
+                          capture_output=True, text=True).stdout.strip()
+names = os.listdir(AUDITS) if os.path.isdir(AUDITS) else []
+dates = sorted(DATED.search(n).group(1) for n in names if DATED.search(n))
+
+# Non-strict, per the currency rule above: a record dated the release day
+# covers that release. Both counts are declared before any finding, so the
+# check states what it read whichever verdict it reaches.
+covering = [date for date in dates if date >= released]
+print("audit records found: %d" % len(dates))
+print("records covering %s, released %s: %d"
+      % (previous, released, len(covering)))
+if not dates:
+    print("no audit record exists; this release owes one")
+    raise SystemExit(1)
+if not covering:
+    print("newest record %s predates %s; this release owes one"
+          % (dates[-1], released))
+    raise SystemExit(1)
+EOF
+```
+
+Pass condition: the command declares two counts — how many audit records
+exist, and how many of them cover the previous release — and prints
+nothing after them. Both MUST be non-zero. A record count of zero is a
+failure rather than an empty tree, since a project reaching this check
+runs the audit, so no record means none was written. A version the check
+cannot read is a failure and never an exemption.
+
+With the release left empty the command reports that the check does not
+apply, on exit status 3.
 
 ### Projects with a version manifest
   9. `git checkout -b chore/release-vX.Y.Z`
