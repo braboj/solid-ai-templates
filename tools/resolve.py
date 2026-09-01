@@ -8,6 +8,7 @@ Usage:
     py tools/resolve.py <stack-id> --concat   # print concatenated content
     py tools/resolve.py --generate            # cache all stacks to generated/
     py tools/resolve.py --list                # list available stack IDs
+    py tools/resolve.py --roots               # list every root a project picks
 
 The resolution algorithm follows ADR-004:
   1. Add all core tier IDs
@@ -21,11 +22,15 @@ import re
 import sys
 from pathlib import Path
 
-# Set the output encoding at the boundary rather than inheriting the
-# console default, which mangles any non-ASCII this program prints.
+# Set the output encoding and line ending at the boundary rather than
+# inheriting the console defaults. The encoding mangles any non-ASCII this
+# program prints; the line ending is why the IDs this program lists are
+# consumed by a shell loop. On Windows a bare `print` emits CRLF, so each
+# ID reaches the loop with a trailing carriage return, every lookup misses,
+# and a reach measurement reports zero for a file that is in the chain.
 for _stream in (sys.stdout, sys.stderr):
     try:
-        _stream.reconfigure(encoding="utf-8")
+        _stream.reconfigure(encoding="utf-8", newline="\n")
     except (AttributeError, ValueError):
         pass
 
@@ -33,7 +38,7 @@ for _stream in (sys.stdout, sys.stderr):
 # Ensure UTF-8 stdout on Windows
 if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer, encoding="utf-8", errors="replace"
+        sys.stdout.buffer, encoding="utf-8", errors="replace", newline="\n"
     )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -184,6 +189,41 @@ def resolve_chain(stack_id, core_ids, entries):
     return files
 
 
+def opt_in_roots(core_ids, entries, stacks):
+    """The IDs a project picks directly that no stack chain carries.
+
+    A project resolves its stack, then its extras, then its platform, each
+    as its own root. An entry reachable only by the second and third steps
+    is guaranteed the core tier plus its own dependency tree and nothing
+    more, so measuring reach over stacks alone leaves it out of the count.
+    """
+    reached = set()
+    for stack in stacks:
+        for eid in resolve_ids(stack["id"], core_ids, entries):
+            reached.add(eid)
+    return sorted(set(entries) - reached)
+
+
+def resolve_ids(stack_id, core_ids, entries):
+    """Resolve a chain and return the IDs in it rather than the files."""
+    resolved = set()
+
+    def resolve(eid):
+        if eid in resolved:
+            return
+        entry = entries.get(eid)
+        if not entry:
+            return
+        resolved.add(eid)
+        for dep in entry.get("depends_on", []):
+            resolve(dep)
+
+    for cid in core_ids:
+        resolved.add(cid)
+    resolve(stack_id)
+    return resolved
+
+
 def read_file(rel_path):
     """Read a file relative to the repo root."""
     return io.open(ROOT / rel_path, encoding="utf-8").read()
@@ -256,6 +296,13 @@ def main():
         for s in stacks:
             label = s.get("label", "")
             print(f"  {s['id']:<30s} {label}")
+        sys.exit(0)
+
+    if "--roots" in args:
+        for s in stacks:
+            print(s["id"])
+        for rid in opt_in_roots(core_ids, entries, stacks):
+            print(rid)
         sys.exit(0)
 
     if "--generate" in args:

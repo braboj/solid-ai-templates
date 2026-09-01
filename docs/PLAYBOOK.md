@@ -73,24 +73,34 @@ genericity before it becomes template content:
    issue suggests — and know which kind of template you are measuring:
 
    ```bash
-   # how many of the 17 stacks resolve a candidate file?
-   for s in $(py tools/resolve.py --list); do
+   # how many of the 37 roots resolve a candidate file?
+   for s in $(py tools/resolve.py --roots); do
      py tools/resolve.py "$s" | grep -q 'core/review.md' && echo "$s"
    done | wc -l
    ```
 
+   `--roots` and not `--list`: a project resolves its stack, then its
+   extras, then its platform, each as its own root, so the 17 stacks are
+   only part of what carries a file. Measuring over `--list` counts the
+   stack chains and silently omits the 20 opt-in roots.
+
    A **chain template** carries rules the generated project follows.
-   Reach is the criterion for it, and a rule in one that no chain
+   Reach is the criterion for it, and a rule in one that no root
    resolves reaches no generated context file.
+
+   An **opt-in template** is a root of its own. Its reach is 1 — itself —
+   and that is the point rather than a low score: what it may rely on is
+   the core tier plus its own `depends_on` tree, because the stack it is
+   paired with is unknown when it is authored. `platform/` templates are
+   the clearest case, since a project picks one regardless of stack.
 
    A **pipeline template** carries rules about generating or consuming a
    context file, and `templates/INTERVIEW.md` reads it directly rather
-   than any stack resolving it. Its chain reach is structurally 0 and
-   says nothing about whether the rule lands: `base/core/agents.md`
-   measures 0/17 and shapes every file the pipeline generates. Recognise
-   one by asking what reads it — a stack, or INTERVIEW.md. `platform/`
-   templates sit outside the chain for a third reason: a project picks
-   one regardless of stack.
+   than any root resolving it into a project. Reach says nothing about
+   whether the rule lands: `base/core/agents.md` is carried by 1 root of
+   37 — its own — and shapes every file the pipeline generates.
+   Recognise one by asking what reads it: a stack, an opt-in root, or
+   INTERVIEW.md.
 
    A filed issue's suggested home is a hypothesis — it is usually
    written from the downstream project, without running this. Where a
