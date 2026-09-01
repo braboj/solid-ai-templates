@@ -507,7 +507,11 @@ no gate asks about it.
    after.** An issue is written against the tree as it stood on its
    filing date, and grooming a claim that has since moved plans work that
    does not exist. Measure the claim, then annotate the issue with what
-   the measurement found and its date
+   the measurement found and its date. Measure it with the extractor the
+   check itself uses, not one written for the measurement: a looser scan
+   counts occurrences the check never sees — a directive quoted inside a
+   fenced block, a name in prose — and the plan is then sized against a
+   corpus nothing acts on
 3. Cluster by target file. Issues touching one section are one pull
    request rather than several, and the clustering is visible only once
    the claims are verified — two issues can name the same file and want
