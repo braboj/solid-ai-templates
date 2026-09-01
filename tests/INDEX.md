@@ -6,6 +6,19 @@ Imbra Procedure Specification Standard.
 Spec files live in `tests/specs/`. See `CODIFICATION.md` for the ID scheme, area codes,
 and component group registry.
 
+## What every smoke check reports
+
+Each check in `run_smoke.py` states what it inspected, not only what it
+found, and the counts print on every run whatever the verdict. A count of
+zero is a failure: a corpus that quietly empties reports the same clean
+result as a tree with nothing wrong in it, and the suite's tally of passing
+checks stops meaning what a reader takes it to mean.
+
+The runner enforces this rather than each check remembering it — a check
+that would pass while reporting no inputs is failed where it is called. The
+assertion is stated here once and inherited by every spec below, rather than
+restated in each.
+
 ## Specs
 
 | ID | Type | Priority | Title |

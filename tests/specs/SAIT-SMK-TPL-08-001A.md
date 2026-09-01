@@ -26,6 +26,7 @@ tags: [structure, id-tag, base, core]
 |--------|-----------|
 | PASSED | Every base template has at least one `[ID:]` tag |
 | FAILED | One or more base templates have no `[ID:]` tag |
+| FAILED | A listed directory does not exist, or no file was inspected |
 | SKIPPED | — |
 | BLOCKED | — |
 | ERROR | File system is inaccessible |
@@ -49,6 +50,16 @@ tags: [structure, id-tag, base, core]
 ### Assertions
 
 1. Assert every base template contains at least one `[ID:]` tag
+2. Assert each listed directory exists — a directory that is not there is
+   a finding, not a skip
+3. Assert at least one file was inspected
+
+### Negative controls
+
+1. Point the directory list at a renamed path; the check MUST fail on the
+   missing directory and on the empty file count, rather than pass having
+   inspected nothing
+2. Empty the directory list; the check MUST fail on both counts
 
 ### Teardown
 

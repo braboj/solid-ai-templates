@@ -148,6 +148,42 @@ def read(path):
         return f.read()
 
 
+class Inspected:
+    """The inputs a check reached, reported whatever its verdict.
+
+    A check that reports only what it found reads identically when its
+    corpus empties and when the tree is clean, so a corpus that quietly
+    goes to zero keeps reporting green -- the suite's count of passing
+    checks stops meaning what a reader takes it to mean. Every count is
+    reported on every run, and a count below its floor is a failure: the
+    check answered a question it never asked.
+    """
+
+    def __init__(self):
+        self._counts = []
+
+    def count(self, label, value, floor=1):
+        """Record an input count and return the value it was taken from.
+
+        `value` may be a number or anything with a length, so a call can
+        wrap the collection a check is about to iterate.
+        """
+        n = value if isinstance(value, int) else len(value)
+        self._counts.append((label, n, floor))
+        return value
+
+    def notes(self):
+        return [f"  {label}: {n}" for label, n, _ in self._counts]
+
+    def failures(self):
+        return [
+            f"  {label}: {n} — below the floor of {floor}; the check reached "
+            f"nothing and an empty corpus reports the same result as a clean "
+            f"tree"
+            for label, n, floor in self._counts if n < floor
+        ]
+
+
 # ---------------------------------------------------------------------------
 # DEPENDS ON extraction
 # ---------------------------------------------------------------------------
@@ -179,15 +215,20 @@ def depends_on_refs(content):
 
 def check_sys_01():
     failures = []
+    seen = Inspected()
+    refs_checked = 0
 
-    for filepath in all_template_files():
+    files = seen.count("template files scanned", all_template_files())
+    for filepath in files:
         for ref in depends_on_refs(read(filepath)):
+            refs_checked += 1
             ref_path = os.path.join(ROOT, ref)
             if not os.path.isfile(ref_path):
                 rel = os.path.relpath(filepath, ROOT)
                 failures.append(f"  {rel}: DEPENDS ON '{ref}' — file not found")
 
-    return failures
+    seen.count("DEPENDS ON references resolved", refs_checked)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -197,8 +238,10 @@ def check_sys_01():
 def check_sys_02():
     failures = []
     seen = {}
+    inspected = Inspected()
 
-    for filepath in all_template_files():
+    files = inspected.count("template files scanned", all_template_files())
+    for filepath in files:
         content = read(filepath)
         rel = os.path.relpath(filepath, ROOT)
         for sid, _ in iter_id_declarations(content):
@@ -210,7 +253,8 @@ def check_sys_02():
             else:
                 seen[sid] = rel
 
-    return failures
+    inspected.count("section IDs collected", len(seen))
+    return inspected.failures() + failures, inspected.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -219,18 +263,23 @@ def check_sys_02():
 
 def check_tpl_04():
     failures = []
+    seen = Inspected()
     ref_pattern = re.compile(r'\[(EXTEND|OVERRIDE):\s*([^\]]+)\]')
 
     declared = set()
-    for filepath in all_template_files():
+    files = seen.count("template files scanned", all_template_files())
+    for filepath in files:
         content = read(filepath)
         for sid, _ in iter_id_declarations(content):
             declared.add(sid)
+    seen.count("section IDs declared", len(declared))
 
-    for filepath in all_template_files():
+    directives = 0
+    for filepath in files:
         content = read(filepath)
         rel = os.path.relpath(filepath, ROOT)
         for match in ref_pattern.finditer(content):
+            directives += 1
             directive = match.group(1)
             ref_id = match.group(2).strip()
             if ref_id not in declared:
@@ -238,7 +287,8 @@ def check_tpl_04():
                     f"  {rel}: [{directive}: {ref_id}] — ID not declared"
                 )
 
-    return failures
+    seen.count("EXTEND/OVERRIDE directives checked", directives)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -257,6 +307,7 @@ def check_mnf_01():
         manifest = yaml.safe_load(f)
 
     failures = []
+    seen = Inspected()
     declared_ids = set()
     entries = []
 
@@ -268,20 +319,26 @@ def check_mnf_01():
                     if "id" in entry:
                         declared_ids.add(entry["id"])
 
+    seen.count("manifest entries read", len(entries))
+    seen.count("IDs declared in the manifest", len(declared_ids))
+
     for entry in entries:
         path = entry.get("file", "")
         if path and not os.path.isfile(os.path.join(ROOT, path)):
             failures.append(f"  file not found: '{path}' (id: {entry.get('id', '?')})")
 
+    deps_checked = 0
     for entry in entries:
         for dep in entry.get("depends_on", []):
+            deps_checked += 1
             if dep not in declared_ids:
                 failures.append(
                     f"  depends_on '{dep}' in '{entry.get('id', '?')}' "
                     f"— ID not declared in manifest"
                 )
 
-    return failures
+    seen.count("depends_on references checked", deps_checked)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -319,10 +376,14 @@ def check_tpl_01():
         "templates/backend/features.md",
         "templates/backend/messaging.md",
     ]
+    seen = Inspected()
+    seen.count("files in the python-fastapi chain", len(chain))
+    seen.count("files required to be in it", len(required))
+
     for req in required:
         if req not in chain:
             failures.append(f"  python-fastapi.md chain missing: '{req}'")
-    return failures
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -355,6 +416,7 @@ def _extract_section(filepath, section_id):
 
 def check_tpl_02():
     failures = []
+    seen = Inspected()
 
     base_content = _extract_section(
         os.path.join(ROOT, "templates", "base", "core", "testing.md"), "base-testing"
@@ -371,7 +433,11 @@ def check_tpl_02():
             "— base rules may have been lost"
         )
 
-    return failures
+    seen.count("sections extracted", 2)
+    seen.count("lines read from base-testing", len(base_content), floor=0)
+    seen.count("lines read from python-service-testing",
+               len(flask_content), floor=0)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -380,6 +446,7 @@ def check_tpl_02():
 
 def check_tpl_03():
     failures = []
+    seen = Inspected()
 
     original = _extract_section(
         os.path.join(ROOT, "templates", "stack", "go-lib.md"), "go-lib-stack"
@@ -400,7 +467,10 @@ def check_tpl_03():
             "[ID: go-lib-stack] — override has no effect"
         )
 
-    return failures
+    seen.count("sections extracted", 2)
+    seen.count("lines read from the original", len(original), floor=0)
+    seen.count("lines read from the override", len(override), floor=0)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -413,10 +483,12 @@ def check_mnf_02():
 
     core_ids, entries, _ = _load_manifest()
     failures = []
+    seen = Inspected()
 
-    stacks = [e for e in entries.values()
-              if e["file"].startswith("templates/stack/")]
+    stacks = seen.count("stacks resolved", [e for e in entries.values()
+                        if e["file"].startswith("templates/stack/")])
 
+    resolved = 0
     for stack in stacks:
         sid = stack["id"]
         files, _ = _resolve_stack(sid, core_ids, entries)
@@ -426,13 +498,15 @@ def check_mnf_02():
             continue
 
         for f in files:
+            resolved += 1
             path = os.path.join(ROOT, f)
             if not os.path.isfile(path):
                 failures.append(f"  {sid}: resolved file missing: {f}")
             elif os.path.getsize(path) == 0:
                 failures.append(f"  {sid}: resolved file empty: {f}")
 
-    return failures
+    seen.count("resolved files inspected", resolved)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -445,9 +519,11 @@ def check_mnf_03():
 
     core_ids, entries, _ = _load_manifest()
     failures = []
+    seen = Inspected()
 
-    stacks = [e for e in entries.values()
-              if e["file"].startswith("templates/stack/")]
+    stacks = seen.count("stacks resolved", [e for e in entries.values()
+                        if e["file"].startswith("templates/stack/")])
+    seen.count("core tier IDs required of each", len(core_ids))
 
     for stack in stacks:
         sid = stack["id"]
@@ -460,7 +536,7 @@ def check_mnf_03():
                     f"resolved chain"
                 )
 
-    return failures
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -480,10 +556,12 @@ def check_mnf_04():
         return [f"  output format missing: {output_file}"]
 
     output_fmt = read(output_path)
+    seen = Inspected()
 
-    stacks = [e for e in entries.values()
-              if e["file"].startswith("templates/stack/")]
+    stacks = seen.count("stacks resolved", [e for e in entries.values()
+                        if e["file"].startswith("templates/stack/")])
 
+    built = 0
     for stack in stacks:
         sid = stack["id"]
         files, _ = _resolve_stack(sid, core_ids, entries)
@@ -502,8 +580,10 @@ def check_mnf_04():
                 f"  {sid}: prompt suspiciously short "
                 f"({len(prompt)} chars)"
             )
+        built += 1
 
-    return failures
+    seen.count("prompts built", built)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -533,6 +613,8 @@ def check_mnf_05():
     core_y, entries_y, _ = _load_manifest()
 
     failures = []
+    seen = Inspected()
+    stacks = seen.count("stacks resolved with both parsers", stacks)
     for stack in stacks:
         sid = stack["id"]
         hand = resolve_tool.resolve_chain(sid, core_h, entries_h)
@@ -553,7 +635,7 @@ def check_mnf_05():
             f"{'; '.join(parts)}"
         )
 
-    return failures
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -567,10 +649,12 @@ def check_tpl_06():
     core_ids, entries, _ = _load_manifest()
     ref_pattern = re.compile(r'\[(EXTEND|OVERRIDE):\s*([^\]]+)\]')
     failures = []
+    seen = Inspected()
 
-    stacks = [e for e in entries.values()
-              if e["file"].startswith("templates/stack/")]
+    stacks = seen.count("stacks resolved", [e for e in entries.values()
+                        if e["file"].startswith("templates/stack/")])
 
+    directives = 0
     for stack in stacks:
         sid = stack["id"]
         chain_files, _ = _resolve_stack(sid, core_ids, entries)
@@ -587,6 +671,7 @@ def check_tpl_06():
             content = read(os.path.join(ROOT, f))
             rel = f.replace("\\", "/")
             for match in ref_pattern.finditer(content):
+                directives += 1
                 directive = match.group(1)
                 ref_id = match.group(2).strip()
                 if ref_id not in chain_ids:
@@ -595,7 +680,8 @@ def check_tpl_06():
                         f" — target not in resolved chain"
                     )
 
-    return failures
+    seen.count("directives checked in a resolved chain", directives)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -637,16 +723,19 @@ def check_tpl_07():
 
     extend_pattern = re.compile(r'^\[EXTEND:\s*([^\]]+)\]', re.MULTILINE)
     failures = []
+    seen = Inspected()
 
     # Build ID → file map
     id_to_file = {}
-    for filepath in all_template_files():
+    files = seen.count("template files scanned", all_template_files())
+    for filepath in files:
         content = read(filepath)
         for sid, _ in iter_id_declarations(content):
             id_to_file[sid] = filepath
 
     # For each EXTEND, compare child bullets against parent bullets
-    for filepath in all_template_files():
+    compared = 0
+    for filepath in files:
         content = read(filepath)
         rel = os.path.relpath(filepath, ROOT).replace("\\", "/")
         for match in extend_pattern.finditer(content):
@@ -658,6 +747,7 @@ def check_tpl_07():
             parent_bullets = _extract_bullets(parent_file, parent_id)
             if not parent_bullets:
                 continue
+            compared += 1
 
             # Find the child section that contains this EXTEND
             child_lines = content.splitlines()
@@ -699,7 +789,8 @@ def check_tpl_07():
                         )
                         break
 
-    return failures
+    seen.count("EXTEND sections compared against a parent", compared)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -724,13 +815,17 @@ def check_sys_03():
                 )
 
     failures = []
-    for filepath in all_template_files():
+    seen = Inspected()
+    seen.count("files named in the manifest", len(manifest_files))
+
+    files = seen.count("template files scanned", all_template_files())
+    for filepath in files:
         rel = os.path.relpath(filepath, ROOT)
         rel_fwd = rel.replace(os.sep, "/")
         if rel_fwd not in {f.replace(os.sep, "/") for f in manifest_files}:
             failures.append(f"  {rel_fwd}: no manifest entry")
 
-    return failures
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -766,8 +861,11 @@ def check_sys_04():
                 file_manifest_deps[entry["file"]] = dep_files
 
     failures = []
+    seen = Inspected()
+    seen.count("manifest entries carrying depends_on", len(file_manifest_deps))
 
-    for filepath in all_template_files():
+    files = seen.count("template files compared", all_template_files())
+    for filepath in files:
         rel = os.path.relpath(filepath, ROOT).replace(os.sep, "/")
         content = read(filepath)
 
@@ -791,7 +889,7 @@ def check_sys_04():
         if parts:
             failures.append(f"  {rel}: {'; '.join(parts)}")
 
-    return failures
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -810,21 +908,35 @@ CORE_DIRS = [
 
 def check_tpl_08():
     failures = []
+    seen = Inspected()
+    seen.count("directories the check is pointed at", len(CORE_DIRS))
 
+    inspected_files = 0
     for d in CORE_DIRS:
         dirpath = os.path.join(ROOT, d)
+
+        # A directory that is not there is a finding, not a skip. Skipping
+        # it makes a rename silent: every listed directory disappears and
+        # the check reports the same pass as a clean tree.
         if not os.path.isdir(dirpath):
+            failures.append(
+                f"  {d.replace(os.sep, '/')}: listed directory does not "
+                f"exist — the check inspects nothing in it"
+            )
             continue
+
         for name in os.listdir(dirpath):
             if not name.endswith(".md"):
                 continue
             filepath = os.path.join(dirpath, name)
+            inspected_files += 1
             content = read(filepath)
             if not any(True for _ in iter_id_declarations(content)):
                 rel = os.path.relpath(filepath, ROOT).replace(os.sep, "/")
                 failures.append(f"  {rel}: missing [ID:] tag")
 
-    return failures
+    seen.count("files inspected for an [ID:] tag", inspected_files)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -833,10 +945,13 @@ def check_tpl_08():
 
 def check_tpl_09():
     failures = []
+    seen = Inspected()
     meta_pattern = re.compile(r'^\[(DEPENDS ON|EXTEND|OVERRIDE):')
     next_id_pattern = re.compile(r'^\s*\[ID:')
 
-    for filepath in all_template_files():
+    sections = 0
+    for filepath in seen.count("template files scanned",
+                               all_template_files()):
         content = read(filepath)
         rel = os.path.relpath(filepath, ROOT).replace(os.sep, "/")
         lines = content.splitlines()
@@ -848,6 +963,7 @@ def check_tpl_09():
             section_id = decls.get(i + 1)
             if not section_id:
                 continue
+            sections += 1
 
             # Check for any non-blank content before the next [ID:]
             # tag. Skip metadata lines ([DEPENDS ON:], [EXTEND:],
@@ -870,7 +986,8 @@ def check_tpl_09():
                     f"  {rel}: [ID: {section_id}] section is empty"
                 )
 
-    return failures
+    seen.count("[ID:] sections inspected", sections)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -913,18 +1030,21 @@ def check_adr_01():
         return ["  PyYAML not installed — run: pip install pyyaml"]
 
     failures = []
+    seen = Inspected()
     decisions_dir = os.path.join(ROOT, "docs", "decisions")
     if not os.path.isdir(decisions_dir):
-        return failures
+        return ["  docs/decisions/ does not exist — the check inspects nothing"]
 
     # id (str) -> (rel_path, frontmatter dict)
     parsed = {}
 
+    numbered = 0
     for name in sorted(os.listdir(decisions_dir)):
         m = ADR_FILENAME.match(name)
         if not m:
             # TEMPLATE.md and any non-numbered files are skipped
             continue
+        numbered += 1
         filepath = os.path.join(decisions_dir, name)
         rel = os.path.relpath(filepath, ROOT).replace(os.sep, "/")
         content = read(filepath)
@@ -1025,7 +1145,9 @@ def check_adr_01():
                     f"does not list {adr_id!r} in supersedes"
                 )
 
-    return failures
+    seen.count("decision records with a numbered filename", numbered)
+    seen.count("records whose frontmatter parsed", len(parsed))
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -1034,6 +1156,7 @@ def check_adr_01():
 
 def check_e2e_01():
     failures = []
+    seen = Inspected()
 
     interview = os.path.join(ROOT, "templates", "INTERVIEW.md")
     if not os.path.isfile(interview):
@@ -1041,10 +1164,13 @@ def check_e2e_01():
 
     required_fields = ("id", "spec", "stack", "answers", "required")
 
+    seen.count("test cases defined", len(ALL_TESTS))
+    validated = 0
     for test in ALL_TESTS:
         if "skip" in test:
             continue
 
+        validated += 1
         tid = test.get("id", "?")
 
         # Validate required fields
@@ -1073,7 +1199,8 @@ def check_e2e_01():
             if not os.path.isfile(path):
                 failures.append(f"  {tid}: extra_file missing: {ef}")
 
-    return failures
+    seen.count("cases validated", validated)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -1106,16 +1233,17 @@ def _section_block(lines, start_index, stop_pattern):
 
 def check_sys_05():
     failures = []
+    seen = Inspected()
 
     # 1) Output spec — every §6.3 directive in agents.md carries the rule.
     agents_path = os.path.join(ROOT, "templates", "base", "core", "agents.md")
     a_lines = read(agents_path).splitlines()
     h63 = re.compile(r"^###\s+6\.3\b")
     stop_spec = re.compile(r"^(#{1,3}\s|```)")
-    found = False
+    found = 0
     for i, line in enumerate(a_lines):
         if h63.match(line):
-            found = True
+            found += 1
             block = _section_block(a_lines, i, stop_spec)
             if not ENFORCE_RE.search(block):
                 failures.append(
@@ -1123,6 +1251,7 @@ def check_sys_05():
                     f"inline-verbatim or hard-delegation (missing 'execute "
                     f"each item' / 'do not summarize')"
                 )
+    seen.count("6.3 directives in agents.md", found)
     if not found:
         failures.append("  agents.md: no '### 6.3' directive found")
 
@@ -1131,16 +1260,20 @@ def check_sys_05():
     examples_dir = os.path.join(ROOT, "examples")
     head = re.compile(r"^#{2,3}\s.*([Ss]ession protocol|[Ee]nd of session)")
     stop_top = re.compile(r"^##\s")
+    examples_read = 0
+    protocols = 0
     if os.path.isdir(examples_dir):
         for name in sorted(os.listdir(examples_dir)):
             cm = os.path.join(examples_dir, name, "CLAUDE.md")
             if not os.path.isfile(cm):
                 continue
+            examples_read += 1
             e_lines = read(cm).splitlines()
             start = next((i for i, l in enumerate(e_lines) if head.match(l)),
                          None)
             if start is None:
                 continue
+            protocols += 1
             block = _section_block(e_lines, start, stop_top)
             if not ENFORCE_RE.search(block):
                 failures.append(
@@ -1150,7 +1283,9 @@ def check_sys_05():
                     f"soft reference or paraphrase drops the wrap-up steps"
                 )
 
-    return failures
+    seen.count("example context files read", examples_read)
+    seen.count("of those, carrying a session-protocol section", protocols)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -1172,10 +1307,12 @@ def check_sys_06():
 
     core_ids, entries, _ = _load_manifest()
     failures = []
+    seen = Inspected()
 
-    stacks = [e for e in entries.values()
-              if e["file"].startswith("templates/stack/")]
+    stacks = seen.count("stacks resolved", [e for e in entries.values()
+                        if e["file"].startswith("templates/stack/")])
 
+    asserted = 0
     for stack in sorted(stacks, key=lambda e: e["id"]):
         sid = stack["id"]
         is_lib = stack.get("layer") == "library"
@@ -1190,6 +1327,7 @@ def check_sys_06():
         for section in _MUST_SECTIONS:
             if section == "Project structure" and is_lib:
                 continue
+            asserted += 1
             heading = re.compile(
                 r"^##\s+" + re.escape(section) + r"\s*$", re.MULTILINE)
             if not heading.search(blob):
@@ -1198,7 +1336,8 @@ def check_sys_06():
                     f"'## {section}' (ADR-017)"
                 )
 
-    return failures
+    seen.count("MUST sections asserted across those chains", asserted)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -1221,11 +1360,16 @@ _SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".idea", ".claude"
 
 def check_sys_07():
     failures = []
+    seen = Inspected()
+    walked = 0
+    reports = 0
     for dirpath, dirnames, filenames in os.walk(ROOT):
         dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
+        walked += len(filenames)
         for name in filenames:
             if not _AUDIT_NAME.match(name):
                 continue
+            reports += 1
             rel = os.path.relpath(os.path.join(dirpath, name), ROOT)
             rel = rel.replace(os.sep, "/")
             if not rel.startswith(_AUDIT_DIR + "/"):
@@ -1239,7 +1383,10 @@ def check_sys_07():
                     f"  {rel}: audit file must use the YYYY-MM-DD-360.md "
                     f"dated-report name (360.md [ID: 360-tracking])"
                 )
-    return failures
+
+    seen.count("files walked", walked)
+    seen.count("audit reports found", reports)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -1270,6 +1417,9 @@ def check_sys_08():
 
     _, entries, _ = _load_manifest()
     failures = []
+    seen = Inspected()
+    seen.count("required examples checked", len(REQUIRED_EXAMPLES))
+    seen.count("stacks they map to", len(set(REQUIRED_EXAMPLES.values())))
 
     for example, stack_id in sorted(REQUIRED_EXAMPLES.items()):
         cm = os.path.join(ROOT, "examples", example, "CLAUDE.md")
@@ -1286,7 +1436,7 @@ def check_sys_08():
                 f"  {example}: mapped stack '{stack_id}' not in manifest"
             )
 
-    return failures
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -1319,6 +1469,8 @@ def check_sys_09():
         "after\n"
     )
     failures = []
+    seen = Inspected()
+    assertions = 0
 
     with tempfile.TemporaryDirectory() as tmp:
         target = os.path.join(tmp, "target.md")
@@ -1326,6 +1478,7 @@ def check_sys_09():
         io.open(target, "w", encoding="utf-8").write(stale)
         changed = sync_tool._update_file(target, {marker: "FRESH"}, True)
         after = io.open(target, encoding="utf-8").read()
+        assertions += 2
         if not changed:
             failures.append(
                 "  sync.py --check did not report a difference it should see"
@@ -1340,13 +1493,19 @@ def check_sys_09():
         io.open(target, "w", encoding="utf-8").write(stale)
         sync_tool._update_file(target, {marker: "FRESH"})
         written = io.open(target, encoding="utf-8").read()
+        assertions += 1
         if "FRESH" not in written:
             failures.append(
                 "  sync.py without --check did not write; the read-only "
                 "assertion above would pass on a no-op"
             )
 
-    return failures
+    # The corpus is a fixture this check builds, so what it reports reaching
+    # is the assertions it ran against it. A refactor that returns before
+    # them leaves the count short rather than reporting a pass.
+    seen.count("fixtures written", 2)
+    seen.count("assertions run against them", assertions, floor=3)
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -1378,6 +1537,11 @@ def check_sys_10():
 
     refs = depends_on_refs(document)
     failures = []
+    seen = Inspected()
+    seen.count("synthetic documents inspected", 1)
+    seen.count("directive occurrences in the document",
+               document.count("[DEPENDS ON:"), floor=3)
+    seen.count("occurrences read as a declaration", len(refs))
 
     if refs != ["templates/base/core/git.md"]:
         failures.append(
@@ -1386,7 +1550,7 @@ def check_sys_10():
             f"not a declaration, and reading it names a file nobody wrote"
         )
 
-    return failures
+    return seen.failures() + failures, seen.notes()
 
 
 # ---------------------------------------------------------------------------
@@ -1628,6 +1792,17 @@ def main():
             # gains the report without every other one changing.
             result = check["fn"]()
             failures, notes = result if isinstance(result, tuple) else (result, [])
+
+            # A check that would pass while reporting no inputs is the thing
+            # this suite is guarding against, so the runner refuses it rather
+            # than trusting each check to remember. A failing check has
+            # already said something; only a silent pass is rejected here.
+            if not failures and not notes:
+                failures = [
+                    "  the check passed without reporting what it inspected — "
+                    "a corpus that empties is indistinguishable from a clean "
+                    "tree until the inputs are counted"
+                ]
         except Exception as e:
             print(f"  {ERR}  {check['id']}  — {e}")
             results[ERR] += 1
