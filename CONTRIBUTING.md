@@ -41,6 +41,13 @@ A pull request whose `generated/` files do not match its templates fails CI.
 - **A decision record** for a structural decision — a new layer, a change to
   the override model, a naming convention. See `docs/decisions/` and copy
   `docs/decisions/TEMPLATE.md`
+- **The ceilings it raises.** Every root has a chain-size ceiling in
+  `tests/chain-budget.txt`, frozen at what the tree measures. A rule added to
+  a widely resolved file pushes every chain carrying it over, and SYS-12
+  fails until the ceilings are raised in the same change. Raise them
+  deliberately: the numbers state what the addition costs every project on
+  those chains, which is the point of writing them down. A change that
+  shrinks a chain passes without touching the file
 
 ## Writing rules
 
