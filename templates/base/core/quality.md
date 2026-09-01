@@ -710,8 +710,20 @@ verdict unreached.
   reached. The counts that say whether a check reached its inputs are what
   a failure is read against, so dropping them when a verdict is reached
   drops them exactly when they are needed
+- A check that determines at run time that it does not apply MUST say so
+  with a reserved exit status, 3, beside the sentence that explains it.
+  The status is what a runner reads: a phrase matched in output is a
+  convention no check declares, and any rewording of the sentence breaks
+  it silently
+- That status is not the disposition a person sets in advance. Skipping a
+  check is a judgement about the project — it cannot apply here at all —
+  made once and recorded where the check is registered. Exit 3 is the
+  check answering, this run, about this moment, and the same check applies
+  next week. Folding the second into the first loses that it ran and
+  answered
 - A run's summary MUST separate the checks awaiting a reading from the
-  checks a verdict was reached on. Folding both into one count of passes
+  checks a verdict was reached on, and both from the checks that answered
+  that they do not apply. Folding both into one count of passes
   is the silencing failure arriving through the summary rather than
   through the body — a finding filed under a total that says there is
   nothing to look at

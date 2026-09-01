@@ -422,10 +422,10 @@ BASE=origin/main
 if [ "$(git rev-parse HEAD)" = "$(git rev-parse $BASE)" ]; then
   if [ -n "$(git status --porcelain)" ]; then
     echo "HEAD is at $BASE and the work is uncommitted; commit it and run again"
-  else
-    echo "HEAD is at $BASE and the tree is clean; no change is under review, so this check does not apply"
+    exit 0
   fi
-  exit 0
+  echo "HEAD is at $BASE and the tree is clean; no change is under review, so this check does not apply"
+  exit 3
 fi
 ALL=$(git diff --name-status $BASE...HEAD)
 TESTS=$(git diff --name-status $BASE...HEAD -- 'tests/*')
@@ -438,9 +438,12 @@ echo "$LOOSENED" | grep . || true
 
 The check's moment is a change under review, so it answers that first. On
 the base with a clean tree there is no change to classify and it reports
-that it does not apply; on the base with an uncommitted one it says so in
-those words, since the natural moment to run this is while writing the
-change and that run would otherwise report three zeros.
+that it does not apply, with exit status 3 — the reserved status for a
+check answering that its moment is not in progress. On the base with an
+uncommitted change it exits clean instead and says so in those words: the
+operator has something to do, and a status meaning no reader is needed
+would be wrong. The natural moment to run this is while writing the
+change, and that run would otherwise report three zeros.
 
 Pass condition: the three counts are the reading and the last count MUST
 be zero; anything printed after them is the list of loosened changes, and

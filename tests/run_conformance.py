@@ -11,8 +11,9 @@ Usage:
     py tests/run_conformance.py --list     # dispositions, run nothing
     py tests/run_conformance.py <find>     # one check, by its find string
 
-A check reaches one of four results. PASS and FAIL are automatic
-verdicts; ERR is a check that could not run; REVIEW is a check whose
+A check reaches one of five results. PASS and FAIL are automatic
+verdicts; ERR is a check that could not run; N/A is a check that
+determined this run that it does not apply; REVIEW is a check whose
 verdict is a judgement, and its output is the result a person reads.
 REVIEW is counted on its own line rather than among the passes, and it
 does not fail the run -- the exit status answers whether a verdict was
@@ -43,6 +44,14 @@ ERR = "ERR"
 # look at: a run that surfaced the output and then contradicted it in
 # the summary.
 REVIEW = "REVIEW"
+
+# A check whose question is tied to a moment reports that the moment is
+# not in progress by exiting with this status. It is not SKIP: SKIP is
+# decided in advance, by a person, about this repository, and this is the
+# check answering, this run, about this moment. Counting it as awaiting a
+# reading asks for a reader the check has already spared.
+NOT_APPLICABLE = 3
+NA = "N/A"
 
 TEMPLATES = os.path.join(ROOT, "templates")
 
@@ -262,7 +271,7 @@ def main():
             print("nothing matched: %s" % wanted)
             sys.exit(1)
 
-    results = {PASS: 0, FAIL: 0, SKIPPED: 0, ERR: 0, REVIEW: 0}
+    results = {PASS: 0, FAIL: 0, SKIPPED: 0, ERR: 0, REVIEW: 0, NA: 0}
     run_results = []
     workdir = tempfile.mkdtemp(prefix="sait-conformance-")
 
@@ -296,8 +305,13 @@ def main():
                                     "error": str(exc)})
                 continue
 
-            failures = verdict(entry, code, out)
-            judgement = entry.get("expect") == MANUAL
+            # Asked before the predicate, because a check that does not
+            # apply prints the sentence explaining it and none of the
+            # lines the predicate expects.
+            not_applicable = code == NOT_APPLICABLE
+
+            failures = [] if not_applicable else verdict(entry, code, out)
+            judgement = entry.get("expect") == MANUAL and not not_applicable
 
             # A judgement check's output IS its result, so it goes to the
             # terminal where the operator is. Every check's output goes to
@@ -315,6 +329,8 @@ def main():
 
             if failures:
                 status = FAIL
+            elif not_applicable:
+                status = NA
             elif judgement:
                 status = REVIEW
             else:
@@ -323,7 +339,7 @@ def main():
             print("  %-6s %s" % (status, title))
             if status == FAIL:
                 print("        %s" % where)
-            for line in failures or reported:
+            for line in failures or reported or (out if not_applicable else []):
                 print("        %s" % line)
             results[status] += 1
             run_results.append({"id": where, "title": title,
@@ -336,11 +352,12 @@ def main():
         return
 
     ran = (results[PASS] + results[FAIL] + results[ERR]
-           + results[REVIEW])
+           + results[REVIEW] + results[NA])
     print("\n%d block(s) registered - %d ran, %d skipped as not applicable"
           % (len(CHECKS), ran, results[SKIPPED]))
-    print("%d passed  %d failed  %d errors  %d awaiting a reading"
-          % (results[PASS], results[FAIL], results[ERR],
+    print("%d passed  %d failed  %d errors  %d not applicable  "
+          "%d awaiting a reading"
+          % (results[PASS], results[FAIL], results[ERR], results[NA],
              results[REVIEW]))
 
     # The count alone reads as a tally of things that went fine. Say what
@@ -362,6 +379,7 @@ def main():
                             r["error"], ""],
         PASS: reading,
         REVIEW: reading,
+        NA: reading,
     })
 
     sys.exit(1 if results[FAIL] or results[ERR] else 0)
