@@ -697,6 +697,30 @@ verdict unreached.
   change merged, with nothing fixed and nothing decided in between. Ask
   what makes the moment identifiable — the tag is at HEAD, the branch is
   the base, no migration is under way — and answer that
+- A check that derives a comparison baseline by running a command MUST
+  verify the command produced one, and refuse rather than compare when it
+  did not. A command that yields nothing is not a command that yields a
+  value meaning there is nothing to compare: the comparison is undefined,
+  and an undefined comparison is answered by whatever the empty value
+  happens to sort against. Every date is later than the empty string and
+  every commit range starting at it is empty, so the check reports a clean
+  result from a comparison that never ran
+- That refusal is a finding, not an inapplicability. The question is still
+  live and it is the missing baseline that needs answering, so the status
+  reserved for a moment that is not in progress is the wrong one to reach
+  for. A moment that has not arrived and a baseline that failed to resolve
+  are different states with different remedies, and one of them is a bug
+- The absence reaches the output before it reaches the verdict. A line
+  interpolating the baseline prints `records covering , released ` and
+  reads as a formatting slip to anyone scanning for a number. Print the
+  baseline the check resolved on its own line, so the value the comparison
+  used is visible whichever verdict follows
+- The class is wider than a version-control tag: a threshold read from a
+  command, a previous value queried from an API, a base ref, a scan root.
+  Each is a parameter the check does not hold until the command returns
+  one. Which derived values are baselines and which are the data being
+  examined takes a person to say — the data is legitimately empty — so
+  this constraint stays declarative rather than naming a check
 - A verdict is a judgement only where no line of the check's output can be
   decided. A threshold the check declares, with a count measured against
   it, is decided and MUST reach an automatic verdict; the judgement is

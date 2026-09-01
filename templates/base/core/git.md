@@ -635,6 +635,16 @@ if MILESTONE is None:
 # from a position in a list of tags.
 previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0"],
                           **RUN).stdout.strip()
+
+# A baseline the command did not produce is not a baseline. With no tag
+# `git describe` prints nothing, `..HEAD` is an empty range, and the
+# check would report zero references from a comparison it never made.
+# The missing tag is the finding; the release is still being cut.
+if not previous:
+    print("no tag precedes this release, so there is no range to read "
+          "the merged work from")
+    raise SystemExit(1)
+
 subjects = subprocess.run(["git", "log", "--format=%s", previous + "..HEAD"],
                           **RUN).stdout
 
@@ -716,6 +726,9 @@ tag, how many references it found in the subjects since, and how many of
 those resolved to a pull request and how many to an issue — then prints
 nothing. An empty result is a failure too, since no references found
 means either nothing is unreleased or the commit subject format drifted.
+A repository with no tag yet fails on that rather than on the count: the
+range the count comes from is undefined, and a first release is exactly
+the case where the two are hardest to tell apart.
 A reference it cannot read is a finding rather than a silent skip: the
 gate establishes nothing about a number it did not resolve. A deferred
 *open* issue correctly carries no milestone — this covers only issues
@@ -1190,8 +1203,20 @@ OFF_LIMITS = [".github/workflows/", ".env", "migrations/"]
 # print the shape of a failure for a question nobody asked.
 here = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True,
                       text=True, encoding="utf-8").stdout.strip()
-there = subprocess.run(["git", "rev-parse", BASE], capture_output=True,
-                       text=True, encoding="utf-8").stdout.strip()
+base = subprocess.run(["git", "rev-parse", BASE], capture_output=True,
+                      text=True, encoding="utf-8")
+
+# An unresolvable base is not an empty one. `git rev-parse` echoes the
+# argument it could not resolve, so the value looks like a baseline, the
+# diff against it errors, and no changed files reads as nothing off
+# limits. Ask the exit status, which is the only thing that says whether
+# a baseline was produced.
+if base.returncode != 0:
+    print("%s does not resolve, so there is nothing to diff against"
+          % BASE)
+    raise SystemExit(1)
+
+there = base.stdout.strip()
 if here == there:
     dirty = subprocess.run(["git", "status", "--porcelain"],
                            capture_output=True, text=True,
@@ -1222,8 +1247,10 @@ Pass condition: the command reports how many files it compared. Zero is
 a failure rather than a clean branch, and the likeliest cause is that the
 change is not committed yet — the natural moment to run a
 pre-pull-request check is while writing it, and that run is guaranteed to
-report nothing. The other cause is a wrong base. An unreached diff
-reports the same nothing a clean one does.
+report nothing. The other cause is a wrong base, which the command now
+refuses rather than counts: `git rev-parse` echoes an argument it cannot
+resolve, so a mistyped base looks like a resolved one and the failing
+diff reports the same nothing a clean branch does.
 
 The command separates those two from a third case that is not a failure
 at all, and does it before counting. With HEAD at the base it asks

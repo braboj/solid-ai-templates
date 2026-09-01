@@ -19,6 +19,9 @@ alters no template carries no entry.
 
 ### Fixed
 
+- A check deriving its comparison baseline from a command refuses when the
+  command produced none, instead of comparing against an empty value. The
+  milestone-coverage and off-limits-path checks are corrected.
 - Extras and platform templates resolve as their own roots, so a section
   one of them names is checked against the chain its reader actually
   receives. Three dangling references are stated inline instead.
