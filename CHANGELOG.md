@@ -17,6 +17,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.70.0] - 2026-09-01
+
 ### Added
 
 - `base-git` requires a release currency gate over a dated artifact to
