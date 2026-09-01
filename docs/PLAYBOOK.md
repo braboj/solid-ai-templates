@@ -360,15 +360,14 @@ EOF
 ```
 
 Pass condition: the fixture that must be reported is reported, the one
-that must not is not, and the check's own corpus counts MOVE between the
-two runs. A count that does not move means the fixture was never read, so
-neither result answers anything — the uniform-positive trap in
-`CLAUDE.md`, arriving through a check instead of a shell probe.
+that must not is not, and the check's own corpus counts move between the
+two runs. `testing-control-corpus-moves` in
+`templates/base/core/testing.md` is the rule, and says why the third is
+what makes the first two readable.
 
-The same shape drives a check that takes an argument — a milestone, a
-module, a field. Replace the placeholder line in `body` before calling
-`run_block`, and ASSERT the replacement happened rather than trusting it.
-The placeholder is not always what the issue or the prose calls it:
+For a check that takes an argument — a milestone, a module, a field —
+replace the placeholder line in `body` before calling `run_block`. The
+placeholder is not always what the issue or the prose calls it:
 `MILESTONE = None` rather than an empty string cost a first attempt here.
 
 ---
