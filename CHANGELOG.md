@@ -17,6 +17,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.69.0] - 2026-09-01
+
 ### Added
 
 - `base-quality` bounds what a judgement verdict is. A threshold the
