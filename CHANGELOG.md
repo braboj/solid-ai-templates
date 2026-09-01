@@ -17,6 +17,21 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- `base-git` requires a release currency gate over a dated artifact to
+  compare non-strictly, so a record dated the release day passes and two
+  releases can ship on one day.
+- `base-quality-gates` requires a change that loosens a gate to add an
+  assertion for the case the loosening admits, and to name the reason in
+  the assertion's message.
+
+### Changed
+
+- `base-quality-gates` extends the test-edit-boundary check with the test
+  root's added and removed line counts, the reading that shows whether a
+  weakening shipped with its replacement.
+
 ## [2.69.0] - 2026-09-01
 
 ### Added
