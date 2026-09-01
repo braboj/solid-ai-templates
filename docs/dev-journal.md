@@ -5469,3 +5469,81 @@ open with 42 unmilestoned, label conformance empty, smoke 26 of 26, sync
 clean, conformance 14 passed with six not applicable and two read: the
 continuation scan finds no check split across a line, and the release
 commit carries two workflow runs rather than none.
+
+## 2026-09-01 — Every defect the cut met was already in the backlog
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**The scope was groomed a session ahead and shipped unchanged.** `v2.70`
+was scoped at the previous wrap-up as #1331 and #1332, to land as one pull
+request because #1332's worked example *is* the loosening #1331 argues for.
+This session opened on a status reading, found the milestone assigned and
+the tree clean, and built exactly that. It is the third cut running planned
+one release ahead, and the third to need no rescoping on contact.
+
+**Placement was measured before it was argued.** `git.md` resolves into
+seventeen chains of seventeen and `quality-gates.md` into twelve, so #1331
+went to the wider file per ADR-028. #1332 had no such choice: its anchor is
+the rule on weakening a specification, which exists only in
+`quality-gates.md`. That makes the pair straddle a containment boundary —
+`quality-gates.md` may name `git.md`, and the reverse dangles five chains —
+so the obligation #1332 adds is stated inline in `git.md` rather than by
+naming its section, which SYS-11 would have caught either way.
+
+**One of the two rules ships with no check, deliberately.** #1331
+constrains how a project writes a currency gate, not any artifact sitting
+in a tree, so there is nothing for a command to measure and
+`quality-gates-pair-check` scopes its requirement to output constraints.
+The temptation was to invent one to look thorough, which that rule names as
+the wrong move.
+
+**The other rule extended a check without touching its pass condition.**
+`quality-gates-test-edit-boundary` gained the test root's added and removed
+line counts. A deliberate loosening already fails its threshold by design;
+the new counts are for the person that failure summons, and answer whether
+the admitted case was asserted. Controls ran per
+`testing-control-corpus-moves`: this branch reported zeros, `d036d56`
+twenty-seven added against nine removed, `e97851b` one against four. The
+corpus moved off zero and the signal pointed both ways, which is what
+separates a working check from one that can no longer report.
+
+**Three defects got in the way of the cut, and all three were already
+filed.** The changelog-completeness check was deliberately not re-run after
+the cut, because its reading would have been two commits against zero
+entries — a failure by its pass condition and the false positive #1348
+describes. The runbook's preamble again denied the pull request its own
+step 4 requires, so step 4 was followed and #1345 stands. And `git.md`
+still hands consumers the themed release title #1196 settled against, so
+the bare title the PLAYBOOK specifies was used and #1346 stands. None was
+in scope; none was fixed. The backlog had predicted the whole session.
+
+**The release commit went red, and the check that exists for it caught
+it.** Smoke failed on `f003ac1` after `curl` took a connection reset
+pulling the gitleaks tarball, so the install step died before any check
+ran. `platform/github.md`'s workflow-run reading is what surfaced it — a
+commit inspected only for "not pending" would have read as fine, which is
+the failure that check was written against. Re-run green; nothing in the
+content was wrong.
+
+**PRs merged:** #1349, #1350
+
+**Issues closed:** #1331, #1332
+
+**Issues opened:** #1351
+
+**Released:** `v2.70.0`, tagged annotated at `f003ac1` — the changelog cut,
+not `main`'s tip — with the milestone theme in the tag message, published
+with a bare-version title, milestone closed, tag-guard green, and step 9
+verified
+
+**What is left.** No cut is scoped. The five unmilestoned release-procedure
+issues cluster tightly enough to be one — #1348, #1345 and #1346 were all
+met in this session's own cut, #1342 asks how a check's disposition is set,
+and #1337 asks what a periodic review attached to every release decays
+into. #1351 was filed at the wrap-up from the check built here: a check may
+carry a verdict and a reading at once, addressed to different readers, and
+nothing upstream says so. The backlog closed at 58 open with 44
+unmilestoned, label conformance empty, smoke 26 of 26, sync clean,
+conformance 14 passed with six not applicable and two read — the
+continuation scan finds no check split across a line, and the release
+commit's two workflow runs report no failure now that the flake is cleared.
