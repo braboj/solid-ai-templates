@@ -116,6 +116,26 @@ def _resolve_stack(stack_id, core_ids, entries):
     resolve(stack_id)
     return files, resolved
 
+
+def _opt_in_roots(core_ids, entries):
+    """The manifest IDs a project picks directly, that no stack chain carries.
+
+    A project resolves its stack, then its extras, then its platform, each as
+    its own root -- the algorithm ADR-004 states and `tools/resolve.py`
+    implements. An opt-in template is therefore guaranteed only the core tier
+    plus its own dependency tree, so a directive or a prose reference it
+    carries has to resolve there, not in a stack chain it may never be paired
+    with. Resolving stacks alone leaves these roots unexamined, and a check
+    that examines nothing reports the same result as a clean tree.
+    """
+    reached = set()
+    for entry in entries.values():
+        if entry["file"].startswith("templates/stack/"):
+            _, ids = _resolve_stack(entry["id"], core_ids, entries)
+            reached |= ids
+    return sorted(set(entries) - reached)
+
+
 TEMPLATE_DIRS = [
     os.path.join("templates", "base", "core"),
     os.path.join("templates", "base", "security"),
@@ -125,6 +145,7 @@ TEMPLATE_DIRS = [
     os.path.join("templates", "base", "data"),
     os.path.join("templates", "backend"),
     os.path.join("templates", "frontend"),
+    os.path.join("templates", "platform"),
     os.path.join("templates", "stack"),
 ]
 
@@ -651,12 +672,20 @@ def check_tpl_06():
     failures = []
     seen = Inspected()
 
-    stacks = seen.count("stacks resolved", [e for e in entries.values()
+    stacks = seen.count("stacks resolved", [e["id"] for e in entries.values()
                         if e["file"].startswith("templates/stack/")])
 
+    # A stack is not the only root a project resolves. Extras and the platform
+    # are chosen independently of the stack, so what guarantees their EXTEND
+    # target is their own chain -- the core tier plus their dependency tree --
+    # and not whichever stack they are paired with. Resolving stacks alone
+    # left every opt-in template unexamined, which is how two platform files
+    # came to extend a section carried by one chain in seventeen.
+    opt_in = seen.count("opt-in roots resolved",
+                        _opt_in_roots(core_ids, entries))
+
     directives = 0
-    for stack in stacks:
-        sid = stack["id"]
+    for sid in list(stacks) + list(opt_in):
         chain_files, _ = _resolve_stack(sid, core_ids, entries)
 
         # Collect all IDs declared in chain files
@@ -1566,7 +1595,8 @@ def check_sys_10():
 # context file does not contain.
 #
 # The failure is invisible from either file. It appears only per chain, which
-# is why this check resolves every stack rather than reading the two files.
+# is why this check resolves every root a project can pick rather than reading
+# the two files.
 
 # What counts as a reference is decided by the IDs the tree declares, not by
 # a list of layer prefixes. A prefix list matches file-level IDs, where a
@@ -1593,12 +1623,20 @@ def check_sys_11():
     # A stack is an entry under templates/stack/, the same selector MNF-02
     # uses -- reading the whole entry table instead resolves layer templates
     # as though they were stacks and inflates every count.
+    roots = [e["id"] for e in entries.values()
+             if e["file"].startswith("templates/stack/")]
+
+    # A stack is one of two kinds of root. Extras and the platform are picked
+    # independently of it, and a file reaching a consumer only that way sits
+    # in no stack chain at all -- so restricting the corpus to stacks makes
+    # the scan of that file vacuous: it is carried by zero chains, nothing
+    # can be missing from zero chains, and the reference passes unread.
+    roots += _opt_in_roots(core_ids, entries)
+
     chains = {}
-    for entry in entries.values():
-        if not entry["file"].startswith("templates/stack/"):
-            continue
-        files, _ = _resolve_stack(entry["id"], core_ids, entries)
-        chains[entry["id"]] = set(f.replace(os.sep, "/") for f in files)
+    for root in roots:
+        files, _ = _resolve_stack(root, core_ids, entries)
+        chains[root] = set(f.replace(os.sep, "/") for f in files)
 
     # all_template_files() returns absolute paths; the manifest names files
     # repo-relative, and the chains are built from the manifest. Normalise to
@@ -1664,7 +1702,7 @@ def check_sys_11():
         f"  section IDs declared: {len(defined_in)}",
         f"  named in another file's prose: {len(cited)}",
         f"  cross-file references checked: {references}",
-        f"  chains resolved: {len(chains)}",
+        f"  roots resolved (stack, extra and platform): {len(chains)}",
     ]
 
     return failures, notes

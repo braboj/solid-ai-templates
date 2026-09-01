@@ -19,6 +19,9 @@ alters no template carries no entry.
 
 ### Fixed
 
+- Extras and platform templates resolve as their own roots, so a section
+  one of them names is checked against the chain its reader actually
+  receives. Three dangling references are stated inline instead.
 - `base-typescript` states the type-gate and mutation-testing rules inline
   rather than naming two `quality-gates` sections that three of the five
   chains carrying it do not include.

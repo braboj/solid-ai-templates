@@ -37,9 +37,9 @@ Platform-specific label implementation (names, colors) is defined in
 the platform template (e.g. `platform/github.md`).
 
 The at-creation rule MUST be paired with a conformance check over open
-issues (`quality-gates-pair-check`) — an unlabeled ticket looks
-identical to a labeled one, so the discipline decays silently
-otherwise. Where the tracker can enforce mutual exclusion natively
+issues, stated as a command with its pass condition — an unlabeled
+ticket looks identical to a labeled one, so the discipline decays
+silently otherwise. Where the tracker can enforce mutual exclusion natively
 (Linear label groups), that is the check; where it cannot (GitHub
 labels), state the query and its pass condition in the platform
 template. The check reports every open issue not carrying exactly one
