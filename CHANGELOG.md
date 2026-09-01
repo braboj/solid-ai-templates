@@ -19,6 +19,10 @@ alters no template carries no entry.
 
 ### Fixed
 
+- The model-limitations table is measured from the shipped chains rather
+  than estimated. Every category was understated two to eight times over
+  and both 32K minimums were unreachable; `sync.py --check` now fails
+  when the figures drift.
 - A check deriving its comparison baseline from a command refuses when the
   command produced none, instead of comparing against an empty value. The
   milestone-coverage and off-limits-path checks are corrected.

@@ -272,6 +272,78 @@ def _spec_chain_examples():
     return (NEWLINE * 2).join(blocks)
 
 
+# A resolved chain is the prompt an adopter actually sends, so the sizes in
+# README's model table are measured from it. Hand-maintained, the table
+# drifts every time a base template grows, and the number it gives is the
+# one thing the reader cannot check before the first attempt truncates.
+
+# Markdown carrying tables, fenced code and hyphenated identifiers tokenizes
+# worse than prose. The figure is deliberately below the four-per-token rule
+# of thumb: a window chosen from an optimistic estimate does not fit.
+CHARS_PER_TOKEN = 3.5
+
+# The chain is not the whole context. The interview goes in with it and the
+# generated file comes back out; a window sized to the prompt alone holds
+# the question and has no room for the answer.
+OVERHEAD_TOKENS = 18000
+
+# What a project can actually buy. A floor landing between two of these
+# names a window nobody sells, so the next real one up is the answer.
+CONTEXT_WINDOWS = [32000, 64000, 128000, 200000, 256000, 512000, 1000000]
+
+
+def _window_label(size):
+    """Render a context window the way a model card names it."""
+    if size >= 1000000:
+        return "%gM" % (size / 1000000.0)
+    return "%dK" % (size // 1000)
+
+
+def _readme_model_limits():
+    """Render README.md's model table from the resolved chains themselves."""
+    from resolve import load_manifest as _load, resolve_chain, concat_chain
+
+    core_ids, entries, stacks = _load()
+
+    # Concatenated here rather than read from generated/: this runs before
+    # that directory is refreshed, so reading it would measure the previous
+    # revision of every chain the table exists to describe.
+    by_layer = {}
+    for stack in stacks:
+        chain = concat_chain(resolve_chain(stack["id"], core_ids, entries))
+        layer = stack.get("layer", "unclassified")
+        by_layer.setdefault(layer, []).append((len(chain), stack["id"]))
+
+    if not by_layer:
+        raise SystemExit("sync: no stacks to measure")
+
+    lines = [
+        "| Stack category | Stacks | Largest chain | Prompt | Min context |",
+        "|----------------|--------|---------------|--------|-------------|",
+    ]
+    for layer in sorted(by_layer):
+        chars, largest = sorted(by_layer[layer])[-1]
+        tokens = chars / CHARS_PER_TOKEN
+        needed = tokens + OVERHEAD_TOKENS
+        window = next((w for w in CONTEXT_WINDOWS if w >= needed), None)
+
+        # A chain outgrowing every window a model sells is a finding about
+        # the chain. Rendering the largest one anyway would print a floor
+        # that does not hold the prompt it is quoted for.
+        if window is None:
+            raise SystemExit(
+                "sync: %s needs ~%dK tokens, beyond every listed window"
+                % (layer, round(needed / 1000.0))
+            )
+
+        lines.append(
+            "| %s | %d | `%s` — %dK chars | ~%dK tokens | %s |"
+            % (layer, len(by_layer[layer]), largest, round(chars / 1000.0),
+               round(tokens / 1000.0), _window_label(window))
+        )
+    return NEWLINE.join(lines)
+
+
 # ---- file update ----
 
 MARKER_RE = re.compile(
@@ -307,10 +379,21 @@ def _update_file(path, replacements, check_mode=False):
         # A function replacement, not a template string: generated
         # content is data, and a backslash in it would otherwise be
         # read as a group reference and silently rewrite the block.
-        text = pattern.sub(
+        text, hits = pattern.subn(
             lambda m, c=content: m.group(1) + c + NEWLINE + m.group(3),
             text,
         )
+
+        # A marker the file does not carry substitutes nothing, so the
+        # document keeps whatever was written there by hand and the gate
+        # reports it in sync. Deleting a pair of comments would then
+        # freeze a generated table and turn the check green over it.
+        if not hits:
+            raise SystemExit(
+                "sync: %s carries no marker for %s; generated content has "
+                "nowhere to go and the staleness gate cannot see it"
+                % (path.name, marker_id)
+            )
 
     if text != original:
         if not check_mode:
@@ -330,6 +413,7 @@ def main():
     spec_content = _spec_sections(manifest)
     chain_examples = _spec_chain_examples()
     readme_content = _readme_stacks(manifest)
+    model_limits = _readme_model_limits()
     interview_content = _interview_stacks(manifest)
 
     targets = [
@@ -340,7 +424,13 @@ def main():
                 "spec-chain-examples": chain_examples,
             },
         ),
-        (ROOT / "README.md", {"readme-stacks": readme_content}),
+        (
+            ROOT / "README.md",
+            {
+                "readme-stacks": readme_content,
+                "readme-model-limits": model_limits,
+            },
+        ),
         (ROOT / "templates" / "INTERVIEW.md", {"interview-stacks": interview_content}),
     ]
 
