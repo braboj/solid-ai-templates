@@ -17,6 +17,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.72.0] - 2026-09-01
+
 ### Fixed
 
 - The model-limitations table is measured from the shipped chains rather
