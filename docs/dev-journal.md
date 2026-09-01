@@ -5396,3 +5396,76 @@ ready and unmerged, the Unreleased section holds three entries against
 five commits where the three journal and documentation commits are
 deliberately not notable, the continuation locator finds none, and one
 workflow run is recorded against the head commit.
+
+---
+
+## 2026-09-01 — The release quiets the check that verifies it
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**The cut was owed rather than planned.** `v2.69` closed three issues and
+merged five pull requests in the previous session, which was asked to wrap
+up rather than release, so the milestone stood complete and untagged
+overnight. This session opened on a status reading that found it, and the
+cut then ran the nine PLAYBOOK steps against a tree whose content had all
+merged a day earlier.
+
+**Three gates ran before the changelog was touched.** Milestone-coverage
+with `MILESTONE` set found twelve references since `v2.68.0`, resolving to
+nine pull requests and three issues, and printed nothing after them.
+Release-ordering listed nine carried commits and no open pull request ready
+but unmerged. Changelog-completeness read nine commits against four
+entries, and the reconciliation is the part no gate performs: three journal
+entries, two process-document changes and one decision record carry no
+entry deliberately, and the three template commits account for all four.
+Each entry was measured against the forty-word bound in the cut itself
+rather than taken from a summary — 37, 32, 35 and 33.
+
+**The release changed how its own verification reads.** Before the tag the
+conformance run reported four checks not applicable and four awaiting a
+reading; after it, six and two. Release-ordering and changelog-completeness
+both answer `HEAD is v2.69.0; no release is in preparation` and exit 3.
+That status is what #1329 shipped in this release, so the first thing the
+cut did was drive the path it had just published, on the live case rather
+than a fixture. The count moving from four to six is the only thing
+separating that from two checks that quietly stopped running, which is the
+claim #1334 made and this release also carries.
+
+**The audit found a rule this repository learned and never shipped.** #1196
+settled the release title as the bare version, because the annotated tag
+message and the milestone description already carry the theme and a release
+list mixing the two forms reads as two conventions rather than one. It
+fixed `docs/PLAYBOOK.md` and stopped there. `base/core/git.md` still hands
+every consumer `gh release create --title "vX.Y.Z — <milestone name>"`, so
+a template reaching seventeen chains tells them to do what the project
+owning the rule decided against. `v2.64` was about this repository
+violating rules it ships; this is the inverse, a rule it derived and kept
+to itself. Filed as #1346.
+
+**The runbook denies a step it requires.** The release preamble says there
+is no branch, commit or pull request; step 4 says the changelog cut is its
+own pull request and MUST merge before the tag. This cut created all three
+— branch, commit `da84ea1`, pull request #1344. The preamble means no
+version-bump commit and predates ADR-029, and an operator who reads it and
+tags `main` publishes a tree whose changelog still says `Unreleased`, with
+nothing left to catch it: the completeness check exits 3 as not applicable
+the moment the tag lands. Filed as #1345.
+
+**PRs merged:** #1344
+
+**Issues closed:** none — `v2.69`'s three closed in the previous session
+
+**Issues opened:** #1345, #1346
+
+**Released:** `v2.69.0`, tagged at `da84ea1` with the milestone theme in the
+tag message, published with a bare-version title, milestone closed,
+tag-guard green
+
+**What is left.** `v2.70 — The gate that was loosened on purpose` is scoped
+and assigned at two open issues, #1331 and #1332, to land as one pull
+request because #1332's worked example is the loosening #1331 argues for.
+#1342 and the two filed here are unmilestoned. The backlog closed at 58
+open with 42 unmilestoned, label conformance empty, smoke 26 of 26, sync
+clean, conformance 14 passed with six not applicable and two read: the
+continuation scan finds no check split across a line, and the release
+commit carries two workflow runs rather than none.
