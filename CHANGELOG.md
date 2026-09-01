@@ -17,6 +17,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.71.0] - 2026-09-01
+
 ### Fixed
 
 - `base-git`'s changelog-completeness check takes the release it prepares
