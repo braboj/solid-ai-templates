@@ -240,8 +240,13 @@ and the advanced data templates (data-governance, data-migration) —
 opt-in extras no stack pulls automatically (`data-quality` is the only
 data module reached by a chain, via python-service).
 
-Orthogonal templates are NOT expected to appear in stack resolution
-and are excluded from reachability checks.
+Orthogonal templates are NOT expected to appear in stack resolution.
+They are resolved as their own roots instead: an orthogonal template is
+guaranteed the core tier plus its own `depends_on` tree, and nothing
+else, because the stack it is paired with is not known when it is
+authored. Reachability is checked against that chain — an `[EXTEND: ...]`
+or a prose section reference in an orthogonal template MUST resolve
+there, not in some stack chain the project may never pick.
 
 ### Opt-in tiers
 
@@ -375,6 +380,11 @@ carries the referencing one — SYS-11 checks this per chain, because the
 defect is invisible from either file on its own. See ADR-028 for the full
 rationale.
 
+An orthogonal template is the sharpest case. It reaches a reader through
+no stack chain at all, so its guaranteed context is the core tier plus
+its own `depends_on` tree — six files and whatever it declares. A
+reference out of that is unreadable for every project that opts in.
+
 ---
 
 ## Precedence rules
@@ -507,8 +517,11 @@ Output: ordered list of template files to load.
 1. Look up Stack ID in templates/manifest.yaml
 2. Recursively resolve depends_on → collect all
    transitive dependencies (depth-first, deduplicated)
-3. Append Extras (skip if already in the resolved set)
-4. Append Platform template (if declared)
+3. Resolve each Extra the same way — its depends_on
+   tree first, then itself (skip anything already
+   in the resolved set)
+4. Resolve the Platform template the same way (if
+   declared)
 5. Append templates/base/core/agents.md
 6. Return the ordered file list
 ```

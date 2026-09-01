@@ -71,10 +71,9 @@ These apply to all three models; the review process checks them.
   MUST be inlined; the full framework is referenced (see "What to
   inline", above).
 - **Pair a checkable rule with its check.** A mechanically checkable
-  constraint names its agent-runnable check — command plus pass
-  condition; subjective rules stay declarative (see
-  `quality-gates-pair-check` in
-  `templates/base/workflow/quality-gates.md`).
+  constraint names its agent-runnable check — the command in a fenced
+  block, the pass condition in prose beside it; subjective rules stay
+  declarative.
 
 ### Self-check
 

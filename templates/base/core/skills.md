@@ -144,8 +144,8 @@ description: >-
   tell the model which is which
 - State the script's limits so it is not over-trusted ("a clean scan is
   not a passing score; the scanner catches only what a regex reaches").
-  A stated check pairs with its rule (see `quality-gates-pair-check` in
-  `templates/base/workflow/quality-gates.md`)
+  A stated check names the command that runs it and the condition that
+  passes it, beside the rule it enforces
 - Wrap existing project tooling by path (an npm script, a Python tool)
   rather than re-implementing its logic in the skill
 

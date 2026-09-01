@@ -147,7 +147,10 @@ base/ ──┬── frontend/ ──┐
 - Sections are tagged `[ID: ...]`, extended with `[EXTEND: ...]`,
   replaced with `[OVERRIDE: ...]`
 - Platform templates are orthogonal to the stack chain — a project
-  picks one platform regardless of stack
+  picks one platform regardless of stack, and it resolves as its own
+  root, so its guaranteed context is the core tier plus its own
+  `depends_on` tree and nothing from the stack (ADR-035); the same
+  holds for every opt-in extra
 - `templates/manifest.yaml` is the machine-readable dependency graph
 
 ### 2.5 Adding a new stack template

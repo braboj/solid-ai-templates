@@ -18,8 +18,9 @@ tags: [composition, reach, section-ids]
 
 > **Given** a template whose running prose names another file's section
 > ID
-> **When** every stack chain that carries the referencing file is
-> resolved
+> **When** every root a project can pick is resolved — each stack, and
+> each orthogonal template a project opts into as its own root — and the
+> chains carrying the referencing file are taken
 > **Then** the file declaring that section is present in all of them —
 > otherwise the reference sends a reader to a section their own context
 > file does not contain
@@ -30,7 +31,7 @@ tags: [composition, reach, section-ids]
 |--------|-----------|
 | PASSED | Every cross-file prose ID reference resolves in all chains carrying the referencing file |
 | FAILED | A reference dangles in at least one chain, or an ID-shaped token no template declares is named |
-| FAILED | The check resolved no chains, or matched no references at all |
+| FAILED | The check resolved no roots, or matched no references at all |
 | SKIPPED | PyYAML not installed |
 | BLOCKED | — |
 | ERROR | — |
@@ -48,7 +49,11 @@ tags: [composition, reach, section-ids]
 
 ### Execution
 
-1. Resolve every stack's chain from the manifest
+1. Resolve every root from the manifest: each stack, and each entry no
+   stack chain reaches — the extras and platform templates a project
+   opts into independently of its stack. A file reaching a consumer only
+   that way sits in no stack chain, so a stack-only corpus scans it
+   against zero chains and the reference passes unread
 2. Map each declared section ID to the files declaring it
 3. For each template, find the backticked tokens in its prose that the
    declared-ID map holds and the file does not declare itself. The set of
@@ -57,13 +62,13 @@ tags: [composition, reach, section-ids]
 4. For each such reference, compare the chains carrying the referencing
    file against those carrying the declaring file
 5. Report the number of declared IDs, the number named in another file's
-   prose, the references checked and the chains resolved
+   prose, the references checked and the roots resolved
 
 ### Assertions
 
 1. Assert no reference is missing from a chain that carries its
    referencing file
-2. Assert the chain count is non-zero — a check that resolved nothing
+2. Assert the root count is non-zero — a check that resolved nothing
    reports the same empty result as one that found nothing
 3. Assert the reference count is non-zero — a pattern that stopped
    matching is indistinguishable from a clean tree otherwise
@@ -81,13 +86,20 @@ tags: [composition, reach, section-ids]
 3. Narrow the pattern to a layer-prefix list; the reported reference
    count MUST drop. A widening that leaves the count unmoved changed
    nothing, whatever the pattern now reads as
+4. Restrict the corpus to stack roots; the reported root count MUST drop
+   and the references an orthogonal template carries MUST stop being
+   checked. Three of them dangled while the check reported green
 
 ## Related
 
 - `SAIT-SMK-TPL-04-001A` — covers EXTEND/OVERRIDE directives, which are
   structural; a prose reference is checked by neither it nor TPL-06
 - `SAIT-SMK-TPL-06-001A` — the same reachability question for directives
-- Measured basis, 2026-09-01: 341 declared section IDs, 28 cross-file
-  prose references across the tree, none dangling. The prefix pattern this
-  check used until then saw 100 of those IDs and 14 of those references,
-  and the two it missed in `base-typescript` dangled in three chains
+- Measured basis, 2026-09-01: 365 declared section IDs, 29 cross-file
+  prose references across 37 roots — 17 stacks and 20 orthogonal
+  templates — none dangling. The prefix pattern this check used earlier
+  saw 100 of those IDs and 14 of those references, and the two it missed
+  in `base-typescript` dangled in three chains. The stack-only corpus
+  that followed scanned `base-agents`, `base-skills` and `base-issues`
+  against zero chains apiece; all three named a section their readers do
+  not receive
