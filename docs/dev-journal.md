@@ -5304,3 +5304,95 @@ state unreachable and about what a loosened gate leaves behind. Neither
 cluster is groomed. Backlog closed at 57 open issues, label conformance
 empty, smoke 26 of 26, sync clean, conformance 10 passed with 12 awaiting
 a reading and all twelve read.
+
+---
+
+## 2026-09-01 — The contract is in the pass condition, not the output
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**The groom ran first and the theme fell out of it.** Forty-three
+unmilestoned issues re-read, each candidate's claims measured against the
+tree before clustering rather than after. Three clustered on two files and
+became `v2.69 — The reading the check has already done`; two more, both
+from `pyomb`, became `v2.70 — The gate that was loosened on purpose`. The
+merged-commit sweep found one hit across 754 commit subjects: an upstream
+flag whose ordering half was closed by a pull request years of releases
+ago and whose heading half is untouched, so it is recorded as staying open
+rather than closed.
+
+**Verifying the claims changed the plan twice, and the second correction
+undid the first.** The issue proposing that a check with a declared
+threshold should reach a verdict named one such check; reading the twelve
+judgement checks' readings found five. Reading their stated pass
+conditions found four — the continuation locator prints three counts
+ending in a zero, the exact shape of a predicate, and its pass condition
+says a non-zero count is not a failure. Then a fifth was claimed for the
+neighbouring issue on the grounds that its own pass condition is
+mechanical, which was wrong for a different reason: the reason it stays a
+judgement was recorded beside its disposition, and scoring it would fail
+every conforming change, because every template change owes an edit to the
+file the check inspects.
+
+**That is the session's one general finding and it is filed, not
+shipped.** A check's output is one sample of its contract taken on a clean
+tree, and it misleads in both directions — a violation count reading zero
+looks like a rule requiring zero, and a count the rule tolerates reads as
+one it forbids. Only the stated pass condition separates "MUST be zero"
+from "is the set to read". The one check carrying a recorded reason is the
+one nearly converted wrongly, which is the case for requiring that reason
+made rather than argued.
+
+**The reading pile fell from twelve to four, and four of the eight that
+left had already answered.** The first change gave four checks predicates
+and required every remaining judgement to state what about it takes a
+person. The second reserved exit status 3 for a check reporting at run
+time that its moment is not in progress, counted apart from the readings.
+The design was the user's call between three candidates; a first-line
+marker was rejected as a string convention no check declares, and both
+signals together as two conventions that can drift apart. ADR-032 carries
+the alternatives, which had otherwise lived only in a pull request body.
+
+**Every exit-3 path was driven to fire before being believed.** Two by
+tagging HEAD and deleting the tag, two by extracting the block with its
+base replaced, two because they fire on this repository as it stands — and
+the run's own not-applicable count moved from zero to two to four, which
+is what separates a path that was never reached from one that correctly
+stayed quiet. The negative control matters as much: with a dirty tree both
+base-gated checks still exit clean and say `commit it and run again`,
+because the operator has something to do there and a status meaning no
+reader is needed would be wrong. That practice, used four times across two
+releases and written down only in this repository's PLAYBOOK, is now
+upstream as `testing-control-corpus-moves`.
+
+**The audit caught a milestone that existed and held nothing.** `v2.70`
+was created with a description enumerating two issues and no issues
+assigned, and it stayed that way for the length of the session. Creating a
+milestone and assigning its issues are two calls; every view that shows a
+milestone shows its title, and the release gate reads the issues a
+milestone holds, so an empty one passes the gate rather than failing it.
+The groom procedure now has a fifth step that assigns and reads the count
+back.
+
+**PRs merged:** #1336, #1338, #1339, #1340, #1341
+
+**Issues closed:** #1322, #1329, #1334
+
+**Issues opened:** #1342
+
+**ADRs:** ADR-032
+
+**What is left.** `v2.69` is complete at three closed and nothing open,
+and it is NOT tagged — the session was asked to wrap up rather than cut,
+so the release, its tag message quoting the milestone theme, and the
+GitHub Release are all owed. `v2.70` is scoped and assigned. One issue arrived
+from a parallel session mid-cut, already labelled, on whether a periodic
+review attached to every release decays into paperwork — unmilestoned and
+unread here. Backlog
+closed at 56 open issues, label conformance empty, smoke 26 of 26, sync
+clean, conformance 14 passed with 4 not applicable and 4 awaiting a
+reading, all four read: release ordering carries five commits with nothing
+ready and unmerged, the Unreleased section holds three entries against
+five commits where the three journal and documentation commits are
+deliberately not notable, the continuation locator finds none, and one
+workflow run is recorded against the head commit.
