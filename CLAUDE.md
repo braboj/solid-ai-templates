@@ -73,6 +73,9 @@ py tools/audit_redundancy.py --check          # CI gate — fail on new dups
   docs, refactor
 - PR titles: `<type>(<scope>): <summary> (#issue)` — same format
   as commits, with issue number(s) at the end
+- A single-commit PR MUST carry the issue number in the commit subject
+  too: GitHub squashes using the PR title only when the branch holds two
+  or more commits, and the commit subject when it holds one
 - Issue titles: sentence case, imperative verb — no type prefix
   (labels carry the type)
 - PRs are small and focused — one concern per PR; one approval
@@ -403,8 +406,9 @@ Run `py tests/run_smoke.py` before every PR. It checks:
   `0 failed` counts only the automatic verdicts. The `not applicable`
   count is not among them: those checks answered by exiting 3 and need no
   reader (PLAYBOOK, "Run the test suite")
-- Run `py tools/sync.py` after any template edit — smoke does not
-  read `generated/`, so a stale pre-resolved chain surfaces only in CI
+- Run `py tools/sync.py` after the LAST template edit of a change, not
+  the first — smoke does not read `generated/`, so a chain regenerated
+  before a later edit is stale and surfaces only in CI
 - If a change affects multiple documents, update all in the same PR
 - Do not drift from the agreed scope without checking with the user
 - When a path-based shell query (`test -f`, `ls`, `git -C <path>`,
