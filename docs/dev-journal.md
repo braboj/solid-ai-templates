@@ -5732,3 +5732,98 @@ reporting item resolves into a change.
 **Issues opened:** #1391.
 **State at close:** unchanged from the entry above, except 73 open issues
 and `main` at the PLAYBOOK commit.
+
+## 2026-09-01 — The decision a release recorded falsified the recipe that
+places the next rule
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** v2.72's second half and the cut. Three issues, three
+pull requests, then the changelog cut, the tag and the release.
+
+#1366 — twenty manifest entries are reachable only through the extras and
+platform steps of the resolution algorithm, and every reachability check
+resolved the seventeen stacks and stopped. Those files were scanned
+against zero chains, so they passed by arithmetic: nothing can be missing
+from zero chains. `templates/platform/` was outside the scanned
+directories entirely. TPL-06 and SYS-11 now resolve thirty-seven roots and
+report the two counts separately. The system specification had said the
+platform template and each extra are appended as bare files; the
+resolution decision record says resolve each one's dependency tree, and
+`resolve.py` already did. The specification was the odd one out and the
+checks had followed it.
+
+#1381 — a check that resolves its comparison baseline by running a command
+inherits a failure no rule covered: the command yields nothing, every
+comparison against the empty value succeeds, and the check reports a clean
+result from a comparison that never ran. Stated in `base-quality` after
+measuring reach — that file and `base-git` both resolve into all
+thirty-seven roots, and the rule is about check construction rather than
+about git.
+
+#1360 — the model-limitations table an adopter reads to pick a model was
+estimated once and never re-measured. The smallest chain in the repository
+is 270K characters, roughly 77K tokens; the table claimed 12K and a 32K
+minimum. It is now rendered by `sync.py` from the resolved chains, and
+`sync.py --check` already runs in CI.
+
+**Widening a check was its own control.** SYS-11 over the opt-in roots
+failed on its first run with three real findings — the agents, skills and
+issue-format templates each named a `quality-gates` section no chain of
+theirs carries. No planted break was needed; the corpus the check had
+never opened held the defects it exists to find.
+
+**The rule found two live instances in the file next to it.** `base-git`
+shipped two checks with the defect #1381 names. The milestone-coverage
+check printed `previous tag: ` and zero references at exit 0. The
+off-limits-path check took its base from `git rev-parse`, which echoes an
+argument it cannot resolve — so a wrong base looked resolved, the diff
+failed, and no changed files read as nothing off limits. A rule shipped in
+the same release as its own violations would have been the fifth such
+case here.
+
+**The release's own decision record falsified the audit's recipe, and the
+audit is where that surfaced.** ADR-035 made an opt-in template a
+resolution root. The PLAYBOOK step that picks where a rule goes still
+measured reach by iterating the seventeen stacks, and the prose around it
+still said platform templates sit outside the chain and that `agents.md`
+measures zero. Placement decisions are made with that recipe, so an
+under-measure puts a rule in the wrong file. Corrected to iterate a new
+`resolve.py --roots`, whose count agrees with the smoke runner's
+independent resolver on every file tried.
+
+**The corrected recipe returned zero, and the zero was the bug.** On
+Windows `print` emitted CRLF, so each ID reached the shell loop as
+`base-agents` with a trailing carriage return, every lookup missed, and
+the recipe reported no reach for files carried by all thirty-seven roots.
+The old form escaped it by accident: word splitting left the carriage
+return on the label rather than the ID. Caught only because the result was
+checked against a known value instead of read.
+
+**Two patterns meant for filing were already in the templates.** The rule
+that a derivable table must be generated rather than hand-maintained, and
+the rule that a control must be shown to have planted its break, are both
+stated in `base-quality-gates`. The second was broken twice this session
+anyway — once by a revert that discarded unstaged work, once by a control
+whose pattern had the wrong line endings and edited nothing while
+reporting clean. The repository shipping a rule is not the same as the
+session applying it.
+
+**PRs merged:** #1393, #1394, #1395, #1396, #1399, #1400.
+**Issues closed:** #1360, #1366, #1381 — milestone #78 complete at 6 of 6,
+closed.
+**Issues opened:** #1401 and #1402, both reusable patterns with no upstream
+home: a generator that substitutes nothing reporting success, and a program
+that pins its output encoding but not its line ending.
+**Labelled in passing:** #1397 and #1398, arriving unlabelled from a
+parallel session and tripping the repo-wide label gate on an unrelated
+branch; `bug`/`P2` on the precedent of #1366.
+**ADRs:** ADR-035, an orthogonal template is a resolution root and its
+reach is measured there.
+**Released:** v2.72.0, annotated tag on the changelog cut, published, notes
+generated. Eleven commits carried.
+**State at close:** smoke 26/26, sync clean, redundancy 0, conformance 14
+passed and 0 failed with three readings read, 0 open pull requests, no
+stale branches, label conformance `[]`, 74 open issues. Three further
+conformance readings appear only while a parallel session's untracked
+`docs/design/` sits in the tree; parked, the run returns to the three.
