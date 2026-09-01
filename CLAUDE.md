@@ -400,8 +400,9 @@ Run `py tests/run_smoke.py` before every PR. It checks:
   takes a predicate, not a judgement; a judgement disposition MUST state
   what takes a person, and the runner fails on one that does not
 - A conformance run is NOT clean until its judgement readings are read —
-  `0 failed` counts only the automatic verdicts (PLAYBOOK, "Run the test
-  suite")
+  `0 failed` counts only the automatic verdicts. The `not applicable`
+  count is not among them: those checks answered by exiting 3 and need no
+  reader (PLAYBOOK, "Run the test suite")
 - Run `py tools/sync.py` after any template edit — smoke does not
   read `generated/`, so a stale pre-resolved chain surfaces only in CI
 - If a change affects multiple documents, update all in the same PR
