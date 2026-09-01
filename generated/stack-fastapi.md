@@ -1938,11 +1938,25 @@ passing green.
   10. `git checkout main && git pull`
   11. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
      — the `-a` is mandatory: a lightweight `git tag` is skipped by
-     `git describe`, so consumers report a stale version
+     `git describe`, so consumers report a stale version. The annotated
+     message is the artifact that carries the release theme
   12. `git push origin vX.Y.Z`
-  13. Create a GitHub Release with auto-generated notes:
-     `gh release create vX.Y.Z --title "vX.Y.Z — <milestone name>"
-     --generate-notes`
+  13. Create a GitHub Release with auto-generated notes, titled with the
+     bare version:
+     `gh release create vX.Y.Z --title "vX.Y.Z" --generate-notes`
+
+The theme belongs to the tag message at step 11, and the release title is
+the bare version. Both artifacts are generated from the same milestone at
+cut time, so nothing is inconsistent on the day and the drift appears only
+across releases: a list mixing themed and bare titles reads as two
+conventions rather than one.
+
+The theme is already recorded twice — in the tag message and in the
+milestone description — so a themed title adds no record, and it spends
+the one artifact that cannot be repaired cheaply. Re-cutting a published
+release to change its title re-dates it, and a mis-ordered release list is
+worse than an inconsistent one. A project that finds the drift late leaves
+the published titles as they are and changes the procedure.
 
 ## Migrating to a new repository
 

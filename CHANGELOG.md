@@ -24,6 +24,13 @@ alters no template carries no entry.
   and its pass condition no longer contradicts itself over a commit that
   is deliberately not notable.
 
+### Changed
+
+- `base-git`'s no-build release step titles the GitHub Release with the
+  bare version and names the annotated tag message as the artifact
+  carrying the release theme, so a release list does not accumulate two
+  title forms.
+
 ## [2.70.0] - 2026-09-01
 
 ### Added
