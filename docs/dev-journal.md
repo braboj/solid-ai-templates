@@ -5639,3 +5639,65 @@ wrap-up for the reusable form of the fail-open defect.
 **State at close:** 73 tags all annotated, smoke 26/26, sync clean,
 conformance 14 passed and 0 failed with both readings read, 0 open pull
 requests, no stale branches, label conformance `[]`, 73 open issues.
+
+## 2026-09-01 — The check that could not see, and the suite that did not count
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** Groomed the backlog and scoped `v2.72 — A pass that counted
+no input, and a number that measured no chain` (milestone #78, six issues,
+both open P1s). Shipped the first half: SYS-11 now decides what counts as a
+prose reference from the IDs the tree declares rather than a list of layer
+prefixes, `base-typescript` states two rules inline that it had been naming
+across a chain gap, and all 26 smoke checks report what they inspected with
+an empty corpus failing rather than passing.
+
+**The groom corrected the issue it was grooming.** #1361 reported 366
+declared IDs with 124 matchable. Measured with the check's own declaration
+scanner — which requires the directive to own its line — the tree holds 341
+declared IDs and the old pattern matched 100. The looser regex behind the
+issue's number also counts `[ID: x]` inside a fenced code block in
+`base-docs`, a docstring in an example function. Same conclusion, 241
+invisible either way, but the numbers the check acts on are the ones now in
+the spec. Verifying a claim with the same extractor that will act on it is
+one step finer than the PLAYBOOK's "measure the claim", and it is what the
+step means.
+
+**Widening a pattern is not separable from the violation it uncovers.**
+Fixing SYS-11 turned the two references in `base-typescript` into a smoke
+failure, so #1361 and #1362 could not land in separate pull requests
+without a red `main` in between. Scoping them as one pull request was
+decided during the groom, from the claims, before either was touched.
+
+**Adding the counts to 26 checks would not have closed the class.** The
+twenty-seventh check is written by someone who has not read the rule, and a
+suite that asks every check to remember a contract gets the checks whose
+authors read it — 25 of 26 here, with the rule shipped in the tree the
+whole time and enforced on template checks by another runner. The
+enforcement moved to the runner: a check that would pass while reporting no
+inputs is failed where it is called. Only a silent pass is rejected, since
+a failing check has already said something. Recorded as ADR-034, because
+the code shows that the runner does this and not why enforcement sits
+there.
+
+**Counting alone would not have caught the demonstrated defect.** TPL-08
+passed with its directory list pointed at a renamed path, because a missing
+directory was skipped with a bare `continue`. The file count is zero
+whether the directory is missing or genuinely empty; only naming the absent
+directory says which. A corpus root that is not found is now a finding.
+
+**The control that mattered was the one run against the whole suite.**
+Emptying `all_template_files()` fails eight checks and exits 1. Every one
+of them passed before this session.
+
+**PRs merged:** #1385, #1386, #1387.
+**Issues closed:** #1361, #1362, #1367 — milestone #78, 3 of 6.
+**Issues opened:** #1388, for the reusable form of the enforcement point.
+**Labelled in passing:** #1384, arriving unlabelled from a parallel session
+mid-pull-request and tripping the repo-wide label gate; `task`/`P2` on the
+precedent of #1367 and #1381, with the precedent commented on the issue.
+**ADRs:** ADR-034, the runner rejects a pass reporting no input.
+**State at close:** smoke 26/26, sync clean, redundancy 0, conformance 14
+passed and 0 failed with all three readings read, 0 open pull requests, no
+stale branches, label conformance `[]`, 72 open issues. Milestone #78 holds
+#1360, #1366 and #1381 — no tag; the cut is half shipped.
