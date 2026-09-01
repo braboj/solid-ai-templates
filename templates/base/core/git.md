@@ -567,7 +567,7 @@ When NOT to close-and-resubmit:
 Which of these steps are enforced, audited one step at a time.
 Enforcement is not transitive between neighbours: a step's gate covers
 that step and says nothing about the one below it, however the sequence
-reads. Four of the eight carry no pass condition:
+reads. Three of the eight carry no pass condition:
 
 | Step | Enforced by |
 | --- | --- |
@@ -971,6 +971,15 @@ if patch:
 
 previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0"],
                           capture_output=True, text=True).stdout.strip()
+
+# The same refusal the unreadable version gets, for the same reason. With
+# no previous tag `git describe` prints nothing and every date compares
+# greater than the empty string, so a first release -- one that owes the
+# review -- would pass on a record of any age.
+if not previous:
+    print("no previous tag, so the record's currency cannot be compared")
+    raise SystemExit(1)
+
 released = subprocess.run(["git", "log", "-1", "--format=%cs", previous],
                           capture_output=True, text=True).stdout.strip()
 names = os.listdir(AUDITS) if os.path.isdir(AUDITS) else []
@@ -998,7 +1007,9 @@ exist, and how many of them cover the previous release — and prints
 nothing after them. Both MUST be non-zero. A record count of zero is a
 failure rather than an empty tree, since a project reaching this check
 runs the audit, so no record means none was written. A version the check
-cannot read is a failure and never an exemption.
+cannot read is a failure and never an exemption, and so is a missing
+previous tag: with nothing to compare against, a record of any age would
+otherwise satisfy the comparison.
 
 With the release left empty the command reports that the check does not
 apply, on exit status 3.

@@ -418,8 +418,9 @@ hand.
 Per `templates/base/workflow/360.md`, a 360 assesses the whole project
 from independent stakeholder perspectives as parallel, context-isolated
 subagents (the headless adaptation re-projects Quality into engineering
-dimensions). Run one before a major release, after a milestone, or
-quarterly.
+dimensions). Run one before a minor or major release, after a milestone, or
+quarterly. A patch release owes neither the audit nor a record
+declining it.
 
 - Store each audit as a dated report at `docs/audits/YYYY-MM-DD-360.md`
   (per §360-tracking) — this is the only audit location; never use a
@@ -576,6 +577,14 @@ no manifest to bump, so nothing needs one. It does not remove every pull
 request: the changelog cut at step 4 is its own, and it is the release
 commit the tag names.
 
+Run `base/core/git.md`'s pre-release checks first — that sequence is the
+source, and the nine steps below are this repository's release procedure
+proper, not a restatement of it. Two of those checks bind here and neither
+has a step below: the periodic-review-scope check, which a minor or major
+release owes and a patch does not (set its `RELEASE` to the version being
+cut; this repository keeps its records in `docs/audits/`), and the
+pipeline-history check.
+
 1. Confirm the milestone's issues are all closed and `main` is green
    (`py tests/run_smoke.py` passes) and up to date (`git pull`)
 2. Confirm the inverse — every issue closed since the previous tag
@@ -663,6 +672,11 @@ Which of those steps are actually enforced, audited per step as
 | 7 | nothing — an open milestone after a published release is silent |
 | 8 | nothing — a missing entry surfaces at the next wrap-up, or never. The entry itself is gated by the audit item that writes it |
 | 9 | nothing; it is the closing check, so it is the one to run by hand |
+
+The pre-release checks above the table are enforced by `base/core/git.md`
+rather than by a row here, which is why they carry no step number: a
+number would claim they are part of this sequence and drift from the one
+that owns them.
 
 Step 6 is the one to protect first, because its omission cannot be
 repaired afterwards: publishing the release later dates it after the
