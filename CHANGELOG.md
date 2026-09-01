@@ -39,6 +39,9 @@ alters no template carries no entry.
 - `base-quality` lets a check carry a verdict and a reading together,
   requiring its prose to say which counts carry the verdict and which
   serve the reader the failure summons.
+- `base-git`'s periodic-review check refuses a release whose previous tag
+  cannot be read, instead of comparing every record against an empty
+  string and passing a first release on a record of any age.
 
 ## [2.70.0] - 2026-09-01
 
