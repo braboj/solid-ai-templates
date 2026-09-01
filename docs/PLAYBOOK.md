@@ -510,6 +510,12 @@ no gate asks about it.
    enumerates the issues; the release tag message quotes that theme, so
    a milestone titled with a bare version leaves the tag with nothing to
    quote
+5. Assign the issues to it, and read the milestone's open count back.
+   Creating a milestone and assigning its issues are two calls, and a
+   milestone whose description enumerates five issues while holding none
+   reads as scoped from every view that shows the title. Nothing else
+   catches it: the release gate reads the issues a milestone holds, so an
+   empty one passes
 
 Grooming produces annotations and a milestone, not edits. An issue whose
 measurement shows it is narrower, wider or wrong as filed is annotated
