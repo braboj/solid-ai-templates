@@ -17,6 +17,13 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Fixed
+
+- `base-git`'s changelog-completeness check takes the release it prepares
+  as a declared value, so an ordinary commit no longer reads as a failure,
+  and its pass condition no longer contradicts itself over a commit that
+  is deliberately not notable.
+
 ## [2.70.0] - 2026-09-01
 
 ### Added
