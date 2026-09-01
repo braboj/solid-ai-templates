@@ -46,6 +46,7 @@ py tools/sync.py --check    # exit 1 if any file is out of sync
 
 # Resolve dependency chain for a stack
 py tools/resolve.py --list                    # list stack IDs
+py tools/resolve.py --roots                   # list every root a project picks
 py tools/resolve.py <stack-id>               # print resolved file list
 py tools/resolve.py <stack-id> --concat      # print concatenated content
 py tools/resolve.py --generate               # regenerate all cached files
