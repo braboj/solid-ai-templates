@@ -17,6 +17,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Fixed
+
+- `base-typescript` states the type-gate and mutation-testing rules inline
+  rather than naming two `quality-gates` sections that three of the five
+  chains carrying it do not include.
+
 ## [2.71.0] - 2026-09-01
 
 ### Fixed

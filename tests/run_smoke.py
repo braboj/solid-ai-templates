@@ -1404,7 +1404,19 @@ def check_sys_10():
 # The failure is invisible from either file. It appears only per chain, which
 # is why this check resolves every stack rather than reading the two files.
 
-_PROSE_ID_REF = re.compile(r"`((?:base|backend|frontend|platform|stack)-[a-z0-9-]+)`")
+# What counts as a reference is decided by the IDs the tree declares, not by
+# a list of layer prefixes. A prefix list matches file-level IDs, where a
+# reference is least likely to dangle -- the section-level IDs the rule is
+# actually about are named `quality-gates-layers`, `security-authn`,
+# `testing-shared-path-breadth`, and a prefix list is blind to all of them.
+# So any backticked token is a candidate and membership in the declared set
+# decides, which cannot narrow again as IDs are added.
+_BACKTICKED_TOKEN = re.compile(r"`([a-z0-9][a-z0-9-]*)`")
+
+# A token no template declares is a finding only when it is shaped like an
+# ID -- `eslint` and `main` are backticked tokens too, and reading every one
+# of them as a broken reference makes the check unusable.
+_LAYER_SHAPED_ID = re.compile(r"^(?:base|backend|frontend|platform|stack)-[a-z0-9-]+$")
 
 
 def check_sys_11():
@@ -1436,22 +1448,25 @@ def check_sys_11():
             defined_in.setdefault(section_id, set()).add(rel_of(path))
 
     references = 0
+    cited = set()
     failures = []
 
     for path in all_template_files():
         rel = rel_of(path)
         content = read(path)
         own = set(sid for sid, _line in iter_id_declarations(content))
-        for match in sorted(set(_PROSE_ID_REF.findall(content))):
+        for match in sorted(set(_BACKTICKED_TOKEN.findall(content))):
             if match in own:
                 continue
             homes = defined_in.get(match)
             if not homes:
-                failures.append(
-                    f"  {rel}: names `{match}`, which no template declares"
-                )
+                if _LAYER_SHAPED_ID.match(match):
+                    failures.append(
+                        f"  {rel}: names `{match}`, which no template declares"
+                    )
                 continue
             references += 1
+            cited.add(match)
             carrying = [s for s, f in chains.items() if rel in f]
             missing = [s for s in carrying if not (homes & chains[s])]
             if missing:
@@ -1476,7 +1491,19 @@ def check_sys_11():
             "looking at rather than reading as a pass"
         )
 
-    return failures
+    # The count of IDs the check can see is reported on every run, pass or
+    # fail. A pattern that narrows takes this number down with it, and
+    # without it in the output the narrowing is silent -- which is how a
+    # prefix list stayed blind to two thirds of the declared IDs while the
+    # check reported green.
+    notes = [
+        f"  section IDs declared: {len(defined_in)}",
+        f"  named in another file's prose: {len(cited)}",
+        f"  cross-file references checked: {references}",
+        f"  chains resolved: {len(chains)}",
+    ]
+
+    return failures, notes
 
 
 # ---------------------------------------------------------------------------
@@ -1545,14 +1572,23 @@ CHECKS = [
 # Report renderers
 # ---------------------------------------------------------------------------
 
+def _inspected(r):
+    """Render what a check reported inspecting, when it reported anything."""
+    if not r.get("notes"):
+        return []
+    return ["**Inspected**:", "", "```"] + r["notes"] + ["```", ""]
+
+
 def render_pass(r):
-    return [f"### {r['status']}  {r['id']} — {r['title']}", ""]
+    return ([f"### {r['status']}  {r['id']} — {r['title']}", ""]
+            + _inspected(r))
 
 
 def render_fail(r):
-    lines = [f"### {r['status']}  {r['id']} — {r['title']}", "",
-             "**Expected**: all assertions pass with no violations", "",
-             "**Observed**:", "", "```"]
+    lines = [f"### {r['status']}  {r['id']} — {r['title']}", ""]
+    lines.extend(_inspected(r))
+    lines.extend(["**Expected**: all assertions pass with no violations", "",
+                  "**Observed**:", "", "```"])
     lines.extend(r["failures"])
     lines.extend(["```", ""])
     return lines
@@ -1587,7 +1623,11 @@ def main():
 
     for check in checks:
         try:
-            failures = check["fn"]()
+            # A check returns its failures, or (failures, notes) when it
+            # reports what it inspected. Both shapes are accepted so a check
+            # gains the report without every other one changing.
+            result = check["fn"]()
+            failures, notes = result if isinstance(result, tuple) else (result, [])
         except Exception as e:
             print(f"  {ERR}  {check['id']}  — {e}")
             results[ERR] += 1
@@ -1599,19 +1639,25 @@ def main():
 
         if failures:
             print(f"  {FAIL}  {check['id']}")
+            for line in notes:
+                print(line)
             for line in failures:
                 print(line)
             results[FAIL] += 1
             run_results.append({
                 "id": check["id"], "title": check["title"],
-                "status": FAIL, "failures": failures, "error": None,
+                "status": FAIL, "failures": failures, "notes": notes,
+                "error": None,
             })
         else:
             print(f"  {PASS}  {check['id']}")
+            for line in notes:
+                print(line)
             results[PASS] += 1
             run_results.append({
                 "id": check["id"], "title": check["title"],
-                "status": PASS, "failures": [], "error": None,
+                "status": PASS, "failures": [], "notes": notes,
+                "error": None,
             })
 
     elapsed = (datetime.datetime.now() - started_at).total_seconds()
