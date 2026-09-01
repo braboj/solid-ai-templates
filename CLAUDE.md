@@ -430,6 +430,14 @@ Run `py tests/run_smoke.py` before every PR. It checks:
   404 body to stdout, so `gh api <missing-path> --jq '.name'
   2>/dev/null` yields a non-empty string and reads as a hit for every
   input
+- Stage or commit before running a control that mutates the tree. The
+  revert step is `git checkout -- <path>`, which restores from the index
+  and discards unstaged work without saying so — an uncommitted edit to
+  the file under test is exactly what the control destroys
+- A control MUST assert its mutation landed before its result is read.
+  A pattern written with the wrong line endings edits nothing, the check
+  then reports clean because the tree never changed, and that reads as
+  the guard holding when it was never exercised
 
 ### 6.3 End of session
 
