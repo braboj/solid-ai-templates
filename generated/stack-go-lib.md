@@ -3820,6 +3820,41 @@ Python-only. Coverage is the part no failing test reports.
 
 ---
 
+## A control proves nothing unless the corpus count moved
+[ID: testing-control-corpus-moves]
+
+`testing-negative-assertion-coverage` asks a single run to state what it
+examined, so an empty result is distinguishable from an unreached one. The
+narrower obligation is about a PAIR of runs. A check that has been
+narrowed or newly forked is believed by driving it through a fixture that
+MUST be reported and one that must not — and a fixture the check never
+reached produces exactly the result a correctly-silent check produces.
+Nothing in the pair says which happened.
+
+- Where a check is narrowed, forked or otherwise changed, the control run
+  MUST show the check's own corpus count changing. Adding a fixture adds
+  to what is read, so a count that does not move means the fixture was
+  never in the corpus and neither run answers anything
+- A control whose corpus count is unchanged proves nothing about the
+  check, whatever it printed. That is the state most easily mistaken for
+  success: the fixture that must be reported was, the other was not, and
+  an unread corpus produces both of those too
+- Where the check takes an argument — a milestone, a module, a field —
+  the control MUST assert that the placeholder was replaced before the
+  run rather than trusting it. A placeholder left in place reaches the
+  same unreached-corpus result by a different route
+- A fixture placed inside the tree the check scans MUST be removed once
+  the pair is read. A control left behind becomes a standing finding, and
+  a standing finding is one a reader learns to dismiss
+
+Measured while converting four checks from a reading to an automatic
+verdict: each control moved the check's own corpus count — 31 changelog
+entries to 32, 91 journal entries to 92, 203 tracked documents to 204, 75
+scanned files to 76 — and the movement is what made "the fixture was
+reported" a finding about the check rather than about the fixture.
+
+---
+
 ## A remedy naming another check is a claim about that check
 [ID: testing-remedy-cross-reference]
 

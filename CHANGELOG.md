@@ -26,6 +26,10 @@ alters no template carries no entry.
 - `base-quality` reserves exit status 3 for a check reporting at run
   time that it does not apply, and requires a run's summary to count
   it apart from the checks awaiting a reading.
+- `base-testing` adds `testing-control-corpus-moves`: a control run
+  for a changed check MUST show the check's own corpus count moving,
+  or a fixture that was never read reads as a check that correctly
+  reported nothing.
 
 ### Changed
 
