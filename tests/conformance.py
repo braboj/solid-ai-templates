@@ -129,9 +129,10 @@ CHECKS = [
     {"file": "base/core/git.md", "find": "entries in Unreleased",
      "title": "The Unreleased section accounts for what the release carries",
      "do": RUN, "expect": MANUAL,
-     "reason": "The two counts are deliberately not required to match. The "
-               "operator confirms each carried commit is either represented "
-               "by an entry or is deliberately not notable."},
+     "reason": "Parameterised by RELEASE, which is unset here, so the check "
+               "reports that no release is in preparation and does not "
+               "apply. With it set, the two counts are deliberately not "
+               "required to match and the operator reconciles them."},
 
     {"file": "base/core/git.md", "find": "<source-owner>/<source-repo>",
      "title": "A repository migration preserves both remotes", "do": SKIP,

@@ -1795,6 +1795,12 @@ not the detector: a carried count of zero the day after a release reads
 as one the day after that, because an unrelated change merged, and
 nothing was fixed in between.
 
+The tag guard is complete here and would not be for the check below. A
+carried count of zero requires HEAD to be the tag, which is exactly what
+exit 3 covers; an uncut `Unreleased` section is instead the ordinary state
+of every untagged commit. The two checks ask the same question and answer
+it differently because their failure shapes differ.
+
 **The changelog-completeness check** — step 8 of the sequence above. Run it
 from the release commit before the `Unreleased` section is cut. The failure
 it catches has no signal anywhere else: each pull request is individually
@@ -1805,32 +1811,49 @@ in practice, and reconstructing what the release contained means reading
 the commit range by hand — the work the changelog existed to save.
 
 ```bash
-previous=$(git describe --tags --abbrev=0)
-if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
-  echo "HEAD is $previous; no release is in preparation, so this check does not apply"
+# The release this check is preparing, or empty on an ordinary day.
+# Setting it is the decision the step asks for: the check reads the
+# `Unreleased` section against the commits a cut would carry, and no state
+# of the repository distinguishes that moment from an ordinary one.
+RELEASE=
+
+if [ -z "$RELEASE" ]; then
+  echo "no release is in preparation; this check does not apply"
   exit 3
 fi
+previous=$(git describe --tags --abbrev=0)
 echo "commits since $previous: $(git log --format='%s' "$previous..HEAD" | wc -l)"
 echo "entries in Unreleased: $(awk '/^## /{ n++ } n==1 && /^- /' CHANGELOG.md | wc -l)"
 git log --format='  carried: %s' "$previous..HEAD"
 ```
 
 Its moment is the release commit before the `Unreleased` section is cut,
-so it answers first whether that moment is in progress. With the tag
-already at HEAD it reports that it does not apply and stops on exit
-status 3: two zeros
-there mean no commits and an uncut section, which is what every ordinary
-day after a release looks like, and its pass condition below reads a zero
-entry count as a failure.
+so it asks first whether that moment is live — and asks the operator,
+because nothing in the repository's state answers it. An untagged HEAD does
+not mean a release is in preparation. It means a commit has landed since
+the last tag, which is the ordinary condition of a repository between
+releases, so a detector reading it as the moment reports the failure shape
+on almost every day. A check whose ordinary output is its defect output
+trains its reader to skip it.
 
 Pass condition: the command prints both counts and lists every carried
-commit, and the operator confirms each carried commit is either represented
-by an entry or is deliberately not notable. The two counts are NOT required
-to match — not every commit earns an entry — but a run reporting commits
-carried and **zero** entries is a failure, and so is a count of entries
-that the listed commits cannot account for. Read the two numbers together:
-the observed failure this check exists for was 37 commits against 2
-entries, which no single-sided assertion detects.
+commit once `RELEASE` names the release being prepared, and the operator
+confirms each carried commit is either represented by an entry or is
+deliberately not notable. The two
+counts are NOT required to match — not every commit earns an entry. Zero
+entries against commits carried is a failure where any carried commit is
+notable; where every one of them is deliberately not, zero is the correct
+reading. That is the guaranteed state directly after a cut, whose first
+commit is the journal entry the release procedure records as owed. A count
+of entries the listed commits cannot account for is the failure in the
+other direction. Read the two numbers together: the observed failure this
+check exists for was 37 commits against 2 entries, which no single-sided
+assertion detects.
+
+With `RELEASE` left empty the command reports that the check does not
+apply, on exit status 3 — the same reserved status the milestone-coverage
+check uses, and the same reason: the moment is a decision the operator
+declares, not a state the repository can be asked for.
 
 The check runs at release time and is the backstop, not the mechanism. The
 entry is added by the change that causes it, per `base-docs`; a project
