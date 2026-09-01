@@ -5547,3 +5547,95 @@ unmilestoned, label conformance empty, smoke 26 of 26, sync clean,
 conformance 14 passed with six not applicable and two read — the
 continuation scan finds no check split across a line, and the release
 commit's two workflow runs report no failure now that the flake is cleared.
+## 2026-09-01 — The cut could not ship until it audited itself
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**The scope was groomed from the whole unmilestoned set, not from the
+obvious cluster.** A status reading found `v2.70.0` shipped and the tree
+clean, with six issues that memory already grouped as one theme. Grooming
+all forty-four unmilestoned issues first per the PLAYBOOK procedure changed
+two things about that group. Reading each claim against the tree showed
+#1346 was worse than filed — the *manifest* release variant already used a
+bare version in both artifacts, so the template shipped two variants
+disagreeing with each other. And measuring reach put #1351 in the opposite
+file from the one it nominated: `quality-gates.md` reaches twelve chains
+and `quality.md` seventeen, so ADR-028 sends the rule to `base-quality`
+and leaves `quality-gates` to defer. Grooming produced annotations and a
+milestone, not edits, which is what the procedure asks for.
+
+**Five pull requests closed the milestone.** #1354 made the
+changelog-completeness check take its moment as a declared value instead of
+detecting it from the tag, and removed the clause contradicting the
+sentence two lines above it. #1355 gave the release theme to the annotated
+tag message and the bare version to the title. #1356 narrowed the
+pre-release periodic review to minor and major releases, with ADR-033.
+#1357 stopped the runbook preamble denying the pull request its own step 4
+requires. #1358 paired #1342 and #1351 in the file the measurement chose.
+
+**The gate shipped in this release blocked its own cut.** ADR-033 says a
+minor release owes a current periodic review; `v2.71.0` is minor, and the
+newest record was dated 2026-06-26 against a `v2.70.0` released the same
+morning. The check returned exit 1 on the release it was written for. Every
+release from v2.64 on was minor, so the arrears predated the change — the
+gate was simply the first thing to make them visible, which ADR-033's
+Consequences section had recorded in advance.
+
+**So the audit ran, and it found three defects in the same day's work.**
+The periodic-review check *failed open* where no previous tag exists:
+`git describe` prints nothing, every date sorts above the empty string, and
+a first release — precisely one that owes the review — passed on a
+1999 record at exit 0. The template had applied its own refuse-rather-than-
+skip reasoning to an unreadable version and not to an unreadable tag.
+`git.md` still read "Four of the eight carry no pass condition" after step 3
+gained a check, because that line sat in the diff as *context* and was left
+behind. And the runbook carried no step for the check at all. All three
+landed in #1359. Inserting a step would have renumbered nine and staled
+ADR-029's reference, so the runbook defers to `base-git`'s pre-release
+sequence instead — the opposite of the duplication that produced the drift.
+
+**A green check was mistaken for evidence, and the audit caught that too.**
+#1358's description claimed SYS-11 confirmed its cross-file reference safe
+in every chain. SYS-11 matches identifiers prefixed with a layer name, so
+it can see 124 of the 366 declared section IDs and not one `quality-*`
+among them — the pass was vacuous. The reference is safe, by containment,
+because `quality.md` is core tier; that was established by an independent
+reach measurement rather than by the check. Two live violations sit in the
+same blind spot and ship in three `generated/` files today. Filed as #1361
+and #1362, and recorded in the audit's method note rather than quietly
+corrected.
+
+**Two reviewers disagreed and averaging would have been wrong.** Value read
+the changelog's "64 published versions from `v2.1.0` to `v2.63.0`" as off by
+two; Documentation read it as reconciling exactly. Measuring the range the
+sentence actually names — 63 tags, 62 published releases, `v2.57.0`
+unpublished — showed Value right and Documentation counting from `v1.0.0`.
+The report carries the measurement rather than either reviewer's number.
+
+**Grades: overall C, set by Discovery as the lowest dimension.**
+Architecture rose from C+ to B and Authoring from B+ to A-, while Value,
+Testing and Documentation each slipped a half grade on ground newly
+measured. June's bottleneck is genuinely gone and was proved so rather than
+taken on faith — an independent PyYAML resolver byte-matched all seventeen
+shipped chains. Discovery fell for standing still: its three High findings
+are June's, untouched after ten weeks, all parked in the most distant
+milestone.
+
+**Nineteen issues filed, two at P1.** #1360, because the README's model
+limitations table understates every chain by 1.5 to 8x and tells library
+adopters a 32K context window suffices when the smallest such chain is
+about 67K tokens. #1361, the SYS-11 pattern gap. The remainder run from a
+second manifest parser in `sync.py` that still drops every block-list
+dependency, through a SPEC resolution algorithm matching neither the
+resolver nor the artifact, to three repository settings that contradict the
+documents describing them.
+
+**PRs merged:** #1354, #1355, #1356, #1357, #1358, #1359, #1379, #1380.
+**Issues closed:** #1348, #1346, #1345, #1337, #1342, #1351 — milestone
+`v2.71 — Where a procedure and its checks disagree with themselves`, 6 of 6.
+**Issues opened:** #1360 through #1378 from the audit, and #1381 at the
+wrap-up for the reusable form of the fail-open defect.
+**Released:** `v2.71.0`, tagged annotated on the changelog cut `7bd0837`.
+**State at close:** 73 tags all annotated, smoke 26/26, sync clean,
+conformance 14 passed and 0 failed with both readings read, 0 open pull
+requests, no stale branches, label conformance `[]`, 73 open issues.
