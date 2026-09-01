@@ -298,6 +298,13 @@ See `tests/CODIFICATION.md` for the ID scheme and `tests/INDEX.md` for the
 full list of specs. Requires `py -m pip install pyyaml` for the manifest
 check.
 
+`run_smoke.py` prints what each check inspected under its verdict — the
+files scanned, the chains resolved, the directives compared. Those lines are
+not findings; read them when a count moves without the tree moving, which is
+how a check that silently stopped reaching its corpus shows up. A count of
+zero fails the check, and a check that passes while reporting nothing is
+failed by the runner itself.
+
 `run_smoke.py` checks that the templates COMPOSE. `run_conformance.py`
 checks that this repository OBEYS them — it extracts every fenced check in
 `templates/` and either runs it here or records why it does not apply.
