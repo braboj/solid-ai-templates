@@ -570,8 +570,11 @@ releases before this sweep existed.
 ## Release a new version
 
 This repo has no version manifest (plain Markdown), so it follows the
-no-build release variant from ADR-006: tag `main` directly via a GitHub
-Release — there is no `chore: release` branch, commit, or PR.
+no-build release variant from ADR-006. What that variant removes is the
+version-bump commit and the `chore: release` branch carrying it — there is
+no manifest to bump, so nothing needs one. It does not remove every pull
+request: the changelog cut at step 4 is its own, and it is the release
+commit the tag names.
 
 1. Confirm the milestone's issues are all closed and `main` is green
    (`py tests/run_smoke.py` passes) and up to date (`git pull`)
@@ -590,7 +593,10 @@ Release — there is no `chore: release` branch, commit, or PR.
    and both pull requests stay green in either order
 4. Cut `CHANGELOG.md` — reconcile the `Unreleased` section against the
    commits the release carries with the changelog-completeness check in
-   `templates/base/core/git.md`, then rename that section to
+   `templates/base/core/git.md`, setting its `RELEASE` to the version
+   being cut. Left empty it reports that no release is in preparation and
+   does not apply, which is correct on any ordinary day and a silent pass
+   here. Then rename that section to
    `## [A.B.C] - YYYY-MM-DD` and open an empty `Unreleased` above it.
    This repo has no version manifest to carry the cut, so it is its own
    pull request, and it MUST merge before the tag below — a tag placed
