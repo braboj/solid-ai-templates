@@ -7,9 +7,13 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Versions up to and including `v2.63.0` predate this file. They are recorded
 in the project's
 [GitHub Releases](https://github.com/braboj/solid-ai-templates/releases) —
-64 published versions from `v2.1.0` to `v2.63.0`. That set is closed and
+62 published versions from `v2.1.0` to `v2.63.0`. That set is closed and
 does not grow; every version released after `v2.63.0` has its own section
 below.
+
+`v2.57.0` is tagged and has no Release. Its tag was cut 36 minutes before
+`v2.58.0` was published, so publishing it now would sort it above `v2.58.0`
+on the releases page. The tag holds the tree; the notes are not written.
 
 The entries describe changes to the templates, which are what a consuming
 project receives. A change to this repository's own tooling or tests that
