@@ -2719,9 +2719,11 @@ for f in records:
   Use the project's preferred rendered-diagram format (Mermaid,
   Draw.io) for diagrams that need to be standalone artifacts; inline
   ASCII is for the quick concept aid that lives inside the ADR
-- Creating a new directory or moving content between documents is an
-  architectural decision — write the ADR **at the moment of the decision**,
-  before creating the files
+- Creating a new directory is an architectural decision — write the ADR
+  **at the moment of the decision**, before creating the files
+- Moving or splitting content between documents is not one; it is editorial
+  housekeeping, recorded in the pull request description. The test is whether
+  the decision had an alternative worth an immutable record
 
 ### Findings docs
 
