@@ -251,6 +251,13 @@ figures with no generator behind it, and the copy is what ages.
    ```
    This verifies all `[DEPENDS ON: ...]` paths, unique IDs, `[EXTEND: ...]` /
    `[OVERRIDE: ...]` references, and `manifest.yaml` consistency in one pass.
+
+   A rule added to a widely resolved file fails SYS-12, because every chain
+   carrying that file is now over the ceiling recorded for it in
+   `tests/chain-budget.txt`. That is the check working: raise the ceilings in
+   the same change, having read what the addition costs. A 47-character rule
+   in a core-tier file moves all 37 roots. Do not raise them reflexively —
+   the numbers are the only place the aggregate cost of a rule is stated.
 2. **Agent check**: attach `INTERVIEW.md` + the changed template to an agent
    and review the output for coherence; or run the
    relevant E2E test if one exists:
@@ -520,17 +527,25 @@ no gate asks about it.
    counts occurrences the check never sees — a directive quoted inside a
    fenced block, a name in prose — and the plan is then sized against a
    corpus nothing acts on
-3. Cluster by target file. Issues touching one section are one pull
+3. **Read the whole issue before judging whether it earns its change.** A
+   ticket's measurements, its reach analysis and the data it carries from a
+   consuming project sit below its opening paragraphs, so a verdict formed
+   from the first screen is formed from the part that argues least. Measured
+   2026-09-01: four tickets were dispositioned as low-value from their first
+   380 characters and all four verdicts were wrong — one carried 22 measured
+   breaches across 13 of 16 records in a consumer repository, another
+   reproduced a gate exiting zero over a deleted marker
+4. Cluster by target file. Issues touching one section are one pull
    request rather than several, and the clustering is visible only once
    the claims are verified — two issues can name the same file and want
    changes that do not compose
-4. Scope the cut from the clusters, then create the milestone. A theme
+5. Scope the cut from the clusters, then create the milestone. A theme
    falls out of what the groom found; choosing a theme first selects
    issues to fit it. The title is `vA.B.C — <theme>` and the description
    enumerates the issues; the release tag message quotes that theme, so
    a milestone titled with a bare version leaves the tag with nothing to
    quote
-5. Assign the issues to it, and read the milestone's open count back.
+6. Assign the issues to it, and read the milestone's open count back.
    Creating a milestone and assigning its issues are two calls, and a
    milestone whose description enumerates five issues while holding none
    reads as scoped from every view that shows the title. Nothing else
