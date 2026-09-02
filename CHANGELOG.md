@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Changed
+
+- Moving or splitting content between documents no longer requires an ADR.
+  The trigger is now whether the decision had an alternative worth recording;
+  creating a directory still qualifies, relocating a section does not
+
 ## [2.72.0] - 2026-09-01
 
 ### Fixed
