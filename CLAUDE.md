@@ -322,7 +322,7 @@ All rules in templates use RFC 2119 keywords:
 
 ### 3.1 Testing
 
-Four files in `tests/`:
+Seven files in `tests/`:
 
 | File | Purpose |
 |------|---------|
@@ -332,6 +332,7 @@ Four files in `tests/`:
 | `tests/run_e2e.py` | E2E test runner (agent-based tests) |
 | `tests/conformance.py` | Disposition per embedded check — run here, or skip with a reason |
 | `tests/run_conformance.py` | Runs the templates' own embedded checks against this repository |
+| `tests/chain-budget.txt` | Ceiling per root for resolved chain size — SYS-12 fails on an overage |
 
 ```bash
 py tests/run_smoke.py              # structural checks
