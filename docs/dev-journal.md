@@ -5928,3 +5928,37 @@ instruction, taking it to twenty-seven.
 **State at close:** smoke 27/27, sync clean, redundancy 0, conformance 14
 passed and 0 failed with five readings read, 0 open pull requests, no stale
 branches, label conformance `[]`, 73 open issues.
+
+## 2026-09-02 — The wrap-up filed an issue after the entry that lists them
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** none to the tree. This entry exists because the previous
+one is now incomplete and a record is fixed in what it claims.
+
+**The entry above lists one issue opened and there were two.** Item 15 of
+the audit, flag gaps, found that the groom procedure's closing sentence —
+"grooming produces annotations and a milestone, not edits" — forbids the one
+edit a groom is best placed to make: retiring an issue whose premise a
+merged decision record has already settled. Six such closures happened
+earlier in this session. That became #1413, filed after item 14 had written
+the entry naming #1407 alone.
+
+**This is the fourth time and the second from this cause.** The ordering
+defect is already filed as #1391: the journal sits at item 14 of sixteen,
+its own text says it is last because it records the others, and items 15 and
+16 follow it. The three earlier recurrences came from the audit running
+twice in a session. This one came from the ordering itself, which is what
+#1391 predicts and what its first option — move the journal after item 15,
+leaving only the summary behind it — would have prevented. The cost is
+exactly as described there: an entry's account is fixed once written, so the
+correction is a second entry rather than an edit.
+
+**Nothing else moved.** No pull request beyond the journal ones, no template
+change, no gate affected.
+
+**Issues opened:** #1413, the groom procedure forbidding the closure a groom
+is best placed to make. Together with #1407 this makes two for the session.
+**State at close:** unchanged from the entry above except the issue count —
+smoke 27/27, sync clean, redundancy 0, label conformance `[]`, 0 open pull
+requests, 74 open issues.
