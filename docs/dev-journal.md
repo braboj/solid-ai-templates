@@ -5827,3 +5827,104 @@ passed and 0 failed with three readings read, 0 open pull requests, no
 stale branches, label conformance `[]`, 74 open issues. Three further
 conformance readings appear only while a parallel session's untracked
 `docs/design/` sits in the tree; parked, the run returns to the three.
+
+## 2026-09-02 — Every addition was justified and the aggregate was the defect
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** a groom driven by what a rule costs rather than whether it
+is true, a feasibility pass over every open ticket, fifteen spikes gathered
+into v3.0, and a ceiling on chain size so growth is refused rather than
+reported.
+
+**The backlog was measured before it was judged.** Seven hundred and eleven
+issues over one hundred and sixty-two days, 89% of them closed, median time
+to close one day, and fifteen of six hundred and thirty-six closures
+dismissed as duplicate or won't-do. The arithmetic behind "we file more than
+we close" is real and thin: 4.4 filed a day against 3.9 closed, a sawtooth
+that drains on every cut with about twenty a month of drift underneath. What
+the number does not measure is defect pressure. Every one of the seven
+hundred and eleven was filed by the maintainer; none came from a consumer.
+The backlog measures how hard the project looks at itself.
+
+**Then the templates were measured, and that is where the problem was.**
+From `v2.1.0` to `v2.72.0` the corpus went from 387,186 bytes to 782,467 and
+from 359 RFC 2119 occurrences to 858, with the file count flat at about
+seventy-five. All of it landed inside the files every chain already carries.
+The smallest chain, `stack-python-lib`, resolves to 370,154 characters —
+roughly 92,500 tokens before a project reads its own context file. Five
+files hold 82% of it and all five reach seventeen of seventeen.
+
+**Four tickets were called nits and all four verdicts were wrong.** They had
+been judged from their first 380 characters. Read whole, one carried
+twenty-two measured readability breaches across thirteen of sixteen records
+in a consuming repository; one reproduced `sync.py --check` exiting zero
+over a deleted marker; one replaced a destructive config edit with a
+non-destructive measurement and showed the naive form printing 366 findings
+that read like an answer; one cited twenty-five of twenty-six checks
+violating a shipped rule for months. The correction changed the diagnosis
+rather than one verdict: there is no population of weak tickets to reject.
+Every addition is justified on its own terms, the cost exists only in
+aggregate, and that is the trade no single ticket review is positioned to
+make. The remedy had to act on the sum.
+
+**So the ceiling caps the sum.** `tests/chain-budget.txt` records a frozen
+number for each of the thirty-seven roots — seventeen stacks and twenty
+orthogonal templates — and SYS-12 fails on an overage, on a root with no
+ceiling, and on a ceiling naming a root that no longer resolves. Frozen at
+the measured size rather than given a percentage band, because a band is
+spent silently and the point is that the diff states the cost. Shrinking
+passes freely. `sync.py` had measured the same numbers for the README table
+all along and never refused one.
+
+**The controls made the blast radius the visible part.** Forty-seven
+characters appended to `core/quality.md` failed all thirty-seven roots. A
+deleted ceiling failed as unmeasured and printed the line to restore. A
+ceiling for a root that does not resolve failed as stale. Each mutation was
+asserted before its result was read.
+
+**The measuring script was wrong before any ticket was.** A citation checker
+called thirty-three of seventy-one tickets stale; the control that had to
+fail said the detectors worked, so the corpus was the suspect. It was
+reading bare filenames like `manifest.yaml` as missing paths and did not
+know stack IDs carry a `stack-` prefix. Fixed, the count fell to fifteen,
+and reading those fifteen left three: `docs/patterns/agent-context-tradeoffs.md`
+moved to `docs/meta/` in May and three spikes still pointed at the old path.
+Six citations rewritten, each verified by re-fetching the issue rather than
+trusting the exit status. A `head -3` on a README grep nearly produced a
+fourth, false, stale verdict in the other direction.
+
+**Feasibility came out better than expected.** All eleven open bugs were
+re-measured against the tree and all eleven still hold, including the six
+scoped into v2.73. Thirty-one percent of open tickets state no acceptance
+criterion, and eight of those are spikes, where the output is a decision.
+The one hard blocker is #1292 behind #1291.
+
+**The parallel session wrote into the tree and then took it back.** Mid-run,
+`SPEC.md`, `sync.py`, `CLAUDE.md` and the PLAYBOOK appeared modified —
+608 deletions in `SPEC.md`, `#1365`'s premise gone — and v2.73 was declared
+blocked. Twenty minutes later the tree was clean, `main` had not moved and
+no pull request existed: the work had been discarded, not landed. The
+milestone was never actually at risk. Two issues arriving unlabelled from
+the same session reddened this session's pull request twice through the
+repo-wide label gate.
+
+**PRs merged:** #1409, #1411.
+**Issues closed:** #1407, and six in the groom — #297 and #298 on the ADR
+that makes an unreferenced template a root rather than a gap, #299 answered
+by that same record, #303 whose two halves both lost their premise, #618
+which asked for no work, #714 as a duplicate of #1291.
+**Issues opened:** #1407, the chain ceiling.
+**Labelled in passing:** #1408 and #1410, both `task`/`P2` on the precedent
+of #1401, both the same false-green class.
+**ADRs:** ADR-036, chain size is capped by a frozen ceiling rather than
+merely reported.
+**Milestones:** `v2.73 — A specification its resolver never ran, and a
+procedure written down twice` created and scoped to six issues, with the
+ordering constraint recorded in its description: the two template fixes land
+before the PLAYBOOK is made to defer, or deferring propagates the defect.
+Fifteen spikes and two dependents moved into v3.0 at the owner's
+instruction, taking it to twenty-seven.
+**State at close:** smoke 27/27, sync clean, redundancy 0, conformance 14
+passed and 0 failed with five readings read, 0 open pull requests, no stale
+branches, label conformance `[]`, 73 open issues.
