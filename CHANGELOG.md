@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.75.0] - 2026-09-03
+
 ### Added
 
 - A negative control must show the planted input reached the check rather
