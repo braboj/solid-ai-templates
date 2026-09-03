@@ -31,9 +31,9 @@ base-deployment       273054
 base-release          268314
 base-skills           272164
 base-two-pass-review  343715
-platform-github       373728
+platform-github       374628
 platform-gitlab       341586
-platform-linear       284510
+platform-linear       285410
 stack-astro           382530
 stack-c-embedded      270813
 stack-django          457981
@@ -50,4 +50,4 @@ stack-nestjs          349822
 stack-nodejs-lib      295412
 stack-python-lib      371669
 stack-python-service  443973
-stack-tutorial        411600
+stack-tutorial        412500

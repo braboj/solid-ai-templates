@@ -552,10 +552,18 @@ no gate asks about it.
    catches it: the release gate reads the issues a milestone holds, so an
    empty one passes
 
-Grooming produces annotations and a milestone, not edits. An issue whose
-measurement shows it is narrower, wider or wrong as filed is annotated
-with that finding and left open — restating the scope is the implementer's
-step, and `base-review` covers the shapes it takes.
+Grooming produces annotations, closures and a milestone, not scope edits.
+An issue whose measurement shows it is narrower, wider or wrong as filed is
+annotated with that finding and left open — restating the scope is the
+implementer's step, and `base-review` covers the shapes it takes.
+
+The one edit a groom is uniquely placed to make is a closure. An issue
+whose premise a merged change has already settled has nothing left to
+implement, and annotating it leaves the note waiting for an implementer who
+will never come. The two are told apart by what the measurement found: the
+claim moved and the work exists in changed form, so annotate; or the
+premise was answered, so close with the evidence. Seven such closures have
+happened across two grooms while this paragraph read as forbidding them.
 
 Where a milestone already exists but its theme describes work that has not
 happened, renumber it rather than dissolving it. A scoped milestone carries
