@@ -1761,6 +1761,32 @@ def _measure_chains():
     return sizes
 
 
+def _core_tier_files(core_ids, entries):
+    """The files the resolver seeds into every chain regardless of what
+    any template declares."""
+    return [entries[cid]["file"] for cid in core_ids if cid in entries]
+
+
+def _declared_closure(start_file):
+    """Files reachable from `start_file` by following DEPENDS ON alone.
+
+    This is the walk README instructs an adopter to perform by hand, so it
+    reads the directives out of the files rather than the manifest's
+    depends_on -- a reader following the README has only the files.
+    """
+    seen, pending = set(), [start_file]
+    while pending:
+        current = pending.pop()
+        if current in seen:
+            continue
+        path = os.path.join(ROOT, current)
+        if not os.path.isfile(path):
+            continue
+        seen.add(current)
+        pending.extend(depends_on_refs(read(path)))
+    return seen
+
+
 def _read_ceilings():
     """Return {root_id: ceiling} from the recorded budget."""
     ceilings = {}
@@ -1827,6 +1853,83 @@ def check_sys_12():
 
 
 # ---------------------------------------------------------------------------
+# SYS-13 - the instructed manual walk reaches what the resolver carries
+# ---------------------------------------------------------------------------
+# README tells an adopter without shell access to build a context file by
+# reading the manifest and walking DEPENDS ON. That walk is not the
+# resolver: the resolver seeds a core tier unconditionally, and no
+# DEPENDS ON directive in the tree declares those files. An adopter
+# following an instruction that omits them loses whole rules and gets no
+# error, because nothing declares what is absent.
+#
+# So the instruction and the resolver are compared here rather than
+# trusted to agree. The comparison runs in both directions: a file the
+# resolver carries and the walk cannot reach is a rule the adopter
+# silently loses, and a file the walk reaches that the resolver drops is
+# an instruction that overshoots.
+
+def check_sys_13():
+    if not HAS_YAML:
+        return [MISSING_YAML]
+
+    core_ids, entries, _ = _load_manifest()
+    seen = Inspected()
+    core_files = seen.count("core-tier files seeded",
+                            _core_tier_files(core_ids, entries))
+    roots = seen.count("roots compared", sorted(_measure_chains()))
+    failures = list(seen.failures())
+
+    # The instruction is half the pair, so a README that stops naming the
+    # core tier has to fail here too -- otherwise this check keeps passing
+    # against a document that no longer tells anyone to seed it.
+    if "core:" not in read(os.path.join(ROOT, "README.md")):
+        failures.append(
+            "  README.md no longer tells the manual path to load the "
+            "manifest's core: list, so the walk it instructs misses every "
+            "file the resolver seeds"
+        )
+
+    missed_without_core = 0
+    for root in roots:
+        entry = entries.get(root)
+        if entry is None:
+            failures.append(
+                f"  {root}: resolves as a root and has no manifest entry, "
+                f"so the walk has no file to start from"
+            )
+            continue
+
+        resolved, _ = _resolve_stack(root, core_ids, entries)
+        resolved = set(resolved)
+        walk = _declared_closure(entry["file"])
+        missed_without_core += len(resolved - walk)
+        instructed = walk | set(core_files)
+
+        for path in sorted(resolved - instructed):
+            failures.append(
+                f"  {root}: the resolver carries {path} and the instructed "
+                f"walk cannot reach it — an adopter following README loses "
+                f"it with no error, because nothing declares what is absent"
+            )
+        for path in sorted(instructed - resolved):
+            failures.append(
+                f"  {root}: the instructed walk reaches {path} and the "
+                f"resolver does not carry it — the instruction sends an "
+                f"adopter to a file their chain does not include"
+            )
+
+    notes = seen.notes()
+    notes.append(
+        f"  files the DEPENDS ON walk alone would miss, summed over roots: "
+        f"{missed_without_core}"
+    )
+    return failures, notes
+
+
+
+
+
+# ---------------------------------------------------------------------------
 # Test registry
 # ---------------------------------------------------------------------------
 
@@ -1884,6 +1987,9 @@ CHECKS = [
     {"id": "SYS-12", "spec": "SAIT-SMK-SYS-12-001A",
      "title": "No resolved chain exceeds its recorded ceiling",
      "fn": check_sys_12},
+    {"id": "SYS-13", "spec": "SAIT-SMK-SYS-13-001A",
+     "title": "The instructed manual walk reaches what the resolver carries",
+     "fn": check_sys_13},
     {"id": "ADR-01", "spec": "SAIT-SMK-ADR-01-001A",
      "title": "ADR frontmatter matches the ADR-010 schema", "fn": check_adr_01},
     {"id": "E2E-01", "spec": "SAIT-SMK-E2E-01-001A",
