@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Fixed
+
+- The no-build release step tags the release commit by name rather than
+  whatever `main` points at, and both release variants carry
+  `gh release create --verify-tag`, which refuses to create a lightweight tag
+
 ## [2.73.0] - 2026-09-03
 
 ### Changed
