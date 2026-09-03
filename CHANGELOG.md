@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.74.0] - 2026-09-03
+
 ### Fixed
 
 - The no-build release step tags the release commit by name rather than
