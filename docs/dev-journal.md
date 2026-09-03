@@ -6354,3 +6354,103 @@ it.
 **State at close:** smoke 27/27, sync clean, redundancy 0, conformance 14
 passed and 0 failed with three readings read, 0 open pull requests, no stale
 branches, label conformance `[]`.
+## 2026-09-03 — Five documents that denied their tooling, and a rule that got shorter
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** `v2.78.0` released — five P1 bugs from yesterday's 360 audit,
+all one shape, plus the wrap-up that found a sixth instance of the same shape
+in the file the fix had trusted. The fifth entry dated today and the fourth
+close-out; the ordering installed this morning held, and item 14 again produced
+work that item 15 could name.
+
+**The five were one defect wearing five faces: a prose document asserting
+something false about the tooling it describes.** The PLAYBOOK said
+`resolve.py` takes no `--check` and that an unknown flag reads as a clean gate;
+the flag exists, CI runs it as a required step, and `--bogus` exits 1.
+CONTRIBUTING told an external contributor the checks need no dependency beyond
+Python; with PyYAML shadowed, 14 of 28 fail. INTERVIEW instructed an agent to
+run `resolve.py <stack-id>` from a table that shipped 17 file paths and no ids.
+README told an adopter to walk `[DEPENDS ON]`, which cannot reach the core
+tier. And `base/core/git.md` required a record of each pre-release step run by
+hand — for one step out of eight, which is how four minor cuts shipped owing a
+periodic review under a gate that was correct the whole time.
+
+**None of the five was detectable by the method that had graded them PASS.**
+Yesterday's audit ran the commands each document names. That cannot catch a
+document asserting a command does not exist, because there is no command to
+run. The negative case is the method it needed: for each claim that X does not
+work, run X.
+
+**A rule got wider by getting shorter.** #1455's fix wanted the record
+requirement to cover the whole sequence. Written as its own paragraph in
+`base/core/git.md` it cost 472 characters and SYS-12 failed all 37 roots — the
+ceilings sit at zero headroom, so any core growth trips it, which is ADR-036
+working exactly as designed. Tightening reached -90. Folding the widened rule
+into the paragraph that already carried the narrow one came out **98 characters
+shorter than the text it replaced**: +8 headroom, no ceiling raised. The
+ratchet has been raised 313 times and lowered none, per #1462; this is one
+piece of evidence that a raise is sometimes a failure of drafting rather than a
+real cost. Recorded in the PLAYBOOK as the step to try before paying.
+
+**The cut was the first release proposal written under the rule it shipped.**
+#1492's body names all eight pre-release steps and each result, including the
+ones this repository's PLAYBOOK deliberately leaves unnumbered. Two steps
+needed more than an exit code. Step 2 reports 425 unreachable commits, and the
+count answers nothing on its own: categorising by subject against `main`
+requires stripping *every* trailing `(#N)` group from both sides, because a
+squash appends its own number to a subject that may already carry issue
+numbers. Stripping one leaves the sides a group apart and 174 read as
+unexplained; stripping all leaves 30, being 12 merge commits and 18
+intermediate commits of squashed pull requests. Step 5's `gh run list
+--workflow` prints `0` and exits `0` for a workflow with no runs, so the name
+was verified against a 404 before the 42 was believed.
+
+**A control satisfied its precondition without running the code, and nearly
+exonerated the wrong thing.** Establishing whether `sync.py` writes CRLF: I
+normalised `INTERVIEW.md` to LF, ran the tool, and it stayed LF. Read at face
+value the tool is innocent. It is not — `sync.py` writes only when the
+generated block differs, so a file already in sync is never opened. Staling the
+block first reversed the verdict, and the mid-flight correction to #1489's body
+was the second time today a stated cause had to be withdrawn. The three control
+rules in `CLAUDE.md` section 6.2 do not catch this: the plant landed, and no
+earlier layer raised. The run simply had nothing to do. Added as a fourth rule
+on the owner's call, and filed as #1493 for `quality-gates.md`, where the
+sibling rules also do not ship.
+
+**The wrap-up found the sixth face of the same defect in the file the fix had
+trusted.** #1459's acceptance criterion named ONBOARDING as the document
+CONTRIBUTING should match. ONBOARDING says, one line above naming PyYAML, "No
+build step, no dependencies to install." The corrected file was corrected
+against a file carrying the same contradiction.
+
+**Three rules this repository applies and ships to nobody.** #1493, #1494 and
+#1495 — the control rule above, refusing a run when the suite's own
+precondition is missing rather than reporting 14 findings about a clean tree,
+and the rule that a stated measurement belongs to the tree it was taken on.
+That last one was load-bearing again today: #1460 claimed 65 misses over 20
+files and the tree gave 38 over 3, the defect real and the magnitude stale.
+This is v2.78's theme one level up — not a document contradicting the tooling,
+but a practice the templates never learned.
+
+**Pull requests merged:** #1485, #1487, #1488, #1489, #1491, #1492 (the cut),
+#1496 (the wrap-up).
+**Issues closed:** #1455, #1458, #1459, #1460, #1461.
+**Issues opened:** #1490, #1493, #1494, #1495. Labelled for the parallel
+session: #1486, #1497.
+**Upstream:** ADR-037 and the widened record rule are in `base/core/git.md`
+already. The three reusable rules are #1493 and #1494 against
+`quality-gates.md` and #1495 against `ai-workflow.md`, each naming candidate
+files rather than picking one, since ADR-028 wants both files' chain reach
+measured first. Project-specific: the fold-before-raising technique, since the
+chain budget is this repository's own mechanism.
+**Milestones:** #84 closed at 11/11. 78 open issues, 2 open P1s — #1480 and
+#712, which are the next real question and are a v3.0 groom rather than a cut.
+**Owed and not repaired:** `v2.77.0`'s publication is not journalled. The entry
+above it records that release's issues and the audit that blocked its tag;
+nothing records the tag and release being cut, that happened in a previous
+session, and an entry of mine dated today would misattribute it.
+**State at close:** smoke 28/28, sync clean, redundancy 0, conformance 14
+passed and 0 failed with two readings read, 0 open pull requests, no stale
+branches, label conformance `[]`. 164 working-tree files still carry
+pre-`.gitattributes` CRLF against 0 committed blobs, tracked as #1490.
