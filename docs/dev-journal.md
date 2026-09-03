@@ -5962,3 +5962,76 @@ is best placed to make. Together with #1407 this makes two for the session.
 **State at close:** unchanged from the entry above except the issue count —
 smoke 27/27, sync clean, redundancy 0, label conformance `[]`, 0 open pull
 requests, 74 open issues.
+
+## 2026-09-03 — Three cuts, and a control that lied in the shape just shipped
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** three releases, fourteen pull requests, seventeen issues
+closed. `v2.73.0` corrected the changelog preamble's own count and narrowed
+the Decision-logs trigger so a content move no longer mandates a record.
+`v2.74.0` closed the specification-versus-resolver pair — SPEC's resolution
+algorithm no longer appends a file the resolver never appended, `sync.py`
+holds one manifest parser instead of two divergent copies, `base-git` tags
+the release commit by name and ships `--verify-tag`, and the PLAYBOOK defers
+to it rather than restating it. `v2.75.0` added six rules for checks that
+report success without having tested anything.
+
+**The chain-budget gate shaped every template change.** SYS-12 refused four
+of them and each was compressed rather than granted its first ask: 555 to
+176, 561 to 444, 823 to 745, 887 to 640, 934 to 760. Compression stopped in
+each case where the next cut would have removed the mechanism rather than
+the wording. The gate merged one day earlier is now the thing that decides
+how much prose a rule may cost.
+
+**A control I ran returned the reassuring answer, and it was wrong.**
+Verifying #1401's claim about the generator, a marker-deletion plant reported
+`exit=0` and read as the generator being blind. The plant never landed: the
+working tree is CRLF under `core.autocrlf` and the pattern ended in a bare
+newline, so marker occurrences went from two to two. The corrected control
+asserted the plant landed first and reported `exit=1` — the generator already
+carried the destination check, fixed while implementing #1360. This is
+#1425's rule, merged forty minutes earlier in the same session, and
+`CLAUDE.md` had carried the general form including the line-endings cause
+since before the session began. Having the rule loaded on every turn did not
+prevent the failure.
+
+**A commit message asserted a measurement this session had not taken.** The
+first draft of the #1401 commit reported the issue's original figure in a
+tense claiming it about the current tree. Corrected before the pull request
+opened, by deleting the un-published branch and re-pushing rather than
+force-pushing. `CLAUDE.md` 6.2 now carries the rule.
+
+**A milestone was renumbered rather than dissolved.** `v2.73` was themed for
+six unstarted issues while five unrelated ones had merged, and #1407 had been
+put in it solely to satisfy the release gate. The scoped milestone moved to
+`v2.74` intact and a new `v2.73` was created under a theme matching what
+shipped. Recorded in the PLAYBOOK's groom section.
+
+**The milestone-coverage check reported a false finding and was not
+satisfied.** It named #1413, an open issue a commit subject mentions without
+closing. Milestoning it would have made the gate green over a milestone that
+had stopped describing its release. The gate defect is #1422; the
+operator-side rule is #1436.
+
+**Grooms:** the unmilestoned set and all of `v3.0` were read whole. Nine
+issues left v3.0 — six conditional on an unresolved predecessor, three a
+launch cluster held behind an architectural decision none of them needs.
+Removing them raised v3.0's spike ratio from 54% to 63%, which is what it
+actually is. `v2.75` was scoped from the remaining clusters and shipped the
+same day.
+
+**Pull requests merged:** #1418, #1419, #1421, #1423, #1426, #1427, #1428,
+#1429, #1430, #1431, #1432, #1433, #1434, #1437.
+**Issues closed:** #1125, #1363, #1364, #1365, #1369, #1370, #1371, #1372,
+#1373, #1378, #1384, #1388, #1401, #1410, #1415, #1416, #1425.
+**Issues opened:** #1417, #1420, #1422 and #1436 from this session; #1424,
+#1425 and #1435 arrived from a parallel session and were labelled on the way
+past.
+**Upstream:** #1436 is the one reusable pattern filed — a gate finding is
+cleared by changing the condition, never the input the gate reads.
+**Milestones:** `v2.73`, `v2.74` and `v2.75` created, scoped, shipped and
+closed. `v3.0` reduced from 28 to 19.
+**State at close:** smoke 27/27, sync clean, redundancy 0, conformance 14
+passed and 0 failed with four readings read, 0 open pull requests, no stale
+branches, label conformance `[]`, 66 open issues.
