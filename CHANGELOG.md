@@ -26,6 +26,9 @@ alters no template carries no entry.
 - The end-of-session dev-journal entry is written after flagging gaps, not
   before, since flagging one can produce a change the entry would then omit.
   Where the checklist runs twice, only the last pass writes it
+- The milestone-coverage check resolves the issues a merged pull request
+  closed, not every issue a commit subject names, and reports how many open
+  issues it skipped
 
 ## [2.75.0] - 2026-09-03
 
