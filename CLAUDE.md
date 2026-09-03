@@ -439,6 +439,10 @@ Run `py tests/run_smoke.py` before every PR. It checks:
   A pattern written with the wrong line endings edits nothing, the check
   then reports clean because the tree never changed, and that reads as
   the guard holding when it was never exercised
+- Report only measurements this session took. An issue states its
+  measurement against the tree on its filing date; repeating that figure
+  in a commit message or pull request body asserts it about the tree
+  now, and the two differ precisely when the defect has since been fixed
 
 ### 6.3 End of session
 

@@ -557,6 +557,15 @@ measurement shows it is narrower, wider or wrong as filed is annotated
 with that finding and left open — restating the scope is the implementer's
 step, and `base-review` covers the shapes it takes.
 
+Where a milestone already exists but its theme describes work that has not
+happened, renumber it rather than dissolving it. A scoped milestone carries
+an ordering and a rationale that took a groom to produce, and emptying it to
+reuse the version number discards both. Move it to the next version, create
+the version being cut under a theme matching what actually shipped, and
+assign the closed issues to that. Met on 2026-09-03: `v2.73` was themed for
+six unstarted issues while five unrelated ones had already merged, and one
+issue had been put in it solely to satisfy the release gate.
+
 ### Sweep merged commits for still-open issues
 
 An issue whose work merged while it stayed open is invisible to every
