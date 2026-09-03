@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Changed
+
+- The end-of-session dev-journal entry is written after flagging gaps, not
+  before, since flagging one can produce a change the entry would then omit.
+  Where the checklist runs twice, only the last pass writes it
+
 ## [2.75.0] - 2026-09-03
 
 ### Added

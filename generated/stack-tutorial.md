@@ -8468,19 +8468,25 @@ summarize — visible sequential execution prevents missed steps.
       engineering-notes doc is produced, reconcile the whole accumulated
       convention set against the resolved template chain — a once-missed
       pattern is swept eventually, not lost forever
-11. **Dev journal** — add a session entry to `docs/dev-journal.md`
-    (date, tool, key changes, PRs merged, issues closed/created). This
-    item is last because it is the only one whose output is a record of
-    the others: written earlier, its merged-pull-request, issue and
-    upstream lines are incomplete by construction, and a journal entry's
-    account is fixed once written, so the correction costs a second entry
-    for one session
-12. **Flag gaps** — if any item cannot be completed this session, report
+11. **Flag gaps** — if any item cannot be completed this session, report
     it as pending (never as done) before closing — including deferred
     cross-repo work, such as an upstream contribution that was flagged
     but not yet landed. Reserve "pending" for work that is genuinely
     blocked — it needs a decision, a credential, or the user. Work the
     agent could do but has not done is not pending; do it.
+12. **Dev journal** — add a session entry to `docs/dev-journal.md`
+    (date, tool, key changes, PRs merged, issues closed/created). This
+    item sits after flagging gaps because it is the only one whose output
+    is a record of the others, and flagging a gap resolves into a change
+    whenever the fix is small enough to apply on the spot — which is when
+    a wrap-up should apply one. Written earlier, its merged-pull-request,
+    issue and upstream lines are incomplete by construction, and an
+    entry's account is fixed once written, so the correction costs a
+    second entry for one session
+    - Where the checklist runs more than once in a session — a release
+      wrap-up, then a close-out — only the last pass writes the entry.
+      An earlier pass records that the session owes one. The entry is
+      owed by the session and discharged once, at the end
 13. **Summary** — summarize what was done and what's next
 
 
