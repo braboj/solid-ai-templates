@@ -6035,3 +6035,71 @@ closed. `v3.0` reduced from 28 to 19.
 **State at close:** smoke 27/27, sync clean, redundancy 0, conformance 14
 passed and 0 failed with four readings read, 0 open pull requests, no stale
 branches, label conformance `[]`, 66 open issues.
+
+## 2026-09-03 — The wrap-up fixed the ordering it was running under
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** `v2.76.0`, six issues on this repository's own procedure
+loop disagreeing with itself. This is the session's second entry and the
+first one owed for a reason the rules now endorse: the entry above was
+written at the last pass of that audit and this is work that followed it.
+
+**The audit's ordering is fixed, and this pass is the first to run under
+it.** The dev journal sat at item 11 of 13 in `base-scope` and 14 of 16 in
+`CLAUDE.md` while its own text said it was last because it records the
+others. Flagging a gap is a reporting step until the gap has a fix small
+enough to apply on the spot, which is when a wrap-up should apply one, and
+four second entries had been owed. The two items are swapped. The earlier
+wrap-up today dodged the defect by assessing item 15 before writing item 14
+— a workaround that had to be remembered, and is now unnecessary.
+
+**Which pass owns the entry is stated for the first time.** The rule
+assumed the checklist runs once; a session cutting a release runs it twice.
+Both documents now say the last pass writes it and an earlier one records
+that the session owes it. The release procedure already said so from its
+side and nothing said it from the audit's.
+
+**A gate was fixed before the rule about it was written.** The
+milestone-coverage check resolved every issue number in a commit subject,
+so an issue a pull request merely names sat where one it closed sits. It
+reported open backlog #1413 as unaccounted-for release work during the
+`v2.73.0` cut. #1422 landed before #1436 deliberately: writing the
+operator-side rule against a check still producing the false finding would
+have described a defect the reader could still reproduce. The fixed check
+now reports how many open issues it skipped, and this cut's own pre-release
+run printed `0 open issue(s) named in passing` — a field that did not exist
+one release earlier.
+
+**The third scheduling state is the absence of the other two.** 41 of 48
+unmilestoned issues carried no trigger, so the deferral rule was honoured
+by 15% of the set it governs and silence meant three different things.
+Readiness was considered as a third value and rejected: a trigger is a
+question and survives neglect, an answer ages from the day it is written.
+The objection came from the owner, from having had issues marked ready that
+stopped being ready, and it is the same reasoning
+`testing-negative-assertion-coverage` uses to prefer a sentinel over an
+empty default.
+
+**A groom may close what a merged change has settled.** The closing rule
+forbade edits in general, so the one edit a groom is uniquely placed to
+make read as forbidden. Seven such closures had happened across two grooms
+while the paragraph prohibited them.
+
+**CRLF produced a second false edit in one day.** Editing `base-scope`, an
+anchor ending in a bare newline matched nothing against a working tree
+`core.autocrlf` writes as CRLF. It was caught by asserting the anchor count
+before writing, which is what `CLAUDE.md` already required and what the
+morning's control had skipped.
+
+**Pull requests merged:** #1439, #1440, #1441, #1442, #1443.
+**Issues closed:** #1262, #1391, #1413, #1420, #1422, #1436.
+**Issues opened:** none.
+**Upstream:** all four patterns landed in `templates/` in the pull requests
+that introduced them, so nothing was left downstream-only. #1248 remains
+owed.
+**Milestones:** `v2.76 — A record written before the work it records, and a
+gate cleared by editing what it reads` created, scoped, shipped and closed.
+**State at close:** smoke 27/27, sync clean, redundancy 0, conformance 14
+passed and 0 failed with four readings read, 0 open pull requests, no stale
+branches, label conformance `[]`, 60 open issues and 41 unmilestoned.
