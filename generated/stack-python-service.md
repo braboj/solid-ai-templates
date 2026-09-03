@@ -8952,6 +8952,49 @@ def __getattr__(name: str) -> object:
   which MUST exit 0. Run it in a fresh interpreter — inside the suite
   the submodule is usually imported already, so the assertion passes or
   fails on unrelated state
+- The map is also a rename table, and that is where a renamed public symbol
+  keeps its old spelling. An entry keyed by the old name resolves to the
+  module defining the new one, the removal version is stated beside it, and
+  the resolver is the one place the deprecation warning goes rather than
+  each call site. `from pkg import OldName` reaches it, because an import
+  that misses the module namespace falls back to `__getattr__`
+
+```python
+# Old name -> new name. Both removed in 2.0.
+_RENAMED = {"OldName": "NewName"}
+
+
+def __getattr__(name: str) -> object:
+    renamed = _RENAMED.get(name)
+
+    if renamed is not None:
+        warnings.warn(
+            f"{name} is renamed to {renamed} and is removed in 2.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        name = renamed
+
+    submodule = _DEFERRED.get(name)
+
+    if submodule is None:
+        raise AttributeError(name)
+
+    return getattr(import_module("." + submodule, __name__), name)
+```
+
+- The alias costs one map entry and one branch, and retiring it is deleting
+  the entry from a file the removal already touches — so no shim module is
+  created and none is left behind to find. This is free only where the
+  deferral already put a resolver: adding a module `__getattr__` purely to
+  hold an alias buys the rename table at the cost of a resolver that every
+  attribute miss now runs through
+- Whether the old name stays in `__all__` is a separate decision from whether
+  it resolves. Listing it keeps a star import working and advertises a name
+  the project is retiring; omitting it retires the advertisement while the
+  name still resolves for anyone who asks by it. A check that every
+  advertised name resolves does not reach an alias kept out of the list, so
+  the alias needs a test of its own
 - No `setup.py` — use `pyproject.toml` only
 
 ---
@@ -8966,6 +9009,19 @@ def __getattr__(name: str) -> object:
 - Follow **PEP 484** and **PEP 526** for type annotations — all public
   functions and class members must be annotated
 - No `Any` in public API — use specific types or `TypeVar`
+- A sentinel a caller is expected to compare against is public API — export
+  it beside the type whose fields carry it. The distinction an unset field
+  preserves is only useful if someone can test for it, and
+  `settings.timeout is UNSET` needs the name to resolve; keeping it private
+  leaves a docstring reading "defaults to UNSET" beside a `package.UNSET`
+  that raises `AttributeError`
+- Make that sentinel a single-member enum rather than an instance of an
+  ordinary class. A type checker narrows a union on identity against an enum
+  member and not against a plain instance, so the class form hands the caller
+  a guard they can write and cannot act on, and every call site then needs a
+  cast the API cannot explain. The enum also supplies its own `__str__`,
+  where a plain class falls back to `__repr__`, so a sentinel that renders as
+  a caller-facing name overrides both spellings
 - Keep functions small and single-purpose
 - Raise specific exceptions — never bare `except:` or `except Exception:`
 - No mutable default arguments

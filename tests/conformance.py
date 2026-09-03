@@ -333,4 +333,9 @@ CHECKS = [
     {"file": "stack/python-lib.md", "find": "from importlib import import_module",
      "title": "Every name in __all__ imports", "do": SKIP,
      "reason": "This repository ships no importable package."},
+
+    {"file": "stack/python-lib.md", "find": "_RENAMED = {\"OldName\"",
+     "title": "A renamed public symbol resolves through the deferred map",
+     "do": SKIP,
+     "reason": "This repository ships no importable package."},
 ]

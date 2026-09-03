@@ -21,6 +21,15 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- A sentinel a caller compares against is public API and is a single-member
+  enum: a type checker narrows a union on identity against an enum member,
+  not against an instance of an ordinary class
+- The deferred-import map is also where a renamed public symbol keeps its old
+  spelling, with the removal version beside the entry and the deprecation
+  warning raised in the resolver rather than at each call site
+
 ### Changed
 
 - A sentinel is also required where a field has no single correct default,
