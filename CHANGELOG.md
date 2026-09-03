@@ -32,6 +32,9 @@ alters no template carries no entry.
 - The deferred-import map is also where a renamed public symbol keeps its old
   spelling, with the removal version beside the entry and the deprecation
   warning raised in the resolver rather than at each call site
+- A library attaches `logging.NullHandler()` to its own logger and installs
+  no writing handler; the application tier of the same package is what
+  constructs a writing one
 
 ### Changed
 

@@ -90,4 +90,57 @@ except ModuleNotFoundError as exc:
   environment run `pip install .` then
   `python -c "import pkg"` — the second command MUST exit 0. Run it as
   its own CI leg, because every other leg installs the extras and so
-  cannot observe the failure
+  cannot observe the failure
+
+---
+
+## Logging
+[ID: base-python-logging]
+
+A library MUST attach `logging.NullHandler()` to its own module logger
+and install no writing handler. Without it `logging.lastResort` writes
+records of WARNING and above to stderr, so a library that logs a warning
+is heard whether or not the host asked to hear it.
+
+```python
+# pkg/transport.py -- the library core
+import logging
+
+_LOG = logging.getLogger(__name__)
+_LOG.addHandler(logging.NullHandler())
+
+
+class Transport:
+    def __init__(self, logger: logging.Logger | None = None) -> None:
+        self._log = logger or _LOG
+```
+
+- The handler goes on the library's own logger, never on the root.
+  Touching the root reconfigures logging for the whole host process
+- The logger MUST be injectable, with the module logger as the fallback,
+  so a caller keeps control of where output goes without reaching into
+  the library's configuration
+- The application tier of the same package MAY construct a writing
+  handler, which is correct for an application. Copying that default
+  into the library core is the defect: importing the library and
+  constructing an object then writes to the host's stdout, and the host
+  never asked. It is easy to reach for, because the application tier is
+  already there and matching the surrounding convention is normally the
+  right instinct
+- The silence MUST be checked rather than assumed, in a fresh
+  interpreter:
+
+```bash
+python -c "
+import logging, pkg
+handlers = logging.getLogger('pkg').handlers
+assert handlers, 'the library attaches no handler'
+assert all(isinstance(h, logging.NullHandler) for h in handlers), handlers
+"
+```
+
+  It MUST exit 0. The fresh interpreter is the part that is easy to drop:
+  a test runner that installs a root handler stops `lastResort` from ever
+  firing, so an assertion that nothing reached stderr passes whether or
+  not the library attached anything — the local value is correct and
+  hides the missing guarantee.
