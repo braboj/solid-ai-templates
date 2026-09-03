@@ -316,6 +316,7 @@ def main():
     check_mode = "--check" in sys.argv
 
     manifest_text = io.open(MANIFEST, encoding="utf-8").read()
+
     # One parser, not two. resolve.py's is the implementation MNF-05
     # cross-validates against PyYAML; a second copy here drifted from it
     # silently, dropping the core tier and every block-list depends_on.
