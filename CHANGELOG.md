@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.77.0] - 2026-09-03
+
 ### Added
 
 - Where a rename spans parts of one call site, the parts are deprecated
