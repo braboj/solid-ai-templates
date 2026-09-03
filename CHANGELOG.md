@@ -23,6 +23,10 @@ alters no template carries no entry.
 
 ### Added
 
+- Where a rename spans parts of one call site, the parts are deprecated
+  together or not at all; aliasing the outer name alone leaves a call that
+  resolves and then fails on its own arguments
+
 - A sentinel a caller compares against is public API and is a single-member
   enum: a type checker narrows a union on identity against an enum member,
   not against an instance of an ordinary class

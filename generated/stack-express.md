@@ -165,6 +165,19 @@ that has since lifted reads exactly like a live one.
   abstraction not holding
 - Before removing or renaming a public symbol, mark it deprecated with a
   comment referencing the replacement; remove it in a follow-up change
+- Where a rename spans parts of one call site — a method and its keyword
+  arguments, a constructor and its parameters — the parts are deprecated
+  together or not at all, and the decision is made for the call rather than
+  per symbol. Aliasing the outer name alone produces a call that resolves and
+  then fails on its own arguments, naming a symbol the caller never wrote.
+  Either alias every part, accepting the shim on the signature, or break the
+  whole call so the failure names the first thing they typed. The
+  half-aliased middle is what the per-symbol reading produces, because the
+  cost is uneven — a map entry for a class, a wrapper for a method, a
+  `**kwargs` shim for a keyword argument that then stops stating what it
+  accepts — so a team aliases down the list until the cost bites. Nothing
+  catches it: each decision is defensible alone and the suite is written in
+  the new spelling throughout, so the broken call is never executed
 - When retiring a concept — a label, a lane, a flag, a convention — sweep
   every surface that still instructs its use, not just the source tree. An
   open ticket body, a planning document, or a draft change description is a
