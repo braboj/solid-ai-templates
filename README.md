@@ -118,7 +118,7 @@ latest rules.
 | embedded | 1 | `stack-c-embedded` — 271K chars | ~78K tokens | 128K |
 | hypermedia | 1 | `stack-htmx` — 284K chars | ~81K tokens | 128K |
 | library | 3 | `stack-python-lib` — 372K chars | ~106K tokens | 128K |
-| static | 2 | `stack-tutorial` — 412K chars | ~118K tokens | 200K |
+| static | 2 | `stack-tutorial` — 413K chars | ~118K tokens | 200K |
 <!-- /generated:readme-model-limits -->
 
 Measured rather than estimated. Each row takes the largest resolved

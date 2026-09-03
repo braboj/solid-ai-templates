@@ -29,6 +29,9 @@ alters no template carries no entry.
 - The milestone-coverage check resolves the issues a merged pull request
   closed, not every issue a commit subject names, and reports how many open
   issues it skipped
+- A gate finding is cleared by changing the condition it describes, never the
+  input the gate reads; a gate whose cheapest remedy is falsifying its input
+  is treated as defective
 
 ## [2.75.0] - 2026-09-03
 
