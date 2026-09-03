@@ -6220,3 +6220,79 @@ conformance 14 passed and 0 failed with two readings read, 0 open pull
 requests, no stale branches, label conformance `[]`, 78 open issues and 6 open
 P1s — five of them filed today and none milestoned, which is the gap flagged at
 item 14 and left for the owner to scope.
+
+## 2026-09-03 — The owner read a finding and rejected the premise under it
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** no template changed. The session's fourth entry and its second
+close-out, owed because the entry above was written before this work existed
+and `docs-record-amendment` fixes an entry's account once written. Nothing here
+amends it; this is what followed.
+
+**A finding was read, found obscure, and the obscurity was the signal.** #1462
+reported that the chain ceiling had been raised 313 times and lowered none. The
+owner said twice that it did not read clearly, which was fair — the issue
+described a mechanism and buried what it meant. Restated concretely, as a speed
+limit that raises itself to your speed every time you pass it, the response was
+not "now I understand the ceiling" but "this is a sign the concept is failing".
+That is the more valuable reading, and it was available in the same
+measurements the audit had already taken.
+
+**The stated design is an hourglass: a tight core that barely changes, with
+rich integration above and below.** Measured against it, the shape has
+inverted. `base/core` plus `base/workflow` is 61.1% of template bytes and took
+102 edits since `v2.55.0`; `stack`, `backend`, `frontend` and `platform`
+together are 30.1% and took 16. `backend/` holds more files than any other
+layer and has not been touched in 22 releases. The average waist file is 26KB
+against 4KB at the ends — seven to one, the wrong way. Nothing has ever been
+deleted.
+
+**The composition test came from the owner's model, not from me.** A rule
+belongs in the waist only if changing the stack, the platform, or the team's
+way of working would not change it. Applied to all 226 H2 sections of the 21
+waist files: 38.4% keep, 49.3% is an operating manual for running an
+agent-assisted repository, 11.1% belongs at a stack or platform end, 1.1% is
+Python mechanics in a stack-agnostic file. `core/git.md` is 88% process — its
+invariant content is 7.5KB of a 63KB file. Nine files are wholly process and
+move intact; four are wholly core, and they are `config`, `readme`, `oop` and
+`release`, which is close to the shape the project set out to build.
+
+**Re-resolving all 37 roots with the non-keep sections removed cuts a mean of
+44%** — the floor from roughly 67k tokens to 35k, the ceiling from 116k to 72k.
+Filed as #1480, P1 spike, with four judgement calls flagged as the ones to
+argue with first and the whole classification reproducible from the issue.
+
+**The two v3.0 questions turned out to constrain each other, and neither issue
+said so.** #712 is delivery — a referenced template loads nothing, so a
+reference is progressive disclosure with the engine removed. #1480 is
+composition. Under #712's finding, moving the process layer out and delivering
+it by reference is not a middle position, it is deletion with a pointer left
+behind: 233KB would stop reaching any agent while the project read as having
+kept it. That leaves three real options and makes a skill the only one that
+keeps the material reachable without charging every consumer — which is what
+`core/skills.md` already says skills are for. Cross-referenced both ways, with
+the ordering stated: composition first, delivery second.
+
+**The brake is the deliverable, not the split.** Without a stated test the
+waist refills by the mechanism that filled it: nobody adds to the core
+deliberately, they add to whichever file already discusses the topic. Every
+rule this session shipped went in that way and each was individually defensible
+— `quality.md` gained two, and `quality.md` is 58KB. The test is acceptance
+criterion 3 of #1480 rather than its own issue, because stating it before the
+split is decided announces a bar the corpus fails in 226 places.
+
+**Pull requests merged:** none since the entry above.
+**Issues closed:** none.
+**Issues opened:** #1478, #1480.
+**Upstream:** the invariance test is reusable and is deliberately unwritten,
+held as acceptance criterion 3 of #1480. `core/agents.md:52` already carries
+"Signal density over length", which is the same instinct with no criterion
+behind it and is the likely home.
+**Milestones:** unchanged; #1480 is unmilestoned and is the largest open
+question in the repository.
+**State at close:** smoke 27/27, sync clean, resolve clean, redundancy 0,
+conformance 14 passed and 0 failed with three readings read, 0 open pull
+requests, no stale branches, label conformance `[]`, 78 open issues, 7 open P1s
+of which 6 are unmilestoned. No template changed since `v2.77.0`, so the 44%
+is a measurement of a proposal and not a result.
