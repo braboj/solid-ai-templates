@@ -6522,6 +6522,12 @@ project fails there, where nobody wrote it and nobody can debug it.
   the fix added a parameter, the control that discriminates is a version
   that accepts the parameter and ignores it — the shape a careless later
   edit takes — not one that removes it and raises a type error
+- A control MUST show the plant reached the check, not only that the run
+  failed. Where a layer sits in front — a parser, a schema, an auth check
+  — the easiest thing to corrupt is what it inspects, so it raises there
+  and the check never runs. Exit status is the same either way, so read
+  which layer raised; corrupting a value rather than a structure gets
+  past the earlier ones
 - The step that plants a break MUST itself be verified. Planting is an
   edit, and an edit that matched nothing exits zero and prints nothing, so
   a break that never landed and a check that never fired produce identical
@@ -6529,7 +6535,12 @@ project fails there, where nobody wrote it and nobody can debug it.
   Confirm the planted input differs from the clean one, by a diff, a
   re-read, or a fixture the edit returns, before reading the run. Prefer
   planting into a throwaway copy whose clean state is known, so the
-  confirmation is a comparison rather than an inspection
+  confirmation is a comparison rather than an inspection. Confirm it in
+  the artifact the check reads, which is often not the one edited — a
+  listing from git's index does not see the working tree, nor does one
+  from a build output or a cache. A deletion confirmed on disk leaves an
+  index-reading check green, which reads as the check being blind: the
+  comfortable conclusion, and nothing later contradicts it
 - A fix with no observable effect on the tree it lands in MUST ship a
   check against a synthetic subject reproducing the condition. A
   preventive fix changes nothing measurable where nothing currently

@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- A negative control must show the planted input reached the check rather
+  than a layer in front of it, and must be confirmed in the artifact the
+  check reads — git's index, not the working tree
+
 ## [2.74.0] - 2026-09-03
 
 ### Fixed

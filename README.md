@@ -113,12 +113,12 @@ latest rules.
 <!-- generated:readme-model-limits -->
 | Stack category | Stacks | Largest chain | Prompt | Min context |
 |----------------|--------|---------------|--------|-------------|
-| abstract | 2 | `stack-python-service` — 441K chars | ~126K tokens | 200K |
+| abstract | 2 | `stack-python-service` — 442K chars | ~126K tokens | 200K |
 | backend | 8 | `stack-django` — 456K chars | ~130K tokens | 200K |
 | embedded | 1 | `stack-c-embedded` — 270K chars | ~77K tokens | 128K |
 | hypermedia | 1 | `stack-htmx` — 282K chars | ~81K tokens | 128K |
-| library | 3 | `stack-python-lib` — 369K chars | ~105K tokens | 128K |
-| static | 2 | `stack-tutorial` — 409K chars | ~117K tokens | 200K |
+| library | 3 | `stack-python-lib` — 369K chars | ~106K tokens | 128K |
+| static | 2 | `stack-tutorial` — 410K chars | ~117K tokens | 200K |
 <!-- /generated:readme-model-limits -->
 
 Measured rather than estimated. Each row takes the largest resolved
