@@ -522,9 +522,15 @@ Output: ordered list of template files to load.
    in the resolved set)
 4. Resolve the Platform template the same way (if
    declared)
-5. Append templates/base/core/agents.md
-6. Return the ordered file list
+5. Return the ordered file list
 ```
+
+`templates/base/core/agents.md` is not appended. It governs how the output
+is written — structure, model selection, formatting — so it is an input to
+generation, applied by whoever produces the file, not a rule file the chain
+loads. The diagram above shows it in that position. A project that wants its
+rules in the chain declares it as an Extra, where it resolves as its own root
+like any other opt-in template.
 
 Ordering: base → backend/frontend → stack (topological sort of
 the dependency graph). Within the same depth level, order follows
