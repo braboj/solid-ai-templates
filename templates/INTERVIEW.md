@@ -75,7 +75,8 @@ Before generating, collect any missing fields in a single question:
 Select the matching stack template from the table below and load its
 DEPENDS ON chain. If you have shell access, run
 `py tools/resolve.py <stack-id> --concat` to get the full resolved
-content. Otherwise, read the pre-resolved file from `generated/<stack-id>.md`.
+content, taking `<stack-id>` from the table's Stack id column.
+Otherwise, read the pre-resolved file from `generated/<stack-id>.md`.
 Apply any adjustments from Phase 3.
 Generate the output file using the format rules in
 `templates/base/core/agents.md`.
@@ -138,23 +139,23 @@ Also generate `docs/ONBOARDING.md` and `docs/PLAYBOOK.md` following the
 required structures in `templates/base/core/docs.md`.
 
 <!-- generated:interview-stacks -->
-| If the project is... | Use... | What it covers |
-|----------------------|--------|----------------|
-| HTMX + server rendering | `templates/stack/htmx.md` | HTMX 2.x, Alpine.js, SSE, OOB swaps, partial responses |
-| Astro (static site) | `templates/stack/static-site-astro.md` | Islands architecture, client directives, content collections |
-| Astro tutorial site | `templates/stack/static-site-tutorial.md` | Multi-chapter tutorial, diagrams, CC BY-NC-SA |
-| Python library / CLI | `templates/stack/python-lib.md` | Installable package or CLI tool, mypy, ruff, pytest |
-| Python service (no framework) | `templates/stack/python-service.md` | Generic Python web service, SQLAlchemy, Alembic |
-| Python + Flask | `templates/stack/python-flask.md` | Sync REST API, factory pattern, blueprints |
-| Python + FastAPI | `templates/stack/python-fastapi.md` | Async REST API, Pydantic v2, DI, OpenAPI |
-| Python + Django | `templates/stack/python-django.md` | Full web framework, ORM, DRF, admin |
-| Go library / CLI | `templates/stack/go-lib.md` | Importable library or CLI binary |
-| Go service / API | `templates/stack/go-service.md` | Generic Go HTTP service, chi, structured logging |
-| Go + Echo | `templates/stack/go-echo.md` | REST API, Echo v4, middleware, validation |
-| Node.js + Express | `templates/stack/node-express.md` | Minimal REST API, Zod validation, Supertest |
-| Node.js + NestJS | `templates/stack/node-nestjs.md` | Modules, controllers, providers, guards, pipes, DI |
-| Go + gRPC | `templates/stack/go-grpc.md` | gRPC service, bufconn, errgroup |
-| Python + gRPC | `templates/stack/python-grpc.md` | gRPC service, grpcio-aio, proto design |
-| Node.js library / CLI | `templates/stack/nodejs-lib.md` | TypeScript npm package or CLI, tsup, Vitest |
-| Embedded C (bare metal) | `templates/stack/c-embedded.md` | GCC + CMake, Unity tests, HAL, binary + .a |
+| If the project is... | Use... | Stack id | What it covers |
+|----------------------|--------|----------|----------------|
+| HTMX + server rendering | `templates/stack/htmx.md` | `stack-htmx` | HTMX 2.x, Alpine.js, SSE, OOB swaps, partial responses |
+| Astro (static site) | `templates/stack/static-site-astro.md` | `stack-astro` | Islands architecture, client directives, content collections |
+| Astro tutorial site | `templates/stack/static-site-tutorial.md` | `stack-tutorial` | Multi-chapter tutorial, diagrams, CC BY-NC-SA |
+| Python library / CLI | `templates/stack/python-lib.md` | `stack-python-lib` | Installable package or CLI tool, mypy, ruff, pytest |
+| Python service (no framework) | `templates/stack/python-service.md` | `stack-python-service` | Generic Python web service, SQLAlchemy, Alembic |
+| Python + Flask | `templates/stack/python-flask.md` | `stack-flask` | Sync REST API, factory pattern, blueprints |
+| Python + FastAPI | `templates/stack/python-fastapi.md` | `stack-fastapi` | Async REST API, Pydantic v2, DI, OpenAPI |
+| Python + Django | `templates/stack/python-django.md` | `stack-django` | Full web framework, ORM, DRF, admin |
+| Go library / CLI | `templates/stack/go-lib.md` | `stack-go-lib` | Importable library or CLI binary |
+| Go service / API | `templates/stack/go-service.md` | `stack-go-service` | Generic Go HTTP service, chi, structured logging |
+| Go + Echo | `templates/stack/go-echo.md` | `stack-go-echo` | REST API, Echo v4, middleware, validation |
+| Node.js + Express | `templates/stack/node-express.md` | `stack-express` | Minimal REST API, Zod validation, Supertest |
+| Node.js + NestJS | `templates/stack/node-nestjs.md` | `stack-nestjs` | Modules, controllers, providers, guards, pipes, DI |
+| Go + gRPC | `templates/stack/go-grpc.md` | `stack-grpc-go` | gRPC service, bufconn, errgroup |
+| Python + gRPC | `templates/stack/python-grpc.md` | `stack-grpc-python` | gRPC service, grpcio-aio, proto design |
+| Node.js library / CLI | `templates/stack/nodejs-lib.md` | `stack-nodejs-lib` | TypeScript npm package or CLI, tsup, Vitest |
+| Embedded C (bare metal) | `templates/stack/c-embedded.md` | `stack-c-embedded` | GCC + CMake, Unity tests, HAL, binary + .a |
 <!-- /generated:interview-stacks -->
