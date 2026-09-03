@@ -647,28 +647,13 @@ pipeline-history check.
    The check's two counts are not required to match: a commit touching
    no template carries no entry, so a journal or tooling change is
    expected to appear in the carried list with nothing answering it
-5. Create and push the tag **annotated**, naming the commit it belongs
-   to rather than whatever `main` points at — `tag-guard.yml` fails a
-   pushed lightweight `v*` tag, and `gh release create` makes a
-   lightweight one when the tag does not already exist:
-   ```bash
-   git tag -a vA.B.C <release-commit> -m "vA.B.C — <milestone theme>"
-   git push origin vA.B.C
-   ```
-   Naming the commit is what keeps the journal step below true. Tagging
-   `main` puts a journal or unrelated pull request merged in between
-   inside the release, and nothing reports it
-6. Cut the release from the existing tag with a bare-version title and
-   auto-generated notes:
-   ```bash
-   gh release create vA.B.C --verify-tag --title vA.B.C --generate-notes
-   ```
-   `--verify-tag` aborts rather than creating the tag, so the release
-   can only ever attach to the annotated tag pushed in step 5. Notes
-   are built from the PRs merged since the previous tag. The title is
-   the bare version and carries no theme — the annotated tag's message
-   and the milestone's description both carry it already, and a release
-   list mixing the two forms reads as two conventions rather than one
+5. Tag and push, per `base/core/git.md`'s no-build sequence — the tag
+   is annotated and names a commit, and that commit is step 4's
+   changelog cut, not `main`. The theme in the tag message is the
+   milestone's, which is where this repository keeps it
+6. Publish the release from that tag, per the same sequence. Locally
+   `tag-guard.yml` is what fails a lightweight tag, so the guard the
+   sequence prescribes is enforced here rather than merely advised
 7. Close the `vA.B.C` milestone once the release is published
 8. Record that the session owes a `docs/dev-journal.md` entry — do not
    write it here. The entry is written at the end-of-session audit item
