@@ -32,6 +32,10 @@ alters no template carries no entry.
 - A gate finding is cleared by changing the condition it describes, never the
   input the gate reads; a gate whose cheapest remedy is falsifying its input
   is treated as defective
+- Scheduling has three states: milestoned, unmilestoned with a trigger, and
+  unmilestoned without one, which means not yet judged. Readiness is not
+  recorded, because an answer ages where a question does not
+- A groom may close an issue whose premise a merged change has settled
 
 ## [2.75.0] - 2026-09-03
 

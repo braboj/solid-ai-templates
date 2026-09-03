@@ -8056,6 +8056,19 @@ issue is fully triaged whether or not it is scheduled.
 - Re-read the unmilestoned set when scoping a cut. Deferral is now the
   absence of a field rather than the presence of a label, so nothing
   surfaces the backlog on its own.
+- Scheduling has three states, and the third is the absence of the other
+  two: milestoned means planned; unmilestoned with a named trigger means
+  deferred; unmilestoned with none means not yet judged, and the groom
+  owes it a decision. Do NOT record readiness as a third value: a trigger
+  is a question and survives neglect, while readiness is an answer about
+  the day it was written, and one nobody has re-read for months asserts
+  it as loudly as one verified this morning.
+- A groom MAY close an issue whose premise something merged has already
+  settled, and this is not a scope edit. Distinguish the two by what the
+  measurement found: the claim moved and the work still exists in changed
+  form, so annotate and leave it for the implementer; or the premise was
+  answered by a merged change, so nothing remains to implement and an
+  annotation would wait for an implementer indefinitely.
 - Re-verify the trigger against the system before deferring the issue
   again — at triage, at scope selection, or when a session reads the
   backlog and skips it. The body was written once, and a fired trigger
