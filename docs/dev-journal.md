@@ -6296,3 +6296,61 @@ conformance 14 passed and 0 failed with three readings read, 0 open pull
 requests, no stale branches, label conformance `[]`, 78 open issues, 7 open P1s
 of which 6 are unmilestoned. No template changed since `v2.77.0`, so the 44%
 is a measurement of a proposal and not a result.
+
+## 2026-09-03 — The project adopted the communication template it authors
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** `CLAUDE.md` section 7. Third close-out of the day and a third
+entry, owed because the entry above closes with "Pull requests merged: none
+since the entry above" and #1482 falsified that line eleven minutes later.
+
+**A template this project wrote had never been applied to it.**
+`base-communication` shipped in #1280 and defines brevity, stating a preferred
+option, asking before assuming scope, and three shorthand verbs. `CLAUDE.md`
+carried no communication rules at all, so the register was set per session by
+inference — which is how a session ends up applying brevity to edit recaps and
+not to a seven-dimension audit report. The owner asked for the official style
+and the fix was to inline the file that already existed.
+
+**Inlined rather than referenced**, per the inline model section 1.1 declares,
+and **appended as section 7 rather than renumbering**: `docs/dev-journal.md`
+cites CLAUDE.md section numbers in ten places and those are fixed accounts.
+Renumbering would have broken every one silently, in a file whose own rule says
+a cross-reference is corrected in place because a stale pointer defeats the
+document's purpose. Appending avoided the question rather than answering it.
+
+**Section 7.2 carries two additions the template permits, and both are
+corrections this session earned rather than inventions.** Brevity applies to
+analysis and audit reporting, not only to edit recaps. And when a finding is
+called unclear, restate it concretely rather than defending the wording — #1462
+was defended twice before the plain restatement produced the diagnosis that
+mattered.
+
+**The reusable half is that nothing requires a consumer to carry a
+communication contract at all.** `grep -c communication` returns 0 in both
+`base-agents` and `base-scope`, the two files governing what a context file
+must contain; `agents.md` requires ONBOARDING and PLAYBOOK as companion
+documents and says nothing about this. So every consumer's agent starts by
+guessing tone and verbosity. Filed as #1483. This repository is the evidence
+for it: it authored the template and did not adopt it for the template's whole
+life.
+
+**The new section is unenforced and looks like every other answer when
+violated.** No check reads it, which puts it in the class
+`quality-gates-pair-check` names — a stated constraint with no check is
+decorative and decays silently. The owner will notice a breach before any gate
+does. Recorded rather than solved, because the check for "was that answer
+concise" is not obviously writable.
+
+**Pull requests merged:** #1482.
+**Issues closed:** none.
+**Issues opened:** #1483.
+**Upstream:** the project-specific half is `CLAUDE.md` section 7; the reusable
+half is #1483 against `base-agents`. #1480 classifies `base-communication` as
+process-layer material, so if that split happens this requirement travels with
+it.
+**Milestones:** unchanged. 79 open issues, 7 open P1s, 6 of them unmilestoned.
+**State at close:** smoke 27/27, sync clean, redundancy 0, conformance 14
+passed and 0 failed with three readings read, 0 open pull requests, no stale
+branches, label conformance `[]`.
