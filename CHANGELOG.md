@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.76.0] - 2026-09-03
+
 ### Changed
 
 - The end-of-session dev-journal entry is written after flagging gaps, not
