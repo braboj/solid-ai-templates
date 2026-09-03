@@ -500,9 +500,12 @@ generated documents, so there is no second command to run. Run it before
 the update instead and it reports the previous state, which reads as a
 pass.
 
-`tools/resolve.py` takes no `--check`; given one it falls through to
-`--list`, prints the stack IDs and exits `0`. An unknown flag on that
-tool is indistinguishable from a clean gate.
+`tools/resolve.py --check` is a real gate and a narrower one: it compares
+`generated/` alone, prints the stale chains and exits `1`. CI runs it as a
+required step and every file in `generated/` opens with a banner naming it.
+The gate above subsumes it, so this step still runs one command — and an
+unknown flag on that tool exits `1`, so a typo there cannot read as a
+clean gate.
 
 ---
 

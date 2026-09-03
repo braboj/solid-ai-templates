@@ -11,8 +11,8 @@ for the rules your pull request is checked against.
 
 ## Before you open a pull request
 
-Run the structural checks. They need Python and no other dependency, and
-they take about a second:
+Run the structural checks. They need Python and PyYAML — `pip install
+pyyaml` — and they take about a second:
 
 ```bash
 py tests/run_smoke.py
