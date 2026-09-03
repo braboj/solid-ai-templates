@@ -50,4 +50,4 @@ stack-nestjs          349341
 stack-nodejs-lib      294931
 stack-python-lib      370614
 stack-python-service  442918
-stack-tutorial        410117
+stack-tutorial        410545

@@ -493,13 +493,17 @@ summarize — visible sequential execution prevents missed steps.
     matches nothing; a `headRefOid` that differs from the local tip
     usually means `gh pr update-branch` rewrote the remote head, so
     inspect it rather than assume unpushed work
-14. **Dev journal** — add a session entry to `docs/dev-journal.md`
-    (date, tool, key changes, PRs merged, issues closed/created). This
-    item is last because it is the only one whose output is a record of
-    the others: written earlier, its merged-pull-request, issue and
-    upstream lines are incomplete by construction, and a journal entry's
-    account is fixed once written, so the correction costs a second entry
-    for one session
-15. **Flag gaps** — if any of the above cannot be completed, flag
+14. **Flag gaps** — if any of the above cannot be completed, flag
     it to the user before closing
+15. **Dev journal** — add a session entry to `docs/dev-journal.md`
+    (date, tool, key changes, PRs merged, issues closed/created). This
+    item sits after flagging gaps because it is the only one whose output
+    is a record of the others, and item 14 resolves into a change whenever
+    a flagged gap has a fix small enough to apply on the spot. Written
+    earlier, its merged-pull-request, issue and upstream lines are
+    incomplete by construction, and an entry's account is fixed once
+    written, so the correction costs a second entry for one session.
+    Where the checklist runs twice in a session — a release wrap-up, then
+    a close-out — only the last pass writes the entry; the earlier one
+    records that the session owes it
 16. **Summary** — summarize what was done and what's next
