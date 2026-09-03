@@ -7082,6 +7082,15 @@ exception, it has skipped the seam.
   NOT be able to block a merge by being slow or down
 - That leg MUST still be watched. A non-blocking leg left permanently
   red is a deleted example with extra steps
+- An example that verifies anything MUST exit non-zero when the
+  verification fails. Printing the verdict is not reporting it: the job
+  reads exit status, so a printed `False` is a green run. It SHOULD
+  still print what was compared — print, then raise. This exempts the
+  weakest examples and catches the strongest, since one that only builds
+  and shows a thing makes no claim to get wrong
+- A verifying example MUST be negative-controlled before it is trusted:
+  plant a behavioural break that leaves the interface intact, confirm the
+  plant landed, then confirm the example exits non-zero
 - The check runs against an install of the project alone, with no dev,
   test or optional extras present:
 
