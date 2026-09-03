@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.78.0] - 2026-09-03
+
 ### Changed
 
 - The release proposal names every step of the pre-release sequence and
