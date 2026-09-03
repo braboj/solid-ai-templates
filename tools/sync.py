@@ -127,15 +127,21 @@ def _readme_stacks(manifest):
 def _interview_stacks(manifest):
     """Generate INTERVIEW.md stack selection table."""
     stacks = manifest.get("stacks", [])
+
+    # The id column is what the instructions above the table consume:
+    # both `resolve.py <stack-id>` and `generated/<stack-id>.md` take the
+    # id, and most of the ids are not derivable from the filename beside
+    # them. Generated from the manifest with the rest of the row, so the
+    # two cannot disagree.
     lines = [
-        "| If the project is... | Use... | What it covers |",
-        "|----------------------|--------|----------------|",
+        "| If the project is... | Use... | Stack id | What it covers |",
+        "|----------------------|--------|----------|----------------|",
     ]
     for e in stacks:
         label = e.get("label", e["id"])
         f = f"`{e['file']}`"
         desc = e.get("description", "")
-        lines.append(f"| {label} | {f} | {desc} |")
+        lines.append(f"| {label} | {f} | `{e['id']}` | {desc} |")
     return "\n".join(lines)
 
 

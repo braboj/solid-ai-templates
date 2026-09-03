@@ -27,6 +27,9 @@ alters no template carries no entry.
   its result, not only the unenforced one; a consuming runbook that
   renumbers or omits those steps inherits the record rather than a
   numbering scheme
+- The interview's stack table carries each stack id beside its file path,
+  so the resolver call and the pre-resolved file it instructs on both have
+  the value they take
 
 ## [2.77.0] - 2026-09-03
 
