@@ -1043,8 +1043,11 @@ apply, on exit status 3.
      `git tag vX.Y.Z` is invisible to `git describe`, which reports
      a stale version to submodule/`describe` consumers
   15. SHOULD create a GitHub Release from the tag:
-      `gh release create vX.Y.Z --title "vX.Y.Z" --generate-notes`
+      `gh release create vX.Y.Z --verify-tag --title "vX.Y.Z" --generate-notes`
       — a pushed tag alone does NOT create a Releases page entry.
+      `--verify-tag` aborts rather than creating one: without it the
+      command makes a lightweight tag whenever the tag is missing,
+      the form step 14 just ruled out.
 
 ### Post-release verification
   16. Verify the manifest version matches the tag — e.g.
@@ -1056,18 +1059,21 @@ apply, on exit status 3.
   9. Where the project keeps a changelog, cut its `Unreleased` section
      into a dated `X.Y.Z` section and merge that through a pull request
      first. There is no version bump here to carry it, so the cut is
-     the release commit — and the tag below MUST land on it or later,
-     or the tagged tree holds a changelog that does not name its own
-     release
+     the release commit — and the tag below MUST name it, or the tagged
+     tree holds a changelog that does not name its own release
   10. `git checkout main && git pull`
-  11. `git tag -a vX.Y.Z -m "vX.Y.Z — <milestone name>"`
-     — the `-a` is mandatory: a lightweight `git tag` is skipped by
-     `git describe`, so consumers report a stale version. The annotated
-     message is the artifact that carries the release theme
+  11. `git tag -a vX.Y.Z <release-commit> -m "vX.Y.Z — <milestone name>"`
+     — name the commit; a tag left to take whatever `main` points at
+     swallows anything merged in between, and nothing reports it. The
+     `-a` is mandatory: a lightweight `git tag` is skipped by `git
+     describe`, so consumers report a stale version, and the annotated
+     message is what carries the release theme
   12. `git push origin vX.Y.Z`
   13. Create a GitHub Release with auto-generated notes, titled with the
      bare version:
-     `gh release create vX.Y.Z --title "vX.Y.Z" --generate-notes`
+     `gh release create vX.Y.Z --verify-tag --title "vX.Y.Z" --generate-notes`
+     — `--verify-tag` for the reason given above; the release attaches
+     to the annotated tag from step 12 or fails
 
 The theme belongs to the tag message at step 11, and the release title is
 the bare version. Both artifacts are generated from the same milestone at
