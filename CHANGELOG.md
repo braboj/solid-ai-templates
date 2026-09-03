@@ -45,6 +45,12 @@ alters no template carries no entry.
   as well as its encoding; a trailing carriage return makes every
   downstream comparison miss and the consumer report a confident zero
 
+### Fixed
+
+- The committed-line-ending check matches any known-text path that is not
+  `i/lf`, since a file carrying a stray carriage return is filed as binary
+  and a check naming `i/crlf` passes over it
+
 ## [2.76.0] - 2026-09-03
 
 ### Changed

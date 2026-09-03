@@ -163,8 +163,9 @@ CHECKS = [
                "tooling lives in `tools/`, which the rule's own text scopes "
                "out. Re-examine if `scripts/` is ever added."},
 
-    {"file": "base/core/quality.md", "find": "i/crlf\" { print }",
-     "title": "No committed file carries CRLF", "do": RUN,
+    {"file": "base/core/quality.md",
+     "find": "ya?ml|json|txt|toml|cfg|ini|sh|sql|css|js|ts",
+     "title": "No committed text file carries CRLF", "do": RUN,
      "expect": SILENT},
 
     # -- base/core/review.md ----------------------------------------------
