@@ -636,6 +636,14 @@ release owes and a patch does not (set its `RELEASE` to the version being
 cut; this repository keeps its records in `docs/audits/`), and the
 pipeline-history check.
 
+Read each gate's output, not its exit status. Most of these checks state
+their pass condition as "prints nothing after the counts" and then print
+findings without exiting non-zero, so a run that reports a real problem
+still exits `0`. Measured during the `v2.77.0` cut: milestone-coverage
+printed `a subject names closed issue 1456, which carries no milestone`
+and exited `0`. An operator reading the status alone ships the defect the
+gate just named.
+
 1. Confirm the milestone's issues are all closed and `main` is green
    (`py tests/run_smoke.py` passes) and up to date (`git pull`)
 2. Confirm the inverse — every issue closed since the previous tag
