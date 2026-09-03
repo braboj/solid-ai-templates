@@ -21,6 +21,13 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Changed
+
+- The release proposal names every step of the pre-release sequence and
+  its result, not only the unenforced one; a consuming runbook that
+  renumbers or omits those steps inherits the record rather than a
+  numbering scheme
+
 ## [2.77.0] - 2026-09-03
 
 ### Added

@@ -1661,11 +1661,10 @@ reads. Three of the eight carry no pass condition:
 Step 6 is unenforced and unrecoverable, which is the combination the rule
 says to address first: its own text records that a tag on a public
 repository cannot be taken back cleanly, so a first pipeline execution
-that ships is not an execution that can be retried. Until it carries a
-check, the release proposal MUST name each pipeline step run by hand and
-the result it produced. That record is what makes its absence visible —
-an operator who skipped step 6 writes nothing, and nothing else reports
-it.
+that ships is not an execution that can be retried. The release proposal
+MUST name every step of this sequence and the result it produced, not
+this one alone: a runbook deferring here numbers none of them, and a
+finished numbered list leaves no blank where a skipped step would show.
 
 Each check below carries a name, and every document that sends an operator
 to one MUST refer to it by that name. A step number identifies a check only
