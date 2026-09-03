@@ -26,7 +26,6 @@ alters no template carries no entry.
 - Where a rename spans parts of one call site, the parts are deprecated
   together or not at all; aliasing the outer name alone leaves a call that
   resolves and then fails on its own arguments
-
 - A sentinel a caller compares against is public API and is a single-member
   enum: a type checker narrows a union on identity against an enum member,
   not against an instance of an ordinary class
@@ -39,6 +38,9 @@ alters no template carries no entry.
 - A sentinel is also required where a field has no single correct default,
   because the right value varies by consumer — a condition independent of the
   ambiguity one, which alone would wrongly permit a plain default
+- A program whose output is another program's input pins its line ending
+  as well as its encoding; a trailing carriage return makes every
+  downstream comparison miss and the consumer report a confident zero
 
 ## [2.76.0] - 2026-09-03
 
