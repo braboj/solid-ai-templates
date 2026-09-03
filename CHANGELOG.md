@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.73.0] - 2026-09-03
+
 ### Changed
 
 - Moving or splitting content between documents no longer requires an ADR.
