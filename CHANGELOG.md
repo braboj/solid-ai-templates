@@ -26,6 +26,9 @@ alters no template carries no entry.
 - A negative control must show the planted input reached the check rather
   than a layer in front of it, and must be confirmed in the artifact the
   check reads — git's index, not the working tree
+- A check reading a per-item declaration must assert each item declares its
+  own, since a permissive default makes an unaudited item read as compliant
+- A suite's reporting contract is enforced by the invoker, not by each check
 
 ## [2.74.0] - 2026-09-03
 

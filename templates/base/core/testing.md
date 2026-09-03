@@ -266,6 +266,11 @@ Python-only. Coverage is the part no failing test reports.
   broken" and "a file violates the rule" are different failures wanting
   different fixes, and a single test reports whichever fires as the same
   red
+- Where a check reads a per-item declaration with a permissive default,
+  it MUST assert each item declares its own. One that never declared
+  inherits the default and reads as audited: the inputs were reached and
+  the data is vacuous. Prefer a sentinel that is not a legal value, so
+  undeclared reads as unset rather than as unconstrained
 - Where the corpus has a known floor, assert the floor rather than mere
   non-emptiness. A set that should hold nineteen members and holds one
   passes a non-empty check while measuring almost nothing
@@ -387,6 +392,11 @@ suites stay green.
   is a real answer where the module is spelled as the tree spells it, and
   a mistyped name produces the same empty result from a search that read
   nothing
+- Where a suite runs many checks, the invoker MUST enforce that, not
+  each check. A contract every check has to remember is kept by the ones
+  whose authors read it — a suite that shipped this rule breached it in
+  25 of 26. Reject a silent pass only; a failing check has already said
+  something
 
 ```bash
 # The module whose scope is narrowing, spelled as the tree spells it.
