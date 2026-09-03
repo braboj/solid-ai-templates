@@ -854,16 +854,29 @@ for name in tracked:
   guarantee that no CRLF is committed, covering files written by any
   tool, editor, or contributor without an EditorConfig plugin.
   EditorConfig normalizes editor-side only; `.gitattributes` enforces
-  the LF rule at commit and checkout
+  the LF rule at commit and checkout. `text=auto` is a heuristic, not
+  a promise: one stray carriage return makes git classify the blob as
+  binary and skip the conversion, so the guarantee has a hole exactly
+  where a malformed write put one
 
 ```bash
-git ls-files --eol | awk '$1 == "i/crlf" { print }'
+git ls-files --eol |
+  awk -F'\t' '$1 !~ /^i\/lf/ &&
+              $2 ~ /\.(md|py|ya?ml|json|txt|toml|cfg|ini|sh|sql|css|js|ts)$/ { print }'
 ```
 
   Pass condition: the command prints nothing. Every committed text blob
-  reports `i/lf` on the index side, whatever the checkout convention
-  is; a path reporting `i/crlf` was committed with CRLF, and no editor
-  setting undoes that after the fact
+  reports `i/lf` on the index side, whatever the checkout convention is.
+  Match on "not `i/lf`" rather than on `i/crlf`: a file carrying CRLF
+  *and* a lone carriage return is filed `i/-text`, so a check naming
+  `i/crlf` passes over the worst version of the defect it exists to
+  catch. Filter by extension because `i/-text` is the right answer for
+  an image and a finding for a `.md`; a text path that must be exempt
+  gets an explicit `-text` in `.gitattributes`, which states the
+  exemption where a reader will find it. Split on the tab: the status
+  fields are space-separated and only the path is tab-delimited, so a
+  whitespace-split `$4` lands in the middle of the attribute list and
+  the check silently matches nothing
 - Prefer self-documenting code — if a comment feels necessary, treat it as a
   signal that the code needs restructuring before the comment is added
 - Add comments only where the intent cannot be expressed in code
@@ -6317,7 +6330,6 @@ except ModuleNotFoundError as exc:
   `python -c "import pkg"` — the second command MUST exit 0. Run it as
   its own CI leg, because every other leg installs the extras and so
   cannot observe the failure
-
 
 ---
 

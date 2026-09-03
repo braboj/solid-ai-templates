@@ -90,7 +90,7 @@ except ModuleNotFoundError as exc:
   environment run `pip install .` then
   `python -c "import pkg"` — the second command MUST exit 0. Run it as
   its own CI leg, because every other leg installs the extras and so
-  cannot observe the failure
+  cannot observe the failure
 
 ---
 
