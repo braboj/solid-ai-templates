@@ -232,6 +232,17 @@ CHECKS = [
      "do": SKIP,
      "reason": "An illustration of the module layout, not a check."},
 
+    {"file": "base/language/python.md", "find": "_LOG.addHandler",
+     "title": "A library core attaches a null handler",
+     "do": SKIP,
+     "reason": "An illustration of the module layout, not a check."},
+
+    {"file": "base/language/python.md", "find": "the library attaches no handler",
+     "title": "A plain import leaves the library's logger silent",
+     "do": SKIP,
+     "reason": "Imports a package named `pkg`. This repository ships no "
+               "importable package."},
+
     # -- base/security/devsecops.md ---------------------------------------
 
     {"file": "base/security/devsecops.md", "find": "sbom.json",

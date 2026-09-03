@@ -113,11 +113,11 @@ latest rules.
 <!-- generated:readme-model-limits -->
 | Stack category | Stacks | Largest chain | Prompt | Min context |
 |----------------|--------|---------------|--------|-------------|
-| abstract | 2 | `stack-python-service` — 450K chars | ~129K tokens | 200K |
-| backend | 8 | `stack-django` — 464K chars | ~133K tokens | 200K |
+| abstract | 2 | `stack-python-service` — 452K chars | ~129K tokens | 200K |
+| backend | 8 | `stack-django` — 466K chars | ~133K tokens | 200K |
 | embedded | 1 | `stack-c-embedded` — 273K chars | ~78K tokens | 128K |
 | hypermedia | 1 | `stack-htmx` — 286K chars | ~82K tokens | 128K |
-| library | 3 | `stack-python-lib` — 377K chars | ~108K tokens | 128K |
+| library | 3 | `stack-python-lib` — 379K chars | ~108K tokens | 128K |
 | static | 2 | `stack-tutorial` — 416K chars | ~119K tokens | 200K |
 <!-- /generated:readme-model-limits -->
 
