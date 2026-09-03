@@ -7857,6 +7857,12 @@ below close those gaps.
 - Captured test fixtures (scraped HTML/JSON representing real external
   byte sequences) MUST be excluded from the formatter — they must
   stay byte-for-byte, and reformatting them changes the test input
+- A gate scoped by an explicit path list MUST record why each candidate
+  NOT on it is off it. Distinct from a collapsed scope: here the gate
+  works as configured and the configuration was never complete. An
+  author enumerates what they run, so ask which candidate someone else
+  runs — that one has the weakest guarantee about its environment and
+  is the likeliest omission
 
 ### Formatter-vs-generator escalation
 
@@ -8028,6 +8034,12 @@ paths.
   generated. The example is reproducible by one call and reads as prose,
   so nobody wires it up, and it drifts from the moment the tool's output
   changes
+- A generator writing into a declared destination MUST verify the
+  destination exists and fail when it does not. Substituting nothing is
+  not having nothing to substitute: a marker the file no longer carries
+  matches nothing, so the text comes back unchanged and `--check`
+  compares it against itself. Deleting a marker pair freezes that block
+  permanently, gate green over it
 - A banner naming the regenerate command is decorative without the
   gate — a stale file looks identical to a fresh one, and the
   regenerator can silently break for months unnoticed
