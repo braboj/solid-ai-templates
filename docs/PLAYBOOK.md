@@ -258,6 +258,14 @@ figures with no generator behind it, and the copy is what ages.
    the same change, having read what the addition costs. A 47-character rule
    in a core-tier file moves all 37 roots. Do not raise them reflexively —
    the numbers are the only place the aggregate cost of a rule is stated.
+
+   Before raising anything, try stating the rule inside the paragraph
+   that already carries the narrow version of it. A widened rule folded
+   in place is often shorter than the text it replaces, and then no
+   ceiling moves at all: the release-proposal record went from +472
+   characters as its own paragraph, which failed all 37 roots, to 98
+   characters shorter than the narrow rule it replaced. Measured
+   2026-09-03 on `base/core/git.md`.
 2. **Agent check**: attach `INTERVIEW.md` + the changed template to an agent
    and review the output for coherence; or run the
    relevant E2E test if one exists:

@@ -227,6 +227,12 @@ resolution — stacks do not need to list them in `depends_on`:
 - `templates/base/core/testing.md`
 - `templates/base/core/review.md`
 
+No `[DEPENDS ON:]` directive anywhere in the tree declares them, so the
+seeding is the only way they are reached — a chain assembled by walking
+the directives alone is missing them and reports nothing, because
+nothing declares what is absent. SYS-13 compares the walk the README
+documents against the resolver for every root, in both directions.
+
 ### Orthogonal templates
 
 Some templates are project-level choices, not stack-level dependencies.

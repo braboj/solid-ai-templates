@@ -41,8 +41,11 @@ git clone https://github.com/braboj/solid-ai-templates.git
 cd solid-ai-templates
 ```
 
-No build step, no dependencies to install. All templates are plain Markdown.
-Install PyYAML for the smoke tests: `pip install pyyaml`
+No build step — all templates are plain Markdown, so nothing is compiled
+and nothing is packaged. The checks are the exception and do take a
+dependency: they need Python and PyYAML, `pip install pyyaml`. Without it
+the smoke runner refuses the run and names what is missing rather than
+reporting the 14 manifest-reading checks as failures.
 
 Set up pre-commit hooks for local validation:
 ```bash

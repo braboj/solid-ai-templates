@@ -439,6 +439,11 @@ Run `py tests/run_smoke.py` before every PR. It checks:
   A pattern written with the wrong line endings edits nothing, the check
   then reports clean because the tree never changed, and that reads as
   the guard holding when it was never exercised
+- A control MUST also force the path under test to run. Satisfying the
+  precondition is not the same as exercising the code: a tool that
+  writes nothing to a file already in its target state reports clean
+  because it never executed, and that reads as the tool being innocent
+  of what it is suspected of
 - Report only measurements this session took. An issue states its
   measurement against the tree on its filing date; repeating that figure
   in a commit message or pull request body asserts it about the tree
