@@ -6103,3 +6103,120 @@ gate cleared by editing what it reads` created, scoped, shipped and closed.
 **State at close:** smoke 27/27, sync clean, redundancy 0, conformance 14
 passed and 0 failed with four readings read, 0 open pull requests, no stale
 branches, label conformance `[]`, 60 open issues and 41 unmilestoned.
+
+## 2026-09-03 — The audit refused the cut, and found the cut's own defect
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** `v2.77.0`, six issues on what a producer decides for a
+consumer it cannot see, plus a 360-degree audit that blocked the tag and then
+found a violated rule inside the release candidate. Third entry of the day and
+the first written under the ordering the entry above installed — item 11's
+PLAYBOOK fix exists because item 14 flagged it and the fix was small enough to
+apply, which is the sequence that was broken this morning.
+
+**The periodic-review gate is real and had been skipped four times.** It
+refused `v2.77.0` because the newest audit record predated the previous tag.
+The same arithmetic holds for `v2.73.0`, `v2.74.0` and `v2.75.0`; the check
+landed 2026-09-01 and was correct throughout. The cause is structural and now
+filed as #1455: `docs/PLAYBOOK.md` deliberately gives the pre-release checks no
+step number, reasoning that a number would drift from the sequence in
+`base-git` that owns them. That reasoning is sound and its consequence is that
+an operator working the numbered list finishes having never run them — there is
+no blank to leave. Two remedies are named in the issue and neither was chosen
+here, because choosing one is the decision the ticket exists to make.
+
+**Seven isolated reviewers, and convergence treated as evidence.** Overall
+`C-`, down from `C+`; six dimensions fell or held and none rose. That reads
+worse than it is. Every prior High closed, and both prior bottlenecks — SYS-11
+seeing 124 of 366 identifiers, and the model-limitations table understating
+every chain — are verified gone, the first with an injected control that fires
+on exactly the identifiers it used to miss. The reviewers, not spending their
+budget re-deriving last time's findings, looked one layer down. Three
+dimensions independently reached the committed CRLF, three the chain-budget
+ratchet, and three the Cursor output-file contradiction.
+
+**The named bottleneck is the chain budget, and it is SYS-11's successor in
+shape.** 313 per-root ceiling raises and zero lowers across 16 commits, all 37
+roots now at exactly zero headroom, and SYS-12 reports only the minimum
+headroom — so padding one ceiling leaves the output byte-identical to an honest
+tree. The file's own text says the numbers are frozen at what the tree
+measured, not padded with a band; nothing enforces that and nothing can reveal
+its breach. I leaned on that mechanism five times during this release. Filed as
+#1462 with the honest qualifier that the ratchet is not fake: controls confirm
+it fires when a ceiling is lowered or removed.
+
+**Two issues I filed carried measurements my own merged pull requests had
+already invalidated.** #1453 cited a `grep` returning 0 that my #1404 bullet
+had made 1 eleven minutes earlier; #1446 asserted the index was clean and
+`v2.77.0`'s own #1451 falsified it seventeen minutes later, while my `sync.py`
+runs moved its file count from 190 to 183. Both corrected in place with
+comments. `CLAUDE.md` already carries the rule I broke, which is the part worth
+recording — a second copy of a rule would not have helped, and the failure was
+carrying a number across a merge rather than not knowing the rule.
+
+**Post-mortem — #1456, a template shipped with committed CRLF (P1).**
+
+- **Symptom:** `templates/base/language/python.md` was committed with 146 CRLF
+  pairs and one doubled carriage return, violating `base-quality`'s rule that
+  committed line endings MUST be LF. It was the only such file in the
+  repository, and it landed one commit after the release rule that a program
+  pins its line ending as well as its encoding.
+- **Root cause:** the append that added the Logging section did
+  `text.rstrip(chr(10))` on a CRLF file. That strips the newline and leaves the
+  carriage return, so writing `\r\n` after it produced `\r\r\n`. The lone CR is
+  what mattered: `.gitattributes` declares `* text=auto eol=lf`, and `text=auto`
+  is a heuristic that classifies a blob with a stray CR as binary and skips
+  normalisation. Git filed it `i/-text`, not `i/crlf`.
+- **Why missed:** the check this project ships for exactly this failure matched
+  `i/crlf`. It printed nothing, passed, and was reported PASS in the same
+  conformance run that carried the violation, with smoke 27/27 and CI green.
+  Every gate was working as written; the pattern was narrower than its subject.
+  Review did not catch it either, because the diff read as a whole-file rewrite
+  and that is what a binary-classified blob always looks like.
+- **Fix:** PR #1457 — the file normalised (pairs collapsed and the stray CR
+  stripped, in that order, since a pair-only fix leaves the CR and the binary
+  classification with it), and the check widened to match any known-text path
+  that is not `i/lf`. Deliberately not done: the 183 working-tree CRLF files
+  #1446 covers were left alone, because renormalising the tree is a separate
+  change with its own destructive-command hazard.
+- **Prevention:** the widened check ships to every consuming project, so the
+  class is closed rather than the instance. It was control-tested in a
+  throwaway repository carrying the exact shape — the old form finds 0 rows
+  there and the new form 1, while a plain-CRLF file normalises to `i/lf` and is
+  correctly ignored. #1463 was filed for the two programs that write committed
+  artifacts without pinning a newline, which are the likeliest source of the
+  next stray byte.
+
+**The control is what caught my second mistake, not my judgement.** The first
+widened pattern split on whitespace and matched nothing, because only the path
+in `git ls-files --eol` is tab-delimited and `$4` lands inside the attribute
+list. It came out clean on the real tree and would have shipped as a
+green-forever check. It failed the direction that must fail, which is the only
+reason it was found. That is the same lesson as the morning's entry, arriving
+by a different route: a check verified only where it should pass has not been
+verified.
+
+**A gate can exit 0 while printing a finding.** milestone-coverage reported
+that a subject named closed issue #1456 carrying no milestone, and exited 0.
+Its pass condition is prose — prints nothing after the counts — and I had
+printed `exit=$?` beside it. #1456 was assigned and the check re-run before the
+tag. The operator half landed in `docs/PLAYBOOK.md` (#1477); the generalisable
+half, how a shipped check signals a finding at all, is #1478.
+
+**Pull requests merged:** #1447, #1448, #1449, #1450, #1451, #1452, #1457,
+#1475, #1476, #1477.
+**Issues closed:** #1402, #1404, #1405, #1424, #1435, #1445, #1456.
+**Issues opened:** #1446, #1453, #1454, #1455, #1456, #1458 through #1474,
+#1478 — 23 in total, 17 of them from the audit.
+**Upstream:** six of the seven patterns landed in `templates/` in the pull
+requests that introduced them. The seventh split: the operator guidance is
+project-specific and went to the PLAYBOOK, the reusable half is #1478 against
+`base-quality-gates`. #1248 remains owed.
+**Milestones:** `v2.77.0 — What a producer decides for a consumer it cannot
+see` created, scoped, shipped and closed at 7 issues.
+**State at close:** smoke 27/27, sync clean, resolve clean, redundancy 0,
+conformance 14 passed and 0 failed with two readings read, 0 open pull
+requests, no stale branches, label conformance `[]`, 78 open issues and 6 open
+P1s — five of them filed today and none milestoned, which is the gap flagged at
+item 14 and left for the owner to scope.
