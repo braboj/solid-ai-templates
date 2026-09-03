@@ -44,6 +44,12 @@ try:
 except ImportError:
     HAS_YAML = False
 
+# The one failure a check returns when the manifest cannot be read at all.
+# It is a constant rather than fourteen copies of a string so the runner's
+# preflight can recognise it, instead of keeping a second list of which
+# checks need the dependency.
+MISSING_YAML = "  PyYAML not installed — run: pip install pyyaml"
+
 
 # ---------------------------------------------------------------------------
 # [ID: ...] declaration matching
@@ -318,7 +324,7 @@ def check_tpl_04():
 
 def check_mnf_01():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     manifest_path = os.path.join(ROOT, "templates", "manifest.yaml")
     if not os.path.isfile(manifest_path):
@@ -500,7 +506,7 @@ def check_tpl_03():
 
 def check_mnf_02():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     core_ids, entries, _ = _load_manifest()
     failures = []
@@ -536,7 +542,7 @@ def check_mnf_02():
 
 def check_mnf_03():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     core_ids, entries, _ = _load_manifest()
     failures = []
@@ -566,7 +572,7 @@ def check_mnf_03():
 
 def check_mnf_04():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     core_ids, entries, _ = _load_manifest()
     failures = []
@@ -620,7 +626,7 @@ def check_mnf_04():
 
 def check_mnf_05():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     tools_dir = os.path.join(ROOT, "tools")
     if tools_dir not in sys.path:
@@ -665,7 +671,7 @@ def check_mnf_05():
 
 def check_tpl_06():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     core_ids, entries, _ = _load_manifest()
     ref_pattern = re.compile(r'\[(EXTEND|OVERRIDE):\s*([^\]]+)\]')
@@ -748,7 +754,7 @@ def _word_set(text):
 
 def check_tpl_07():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     extend_pattern = re.compile(r'^\[EXTEND:\s*([^\]]+)\]', re.MULTILINE)
     failures = []
@@ -828,7 +834,7 @@ def check_tpl_07():
 
 def check_sys_03():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     manifest_path = os.path.join(ROOT, "templates", "manifest.yaml")
     with io.open(manifest_path, encoding="utf-8") as f:
@@ -863,7 +869,7 @@ def check_sys_03():
 
 def check_sys_04():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     manifest_path = os.path.join(ROOT, "templates", "manifest.yaml")
     with io.open(manifest_path, encoding="utf-8") as f:
@@ -1056,7 +1062,7 @@ def _parse_adr(filepath, content):
 
 def check_adr_01():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     failures = []
     seen = Inspected()
@@ -1332,7 +1338,7 @@ _MUST_SECTIONS = ("Stack", "Commands", "Project structure")
 
 def check_sys_06():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     core_ids, entries, _ = _load_manifest()
     failures = []
@@ -1442,7 +1448,7 @@ REQUIRED_EXAMPLES = {
 
 def check_sys_08():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     _, entries, _ = _load_manifest()
     failures = []
@@ -1615,7 +1621,7 @@ _LAYER_SHAPED_ID = re.compile(r"^(?:base|backend|frontend|platform|stack)-[a-z0-
 
 def check_sys_11():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     core_ids, entries, _ = _load_manifest()
 
@@ -1796,7 +1802,7 @@ def _read_ceilings():
 
 def check_sys_12():
     if not HAS_YAML:
-        return ["  PyYAML not installed — run: pip install pyyaml"]
+        return [MISSING_YAML]
 
     if not os.path.exists(os.path.join(ROOT, BUDGET_FILE)):
         return [f"  {BUDGET_FILE} is missing — no root carries a ceiling and "
@@ -2026,6 +2032,30 @@ def render_err(r):
 # Runner
 # ---------------------------------------------------------------------------
 
+# PyYAML is a precondition of this suite, not a property of the tree the
+# suite checks. Fourteen checks read `templates/manifest.yaml` through it,
+# and each reports the missing dependency itself -- so an incomplete
+# environment reads as fourteen defects in a clean tree, which is what an
+# external contributor sees on their first command.
+#
+# Which checks need it is asked of the checks rather than listed here. A
+# hand-kept list duplicates the guards and drifts from them; a guarded
+# check returns its one failure before touching the filesystem, so asking
+# costs nothing.
+def _blocked_on_yaml(checks):
+    """Return the IDs of `checks` whose only failure is the missing dependency."""
+    blocked = []
+    for check in checks:
+        try:
+            result = check["fn"]()
+        except Exception:
+            continue
+        failures = result[0] if isinstance(result, tuple) else result
+        if failures == [MISSING_YAML]:
+            blocked.append(check["id"])
+    return blocked
+
+
 def main():
     started_at = datetime.datetime.now()
 
@@ -2037,6 +2067,27 @@ def main():
         checks = [c for c in CHECKS if c["id"] in filter_ids]
         if not checks:
             print(f"No checks matched: {filter_ids}")
+            sys.exit(1)
+
+    # Refuse the run rather than reporting the environment as findings.
+    # Nothing about the tree has been read at this point, so there is no
+    # partial verdict worth printing alongside the refusal.
+    if not HAS_YAML:
+        blocked = _blocked_on_yaml(checks)
+        if blocked:
+            print(
+                f"PyYAML is not installed, and {len(blocked)} of the "
+                f"{len(checks)} selected check(s) read "
+                f"templates/manifest.yaml through it:"
+            )
+            print(f"  {', '.join(blocked)}")
+            print("")
+            print("  pip install pyyaml")
+            print("")
+            print(
+                "No check has run. This is an incomplete environment, not a "
+                "finding about the tree."
+            )
             sys.exit(1)
 
     results = {PASS: 0, FAIL: 0, ERR: 0}

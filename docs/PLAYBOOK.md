@@ -500,9 +500,12 @@ generated documents, so there is no second command to run. Run it before
 the update instead and it reports the previous state, which reads as a
 pass.
 
-`tools/resolve.py` takes no `--check`; given one it falls through to
-`--list`, prints the stack IDs and exits `0`. An unknown flag on that
-tool is indistinguishable from a clean gate.
+`tools/resolve.py --check` is a real gate and a narrower one: it compares
+`generated/` alone, prints the stale chains and exits `1`. CI runs it as a
+required step and every file in `generated/` opens with a banner naming it.
+The gate above subsumes it, so this step still runs one command — and an
+unknown flag on that tool exits `1`, so a typo there cannot read as a
+clean gate.
 
 ---
 
@@ -668,7 +671,10 @@ gate just named.
    `## [A.B.C] - YYYY-MM-DD` and open an empty `Unreleased` above it.
    This repo has no version manifest to carry the cut, so it is its own
    pull request, and it MUST merge before the tag below — a tag placed
-   first names a tree whose changelog does not mention the release.
+   first names a tree whose changelog does not mention the release. That
+   pull request's body is this repository's release proposal: it names
+   every step of `base/core/git.md`'s pre-release sequence and the result
+   it produced, including the checks that carry no step number here.
    The check's two counts are not required to match: a commit touching
    no template carries no entry, so a journal or tooling change is
    expected to appear in the carried list with nothing answering it
@@ -720,7 +726,10 @@ Which of those steps are actually enforced, audited per step as
 The pre-release checks above the table are enforced by `base/core/git.md`
 rather than by a row here, which is why they carry no step number: a
 number would claim they are part of this sequence and drift from the one
-that owns them.
+that owns them. What keeps them from being skipped is not a number but
+the record at step 4 — a check nobody ran is a line the release proposal
+does not carry. Four minor cuts shipped before that record was required,
+each owing a periodic review; ADR-037 holds their disposition.
 
 Step 6 is the one to protect first, because its omission cannot be
 repaired afterwards: publishing the release later dates it after the
