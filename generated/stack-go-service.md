@@ -1730,7 +1730,7 @@ def covered(issue, whose):
                         % (whose, issue, carries))
 
 
-kinds = {"pull request": 0, "issue": 0}
+kinds = {"pull request": 0, "issue": 0, "open issue named in passing": 0}
 for number in merged:
     # The issues endpoint answers for either kind and says which: a pull
     # request carries a `pull_request` key and an issue does not. Ask it
@@ -1745,9 +1745,17 @@ for number in merged:
         findings.append("reference %d could not be read" % number)
         continue
 
-    if json.loads(proc.stdout).get("pull_request") is None:
+    body = json.loads(proc.stdout)
+    if body.get("pull_request") is None:
+        # A subject naming an issue is not evidence one closed it. An
+        # open issue there is backlog, and demanding a milestone on it is
+        # answered by milestoning backlog into a shipped release.
+        if body.get("state") == "open":
+            kinds["open issue named in passing"] += 1
+            continue
+
         kinds["issue"] += 1
-        covered(number, "a subject names")
+        covered(number, "a subject names closed")
         continue
 
     kinds["pull request"] += 1
@@ -1759,8 +1767,10 @@ for number in merged:
     for ref in json.loads(raw.stdout).get("closingIssuesReferences") or []:
         covered(ref["number"], "pull request %d closed" % number)
 
-print("resolved: %d pull request(s), %d issue(s)"
-      % (kinds["pull request"], kinds["issue"]))
+print("resolved: %d pull request(s), %d closed issue(s), "
+      "%d open issue(s) named in passing"
+      % (kinds["pull request"], kinds["issue"],
+         kinds["open issue named in passing"]))
 for finding in findings:
     print(finding)
 EOF
