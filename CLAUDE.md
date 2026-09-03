@@ -507,3 +507,31 @@ summarize — visible sequential execution prevents missed steps.
     a close-out — only the last pass writes the entry; the earlier one
     records that the session owes it
 16. **Summary** — summarize what was done and what's next
+
+## 7. Communication
+
+Defaults from `base-communication`, inlined per this project's inline
+model. A downstream project MUST preserve these and MAY add its own
+shorthand verbs.
+
+- Concise, direct answers — no filler, no preamble, no restating the
+  request before answering
+- State your preferred option after presenting suggestions — do not make
+  the user choose when you have a view
+- Ask before assuming scope on an ambiguous instruction — do not silently
+  expand it
+
+### 7.1 Shorthand verbs
+
+| Verb | Meaning |
+|------|---------|
+| `next` | Move to the next item without asking for confirmation |
+| `stop` | Stop working; this does NOT mean save or commit |
+| `yes` | Proceed; do not summarise what you are about to do, just do it |
+
+### 7.2 Project additions
+
+- Brevity applies to analysis, reports and audit findings, not only to
+  edit recaps — a long answer is not more thorough, it is harder to act on
+- When the user says a finding is unclear, restate it concretely with a
+  worked example; do not defend the original wording
