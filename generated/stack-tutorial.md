@@ -6487,6 +6487,15 @@ one leaves a gate behind.
 - When the failing case is a genuine defect and the fix is small, fix it. A
   check narrowed to accommodate one known defect is a permanent price paid
   for a temporary problem
+- A finding MUST be cleared by changing the condition it describes, never
+  the input the gate reads. The rules above govern the gate's
+  configuration; this governs its data, under the same pressure. Editing a
+  tracker field or a fixture to retire a finding leaves the gate green over
+  a repository now additionally wrong about itself, and nothing afterwards
+  tells that from a finding answered properly
+- Where the finding is false, fix the gate and record why. A gate whose
+  cheapest remedy is falsifying its input SHOULD be treated as defective in
+  the same change
 
 ### Retrofitting a linter
 
