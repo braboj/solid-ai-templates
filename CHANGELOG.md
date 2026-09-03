@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Changed
+
+- A sentinel is also required where a field has no single correct default,
+  because the right value varies by consumer — a condition independent of the
+  ambiguity one, which alone would wrongly permit a plain default
+
 ## [2.76.0] - 2026-09-03
 
 ### Changed

@@ -5408,7 +5408,17 @@ deployment and secrets; the in-process object holds one run's inputs.
   null/sentinel, and a shared resolver backfills each unset field from
   the selected preset while an explicit value always wins. This
   separates "user said nothing" from "user said this" — never default a
-  flag to the preset value directly, or the two become indistinguishable
+  flag to the preset value directly, or the two become indistinguishable.
+  A sentinel is required on a second and independent condition too:
+  where a field has no single correct default, because the right value
+  depends on which consumer resolves the record. One record handed to
+  two consumers cannot store a resolved value for such a field without
+  being wrong for one of them, and no user would ever pass the other
+  consumer's value — so the ambiguity test alone concludes a plain
+  default is safe and is wrong. Keeping the field unset is also what
+  lets a record report which of its own settings depart from the
+  baseline: a field that varies by consumer is otherwise
+  indistinguishable from one the caller set
 - **Derive layout from the object** — compute paths as properties
   (e.g. `out_dir` from the run name) so nothing hardcodes them; a copy
   accessor hands callers a mutable copy so they cannot mutate the shared
