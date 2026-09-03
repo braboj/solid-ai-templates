@@ -33,6 +33,8 @@ alters no template carries no entry.
   a marker the file no longer carries reports the file in sync
 - A gate scoped by an explicit path list must record why each candidate not
   on the list is off it
+- An example that verifies something must exit non-zero when the verification
+  fails, and be negative-controlled — a printed verdict is a green run
 
 ## [2.74.0] - 2026-09-03
 
