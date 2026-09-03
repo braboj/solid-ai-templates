@@ -23,6 +23,10 @@ alters no template carries no entry.
 
 ### Changed
 
+- The release proposal names every step of the pre-release sequence and
+  its result, not only the unenforced one; a consuming runbook that
+  renumbers or omits those steps inherits the record rather than a
+  numbering scheme
 - The interview's stack table carries each stack id beside its file path,
   so the resolver call and the pre-resolved file it instructs on both have
   the value they take
