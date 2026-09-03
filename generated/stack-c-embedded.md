@@ -831,11 +831,18 @@ for name in tracked:
   else, and it reaches further than it looks: a generator whose string
   literals draw a diagram is writing a document, not code
 - A program that writes text MUST set its output encoding explicitly
-  rather than inheriting the console's. Inheriting is what turns a
-  correct string into mojibake on someone else's machine, and the
-  boundary is what needs fixing, not every string that crosses it. In
-  Python: `sys.stdout.reconfigure(encoding="utf-8")` at the entry
-  point
+  rather than inheriting the console's, and a program whose output is
+  another program's input MUST pin its line ending at the same
+  boundary. Inheriting is what turns a correct string into mojibake on
+  someone else's machine, and the boundary is what needs fixing, not
+  every string that crosses it. The line ending is the other half of
+  that boundary and fails worse, because it fails silently: a mangled
+  character is visible in the output, while a trailing carriage return
+  makes every downstream comparison miss and the consumer report a
+  confident zero rather than an error. This is a different rule from
+  the committed-file one below — such output is never committed. In
+  Python, at the entry point:
+  `sys.stdout.reconfigure(encoding="utf-8", newline="\n")`
 - Line endings MUST be LF — CRLF is not acceptable in any committed file
 - A linter SHOULD enforce formatting automatically on save; keep manual style
   rules to a minimum
