@@ -48,7 +48,7 @@ GENERATED = ROOT / "generated"
 
 # ---- minimal YAML parser (shared with sync.py) ----
 
-def _parse_manifest(text):
+def parse_manifest(text):
     """Parse manifest.yaml into {section: [entries]}."""
     sections = {}
     current_section = None
@@ -143,7 +143,7 @@ def load_manifest():
     Returns (core_ids, entries_by_id, stacks).
     """
     text = io.open(MANIFEST, encoding="utf-8").read()
-    manifest = _parse_manifest(text)
+    manifest = parse_manifest(text)
 
     entries = {}
     for section in ("base", "platform", "frontend", "backend", "stacks"):

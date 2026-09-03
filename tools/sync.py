@@ -20,101 +20,9 @@ for _stream in (sys.stdout, sys.stderr):
         pass
 
 
-# pyyaml is not required — use a minimal yaml subset parser
-# since manifest.yaml only uses simple scalars and lists.
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "templates" / "manifest.yaml"
-
-
-# ---- minimal YAML parser (no pyyaml dependency) ----
-
-def _parse_manifest(text):
-    """Parse manifest.yaml into {section: [entries]}."""
-    sections = {}
-    current_section = None
-    current_entry = None
-    list_key = None
-
-    for raw_line in text.splitlines():
-        stripped = raw_line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-
-        # top-level key like "base:" or "stacks:"
-        m = re.match(r"^(\w[\w-]*):\s*$", raw_line)
-        if m and not raw_line.startswith(" "):
-            key = m.group(1)
-            if key == "version":
-                continue
-            current_section = key
-            sections.setdefault(current_section, [])
-            current_entry = None
-            list_key = None
-            continue
-
-        if current_section is None:
-            continue
-
-        # top-level scalar like version: "1.0"
-        m = re.match(r'^(\w[\w-]*):\s+"?([^"]+)"?\s*$', raw_line)
-        if m and not raw_line.startswith(" "):
-            continue
-
-        # list item start: "  - id: xxx"
-        m = re.match(r"^\s+-\s+id:\s+(.+)$", stripped)
-        if stripped.startswith("- id:"):
-            current_entry = {"id": stripped.split(":", 1)[1].strip()}
-            sections[current_section].append(current_entry)
-            list_key = None
-            continue
-
-        if current_entry is None:
-            continue
-
-        # inline list: depends_on: [a, b, c]
-        m = re.match(r"^(\w[\w_]*):\s+\[(.+)\]$", stripped)
-        if m:
-            key = m.group(1)
-            vals = [v.strip() for v in m.group(2).split(",")]
-            current_entry[key] = vals
-            list_key = None
-            continue
-
-        # key: value
-        m = re.match(r"^(\w[\w_]*):\s*(.+)$", stripped)
-        if m and not stripped.startswith("-"):
-            key, val = m.group(1), m.group(2).strip()
-            if val == "":
-                # start of a block list
-                list_key = key
-                current_entry[key] = []
-            else:
-                current_entry[key] = val
-                list_key = None
-            continue
-
-        # bracketed continuation after an empty "key:" line:
-        #   depends_on:
-        #     [a, b, c]
-        if (
-            list_key
-            and stripped.startswith("[")
-            and stripped.endswith("]")
-        ):
-            inner = stripped[1:-1]
-            current_entry[list_key] = [
-                v.strip() for v in inner.split(",") if v.strip()
-            ]
-            list_key = None
-            continue
-
-        # block list item: "      - value"
-        if stripped.startswith("- ") and list_key:
-            current_entry[list_key].append(stripped[2:].strip())
-            continue
-
-    return sections
 
 
 # ---- generators ----
@@ -408,7 +316,12 @@ def main():
     check_mode = "--check" in sys.argv
 
     manifest_text = io.open(MANIFEST, encoding="utf-8").read()
-    manifest = _parse_manifest(manifest_text)
+    # One parser, not two. resolve.py's is the implementation MNF-05
+    # cross-validates against PyYAML; a second copy here drifted from it
+    # silently, dropping the core tier and every block-list depends_on.
+    from resolve import parse_manifest
+
+    manifest = parse_manifest(manifest_text)
 
     spec_content = _spec_sections(manifest)
     chain_examples = _spec_chain_examples()
