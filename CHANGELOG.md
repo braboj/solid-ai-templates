@@ -29,6 +29,10 @@ alters no template carries no entry.
 - A check reading a per-item declaration must assert each item declares its
   own, since a permissive default makes an unaudited item read as compliant
 - A suite's reporting contract is enforced by the invoker, not by each check
+- A generator must verify its declared destination exists; substituting into
+  a marker the file no longer carries reports the file in sync
+- A gate scoped by an explicit path list must record why each candidate not
+  on the list is off it
 
 ## [2.74.0] - 2026-09-03
 
