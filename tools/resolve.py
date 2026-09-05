@@ -283,6 +283,9 @@ def check_generated(core_ids, entries, stacks):
 
 # ---- CLI ----
 
+KNOWN_FLAGS = {"--help", "--list", "--roots", "--generate", "--check", "--concat"}
+
+
 def main():
     args = sys.argv[1:]
 
@@ -320,8 +323,37 @@ def main():
             print("All generated files up to date.")
             sys.exit(0)
 
-    stack_id = args[0]
     do_concat = "--concat" in args
+
+    # A flag this program does not implement is a mistake, not a root. Left
+    # to fall through it was reported as an unknown stack id, which named the
+    # wrong thing, and after roots became a validated list it would have been
+    # reported as no root at all.
+    unknown = [a for a in args if a.startswith("--") and a not in KNOWN_FLAGS]
+    if unknown:
+        print("Unknown flag: " + ", ".join(unknown))
+        print(f"Known flags: {', '.join(sorted(KNOWN_FLAGS))}")
+        sys.exit(1)
+
+    # Every argument is accounted for. Taking args[0] and ignoring the rest
+    # let a root that does not exist pass silently whenever it followed a
+    # valid one, so a typo in a scripted invocation resolved the wrong chain
+    # and exited 0.
+    roots = [a for a in args if not a.startswith("--")]
+
+    if not roots:
+        print("No root given. Run with --roots to see what a project can pick.")
+        sys.exit(1)
+
+    # Roots do not compose. Under ADR-035 a stack and an orthogonal template
+    # each resolve as their own root, so concatenating two of them would
+    # report a chain no project ever loads.
+    if len(roots) > 1:
+        print("More than one root given: " + ", ".join(roots))
+        print("Roots resolve independently -- run this once per root.")
+        sys.exit(1)
+
+    stack_id = roots[0]
 
     if stack_id not in entries:
         print(f"Unknown stack ID: {stack_id}")

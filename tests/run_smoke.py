@@ -24,6 +24,7 @@ import datetime
 import io
 import os
 import re
+import subprocess
 import sys
 
 from lib import ROOT, PASS, FAIL, ERR, write_report
@@ -1933,6 +1934,55 @@ def check_sys_13():
 # Test registry
 # ---------------------------------------------------------------------------
 
+# SYS-14 -- resolve.py accounts for every argument it is given
+#
+# The resolver took args[0] and ignored the rest, so a root that does not
+# exist passed silently whenever it followed a valid one and the wrong chain
+# resolved at exit 0. Roots do not compose -- ADR-035 has a stack and an
+# orthogonal template each resolving as their own root -- so more than one
+# root is refused rather than concatenated.
+#
+# Each case asserts the exit status AND a phrase from the message, because a
+# program that exits 1 for the wrong reason reads identical to one that
+# exits 1 for the right one.
+
+RESOLVE_CASES = [
+    (["stack-flask"], 0, ""),
+    (["bogus-root"], 1, "Unknown stack ID"),
+    (["stack-flask", "bogus-root"], 1, "Roots resolve independently"),
+    (["stack-flask", "platform-github"], 1, "Roots resolve independently"),
+    (["--bogus-flag"], 1, "Unknown flag"),
+    # Bare invocation is the usage path, not an error -- same as --help.
+    ([], 0, "resolve.py"),
+]
+
+
+def check_sys_14():
+    seen = Inspected()
+    resolver = os.path.join(ROOT, "tools", "resolve.py")
+    seen.count("resolve.py argument cases", RESOLVE_CASES)
+    failures = []
+
+    for args, want_code, want_phrase in RESOLVE_CASES:
+        proc = subprocess.run(
+            [sys.executable, resolver] + args,
+            capture_output=True, text=True,
+        )
+        shown = " ".join(args) or "(no arguments)"
+        if proc.returncode != want_code:
+            failures.append(
+                f"  resolve.py {shown}: exit {proc.returncode}, expected "
+                f"{want_code}"
+            )
+            continue
+        if want_phrase and want_phrase not in (proc.stdout + proc.stderr):
+            failures.append(
+                f"  resolve.py {shown}: exit {want_code} as expected, but the "
+                f"message does not carry {want_phrase!r}, so the status may "
+                f"be right for the wrong reason"
+            )
+    return seen.failures() + failures, seen.notes()
+
 CHECKS = [
     {"id": "SYS-01", "spec": "SAIT-SMK-SYS-01-001A",
      "title": "DEPENDS ON paths resolve to existing files", "fn": check_sys_01},
@@ -1990,6 +2040,9 @@ CHECKS = [
     {"id": "SYS-13", "spec": "SAIT-SMK-SYS-13-001A",
      "title": "The instructed manual walk reaches what the resolver carries",
      "fn": check_sys_13},
+    {"id": "SYS-14", "spec": "SAIT-SMK-SYS-14-001A",
+     "title": "resolve.py accounts for every argument it is given",
+     "fn": check_sys_14},
     {"id": "ADR-01", "spec": "SAIT-SMK-ADR-01-001A",
      "title": "ADR frontmatter matches the ADR-010 schema", "fn": check_adr_01},
     {"id": "E2E-01", "spec": "SAIT-SMK-E2E-01-001A",
