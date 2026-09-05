@@ -4,21 +4,6 @@
 Standard formats for work items in GitHub Issues. Each type has a label,
 a title convention, and a body template.
 
-Start with the concrete problem or desired outcome. Use the sections below
-as a starting point, not mandatory paperwork: omit empty or irrelevant ones,
-and use a short paragraph plus acceptance criteria for a small task.
-
-- Use sentence-case `##` headings with blank lines before the content.
-- Keep paragraphs short; use bullets for parallel facts and numbered steps
-  for sequences. Reserve checkboxes for observable completion criteria.
-- Put commands and exact output in fenced blocks. Link supporting evidence
-  beside the claim; put related issues at the end. Use tables for comparisons.
-- Keep labels, priority, and milestone in tracker fields rather than repeating
-  them in the body. User-story wording is optional, not a required preamble.
-- Rewrite the body around the current scope when it changes; preserve useful
-  discussion in comments. Avoid accumulating correction preambles and stale
-  proposals. Formatting alone requires no ADR, new issue, or automated gate.
-
 ---
 
 ## Issue types
@@ -176,16 +161,16 @@ checklist.
 
 ```markdown
 ## Goal
-
 [One sentence — what does success look like?]
 
 ## Tasks
-
 - [ ] #XX — task description
 - [ ] #YY — task description
 
-## Definition of done
+## Out of scope
+[What this epic does NOT cover]
 
+## Definition of done
 [Measurable criteria for closing]
 ```
 
@@ -200,23 +185,21 @@ checklist.
 ## Task
 
 An atomic, implementable unit of work. One task = one branch = one PR.
+Embeds a user story line for user context.
 
 **Title:** descriptive action (no prefix — commit messages carry the
 `feat:/fix:/data:/docs:/chore:/refactor:/test:` prefix, not issue titles)
 
 ```markdown
-**Optional user story:** As a [role], I want [capability], so that [benefit].
+As a [user type], I want [capability] so that [benefit].
 
-## Problem
+## What
+[Clear description of the change]
 
-[Current limitation and who it affects]
-
-## Proposed change
-
-[Desired behavior; a before/after example when useful]
+## Why
+[Motivation — which epic does this serve?]
 
 ## Acceptance criteria
-
 - [ ] [Observable behavior 1]
 - [ ] [Observable behavior 2]
 ```
@@ -237,22 +220,20 @@ A defect in existing functionality.
 **Title:** what is broken (no prefix — the `bug` label identifies the type)
 
 ```markdown
-## Problem
-
-[Observed failure and user impact]
+**Severity:** critical | major | minor | trivial
 
 ## Expected
-
 [What should happen]
 
-## Reproduce
+## Actual
+[What happens instead]
 
+## Reproduce
 1. [Step 1]
 2. [Step 2]
-3. [Observed result or error]
+3. [Result]
 
 ## Environment
-
 [dev/preview/production, browser, branch]
 ```
 
@@ -280,27 +261,23 @@ bug — a bug is a defect you discover, an incident is something burning.
 **Title:** what is down (no prefix — the `incident` label identifies the type)
 
 ```markdown
+**Severity:** critical | major
 **Status:** investigating | identified | mitigating | resolved
 
 ## Impact
-
 [Who is affected, how severely]
 
 ## Timeline
-
 - [HH:MM UTC] — [event]
 - [HH:MM UTC] — [event]
 
 ## Root cause
-
 [What caused it — fill in after identified]
 
 ## Resolution
-
 [What fixed it — fill in after resolved]
 
 ## Prevention
-
 [What changes prevent recurrence — fill in after postmortem]
 ```
 
@@ -320,20 +297,19 @@ Research or exploration where the output is a decision, not code.
 **Title:** the question being investigated (no prefix — the `spike`
 label identifies the type)
 
-**Format:** state the question, the decision it informs, and the required
-evidence. An ADR is an output only when the architectural threshold is met.
+**Format:** use the task format. The acceptance criteria describe what the
+spike should produce (an ADR, a recommendation, a prototype).
 
 ```markdown
-## Question
+As a [role], I want to understand [topic] so that [decision can be made].
 
-[Specific uncertainty to resolve]
+## What
+[Question or area to explore]
 
-## Context
+## Why
+[What decision is blocked without this research?]
 
-[Decision blocked and relevant evidence already available]
-
-## Deliverable
-
-- [ ] Recommendation supported by the relevant evidence
-- [ ] Alternatives and material tradeoffs, including doing nothing
+## Acceptance criteria
+- [ ] ADR documenting the decision
+- [ ] Recommendation with alternatives considered
 ```

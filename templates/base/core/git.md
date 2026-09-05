@@ -20,14 +20,6 @@
 
 ## Pull requests
 - PRs should be small and focused — one concern per PR
-- Lead the body with the concrete problem and resulting behavior. Use
-  `## Summary` and `## Validation` for changes needing structure; a small fix
-  may use one paragraph plus its check result. Describe the final diff, not
-  the session history. Add migration or risk notes only when they matter.
-- Use bullets for parallel changes, numbered steps for sequences, and fenced
-  code for runnable commands. Leave blank lines around headings and lists.
-  Report completed checks as results, not unchecked tasks. Omit empty sections,
-  generic checklists, and repeated metadata already shown by the tracker.
 - Always test locally before committing
 - **A local run is evidence about one platform.** Read the CI run for the
   push before describing the change as good. Where development and CI
@@ -36,10 +28,16 @@
   second covers what the project ships on. A pipeline check at session
   start is a different moment — it catches one broken before you began,
   not one you broke and are about to report as clean
-- Put issue links at the end. Repeat the closing keyword for every resolved
-  issue (`Closes #a`, `Closes #b`); bare numbers do not close issues.
-  Negation does not prevent auto-closing: use `Related: #N` or `Part of #N`
-  for unfinished work, never a negated closing phrase
+- **Repeat the closing keyword before each issue number** when a PR
+  closes more than one issue: `Closes #a, closes #b, closes #c` closes
+  all three. `Closes #a, #b, #c` closes only `#a` — a bare `#b`/`#c` is
+  a plain reference, not a closing one, and stays open after merge.
+- **A closing keyword auto-closes even when negated** — GitHub matches
+  the bare `close/fix/resolve #N` substring regardless of surrounding
+  words, so "does not close #N" in a PR body or commit still closes #N
+  on merge. To reference an issue without closing it, write "part of #N"
+  or `#N` alone — never a closing keyword next to the number unless the
+  change truly resolves it
 - **Regenerate derived artifacts in the same PR** — when a change
   affects generated or derived files committed to the repo (extractor
   outputs, snapshot fixtures, generated docs), regenerate them in the
@@ -64,10 +62,17 @@
   `templates/base/core/review.md` priority order: security → correctness →
   clarity →
   conventions. Check CI passes. Only merge after the review passes.
-- Re-run the verification claimed in the PR body when its base advances.
-  A clean merge and passing CI do not revalidate counts, removed references,
-  or retired flags: later commits may invalidate that evidence. Update the
-  body with results against the new base
+- **Re-run the verification a pull request body claims, rather than
+  reading it, whenever the base has advanced since the body was
+  written.** A well-written body carries evidence — a grep that found no
+  surviving references, a count, a command whose output justified the
+  change. That evidence is scoped to the base it was produced against,
+  and a commit landing afterwards can falsify it without producing a
+  conflict, a failing check, or any other signal: the merge is clean, the
+  checks pass against the merge commit, and the body still reads as
+  verified. It matters most for a change that proves an ABSENCE — a
+  deleted file, a removed reference, a retired flag — where the later
+  commit reintroduces the very thing the body proved gone
 - **Before pushing or creating a PR**, check `git status` and list open PRs.
   If the previous PR is closed or merged, create a new branch rather than
   pushing to a stale one.

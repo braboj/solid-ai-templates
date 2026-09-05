@@ -23,10 +23,6 @@ alters no template carries no entry.
 
 ### Changed
 
-- Issue formats lead with the problem and proposed outcome; user-story
-  preambles are optional. PRs use summary and validation sections, omit
-  empty boilerplate, and report completed checks as results.
-
 - New template rules are adopted for local needs or material risks, not
   automatically on pin updates. Declining a candidate requires no ADR or
   ticket; reference and hybrid context files state this boundary inline.
