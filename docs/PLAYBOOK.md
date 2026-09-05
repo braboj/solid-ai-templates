@@ -147,10 +147,11 @@ genericity before it becomes template content:
 
 ## Author a new ADR
 
-ADRs live in `docs/decisions/` and follow the schema defined in
-`docs/decisions/010-adr-governance.md` (ADR-010). Use this workflow
-for any significant architectural decision (new layer, naming
-convention change, override model change, governance rule, etc.).
+Use this workflow only after applying the decision threshold in
+`templates/base/core/docs.md`. Routine naming, directory moves, and policy
+repairs need no ADR. One coherent architectural decision may cover related
+work across several issues or PRs. ADRs live in `docs/decisions/`; ADR-010
+records the frontmatter schema.
 
 1. Copy the template:
    ```bash
@@ -173,9 +174,8 @@ convention change, override model change, governance rule, etc.).
 5. If this ADR supersedes an existing one: update the old ADR's
    frontmatter in the same PR — set its `status: Superseded`,
    refresh `date`, and add this ADR's id to its `superseded_by`
-   list. This metadata-only update is the ONE allowed exception
-   to ADR immutability; the prose body of the superseded ADR
-   stays untouched.
+   list. Preserve historical claims; format-only changes are also allowed
+   under the decision-log rules in `templates/base/core/docs.md`.
 6. Run `py tests/run_smoke.py ADR-01` to validate the frontmatter
    schema before opening the PR.
 7. If the ADR **removes** a concept, sweep for prose that still
@@ -189,8 +189,28 @@ convention change, override model change, governance rule, etc.).
    removed concept passes review on its own terms and undoes the
    ADR when implemented. Fix the issue body, do not rely on
    catching it at implementation time.
-8. Open the PR. After merge, the ADR is immutable except for
-   future supersession metadata updates.
+8. Open the PR. Preserve the merged decision as history. Routine later
+   refinements update current docs and the PR; only a material architectural
+   replacement needs a superseding ADR.
+
+## Adopt a template policy update
+
+A newer tag alone creates no work. Review a template update for a named project
+need or material risk, applying "Adopting shared rules" in
+`templates/base/core/docs.md`. Keep existing adopted conventions until the
+project deliberately changes them; declining a candidate needs no ADR or ticket.
+
+For consumers adopting the selective-adoption and ADR-threshold update:
+
+- Inline the adoption boundary in the root context file before applying newly
+  read template rules. Update copied inline rules as well as the submodule pin.
+- Replace old directory-move, paragraph-length, and per-issue ADR triggers in
+  the local context, wrap-up checklist, and authoring instructions.
+- Keep existing ADRs as history. Put routine refinements in current docs and
+  the PR; do not create a consolidation project or a decline register.
+- Reconcile the reference list if a chosen update changes dependencies, and
+  run the project's relevant existing checks. Select a released tag when the
+  policy ships; until then the current pin remains usable.
 
 ---
 

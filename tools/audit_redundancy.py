@@ -31,7 +31,7 @@ import re
 import sys
 from difflib import SequenceMatcher
 
-from resolve import load_manifest, resolve_chain, read_file
+from resolve import load_manifest, opt_in_roots, resolve_chain, read_file
 
 # Set the output encoding at the boundary rather than inheriting the
 # console default, which mangles any non-ASCII this program prints.
@@ -181,6 +181,9 @@ def find_exact(sections, supersedes):
                 yield fp, original, ia, ib
 
 
+_RATIO = {}
+
+
 def find_near(sections, supersedes):
     """Yield (ratio, fp_a, fp_b, idx_a, idx_b) for near-duplicate rules
     across non-override section pairs in different files. Candidate pairs
@@ -220,21 +223,33 @@ def find_near(sections, supersedes):
         key = tuple(sorted([fa, fb]))
         if key in seen:
             continue
-        ratio = SequenceMatcher(None, fa, fb).ratio()
+
+        # The same rule pair is compared once per chain carrying both
+        # files, and the core tier is in all 37. The ratio does not
+        # depend on the chain, so it is computed once per pair.
+        ratio = _RATIO.get(key)
+        if ratio is None:
+            ratio = SequenceMatcher(None, fa, fb).ratio()
+            _RATIO[key] = ratio
         if ratio >= NEAR_THRESHOLD:
             seen.add(key)
             yield ratio, fa, fb, ia, ib
 
 
-def collect(core_ids, entries, stacks, want_near=False):
-    """Run exact (and optionally near) detection over every stack,
-    aggregating each unique finding to the set of chains it affects."""
+def collect(core_ids, entries, roots, want_near=False):
+    """Run exact (and optionally near) detection over every root,
+    aggregating each unique finding to the set of chains it affects.
+
+    Every root, not every stack. A project picks a stack or an orthogonal
+    template independently and each resolves as its own chain (ADR-035), so
+    scanning stacks alone left 20 of 37 chains unread -- including pairs that
+    duplicate a rule inside a chain that ships.
+    """
 
     # key -> {"original", "sites", "chains"}
     exact = {}
     near = {}
-    for stack in stacks:
-        sid = stack["id"]
+    for sid in roots:
         sections, supersedes = chain_sections(sid, core_ids, entries)
 
         for fp, original, ia, ib in find_exact(sections, supersedes):
@@ -277,7 +292,19 @@ def main():
         sys.exit(0)
 
     core_ids, entries, stacks = load_manifest()
-    exact, near = collect(core_ids, entries, stacks, want_near="--near" in args)
+    roots = [s["id"] for s in stacks]
+    roots += opt_in_roots(core_ids, entries, stacks)
+    if not roots:
+        print("no root resolved; refusing to report a clean audit over an "
+              "empty corpus")
+        sys.exit(1)
+
+    # --check reports the near count, so it must compute that tier too.
+    # A --check that skipped it printed "0" while six pairs stood.
+    want_near = "--near" in args or "--check" in args
+    exact, near = collect(core_ids, entries, roots, want_near=want_near)
+    print(f"roots scanned: {len(roots)} "
+          f"({len(stacks)} stack, {len(roots) - len(stacks)} orthogonal)")
 
     print("=" * 70)
     print("EXACT in-chain rule duplicates")
@@ -312,6 +339,13 @@ def main():
         print(f"\n>>> {len(near)} near in-chain duplicate(s)")
 
     if "--check" in args:
+        # The gate fails on exact duplicates only, and says so rather than
+        # letting a green run read as "no duplicates". A 0.99 pair survived
+        # in a shipping chain while --check passed and reported nothing about
+        # the tier it does not score (ADR-038).
+        print(f"\nnear-duplicate pairs found (not gated, see ADR-038): "
+              f"{len(near)}")
+
         present = set()
         new_dups = []
         for rec in exact.values():

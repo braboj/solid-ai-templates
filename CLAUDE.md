@@ -279,16 +279,18 @@ base/ ──┬── frontend/ ──┐
 
 #### Decision logs
 
-- Significant structural decisions (new layer, naming convention
-  change, override model change) MUST be recorded as ADRs in
-  `docs/decisions/`
+- Apply the ADR threshold in `templates/base/core/docs.md`: consequential,
+  durable architectural choices with meaningful alternatives need a record.
+  Routine naming, moves, check refinements, and compliance repairs do not.
 - Each ADR documents: context, decision, alternatives considered,
   consequences
-- Each ADR addresses exactly one concern — a separate concern gets
-  its own ADR (multi-part decisions allowed within one concern)
+- One coherent architectural decision may cover related choices across
+  several issues or PRs; do not require a record per implementation concern.
 - What is immutable in a merged ADR is the decision — the claims
   made in Context, Decision, Alternatives considered and
-  Consequences. Changing one requires a new ADR. Supersession
+  Consequences. Preserve those claims as history; routine refinements update
+  current docs and the PR, while material architectural changes need a new ADR.
+  Supersession
   metadata (`superseded_by` / `status` / `date`) and format-only
   edits that move no claim are both permitted; see `base-docs`
   Decision logs for the test and the evidence it requires
@@ -474,10 +476,8 @@ summarize — visible sequential execution prevents missed steps.
    agent MUST apply the rule on every turn.
 
    CLAUDE.md contains rules only — not changelogs, package
-   architecture, per-feature progress, or session logs. Each rule
-   fits on one line; if it needs a paragraph, write an ADR and
-   leave a one-line pointer here. Evaluate items individually; do
-   not batch-dismiss.
+   architecture, per-feature progress, or session logs. Keep necessary
+   qualifiers; paragraph length does not require an ADR.
 7. **README.md** — for each new command, dependency, or structural
    change, is it reflected? Name the section.
 8. **docs/SPEC.md** — for each change to composition model or ID
@@ -488,9 +488,9 @@ summarize — visible sequential execution prevents missed steps.
     setup step, is it documented? Name the section.
 11. **docs/PLAYBOOK.md** — for each new command, script, or
     workflow added, is it documented? Name the section.
-12. **Template feedback** — for each new pattern or convention
-    introduced, explicitly state whether it is project-specific
-    or reusable; if reusable, name the upstream template file
+12. **Template feedback** — consider a demonstrated shared defect or recurring
+    need, reconcile existing issues, and act within the authorized scope.
+    A reusable-looking preference alone requires no ticket or ADR.
 13. **Branch cleanup** — delete local branches whose PRs have merged,
     verified against the PR record: `gh pr view <N> --json
     state,headRefOid` must report `MERGED`, then `git branch -D`.
