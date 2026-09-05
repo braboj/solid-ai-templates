@@ -223,6 +223,7 @@ def find_near(sections, supersedes):
         key = tuple(sorted([fa, fb]))
         if key in seen:
             continue
+
         # The same rule pair is compared once per chain carrying both
         # files, and the core tier is in all 37. The ratio does not
         # depend on the chain, so it is computed once per pair.
@@ -297,6 +298,7 @@ def main():
         print("no root resolved; refusing to report a clean audit over an "
               "empty corpus")
         sys.exit(1)
+
     # --check reports the near count, so it must compute that tier too.
     # A --check that skipped it printed "0" while six pairs stood.
     want_near = "--near" in args or "--check" in args
