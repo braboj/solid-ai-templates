@@ -30,7 +30,9 @@ conversations, the reviews that catch bugs instead of churning style nits.
 
 **Prerequisites:** a local coding agent that can read files from
 your project directory (Claude Code, Cursor, Codex CLI, Windsurf,
-or similar).
+or similar). The optional `tools/` scripts also need Python 3 and
+PyYAML (`pip install pyyaml`); commands below use `python3`, which
+on Windows is `py`.
 
 **Output:** a `CLAUDE.md` or `AGENTS.md` file placed at your project
 root, containing coding conventions tailored to your stack. Works
@@ -132,8 +134,8 @@ prose. The minimum window adds 18K tokens for the interview and the
 file the model has to write back, then rounds up to the next window a
 model actually sells.
 
-`py tools/sync.py` regenerates the table from the chains and
-`py tools/sync.py --check` fails when it drifts, so the figures move
+`python3 tools/sync.py` regenerates the table from the chains and
+`python3 tools/sync.py --check` fails when it drifts, so the figures move
 when a base template grows instead of ageing quietly.
 
 - **Output token limit < 16K** (e.g. GPT-4o default): generated file
@@ -167,10 +169,15 @@ when a base template grows instead of ageing quietly.
 
 ## Supported agents
 
+<!-- generated:readme-agents -->
 | Agent | Output file |
 |-------|-------------|
 | Claude Code | `CLAUDE.md` |
-| Codex CLI, Devin, Cursor, Windsurf | `AGENTS.md` |
+| Cursor | `.cursor/rules/project.mdc` |
+| GitHub Copilot | `.github/copilot-instructions.md` |
+| OpenAI Codex CLI | `AGENTS.md` |
+| Generic / other | `AI_CONTEXT.md` |
+<!-- /generated:readme-agents -->
 
 See `templates/base/core/agents.md` for structure, models, and formatting rules.
 

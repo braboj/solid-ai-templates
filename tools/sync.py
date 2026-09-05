@@ -23,6 +23,7 @@ for _stream in (sys.stdout, sys.stderr):
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "templates" / "manifest.yaml"
+DOCS_TEMPLATE = ROOT / "templates" / "base" / "core" / "docs.md"
 
 
 # ---- generators ----
@@ -318,6 +319,45 @@ def _update_file(path, replacements, check_mode=False):
 
 # ---- main ----
 
+def _readme_agents():
+    """Render the agent-to-output mapping the templates already state.
+
+    The mapping is written once, in base-docs. The README's copy is
+    generated so the two cannot disagree; `--check` fails when it drifts.
+    """
+    text = io.open(DOCS_TEMPLATE, encoding="utf-8").read()
+    section = text.split("## Output file by agent", 1)
+    if len(section) != 2:
+        raise SystemExit(
+            "sync: base-docs has no 'Output file by agent' section; the "
+            "README's agent table has no source to render from"
+        )
+
+    rows = []
+    for line in section[1].splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            if rows:
+                break
+            continue
+        cells = [c.strip() for c in stripped.strip("|").split("|")]
+        if len(cells) != 2 or set(cells[0]) <= set("- "):
+            continue
+        if cells[0] == "Agent":
+            continue
+        rows.append((cells[0], cells[1]))
+
+    if not rows:
+        raise SystemExit(
+            "sync: the 'Output file by agent' table parsed to zero rows; "
+            "refusing to write an empty README mapping"
+        )
+
+    out = ["| Agent | Output file |", "|-------|-------------|"]
+    out += ["| %s | %s |" % (agent, path) for agent, path in rows]
+    return "\n".join(out)
+
+
 def main():
     check_mode = "--check" in sys.argv
 
@@ -334,6 +374,7 @@ def main():
     chain_examples = _spec_chain_examples()
     readme_content = _readme_stacks(manifest)
     model_limits = _readme_model_limits()
+    agent_outputs = _readme_agents()
     interview_content = _interview_stacks(manifest)
 
     targets = [
@@ -349,6 +390,7 @@ def main():
             {
                 "readme-stacks": readme_content,
                 "readme-model-limits": model_limits,
+                "readme-agents": agent_outputs,
             },
         ),
         (ROOT / "templates" / "INTERVIEW.md", {"interview-stacks": interview_content}),

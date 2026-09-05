@@ -145,4 +145,4 @@ continued from the repository alone.
 ## Getting help
 
 - `docs/SPEC.md` — answers most "how does X work" questions
-- Open a GitHub Discussion if something is unclear
+- Open an issue if something is unclear — Discussions are not enabled
