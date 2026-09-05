@@ -169,10 +169,15 @@ when a base template grows instead of ageing quietly.
 
 ## Supported agents
 
+<!-- generated:readme-agents -->
 | Agent | Output file |
 |-------|-------------|
 | Claude Code | `CLAUDE.md` |
-| Codex CLI, Devin, Cursor, Windsurf | `AGENTS.md` |
+| Cursor | `.cursor/rules/project.mdc` |
+| GitHub Copilot | `.github/copilot-instructions.md` |
+| OpenAI Codex CLI | `AGENTS.md` |
+| Generic / other | `AI_CONTEXT.md` |
+<!-- /generated:readme-agents -->
 
 See `templates/base/core/agents.md` for structure, models, and formatting rules.
 
