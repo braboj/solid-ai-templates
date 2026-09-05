@@ -8,15 +8,24 @@ context files.
 
 ## Output files
 
-| File | Read by | When to use |
-|------|---------|-------------|
-| `CLAUDE.md` | Claude Code | Claude Code is the primary agent |
-| `AGENTS.md` | Codex CLI, Devin, Cursor, Windsurf, Claude Code (fallback) | Cross-agent compatibility |
+| File | When to use |
+|------|-------------|
+| `CLAUDE.md` | Claude Code is the primary agent |
+| `AGENTS.md` | Cross-agent compatibility, and the fallback for agents with no native file |
 
 Both files use the same structure. Generate `CLAUDE.md` for Claude
 Code projects, `AGENTS.md` for everything else, or both for maximum
 coverage. A single `AGENTS.md` is sufficient if no Claude-specific
 rules are required.
+
+An agent with a native context file takes that file rather than
+`AGENTS.md`. Exactly one table states which file each agent takes --
+the output-file-by-agent table in the documentation rules. Every other
+copy MUST be generated from it rather than written out, and a project
+that renders one into a README MUST gate the copy with the same
+regeneration check it uses for any other generated block. A mapping
+typed into two files drifts in one of them without either being wrong
+at the time it was written.
 
 ---
 
