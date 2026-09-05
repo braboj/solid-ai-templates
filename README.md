@@ -97,11 +97,11 @@ For teams that want version-pinned templates inside their repo:
 
 ```bash
 cd my-project
-git submodule add https://github.com/braboj/solid-ai-templates.git .ai-templates
+git submodule add https://github.com/braboj/solid-ai-templates.git docs/solid-ai-templates
 ```
 
 1. Open your agent in your project directory
-2. Tell the agent to read `.ai-templates/templates/INTERVIEW.md`
+2. Tell the agent to read `docs/solid-ai-templates/templates/INTERVIEW.md`
 3. Follow the interview — the agent reads templates from the
    submodule and generates your context file
 4. Commit the generated file alongside the submodule
