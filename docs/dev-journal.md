@@ -6454,3 +6454,112 @@ session, and an entry of mine dated today would misattribute it.
 passed and 0 failed with two readings read, 0 open pull requests, no stale
 branches, label conformance `[]`. 164 working-tree files still carry
 pre-`.gitattributes` CRLF against 0 committed blobs, tracked as #1490.
+
+## 2026-09-05 — The instruments measured the wrong corpus, and so did the controls
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** `v2.79.0` released — six issues where the front door described
+a repository that does not exist — then half of `v2.80`, which is about the
+tools that measure this project being pointed at part of it. A backlog groom
+took 80 open issues to 70. A parallel session's policy PR was reviewed, fixed
+and merged. This entry discharges the one `v2.79.0` owed and covers the
+session that followed it.
+
+**`v2.79.0` — the documents an adopter reads first.** ONBOARDING sent
+contributors to Discussions that are disabled. dependabot declared a pip
+ecosystem with no Python manifest to read. CLAUDE.md required an approving
+review that branch protection does not require and the sole maintainer cannot
+give. The homepage pointed at a site mentioning the project zero times. The
+adopter path ran `py`, absent from macOS and Linux, while README named no
+Python prerequisite. Two shipped tables disagreed on Cursor's output file and
+README followed the one no stack chain carries. README vendored the submodule
+at `.ai-templates` while INTERVIEW.md — what an agent actually executes —
+instructs `docs/solid-ai-templates`. Six issues, four pull requests.
+
+**The measurement theme, which the cut surfaced by accident.** Fixing the
+Cursor mapping meant editing `base-docs`, which is core tier, so every chain
+grew ten characters. SYS-12 reported all 37 roots two over rather than ten.
+The recorded ceilings had been carrying eight characters of slack from an
+earlier shrink, because the check fails when a chain exceeds its ceiling and a
+shrink passes freely. That is #1462's mechanism, met in the diff rather than
+in the issue.
+
+**`v2.80` is that observation generalised.** `audit_redundancy.py` looped over
+stacks, so it resolved 17 of the 37 roots a project can pick and never read a
+single `platform/` file or opt-in extra. Widened, near-duplicates went 3 to 6,
+and the widest newly visible pair scores 0.99: `git.md` and `release.md` both
+carry a `Versioning` section and both resolve into `base-release`, so a
+project picking that extra receives the rule twice. It was invisible from two
+directions at once — outside the scanned roots, and below the gated tier.
+ADR-038 settles the second: `--check` keeps gating exact duplicates only and
+now prints the near count beside its verdict, so a passing gate states what it
+did not gate. Memoising the ratio on the rule pair took `--check` from 58s to
+7s; it does not depend on the chain, and the core tier is in all 37.
+
+`resolve.py` took `args[0]` and ignored the rest, so a root that does not
+exist passed silently when it followed a valid one — exit 0 on the wrong
+chain, while the same argument alone exits 1. The validation existed; the
+second position never reached it. Roots are refused rather than composed,
+since ADR-035 has each resolving on its own. SYS-14 covers six argument shapes
+and asserts a phrase from each message, because a program exiting 1 for the
+wrong reason reads identically to one exiting 1 for the right one.
+
+**Four controls were wrong before they were right, and each failed a
+different way.** A planted prose section proved nothing against a detector
+that fingerprints bullet lines: the gate reported clean and that read as the
+gate holding. `git checkout -- <path>` restored `audit_redundancy.py` from the
+index and silently discarded the memo, because an older version had been
+staged. An exit code was read after a pipe, so `$?` was `tail`'s. And a chain
+figure reported as taken on `main` had been taken on `docs/issue-pr-formatting`
+— the parallel session moved HEAD in the shared checkout mid-measurement. The
+first three are already rules in CLAUDE.md 6.2; the fourth was not, and the
+existing `pwd` rule does not cover a wrong branch in a right directory. Both
+gaps are now rules there.
+
+**The parallel session.** #1508 raises the ADR threshold and makes template
+adoption selective. Review found one measurable defect: it removes a large
+amount of core-tier text and left every ceiling untouched, so all 37 became
+padded by 550 to 2061 characters, 33869 in total, against 0 on `main`. Its own
+validation line — "all 37 chain ceilings without increases" — is accurate and
+cannot distinguish that from a clean result, because SYS-12 only fails upward.
+Two other findings were withdrawn: the ADR immutability and precedence rules
+are not deleted, they survive reworded, and the greps had searched the old
+phrasings.
+
+**Groom.** 80 to 70. Every mechanically checkable claim in the backlog was
+re-measured against the tree with a control on each probe, and **nothing had
+been silently fixed** — closure came only from subsumption. #350's four axes
+had been split into `audit_redundancy.py`, #1471, #368 and #1184; #369 was
+#368 with one extra variable; #1490 and #1470 were subsets whose unique
+content was ported before closing. Seven issues now carry an explicit trigger
+condition rather than an implicit deferral.
+
+**Pull requests merged:** #1499, #1500, #1501, #1502, #1503 (the cut), #1507,
+#1508 (the parallel session's), #1510, #1513 (the wrap-up).
+**Issues closed:** #1374, #1375, #1377, #1472, #1473, #1474 in `v2.79.0`;
+#1464 and #1466 in `v2.80`; #350, #369, #1470, #1490 as duplicates.
+**Issues opened:** none. Four findings were surfaced and deliberately left
+unfiled, listed under Owed below.
+**Upstream:** two reusable patterns, neither filed. A CLI validating every
+argument rather than dropping the unparsed ones belongs in `base/core/cli.md`,
+which covers `main(argv) -> int` and shared parsing but not this. A gate with
+an advisory tier reporting that tier's count on every run belongs in
+`quality-gates.md`, where the word "advisory" does not appear. Project-specific:
+rebasing the ceilings down on a shrink, since `chain-budget.txt` is this
+repository's own instrument and #1462 owns the general form.
+**Milestones:** #85 closed at 11/11 for `v2.79.0`. #86 (`v2.80`) is open at
+2 of 4, deliberately — #1465 is small and #1471 asks what 21% of the corpus is
+for, which #1480 re-asks in a wider frame.
+**Owed and not repaired:** `v2.80` is not cut. #1471 was proposed for
+reassignment to #1480's orbit and not moved. Two defects are unfiled: SYS-07
+walks gitignored paths, so any local worktree turns it red while CI stays
+green, and `360.md:504` ships `py tests/run_smoke.py SYS-07` — this
+repository's own runner and check id — inside a template no consumer can run.
+**State at close:** smoke 29/29, sync clean, `resolve.py --check` clean,
+redundancy 0, conformance 14 passed and 0 failed with three readings read, 0
+open pull requests, no stale branches of mine, label conformance `[]`. The
+shared checkout sits on the parallel session's branch with two of its
+worktrees and one stash outstanding, none of it mine to remove.
+
+---
