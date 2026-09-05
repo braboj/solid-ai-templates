@@ -1952,6 +1952,7 @@ RESOLVE_CASES = [
     (["stack-flask", "bogus-root"], 1, "Roots resolve independently"),
     (["stack-flask", "platform-github"], 1, "Roots resolve independently"),
     (["--bogus-flag"], 1, "Unknown flag"),
+
     # Bare invocation is the usage path, not an error -- same as --help.
     ([], 0, "resolve.py"),
 ]
