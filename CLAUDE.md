@@ -426,6 +426,13 @@ Run `py tests/run_smoke.py` before every PR. It checks:
   unexpected empty/negative, FIRST verify the working directory
   (`pwd`) — shell tool cwd persists across commands and an earlier
   `cd` may make "from the repo root" diagnostics false-negative
+- Verify the branch, not only the directory, before trusting a
+  measurement — a parallel session shares this checkout and moves HEAD,
+  so take any figure you will report from a worktree pinned to an
+  explicit ref
+- A control's plant MUST take a form the check actually inspects: a
+  prose section proves nothing against a detector that fingerprints
+  bullet lines, and the clean result reads as the check holding
 - The inverse holds too: when a probe returns an unexpected *uniform*
   positive — every repository carries the file, every case passes —
   validate it against a control that MUST fail before believing it. A
