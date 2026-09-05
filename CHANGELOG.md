@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.79.0] - 2026-09-05
+
 ### Fixed
 
 - Adopter-facing commands invoke `python3` rather than the Windows-only
