@@ -6,6 +6,8 @@ labels: ["task", "P2"]
 
 <!-- Keep relevant sections; remove placeholders before submitting. -->
 
+**Optional user story:** As a [role], I want [capability], so that [benefit].
+
 ## Problem
 
 [Current limitation and who it affects]

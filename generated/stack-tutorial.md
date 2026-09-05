@@ -8171,6 +8171,8 @@ An atomic, implementable unit of work. One task = one branch = one PR.
 `feat:/fix:/data:/docs:/chore:/refactor:/test:` prefix, not issue titles)
 
 ```markdown
+**Optional user story:** As a [role], I want [capability], so that [benefit].
+
 ## Problem
 
 [Current limitation and who it affects]
