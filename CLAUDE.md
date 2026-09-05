@@ -79,8 +79,8 @@ py tools/audit_redundancy.py --check          # CI gate — fail on new dups
   or more commits, and the commit subject when it holds one
 - Issue titles: sentence case, imperative verb — no type prefix
   (labels carry the type)
-- PRs are small and focused — one concern per PR; one approval
-  required to merge
+- PRs are small and focused — one concern per PR, merged once its
+  checks pass; no approving review is required, and none is enforced
 - After a PR is merged, delete branch and pull main before starting
   new work
 - Do not commit `.idea/`, editor config, or any generated output
