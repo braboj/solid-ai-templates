@@ -114,15 +114,20 @@ latest rules.
 
 ## Model limitations
 
+Template updates are selective: adopt new conventions for a project need or
+material risk, not merely because a tag exists. Existing adopted rules remain
+effective; declining a new rule needs no ADR or ticket. See the
+[consumer migration guidance](docs/PLAYBOOK.md#adopt-a-template-policy-update).
+
 <!-- generated:readme-model-limits -->
 | Stack category | Stacks | Largest chain | Prompt | Min context |
 |----------------|--------|---------------|--------|-------------|
-| abstract | 2 | `stack-python-service` — 453K chars | ~129K tokens | 200K |
-| backend | 8 | `stack-django` — 467K chars | ~133K tokens | 200K |
-| embedded | 1 | `stack-c-embedded` — 274K chars | ~78K tokens | 128K |
-| hypermedia | 1 | `stack-htmx` — 287K chars | ~82K tokens | 128K |
-| library | 3 | `stack-python-lib` — 380K chars | ~109K tokens | 128K |
-| static | 2 | `stack-tutorial` — 416K chars | ~119K tokens | 200K |
+| abstract | 2 | `stack-python-service` — 452K chars | ~129K tokens | 200K |
+| backend | 8 | `stack-django` — 466K chars | ~133K tokens | 200K |
+| embedded | 1 | `stack-c-embedded` — 273K chars | ~78K tokens | 128K |
+| hypermedia | 1 | `stack-htmx` — 286K chars | ~82K tokens | 128K |
+| library | 3 | `stack-python-lib` — 379K chars | ~108K tokens | 128K |
+| static | 2 | `stack-tutorial` — 414K chars | ~118K tokens | 200K |
 <!-- /generated:readme-model-limits -->
 
 Measured rather than estimated. Each row takes the largest resolved

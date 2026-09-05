@@ -51,6 +51,11 @@ Based on what you learned, propose a complete setup:
 - Deployment target and distribution
 - Key conventions: testing, linting, git
 
+Select conventions for the project's needs and material risks. The resolved
+chain supplies candidates, not an obligation to adopt every rule. Keep existing
+adopted conventions unless the user changes them; declining a new candidate
+requires no ADR or ticket. Include that boundary in reference/hybrid output.
+
 Present the proposal as a short summary and ask the user to confirm or
 adjust. Proceed to Phase 4 once the user approves.
 

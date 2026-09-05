@@ -409,8 +409,14 @@ sequential execution prevents missed steps.
 3. Epic checklists — update epic checklists if relevant
 4. Dev journal — add a session entry to `docs/dev-journal.md` (date,
    tool, key changes, PRs merged, issues closed/created)
-5. ADRs — record any architectural decisions in `docs/decisions/`; a new
-   directory or content move between documents each needs an ADR
+5. ADRs — A consequential, durable architectural choice with meaningful alternatives
+     MUST have an Architecture Decision Record (ADR) in `docs/decisions/` when
+     future maintainers need its tradeoffs to safely reconsider it. Examples:
+     ownership boundaries, compatibility contracts, or a major dependency strategy.
+   Routine naming, formatting, directory creation, document moves, check-output
+     refinements, and compliance repairs belong in the issue/PR and current docs.
+     They need no ADR unless their consequences meet the threshold above; no
+     separate justification for not writing an ADR is required.
 6. Migrations — confirm every schema change has a reversible Alembic
    migration committed and applied (`alembic upgrade head`)
 7. OpenAPI contract — confirm the `version` was bumped if any route,

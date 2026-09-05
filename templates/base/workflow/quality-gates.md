@@ -542,10 +542,9 @@ Lighthouse job when the PR touches only dependency manifests
   run: npm run lighthouse
 ```
 
-Document the skip rule in an ADR alongside the workflow change —
-the reasoning ("this gate cannot produce signal on these PRs")
-should be discoverable later when someone wonders why the gate
-sometimes doesn't run.
+Document the skip rule and rationale alongside the workflow change in the
+workflow or PR. Use an ADR only for a consequential architectural tradeoff,
+not merely because a gate has a condition.
 
 ---
 
@@ -604,7 +603,8 @@ below close those gaps.
   triggers the gate MUST cover the same set of paths — a directory
   excluded from one MUST be excluded from the other
 - A secondary toolchain with its own test runner is verified by that
-  runner, not the primary stack's gate. Document the split in an ADR
+  runner, not the primary stack's gate. Document the split in the CI docs;
+  runner selection alone does not require an ADR
 - Captured test fixtures (scraped HTML/JSON representing real external
   byte sequences) MUST be excluded from the formatter — they must
   stay byte-for-byte, and reformatting them changes the test input

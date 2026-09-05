@@ -310,6 +310,13 @@ Current meta documents:
 
 ## Override mechanism
 
+Resolution selects source files; project adoption selects operative rules.
+The dependency graph and section overrides remain deterministic discovery
+mechanisms. A consumer update does not automatically adopt new rules or create
+compliance work. Apply "Adopting shared rules" in
+`templates/base/core/docs.md`, and inline that boundary in reference/hybrid
+context files. Existing adopted rules remain effective until deliberately changed.
+
 Each base template section is tagged with a unique ID:
 
 ```markdown

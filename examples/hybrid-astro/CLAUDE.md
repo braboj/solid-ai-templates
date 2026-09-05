@@ -43,6 +43,23 @@ overrides and additions follow below.
 > 11. `docs/solid-ai-templates/templates/frontend/static-site.md`
 > 12. `docs/solid-ai-templates/templates/stack/static-site-astro.md`
 
+## Adoption boundary
+
+- Templates supply candidate conventions; the project chooses what it adopts.
+  Resolve dependencies to discover the available rules, not to authorize work.
+- Adopt a new rule when it addresses a named local defect, requirement, or
+  credible material risk. Preventive security controls need no prior incident.
+- A template update MUST NOT automatically create compliance work, tickets,
+  or decision records. A newer tag alone is not a reason to update the pin.
+- A declined candidate needs at most a line in the existing PR or discussion;
+  no ADR, separate ticket, or decline register is required.
+- Existing adopted rules remain effective until the project changes them.
+  Keep the operative selection and any necessary precedence in the project's
+  context file; a reference/hybrid file MUST inline this adoption boundary so
+  reading a new upstream MUST cannot silently expand the adopted rule set.
+- Assess security fixes in tools the project executes promptly. Review new
+  conventions when a project need warrants it, rather than on every release.
+
 ## 1. Project
 
 ### 1.1 Identity
@@ -191,7 +208,14 @@ moving to the next. At minimum, confirm in order:
 2. Close issues — close completed issues; verify auto-close worked
 3. Dev journal — add a session entry to `docs/dev-journal.md` (date,
    tool, key changes, PRs merged, issues closed/created)
-4. ADRs — record any architectural decisions in `docs/decisions/`
+4. ADRs — A consequential, durable architectural choice with meaningful alternatives
+     MUST have an Architecture Decision Record (ADR) in `docs/decisions/` when
+     future maintainers need its tradeoffs to safely reconsider it. Examples:
+     ownership boundaries, compatibility contracts, or a major dependency strategy.
+   Routine naming, formatting, directory creation, document moves, check-output
+     refinements, and compliance repairs belong in the issue/PR and current docs.
+     They need no ADR unless their consequences meet the threshold above; no
+     separate justification for not writing an ADR is required.
 5. CLAUDE.md — for each new convention, decide whether it belongs here
    (a rule the agent MUST apply every turn) or in another doc
 6. README.md / docs — for each new command, dependency, or content

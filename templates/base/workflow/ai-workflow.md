@@ -199,7 +199,9 @@ CLAUDE.md or memory. Evaluate in priority order:
 
 1. **Code / JSDoc / docstrings** — naming, typing, or invariant rules
    a developer reads while editing the relevant code
-2. **ADR** — architectural decisions with alternatives weighed
+2. **ADR** — consequential, durable architectural choices with meaningful
+   alternatives, per the decision threshold in `templates/base/core/docs.md`;
+   routine conventions and corrections stay in the issue/PR and current docs
 3. **README** (project or package) — discoverable user-facing setup,
    usage, or capability
 4. **PLAYBOOK** — operational workflow (commands, recipes)
@@ -406,10 +408,9 @@ path offered.
 Interim findings from a multi-AC spike sliced across sessions (a partial
 deliverable that does not yet conclude the spike) belong in a comment on
 the spike issue — durable, queryable, bidirectionally linked, and
-needing no new directory. Do NOT create a `docs/spikes/` directory for
-one-off findings: a new directory is itself an architectural decision
-that needs its own ADR. The durable artifact is the eventual ADR per the
-decision-log rule, citing the interim comment(s).
+needing no new directory. Keep one-off findings on the issue. The conclusion
+needs an ADR only if it meets the architectural decision threshold; neither
+a spike nor creating a directory automatically requires one.
 
 ### Triage by fan-out
 [ID: ai-workflow-triage-fanout]
