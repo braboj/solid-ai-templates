@@ -1098,6 +1098,14 @@ so every hit is a real finding rather than a judgement call.
 
 ## Pull requests
 - PRs should be small and focused — one concern per PR
+- Lead the body with the concrete problem and resulting behavior. Use
+  `## Summary` and `## Validation` for changes needing structure; a small fix
+  may use one paragraph plus its check result. Describe the final diff, not
+  the session history. Add migration or risk notes only when they matter.
+- Use bullets for parallel changes, numbered steps for sequences, and fenced
+  code for runnable commands. Leave blank lines around headings and lists.
+  Report completed checks as results, not unchecked tasks. Omit empty sections,
+  generic checklists, and repeated metadata already shown by the tracker.
 - Always test locally before committing
 - **A local run is evidence about one platform.** Read the CI run for the
   push before describing the change as good. Where development and CI
@@ -1106,16 +1114,10 @@ so every hit is a real finding rather than a judgement call.
   second covers what the project ships on. A pipeline check at session
   start is a different moment — it catches one broken before you began,
   not one you broke and are about to report as clean
-- **Repeat the closing keyword before each issue number** when a PR
-  closes more than one issue: `Closes #a, closes #b, closes #c` closes
-  all three. `Closes #a, #b, #c` closes only `#a` — a bare `#b`/`#c` is
-  a plain reference, not a closing one, and stays open after merge.
-- **A closing keyword auto-closes even when negated** — GitHub matches
-  the bare `close/fix/resolve #N` substring regardless of surrounding
-  words, so "does not close #N" in a PR body or commit still closes #N
-  on merge. To reference an issue without closing it, write "part of #N"
-  or `#N` alone — never a closing keyword next to the number unless the
-  change truly resolves it
+- Put issue links at the end. Repeat the closing keyword for every resolved
+  issue (`Closes #a`, `Closes #b`); bare numbers do not close issues.
+  Negation does not prevent auto-closing: use `Related: #N` or `Part of #N`
+  for unfinished work, never a negated closing phrase
 - **Regenerate derived artifacts in the same PR** — when a change
   affects generated or derived files committed to the repo (extractor
   outputs, snapshot fixtures, generated docs), regenerate them in the
@@ -1140,17 +1142,10 @@ so every hit is a real finding rather than a judgement call.
   `templates/base/core/review.md` priority order: security → correctness →
   clarity →
   conventions. Check CI passes. Only merge after the review passes.
-- **Re-run the verification a pull request body claims, rather than
-  reading it, whenever the base has advanced since the body was
-  written.** A well-written body carries evidence — a grep that found no
-  surviving references, a count, a command whose output justified the
-  change. That evidence is scoped to the base it was produced against,
-  and a commit landing afterwards can falsify it without producing a
-  conflict, a failing check, or any other signal: the merge is clean, the
-  checks pass against the merge commit, and the body still reads as
-  verified. It matters most for a change that proves an ABSENCE — a
-  deleted file, a removed reference, a retired flag — where the later
-  commit reintroduces the very thing the body proved gone
+- Re-run the verification claimed in the PR body when its base advances.
+  A clean merge and passing CI do not revalidate counts, removed references,
+  or retired flags: later commits may invalidate that evidence. Update the
+  body with results against the new base
 - **Before pushing or creating a PR**, check `git status` and list open PRs.
   If the previous PR is closed or merged, create a new branch rather than
   pushing to a stale one.
@@ -7975,6 +7970,21 @@ Rules:
 Standard formats for work items in GitHub Issues. Each type has a label,
 a title convention, and a body template.
 
+Start with the concrete problem or desired outcome. Use the sections below
+as a starting point, not mandatory paperwork: omit empty or irrelevant ones,
+and use a short paragraph plus acceptance criteria for a small task.
+
+- Use sentence-case `##` headings with blank lines before the content.
+- Keep paragraphs short; use bullets for parallel facts and numbered steps
+  for sequences. Reserve checkboxes for observable completion criteria.
+- Put commands and exact output in fenced blocks. Link supporting evidence
+  beside the claim; put related issues at the end. Use tables for comparisons.
+- Keep labels, priority, and milestone in tracker fields rather than repeating
+  them in the body. User-story wording is optional, not a required preamble.
+- Rewrite the body around the current scope when it changes; preserve useful
+  discussion in comments. Avoid accumulating correction preambles and stale
+  proposals. Formatting alone requires no ADR, new issue, or automated gate.
+
 ---
 
 ## Issue types
@@ -8132,16 +8142,16 @@ checklist.
 
 ```markdown
 ## Goal
+
 [One sentence — what does success look like?]
 
 ## Tasks
+
 - [ ] #XX — task description
 - [ ] #YY — task description
 
-## Out of scope
-[What this epic does NOT cover]
-
 ## Definition of done
+
 [Measurable criteria for closing]
 ```
 
@@ -8156,21 +8166,21 @@ checklist.
 ## Task
 
 An atomic, implementable unit of work. One task = one branch = one PR.
-Embeds a user story line for user context.
 
 **Title:** descriptive action (no prefix — commit messages carry the
 `feat:/fix:/data:/docs:/chore:/refactor:/test:` prefix, not issue titles)
 
 ```markdown
-As a [user type], I want [capability] so that [benefit].
+## Problem
 
-## What
-[Clear description of the change]
+[Current limitation and who it affects]
 
-## Why
-[Motivation — which epic does this serve?]
+## Proposed change
+
+[Desired behavior; a before/after example when useful]
 
 ## Acceptance criteria
+
 - [ ] [Observable behavior 1]
 - [ ] [Observable behavior 2]
 ```
@@ -8191,20 +8201,22 @@ A defect in existing functionality.
 **Title:** what is broken (no prefix — the `bug` label identifies the type)
 
 ```markdown
-**Severity:** critical | major | minor | trivial
+## Problem
+
+[Observed failure and user impact]
 
 ## Expected
+
 [What should happen]
 
-## Actual
-[What happens instead]
-
 ## Reproduce
+
 1. [Step 1]
 2. [Step 2]
-3. [Result]
+3. [Observed result or error]
 
 ## Environment
+
 [dev/preview/production, browser, branch]
 ```
 
@@ -8232,23 +8244,27 @@ bug — a bug is a defect you discover, an incident is something burning.
 **Title:** what is down (no prefix — the `incident` label identifies the type)
 
 ```markdown
-**Severity:** critical | major
 **Status:** investigating | identified | mitigating | resolved
 
 ## Impact
+
 [Who is affected, how severely]
 
 ## Timeline
+
 - [HH:MM UTC] — [event]
 - [HH:MM UTC] — [event]
 
 ## Root cause
+
 [What caused it — fill in after identified]
 
 ## Resolution
+
 [What fixed it — fill in after resolved]
 
 ## Prevention
+
 [What changes prevent recurrence — fill in after postmortem]
 ```
 
@@ -8268,21 +8284,22 @@ Research or exploration where the output is a decision, not code.
 **Title:** the question being investigated (no prefix — the `spike`
 label identifies the type)
 
-**Format:** use the task format. The acceptance criteria describe what the
-spike should produce (an ADR, a recommendation, a prototype).
+**Format:** state the question, the decision it informs, and the required
+evidence. An ADR is an output only when the architectural threshold is met.
 
 ```markdown
-As a [role], I want to understand [topic] so that [decision can be made].
+## Question
 
-## What
-[Question or area to explore]
+[Specific uncertainty to resolve]
 
-## Why
-[What decision is blocked without this research?]
+## Context
 
-## Acceptance criteria
-- [ ] ADR documenting the decision
-- [ ] Recommendation with alternatives considered
+[Decision blocked and relevant evidence already available]
+
+## Deliverable
+
+- [ ] Recommendation supported by the relevant evidence
+- [ ] Alternatives and material tradeoffs, including doing nothing
 ```
 
 

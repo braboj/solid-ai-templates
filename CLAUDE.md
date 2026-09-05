@@ -77,6 +77,10 @@ py tools/audit_redundancy.py --check          # CI gate — fail on new dups
 - A single-commit PR MUST carry the issue number in the commit subject
   too: GitHub squashes using the PR title only when the branch holds two
   or more commits, and the commit subject when it holds one
+- Issue/PR bodies lead with the problem and outcome, use short sections with
+  blank lines around lists, and omit empty boilerplate. Issues use completion
+  checkboxes; PR validation states actual results. Use the GitHub templates
+  and keep scope history in discussion rather than correction preambles.
 - Issue titles: sentence case, imperative verb — no type prefix
   (labels carry the type)
 - PRs are small and focused — one concern per PR, merged once its
