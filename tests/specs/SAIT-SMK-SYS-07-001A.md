@@ -16,7 +16,7 @@ tags: [audit, 360, convention, adr-018]
 
 ## Short description
 
-> **Given** the repository tree
+> **Given** the repository's files, ignored paths excluded
 > **When** every Markdown file whose name matches a 360 audit report
 > (`360-audit*.md` or `*-360.md`) is located
 > **Then** each one lives under `docs/audits/` and uses the dated
@@ -31,7 +31,7 @@ tags: [audit, 360, convention, adr-018]
 | FAILED | An audit report exists outside `docs/audits/`, or a file inside it uses a non-dated name |
 | SKIPPED | — |
 | BLOCKED | — |
-| ERROR | File system is inaccessible |
+| ERROR | File system is inaccessible, or `git ls-files` cannot run |
 
 ## Steps
 
@@ -45,11 +45,14 @@ tags: [audit, 360, convention, adr-018]
 
 ### Execution
 
-1. Walk the repository tree, skipping VCS and tooling directories
-   (`.git`, `.venv`, `node_modules`, `__pycache__`, `.idea`, `.claude`)
-2. Match each filename against the audit-report pattern
+1. List the repository's files with `git ls-files --cached --others
+   --exclude-standard` — tracked files plus the untracked ones a commit
+   could still add, with everything `.gitignore` excludes left out
+2. Drop any path under a VCS or tooling directory (`.git`, `.venv`,
+   `node_modules`, `__pycache__`, `.idea`, `.claude`)
+3. Match each filename against the audit-report pattern
    (`360-audit*.md` or `*-360.md`)
-3. For each match, record its path relative to the repository root
+4. For each match, record its path relative to the repository root
 
 ### Assertions
 

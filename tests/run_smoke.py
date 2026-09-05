@@ -1394,20 +1394,43 @@ _DATED_AUDIT_NAME = re.compile(r"^\d{4}-\d{2}-\d{2}-360\.md$")
 _SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".idea", ".claude"}
 
 
+def _repository_files():
+    """Every repo-relative path git tracks or would track, ignored ones out.
+
+    A filesystem walk cannot read .gitignore, so it descends into build
+    output, virtual environments and the nested worktrees under temp/, and
+    reports their copies of a file as repository content -- a checkout of an
+    older commit fails the check for where that commit put its files. Git
+    decides what belongs to the repository, so ask git: --cached covers
+    tracked files and --others --exclude-standard the untracked ones a
+    commit could still add, leaving out everything .gitignore excludes.
+    """
+    out = subprocess.check_output(
+        ["git", "-C", ROOT, "ls-files", "-z", "--cached", "--others",
+         "--exclude-standard"],
+        stderr=subprocess.STDOUT,
+    )
+    paths = [p for p in out.decode("utf-8").split("\0") if p]
+
+    # Git lists an unignored virtual environment or dependency tree in full.
+    # The skip list is what this check has always declined to read, so apply
+    # it to git's answer rather than letting the corpus depend on whether a
+    # given toolchain happens to write its own .gitignore.
+    return [
+        p for p in paths
+        if not any(part in _SKIP_DIRS for part in p.split("/"))
+    ]
+
+
 def check_sys_07():
     failures = []
     seen = Inspected()
-    walked = 0
     reports = 0
-    for dirpath, dirnames, filenames in os.walk(ROOT):
-        dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
-        walked += len(filenames)
-        for name in filenames:
-            if not _AUDIT_NAME.match(name):
-                continue
+    walked = _repository_files()
+    for rel in walked:
+        name = rel.rsplit("/", 1)[-1]
+        if _AUDIT_NAME.match(name):
             reports += 1
-            rel = os.path.relpath(os.path.join(dirpath, name), ROOT)
-            rel = rel.replace(os.sep, "/")
             if not rel.startswith(_AUDIT_DIR + "/"):
                 failures.append(
                     f"  {rel}: 360 audit report outside {_AUDIT_DIR}/ — move "
@@ -1420,7 +1443,7 @@ def check_sys_07():
                     f"dated-report name (360.md [ID: 360-tracking])"
                 )
 
-    seen.count("files walked", walked)
+    seen.count("repository files read", walked)
     seen.count("audit reports found", reports)
     return seen.failures() + failures, seen.notes()
 
