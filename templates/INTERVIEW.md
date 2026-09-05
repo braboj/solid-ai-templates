@@ -74,7 +74,8 @@ Before generating, collect any missing fields in a single question:
 
 Select the matching stack template from the table below and load its
 DEPENDS ON chain. If you have shell access, run
-`py tools/resolve.py <stack-id> --concat` to get the full resolved
+`python3 tools/resolve.py <stack-id> --concat` (`py` on Windows) to
+get the full resolved
 content, taking `<stack-id>` from the table's Stack id column.
 Otherwise, read the pre-resolved file from `generated/<stack-id>.md`.
 Apply any adjustments from Phase 3.

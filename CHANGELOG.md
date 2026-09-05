@@ -23,6 +23,8 @@ alters no template carries no entry.
 
 ### Fixed
 
+- Adopter-facing commands invoke `python3` rather than the Windows-only
+  `py` launcher, and the generated-file banner example follows suit.
 - One table maps each agent to its output file. The agent rules state
   where that mapping lives instead of carrying a second copy, which had
   drifted to answer Cursor with `AGENTS.md`.
