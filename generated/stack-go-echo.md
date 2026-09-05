@@ -2577,73 +2577,58 @@ wrong before changing either.
   rule that governs both. Reconcile to whichever the governing rule
   supports, and fix the other
 
+## Adopting shared rules
+
+- Templates supply candidate conventions; the project chooses what it adopts.
+  Resolve dependencies to discover the available rules, not to authorize work.
+- Adopt a new rule when it addresses a named local defect, requirement, or
+  credible material risk. Preventive security controls need no prior incident.
+- A template update MUST NOT automatically create compliance work, tickets,
+  or decision records. A newer tag alone is not a reason to update the pin.
+- A declined candidate needs at most a line in the existing PR or discussion;
+  no ADR, separate ticket, or decline register is required.
+- Existing adopted rules remain effective until the project changes them.
+  Keep the operative selection and any necessary precedence in the project's
+  context file; a reference/hybrid file MUST inline this adoption boundary so
+  reading a new upstream MUST cannot silently expand the adopted rule set.
+- Assess security fixes in tools the project executes promptly. Review new
+  conventions when a project need warrants it, rather than on every release.
+
 ## Decision logs
 
-- Significant architectural decisions MUST be recorded as Architecture Decision
-  Records (ADR) in `docs/decisions/`
+- A consequential, durable architectural choice with meaningful alternatives
+  MUST have an Architecture Decision Record (ADR) in `docs/decisions/` when
+  future maintainers need its tradeoffs to safely reconsider it. Examples:
+  ownership boundaries, compatibility contracts, or a major dependency strategy.
+- Routine naming, formatting, directory creation, document moves, check-output
+  refinements, and compliance repairs belong in the issue/PR and current docs.
+  They need no ADR unless their consequences meet the threshold above; no
+  separate justification for not writing an ADR is required.
 - Each ADR documents: context, decision, alternatives considered, consequences
-- Each ADR MUST address exactly one concern — a separate concern gets its
-  own ADR. One concern is not one rule: a single ADR MAY number multiple
-  related decisions (1., 2., …) within its one concern
+- Each ADR records one coherent architectural decision. Related ownership,
+  layout, and compatibility choices MAY share it across several issues or PRs.
+  One rule, implementation concern, issue, or PR does not mean one ADR.
 - Render "Alternatives considered" and "Consequences" as tables where the
   content fits — they scan faster than prose lists
-- ADRs are immutable once merged — create a new ADR to supersede an
-  old one. Two changes are exempt: the supersession metadata
-  (`status`, `date`, `superseded_by`), because a supersession has to
-  be recorded on both sides; and format-only edits to the body, which
-  move no claim
-- What is immutable is the decision, not the format. The decision is
-  the set of claims the record makes in Context, Decision,
-  Alternatives considered and Consequences. Adding a claim, removing
-  one, or changing what one asserts requires a new ADR, however
-  small the edit looks
-- Reformatting a merged ADR therefore needs no superseding ADR. The
-  test is whether any claim moved, not whether the edit appears on a
-  list of permitted operations: rewrapping to the project width,
-  normalizing headings, titles, filenames and cross-links, splitting
-  a sentence no reader can parse, and rendering a buried enumeration
-  as a list all qualify. State "format-only, no decision change" in
-  the commit, and show it with `git diff --word-diff` — only
-  whitespace, connectives, capitalisation and list rendering may
-  move. An enumeration of allowed operations would be
-  under-inclusive by construction, and it would leave an unreadable
-  record unreadable in the name of protecting it
-- A claim in a merged ADR that a later decision falsifies is corrected
-  by writing a new ADR, never by editing the ADR that carries it and
-  never by appending to it — both change what a closed record asserts.
-  An ADR whose remaining decisions are current MUST NOT be marked
-  `Superseded` to correct one claim; supersession is for a record that
-  is wholly replaced
-- Precedence between a project's own decision records and the rules it
-  inherits is that project's decision, and MUST be declared in its
-  context file. A record documenting a deliberate divergence from an
-  inherited rule is such a decision: it carries the reasoning the
-  divergence rests on, so a later version of that rule does not retire
-  it. The inverse holds only in a repository that owns the rules it
-  applies, where a record describes a rule rather than departing from
-  one — that ordering belongs in its own context file, not here
-- When an ADR's premise is refuted shortly after it merges (typically by
-  data that should have informed it), prefer a same-day or same-week
-  supersession ADR documenting the post-mortem over silently closing the
-  follow-up issues — an `Accepted` ADR describing code that does not exist
-  is documentation-vs-code drift. The supersession ADR records the refuting
-  evidence and a post-mortem (Symptom / Root cause / Why missed / Fix /
-  Prevention) if the original shipped any change; the superseded ADR's
-  status flips to `Superseded` and gains the new id in
-  `superseded_by`, in the same PR
-- When a rule the project deliberately does NOT follow moves in its own
-  source — an upstream chain, a vendored rule set, a submodule pointer
-  bump — re-read the divergence record before deciding what the change
-  means. The reconciliation is done by reading a diff, and the diff does
-  not know the divergence exists, so the change reads as a gap to close
-  rather than a decision already reasoned about
-- A reconciliation that touches a recorded divergence MUST state whether
-  the divergence still holds, and MUST separate what the range refuted
-  from what it merely moved nearby. A decision can survive intact while
-  a neighbouring rule it named — a fallback, an alternative mechanism,
-  an exemption it relied on — is deleted; that is a repair to the
-  record, not grounds to reverse it. Recency is no protection, since
-  the source can move within hours of the record merging
+- Preserve merged ADR claims as history. Supersession metadata and format-only
+  edits that change no claim are allowed. For format-only edits, state
+  "format-only, no decision change" in the commit and verify with
+  `git diff --word-diff`; do not rewrite historical reasoning
+- Current requirements live in the specification or project conventions, not
+  in a chain of historical corrections. If a later change invalidates a minor
+  premise or revisit trigger, state the correction in the current docs and PR.
+  Create a superseding ADR only when the replacement meets the architectural
+  threshold; an unchanged architectural choice needs no new record
+- Declare precedence in the project's context file. Updating upstream rules
+  does not retire a deliberate local choice. A repository that owns its rules
+  states whether current rules or historical records govern
+- A refuted premise warrants an architectural reassessment, not automatic
+  supersession. Record the evidence in the issue/PR; if the architectural
+  choice changes materially, supersede it and update reciprocal metadata
+- When a selected update affects a recorded divergence, read its rationale
+  and state in the PR whether it still holds. Distinguish a refuted decision
+  from changed surrounding text; neither requires adopting the upstream rule
+  or creating an ADR for a routine refinement
 - File naming: `NNN-slug.md` — zero-padded sequence number + kebab-case slug
   (e.g. `001-data-storage.md`, `002-hosting.md`)
 - ADR file format — YAML frontmatter carrying the machine-readable
@@ -2687,9 +2672,9 @@ superseded_by: []         # ids that supersede this ADR
 - `status` MUST be one of `Proposed`, `Accepted`, `Superseded`, and
   MUST read `Superseded` if and only if `superseded_by` is non-empty
 - `date` MUST be present and MUST be updated whenever `status` changes
-- `category` MUST come from a closed set the project defines and
-  records. A new category needs its own ADR, which keeps the set a
-  scope-of-impact decision instead of a free-text field
+- `category` MUST come from a closed set the project defines in its schema.
+  Update the schema and its validation together when changing that set;
+  adding a category alone needs no ADR
 - `supersedes` and `superseded_by` MUST both be present even when
   empty, so a reader never has to tell absent from empty
 - Check — every ADR parses and satisfies the schema. Pass condition:
@@ -2767,11 +2752,8 @@ for f in records:
   Use the project's preferred rendered-diagram format (Mermaid,
   Draw.io) for diagrams that need to be standalone artifacts; inline
   ASCII is for the quick concept aid that lives inside the ADR
-- Creating a new directory is an architectural decision — write the ADR
-  **at the moment of the decision**, before creating the files
-- Moving or splitting content between documents is not one; it is editorial
-  housekeeping, recorded in the pull request description. The test is whether
-  the decision had an alternative worth an immutable record
+- File and directory operations do not determine architectural significance.
+  Apply the decision threshold above to their consequences, not their shape
 
 ### Findings docs
 
@@ -6141,10 +6123,9 @@ Lighthouse job when the PR touches only dependency manifests
   run: npm run lighthouse
 ```
 
-Document the skip rule in an ADR alongside the workflow change —
-the reasoning ("this gate cannot produce signal on these PRs")
-should be discoverable later when someone wonders why the gate
-sometimes doesn't run.
+Document the skip rule and rationale alongside the workflow change in the
+workflow or PR. Use an ADR only for a consequential architectural tradeoff,
+not merely because a gate has a condition.
 
 ---
 
@@ -6203,7 +6184,8 @@ below close those gaps.
   triggers the gate MUST cover the same set of paths — a directory
   excluded from one MUST be excluded from the other
 - A secondary toolchain with its own test runner is verified by that
-  runner, not the primary stack's gate. Document the split in an ADR
+  runner, not the primary stack's gate. Document the split in the CI docs;
+  runner selection alone does not require an ADR
 - Captured test fixtures (scraped HTML/JSON representing real external
   byte sequences) MUST be excluded from the formatter — they must
   stay byte-for-byte, and reformatting them changes the test input

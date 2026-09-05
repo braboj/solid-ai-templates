@@ -64,10 +64,9 @@ These apply to all three models; the review process checks them.
   followed; never compress away a load-bearing clause. Optimize for
   clarity, not bytes (see `docs/meta/agent-context-tradeoffs.md` and
   `templates/base/workflow/compression.md`).
-- **One line per rule.** A rule that needs a paragraph is a decision
-  with context — write an ADR and leave a one-line pointer (see the
-  Doc placement decision tree in
-  `templates/base/workflow/ai-workflow.md`).
+- **Concise rules.** Keep necessary scope and qualifiers. Length alone does
+  not warrant an ADR; apply the decision threshold in
+  `templates/base/core/docs.md` and place explanations in their relevant docs.
 - **Single source of truth.** Never restate a rule that is
   authoritative in a skill, ADR, README, or template — point to it.
   Duplicated rules drift, and the agent gets no signal which copy
@@ -91,7 +90,7 @@ hold; a failing item is a fix, not a note:
 
 - Every line states a rule the agent applies next turn — no changelog,
   architecture, or progress narrative.
-- No rule is a paragraph that should be an ADR plus a one-line pointer.
+- Rule length does not create an ADR obligation; required qualifiers survive.
 - No prose restates a rule that is authoritative elsewhere (skill,
   ADR, README, template).
 - If more than one authority governs the project, the precedence order
@@ -355,6 +354,13 @@ checklist into a short bullet list: that silently drops steps and the
 
 ## Vendoring the templates
 
+Inline the project's adoption boundary in reference and hybrid output:
+existing adopted rules remain effective, but reading a new upstream rule or
+bumping the pin does not adopt it. Select new conventions for a named local
+need or material risk; declining one needs no ADR or ticket. See
+`templates/base/core/docs.md` (Adopting shared rules). This boundary takes
+precedence over inherited instructions to apply every newly discovered rule.
+
 The reference and hybrid models both vendor this repository as a
 submodule. That puts files on disk which the consuming repository does
 not track, and any tool that walks the tree rather than the VCS index
@@ -404,18 +410,16 @@ moves the pin to.
   correct until upstream keeps working past a release, then silently
   attributes rules to a range that does not contain them
 
-The pinned revision settles *when*; the dependency graph settles *what*.
-Governance resolves transitively through each template's `DEPENDS ON`
-header — declaring `platform/<host>.md` also declares every template it
-reaches, and every template those reach.
+The pinned revision settles the source version; the dependency graph settles
+which files to read. Resolve each template's `DEPENDS ON` transitively, then
+apply the project's adoption boundary to the candidate rules they contain.
 
 - Resolve each changed file against the graph when reconciling a bump,
-  never against a list. A file absent from the list still governs if
-  anything declared reaches it; a file that reads as obviously
-  applicable does not govern unless something declared reaches it
+  never against a cached list. A reachable file belongs in the reading set;
+  that membership does not automatically adopt new rules inside it
 - Any chain list a consumer writes into its own context file is a cache
   of that resolution, not the definition. It can go stale, and a stale
-  one changes governed scope without any edit to the rule it drops
+  one changes the reading set without any edit to the rule it drops
 - Both errors pass for ordinary reconciliation work. The missed file
   surfaces as a local document maintaining a convention upstream
   already owns; the over-included one as a repository enforcing rules

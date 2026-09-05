@@ -21,6 +21,18 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Changed
+
+- New template rules are adopted for local needs or material risks, not
+  automatically on pin updates. Declining a candidate requires no ADR or
+  ticket; reference and hybrid context files state this boundary inline.
+- ADRs cover consequential architectural choices. Routine moves, naming,
+  paragraph length, compliance repairs, and minor historical corrections no
+  longer require new records. Related changes may share one decision.
+- Session startup preserves existing changes. Wrap-up no longer requires
+  template pin bumps or upstream issues solely because a newer tag or a
+  reusable-looking convention exists.
+
 ## [2.79.0] - 2026-09-05
 
 ### Fixed

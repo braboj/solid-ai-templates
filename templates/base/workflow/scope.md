@@ -16,17 +16,14 @@ Before starting any work, the agent MUST:
 1. Read all documents referenced in the project's CLAUDE.md (e.g.
    `docs/solid-ai-templates/templates/base/core/git.md`,
    `templates/base/core/docs.md`, etc.)
-2. These contain binding conventions that CLAUDE.md inherits — do not
-   proceed until you have read and understood them
+2. Apply the project's adopted conventions. Reading or updating a template
+   does not adopt its new rules; follow "Adopting shared rules" in
+   `templates/base/core/docs.md`
 3. Check which branch you are on — if not `main`, ask why before
    proceeding
-4. Check `git status` — if uncommitted changes exist, resolve before
-   starting new work. Uncommitted changes at session start usually mean
-   the previous session's wrap (journal entry, memory pointer) was
-   written but never shipped: branch, commit, push, and merge it as the
-   FIRST action, before any new work. "Resolve" means ship the previous
-   wrap — not stash or delete. If the change is something else, ask what
-   it is and whether it should ship before the new scope.
+4. Check `git status` and preserve existing work. Continue independent work
+   when possible; ask only if overlapping changes prevent safe progress.
+   Uncommitted changes do not authorize committing, pushing, or merging them.
 5. Clean up stale branches: `git fetch --prune` to remove stale
    remote-tracking refs, then delete local branches whose PRs have
    merged. Verify each against the PR record, never against
@@ -191,9 +188,9 @@ summarize — visible sequential execution prevents missed steps.
    shipped this session, from the tracker rather than memory, and close
    what is done (verify auto-close worked)
 3. **Epic checklists** — update epic checklists if relevant
-4. **ADRs** — record any architectural decisions in `docs/decisions/`.
-   Check: were any new directories created or content moved between
-   documents? Each one needs an ADR.
+4. **ADRs** — apply the decision threshold in
+   `templates/base/core/docs.md`. Routine moves, naming, and compliance
+   repairs need no ADR; one coherent architectural choice may span PRs.
 5. **CLAUDE.md** — for each new convention/rule, apply the doc-placement
    decision tree in `ai-workflow.md` (Doc placement decision tree
    section): evaluate code → ADR → README → PLAYBOOK → CLAUDE.md →
@@ -201,9 +198,8 @@ summarize — visible sequential execution prevents missed steps.
    apply the rule on every turn.
 
    CLAUDE.md contains rules only — not changelogs, package architecture,
-   per-feature progress, or session logs. Each rule fits on one line;
-   if it needs a paragraph, write an ADR and leave a one-line pointer
-   here. Evaluate items individually; do not batch-dismiss.
+   per-feature progress, or session logs. Keep rules concise without
+   removing necessary qualifiers; paragraph length does not require an ADR.
 6. **README.md** — for each new command, dependency, or structural
    change, is it reflected? Name the section.
 7. **ONBOARDING.md** — ensure `docs/ONBOARDING.md` exists and covers
@@ -213,28 +209,13 @@ summarize — visible sequential execution prevents missed steps.
 8. **PLAYBOOK.md** — ensure `docs/PLAYBOOK.md` exists and covers each
    new command, script, or workflow added. Create it if missing; name
    the section. A missing doc is work to do here, not a gap to report.
-9. **Submodules** — check if upstream submodules need updates
-   (`git submodule update --remote`); commit the pointer bump if needed
-10. **Template feedback** — for each new pattern or convention
-    introduced, state whether it is project-specific or reusable. If
-    reusable, name the upstream template file and file an issue on the
-    upstream repo (not a downstream note) — naming a candidate is not
-    contributing it
-    - **Capture at decision time, not only here.** When an ADR or
-      decision records a generic convention, judge reusability then and
-      record the verdict on the record (an `Upstream:` line: candidate
-      file + filed issue, or `none`). This item then harvests flagged
-      candidates instead of re-deriving them, so a session that never
-      formally wraps still leaves the verdict captured
-    - **Strip the domain skin before judging.** Restate the convention
-      with the project's domain nouns removed and re-ask whether it
-      stands alone — a generic core ("scope the coverage denominator to
-      the CI-runnable surface") hides under domain framing ("omit the
-      GPU-only modules") and reads as project-specific
-    - **Reconcile periodically.** Every N sessions, or when a genericized
-      engineering-notes doc is produced, reconcile the whole accumulated
-      convention set against the resolved template chain — a once-missed
-      pattern is swept eventually, not lost forever
+9. **Submodules** — review updates needed for the current task or a material
+   security risk. A newer template tag alone creates no update obligation;
+   follow the project's adoption policy before changing a pin.
+10. **Template feedback** — propose upstream work for a demonstrated shared
+    defect or recurring need. Check existing issues first. A reusable-looking
+    preference alone requires no issue, ADR, or `Upstream:` bookkeeping;
+    contribute when the user has authorized that work.
 11. **Flag gaps** — if any item cannot be completed this session, report
     it as pending (never as done) before closing — including deferred
     cross-repo work, such as an upstream contribution that was flagged
