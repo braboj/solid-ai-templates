@@ -6,4 +6,4 @@
 
 <!-- State checks run and results. Note anything relevant that was not tested. -->
 
-<!-- Add migration/risk notes only when useful. End with one Closes #N per resolved issue. -->
+<!-- Add relevant migration/risk notes. End with one Closes #N per resolved issue. -->
