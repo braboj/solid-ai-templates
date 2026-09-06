@@ -5821,7 +5821,12 @@ stateless logic.
 [ID: base-security]
 
 Cross-cutting security rules for application code. Applies to
-every project regardless of language or framework.
+every project regardless of language or framework. The sections below
+cover the OWASP Top 10 categories: injection, broken access control,
+cryptographic failures, insecure design, security misconfiguration,
+vulnerable components, identification and authentication failures,
+software and data integrity failures, logging and monitoring failures,
+and server-side request forgery.
 
 
 ---
@@ -5843,7 +5848,7 @@ every project regardless of language or framework.
 
 ---
 
-## Output encoding
+## Output encoding (XSS)
 
 [ID: security-output]
 
@@ -5900,6 +5905,29 @@ every project regardless of language or framework.
   for sensitive applications, configurable otherwise
 - Invalidate sessions on logout — do not rely on cookie expiry
   alone
+
+---
+
+## Cross-site request forgery (CSRF)
+
+[ID: security-csrf]
+
+- Every state-changing request MUST carry a CSRF defence when the
+  session is authenticated by an ambient credential the browser
+  attaches on its own — a cookie, HTTP Basic, or a client certificate
+- Use the framework's built-in CSRF middleware — never hand-roll token
+  generation or comparison
+- `SameSite=Lax` on the session cookie is defence in depth, not the
+  defence — it does not cover top-level `POST` navigation on older
+  browsers, and a subdomain takeover defeats it
+- Prefer the synchroniser token pattern; where the server holds no
+  session state, use the signed double-submit cookie with the token
+  bound to the session identifier
+- Validate the token on every `POST`, `PUT`, `PATCH` and `DELETE` —
+  never on `GET`, which MUST NOT change state
+- An API authenticated only by a bearer token the client attaches
+  explicitly needs no CSRF token — the browser never adds that header
+  on its own; an API that also accepts cookie authentication does
 
 ---
 
