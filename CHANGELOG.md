@@ -26,6 +26,9 @@ alters no template carries no entry.
 - `stack-htmx` resolves `base-security`. A server-rendered web stack
   shipped no rule on injection, authentication, session management,
   secrets or transport security.
+- `base-readme` requires a capability and its first documentation to land
+  on the same side of a release tag, and `base-git` ships the check: the
+  tree being tagged documents every identifier the release record names.
 - `base-quality` ships the working-tree half of its line-ending rule.
   A checkout made before `.gitattributes` landed keeps its old
   convention indefinitely, with the index clean and `git status` quiet.

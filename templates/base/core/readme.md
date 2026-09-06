@@ -104,6 +104,16 @@ Every README MUST contain the following sections, in this order:
   section with a `> Note: planned for vX.Y` callout
 - README MUST be updated in the same commit that changes the behaviour it
   describes — a stale README is a defect
+- A capability and its first documentation MUST land on the same side of a
+  release tag. The rule above is phrased against commits and cannot see a
+  tag, so a documentation change merged an hour after the tag satisfies it
+  completely while the artifact carries no mention of the feature. What a
+  consumer downloads is the tree the tag names: the source archive, the
+  distribution and the package metadata all read the README from there,
+  and the branch they never see is where the description sits. Where the
+  documentation is not ready, the release waits for it or ships without
+  the feature; a follow-up release that documents the previous one is the
+  repair, not the rule
 - A README MUST NOT state a measured value that changes without a
   corresponding edit — coverage percentages, test counts, byte sizes,
   timings. The rules above cover content that goes stale when someone

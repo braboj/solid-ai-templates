@@ -135,6 +135,10 @@ CHECKS = [
                "which side of the tag the work lands on. The check states "
                "that is not a warning it can score."},
 
+    {"file": "base/core/git.md", "find": "documentation files in the tree",
+     "title": "The tree being tagged documents what the release claims",
+     "do": RUN, "expect": ["nonzero", "nonzero", "any", "zero"]},
+
     {"file": "base/core/git.md", "find": "entries in Unreleased",
      "title": "The Unreleased section accounts for what the release carries",
      "do": RUN, "expect": MANUAL,

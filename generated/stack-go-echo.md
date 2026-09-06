@@ -1987,6 +1987,114 @@ exit 3 covers; an uncut `Unreleased` section is instead the ordinary state
 of every untagged commit. The two checks ask the same question and answer
 it differently because their failure shapes differ.
 
+**The release-documentation check** — run it from the release commit,
+before the tag is pushed. It asks the one question every other gate
+answers about the branch instead of the artifact: does the tree being
+tagged describe what the release says it ships. Linters, the test suite
+and the changelog gate all read the working tree, the packaging check
+validates metadata rather than its content, and the README as the tag
+freezes it is the file nobody reads and the one a consumer opens first.
+
+```bash
+py - <<'EOF'
+import re, subprocess, sys
+
+sys.stdout.reconfigure(encoding="utf-8")
+
+# The version being released, or empty on an ordinary day. Setting it is
+# the decision the step asks for.
+RELEASE = ""
+
+# Where the release record lives, and which paths in the tree count as
+# the documentation a consumer reads. A capability named in the record and
+# present in none of these shipped undocumented.
+RECORD = "CHANGELOG.md"
+DOCS = ("README.md", "docs/")
+
+if not RELEASE:
+    print("no release is in preparation; this check does not apply")
+    raise SystemExit(3)
+
+
+def at_head(path):
+    """Read a path from the working tree the tag will name."""
+    proc = subprocess.run(["git", "show", "HEAD:" + path],
+                          capture_output=True, text=True, encoding="utf-8")
+    return proc.stdout if proc.returncode == 0 else None
+
+
+record = at_head(RECORD)
+if record is None:
+    print("the tree being tagged carries no %s, so there is nothing to "
+          "check the description against" % RECORD)
+    raise SystemExit(1)
+
+# Read the documentation as the tag freezes it, not as the branch has it.
+# The branch is what every other gate sees and is not what ships.
+listed = subprocess.run(["git", "ls-tree", "-r", "--name-only", "HEAD"],
+                        capture_output=True, text=True,
+                        encoding="utf-8").stdout.split()
+docs = [p for p in listed if p.startswith(DOCS)]
+print("documentation files in the tree being tagged: %d" % len(docs))
+if not docs:
+    print("the tree being tagged carries no documentation at all")
+    raise SystemExit(1)
+prose = chr(10).join(at_head(p) or "" for p in docs)
+
+# The section for this release: everything under its heading, up to the
+# next one.
+section = re.search(r"^##\s*\[?%s\]?.*?$(.*?)(?=^##\s|\Z)"
+                    % re.escape(RELEASE.lstrip("v")),
+                    record, re.M | re.S)
+if section is None:
+    print("no %s section names %s; the record and the tag disagree about "
+          "what is being released" % (RECORD, RELEASE))
+    raise SystemExit(1)
+
+entries = [l for l in section.group(1).splitlines() if l.startswith("- ")]
+print("release record entries read: %d" % len(entries))
+
+# What the record names in code format is what a consumer will search the
+# description for. Prose alone is not checkable and is not a finding.
+named, missing = set(), []
+for entry in entries:
+    named.update(re.findall(r"`([^`]+)`", entry))
+print("identifiers the record names: %d" % len(named))
+
+for name in sorted(named):
+    if name not in prose:
+        missing.append(name)
+print("of those, documented nowhere in this tree: %d" % len(missing))
+for name in missing:
+    print("  %s" % name)
+raise SystemExit(1 if missing or not entries else 0)
+EOF
+```
+
+Pass condition: the command reports how many documentation files the tree
+carries, how many entries it read, how many identifiers they name, and how
+many of those the documentation never mentions; the first two are non-zero
+and the last is zero. An identifier the record names and the shipped
+documentation does not is the defect this check exists for — the release
+carries the capability and the tree it is cut from says nothing about it.
+
+Read the documentation as the tag freezes it, which is the whole point: a
+description merged an hour after the tag is on the branch every other gate
+inspects and in nothing a consumer downloads. Zero identifiers is a
+legitimate reading rather than a failure, since a release of prose changes
+names none. Zero entries is a failure, because a release with an empty
+record is one whose section heading did not match rather than one that
+shipped nothing.
+
+Which paths count as documentation is a project judgement and is named in
+the check. Setting it to the front page alone fails a project whose
+changelog speaks in internal identifiers its README has no reason to carry;
+setting it to the whole tree passes anything the code mentions, which is
+the defect itself.
+
+With the release left empty the command reports that the check does not
+apply, on exit status 3.
+
 **The changelog-completeness check** — step 8 of the sequence above. Run it
 from the release commit before the `Unreleased` section is cut. The failure
 it catches has no signal anywhere else: each pull request is individually
@@ -3934,6 +4042,16 @@ Every README MUST contain the following sections, in this order:
   section with a `> Note: planned for vX.Y` callout
 - README MUST be updated in the same commit that changes the behaviour it
   describes — a stale README is a defect
+- A capability and its first documentation MUST land on the same side of a
+  release tag. The rule above is phrased against commits and cannot see a
+  tag, so a documentation change merged an hour after the tag satisfies it
+  completely while the artifact carries no mention of the feature. What a
+  consumer downloads is the tree the tag names: the source archive, the
+  distribution and the package metadata all read the README from there,
+  and the branch they never see is where the description sits. Where the
+  documentation is not ready, the release waits for it or ships without
+  the feature; a follow-up release that documents the previous one is the
+  repair, not the rule
 - A README MUST NOT state a measured value that changes without a
   corresponding edit — coverage percentages, test counts, byte sizes,
   timings. The rules above cover content that goes stale when someone
