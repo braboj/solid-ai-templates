@@ -166,7 +166,15 @@ CHECKS = [
                "touches, which is prose in a pull request body and not a "
                "count."},
 
-    # -- base/core/quality.md ---------------------------------------------
+    # -- base/core/quality.md ------------------------------------------
+
+    {"file": "base/core/quality.md", "find": "documents naming ${module}",
+     "title": "A document naming a check is re-read when its exemptions change",
+     "do": SKIP,
+     "reason": "Takes the check whose exemptions are changing as an "
+               "argument. It is run per change, at the moment an "
+               "exemption is added or removed, not as a property of the "
+               "tree."},
 
     {"file": "base/core/quality.md", "find": "Identifiers only",
      "title": "Identifiers stay ASCII", "do": RUN, "expect": SILENT},
