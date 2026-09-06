@@ -21,30 +21,26 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
-### Changed
-
-- `base-docs`' gated-figure check reads every tracked Markdown, not a
-  path list. A dated record is excluded by kind: a `<!-- measured:
-  YYYY-MM-DD -->` marker exempts a passage, and an undated one does not.
-
 ### Added
 
 - `stack-htmx` resolves `base-security`. A server-rendered web stack
   shipped no rule on injection, authentication, session management,
   secrets or transport security.
+- `base-quality` ships the working-tree half of its line-ending rule.
+  A checkout made before `.gitattributes` landed keeps its old
+  convention indefinitely, with the index clean and `git status` quiet.
 - `base-review` names a seventh shape a filed issue takes: one deferring
   to a sibling's approach cites a plan, and a plan changes during
   implementation. It ships the check on what the sibling shipped.
 
 ### Changed
 
-- `base-quality` requires a shipped check to carry its verdict in its exit
-  status, and a pass condition satisfied by silence to reach a non-zero one.
-  Five `base-git` checks that printed findings and exited zero now exit.
-- `platform-github`'s commit-checks check reports that it does not apply
-  where HEAD is on no remote branch. A pull-request checkout inspects a
-  synthesised merge commit, whose run count is zero for every pull
-  request.
+- `base-quality` requires a shipped check to carry its verdict in its
+  exit status, and a pass condition satisfied by silence to reach a
+  non-zero one. Five `base-git` checks that printed findings now exit.
+- `base-docs`' gated-figure check reads every tracked Markdown, not a
+  path list. A dated record is excluded by kind: a `<!-- measured:
+  YYYY-MM-DD -->` marker exempts a passage, and an undated one does not.
 
 ## [2.81.0] - 2026-09-06
 

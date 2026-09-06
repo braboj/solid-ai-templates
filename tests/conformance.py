@@ -177,6 +177,10 @@ CHECKS = [
      "title": "No committed text file carries CRLF", "do": RUN,
      "expect": SILENT},
 
+    {"file": "base/core/quality.md", "find": "eol() { git ls-files --eol",
+     "title": "The checkout carries the line ending the index does",
+     "do": RUN, "expect": ["nonzero", "zero"]},
+
     # -- base/core/review.md ----------------------------------------------
 
     {"file": "base/core/review.md", "find": "open pull requests inspected",

@@ -893,6 +893,35 @@ git ls-files --eol |
   fields are space-separated and only the path is tab-delimited, so a
   whitespace-split `$4` lands in the middle of the attribute list and
   the check silently matches nothing
+- The index being right does not make the checkout right. `.gitattributes`
+  governs what a fresh clone writes, so a working copy created before the
+  file landed keeps whatever it was checked out with, indefinitely and
+  invisibly: every commit from it is still normalised, and `git status`
+  stays clean, while every tool that reads the files sees different bytes
+  than the same tool on a colleague's machine. A byte-level measurement
+  taken there is not reproducible anywhere else, and an edit script that
+  matches on a line ending silently rewrites the whole file or nothing at
+  all. Refresh a drifted checkout by rewriting the offending files, or by
+  re-cloning; the check is what says one has drifted:
+
+  ```bash
+  eol() { git ls-files --eol | awk -F'\t' "$1"; }
+  total=$(eol '$1 ~ /^i\/lf/' | wc -l)
+  drifted=$(eol '$1 ~ /^i\/lf/ && $1 !~ /w\/lf/' | wc -l)
+  echo "text files tracked: $total"
+  echo "checked out against a different convention: $drifted"
+  eol '$1 ~ /^i\/lf/ && $1 !~ /w\/lf/ { print "  " $2 }'
+  if [ "$total" -eq 0 ]; then
+    echo "no text file reached; the extension or index pattern drifted"
+    exit 1
+  fi
+  [ "$drifted" -eq 0 ] || exit 1
+  ```
+
+  Pass condition: the first count is above zero, proving the command
+  reached the index, and the second is zero; either failing reaches a
+  non-zero status. The first count is what separates a clean tree from a
+  pattern that stopped matching, which report the same zero on the second.
 - Prefer self-documenting code — if a comment feels necessary, treat it as a
   signal that the code needs restructuring before the comment is added
 - Add comments only where the intent cannot be expressed in code
