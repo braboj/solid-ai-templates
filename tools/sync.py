@@ -125,6 +125,32 @@ def _readme_stacks(manifest):
     return "\n".join(lines)
 
 
+def _readme_extras(core_ids, entries, stacks):
+    """Generate the README table of roots a project picks beside its stack.
+
+    A stack is one of two kinds of root. The platform and every extra are
+    picked independently and resolve as their own root, so a table built
+    from the manifest's stacks: key alone leaves a fifth of the catalogue
+    off the page that describes the catalogue.
+    """
+    from resolve import opt_in_roots
+
+    lines = [
+        "| Template | Kind | Description |",
+        "|----------|------|-------------|",
+    ]
+    for root in opt_in_roots(core_ids, entries, stacks):
+        entry = entries[root]
+        parts = entry["file"].split("/")
+
+        # templates/platform/x.md and templates/backend/x.md name their kind
+        # in the second segment; templates/base/<kind>/x.md in the third.
+        kind = parts[2] if parts[1] == "base" else parts[1]
+        lines.append("| `%s` | %s | %s |"
+                     % (entry["file"], kind, entry.get("description", "")))
+    return "\n".join(lines)
+
+
 def _interview_stacks(manifest):
     """Generate INTERVIEW.md stack selection table."""
     stacks = manifest.get("stacks", [])
@@ -373,6 +399,15 @@ def main():
     spec_content = _spec_sections(manifest)
     chain_examples = _spec_chain_examples()
     readme_content = _readme_stacks(manifest)
+
+    # load_manifest() re-reads the file parse_manifest already produced, but
+    # it is the resolver's own entry point and returns the core tier and the
+    # stack list the root split needs. Reusing it keeps one definition of
+    # what an opt-in root is.
+    from resolve import load_manifest
+
+    core_ids, entries, stacks = load_manifest()
+    readme_extras = _readme_extras(core_ids, entries, stacks)
     model_limits = _readme_model_limits()
     agent_outputs = _readme_agents()
     interview_content = _interview_stacks(manifest)
@@ -389,6 +424,7 @@ def main():
             ROOT / "README.md",
             {
                 "readme-stacks": readme_content,
+                "readme-extras": readme_extras,
                 "readme-model-limits": model_limits,
                 "readme-agents": agent_outputs,
             },

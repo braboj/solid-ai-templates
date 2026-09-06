@@ -148,6 +148,25 @@ when a base template grows instead of ageing quietly.
   to the model maximum
 - **Output token limit 32K+**: full inline file fits in one pass
 
+## What a project picks
+
+A project does not pick one template. It picks a **stack**, a **platform**,
+and any **extras** it needs, and each one resolves independently: the core
+tier plus that template's own `[DEPENDS ON]` tree. An extra is guaranteed
+nothing from the stack it sits beside, which is why it can be added to any
+of them.
+
+```
+your project
+  |-- one stack        python-fastapi, go-service, htmx, ...
+  |-- one platform     github, gitlab, linear
+  `-- any extras       caching, jobs, release, deployment, ...
+```
+
+`python3 tools/resolve.py --roots` lists every root a project can pick — 17
+stacks and 20 orthogonal templates. The stacks are below; the rest are the
+extras table that follows them.
+
 ## Supported stacks
 
 <!-- generated:readme-stacks -->
@@ -171,6 +190,43 @@ when a base template grows instead of ageing quietly.
 | `templates/stack/nodejs-lib.md` | library | TypeScript npm package or CLI, tsup, Vitest |
 | `templates/stack/c-embedded.md` | embedded | GCC + CMake, Unity tests, HAL, binary + .a |
 <!-- /generated:readme-stacks -->
+
+## Platforms and extras
+
+Picked independently of the stack, each resolving as its own root. The
+examples under `examples/` cite several of these, so a reader who opens one
+meets templates the stacks table does not list.
+
+<!-- generated:readme-extras -->
+| Template | Kind | Description |
+|----------|------|-------------|
+| `templates/backend/caching.md` | backend | Cache-aside, TTL, invalidation, resilience, stampede |
+| `templates/backend/edge.md` | backend | Reverse proxy / edge — TLS termination, forwarded headers, upstream routing, timeouts, edge security |
+| `templates/backend/jobs.md` | backend | Background jobs, idempotency, retry, DLQ, scheduling |
+| `templates/backend/microservices.md` | backend | Service boundaries, inter-service comms, saga, contract testing |
+| `templates/backend/monitoring.md` | backend | Key metrics, thresholds, alerts, dashboards, incidents |
+| `templates/backend/webhooks.md` | backend | Inbound webhook intake, edge signature verification, fast-ack, retry amplification |
+| `templates/base/workflow/360.md` | workflow | 360-degree project analysis — four stakeholder perspectives, grading |
+| `templates/base/core/agents.md` | core | Output structure, models (inline/reference/hybrid), formatting rules |
+| `templates/base/workflow/ai-workflow.md` | workflow | AI-assisted development lifecycle, work item hierarchy |
+| `templates/base/workflow/communication.md` | workflow | Communication preferences — concise output, shorthand verbs, scope-asking |
+| `templates/base/workflow/compression.md` | workflow | Re-verifying summaries, tables and rollups derived from verified research |
+| `templates/base/data/data-governance.md` | data | Classification, PII handling, retention, ownership, audit trail |
+| `templates/base/data/data-migration.md` | data | Versioned migrations, zero-downtime, rollback strategies |
+| `templates/base/infra/deployment.md` | infra | Deployment targets (cloud/hybrid/offline), certs, LB, registries, secrets |
+| `templates/base/workflow/release.md` | workflow | Semver, version bump propagation, backward compat, cut-over |
+| `templates/base/core/skills.md` | core | Skill authoring — when to write one, frontmatter, triggering, structure, scripts |
+| `templates/base/workflow/two-pass-review.md` | workflow | Split convention checks into mechanical (auto-fix) and contextual (over-flag, judge) passes over one catalogue |
+| `templates/platform/github.md` | platform | CodeQL, GitHub Actions, gitleaks action, push protection |
+| `templates/platform/gitlab.md` | platform | Semgrep OSS, GitLab CI/CD, gitleaks CLI |
+| `templates/platform/linear.md` | platform | Label groups, native priority, sub-issues, code-host sync |
+<!-- /generated:readme-extras -->
+
+`generated/` holds a pre-resolved chain for each of the 17 stacks and not
+for these 20. A stack chain spans dozens of files and is tedious to
+assemble by hand; an extra is one file plus the core tier, so the file
+itself is the shortest path to it. Attach the template directly, or run
+`python3 tools/resolve.py <root> --concat` to get its chain the same way.
 
 ## Supported agents
 
