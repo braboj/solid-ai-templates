@@ -220,6 +220,32 @@ def reading(result):
     return head + (["```"] + body + ["```", ""] if body else [])
 
 
+BUDGET = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                      "reading-budget.txt")
+
+
+def budgeted():
+    """The check titles allowed to await a reading.
+
+    A reading is not a failure, so the run stays green over one and the set
+    can grow with nothing registering that it did. This file is what
+    registers it: an unbudgeted reading fails, and a budgeted check that
+    reaches a verdict passes freely.
+    """
+    raw = io.open(BUDGET, "rb").read().decode("utf-8")
+    raw = raw.replace(chr(13) + chr(10), chr(10)).replace(chr(13), chr(10))
+    titles = [l.strip() for l in raw.split(chr(10))
+              if l.strip() and not l.startswith("#")]
+
+    # A budget the file did not produce is not a budget. An empty read --
+    # a truncated file, a wrong path -- would license every reading, which
+    # is the state this check exists to refuse.
+    if not titles:
+        raise SystemExit("FAIL: %s named no check. An empty budget "
+                         "licenses every reading." % BUDGET)
+    return titles
+
+
 def main():
     started_at = datetime.datetime.now()
     args = sys.argv[1:]
@@ -241,7 +267,7 @@ def main():
     # and a block matching nothing are different defects and both are
     # reported: a registry drifting out of step with the templates is how
     # a check goes unexamined.
-    matched, problems = {}, []
+    matched, problems, reviewed = {}, [], []
     for entry in CHECKS:
         # A judgement with no stated reason is indistinguishable from a
         # verdict nobody got round to writing, and the pile is where the
@@ -370,6 +396,8 @@ def main():
             run_results.append({"id": where, "title": title,
                                 "status": status, "failures": failures,
                                 "error": "", "output": out})
+            if status == REVIEW:
+                reviewed.append(title)
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
 
@@ -392,6 +420,34 @@ def main():
               "them above before calling the run clean."
               % results[REVIEW])
 
+    # Nobody reads a reading in CI: the job is green and the line scrolls
+    # past. The budget is what makes growth arrive as a failure, in the
+    # change that causes it.
+    allowed = budgeted()
+    print("readings budgeted: %d, awaiting a reading: %d"
+          % (len(allowed), len(reviewed)))
+    unbudgeted = [t for t in reviewed if t not in allowed]
+    for title in unbudgeted:
+        print("  unbudgeted reading: %s" % title)
+    if unbudgeted:
+        print("A reading is not a failure, but an unregistered one is. "
+              "Reach a verdict, or add it to tests/reading-budget.txt in "
+              "this change with the reason it cannot.")
+
+    # The report is where a reading is legible; the log is where it is
+    # not. On a hosted runner say it in the run summary too, which a green
+    # job still shows.
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with io.open(summary, "a", encoding="utf-8") as handle:
+            handle.write("### Conformance%s" % chr(10) + chr(10))
+            handle.write("%d passed, %d failed, %d not applicable, "
+                         "%d awaiting a reading (%d budgeted)."
+                         % (results[PASS], results[FAIL], results[NA],
+                            results[REVIEW], len(allowed)) + chr(10))
+            for title in reviewed:
+                handle.write("- reading: %s%s" % (title, chr(10)))
+
     if ran == 0:
         print("\nFAIL: ran nothing. Every check reported as not applicable "
               "is a check that never verified anything.")
@@ -407,7 +463,7 @@ def main():
         NA: reading,
     })
 
-    sys.exit(1 if results[FAIL] or results[ERR] else 0)
+    sys.exit(1 if results[FAIL] or results[ERR] or unbudgeted else 0)
 
 
 if __name__ == "__main__":

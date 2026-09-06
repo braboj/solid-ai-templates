@@ -415,7 +415,9 @@ Run `py tests/run_smoke.py` before every PR. It checks:
   the reason it does not apply. `py tests/run_conformance.py` fails on a
   block with no entry. A block whose pass condition declares a threshold
   takes a predicate, not a judgement; a judgement disposition MUST state
-  what takes a person, and the runner fails on one that does not
+  what takes a person, and MUST name the check in
+  `tests/reading-budget.txt` beside that reason. The runner fails on a
+  judgement stating neither
 - A conformance run is NOT clean until its judgement readings are read —
   `0 failed` counts only the automatic verdicts. The `not applicable`
   count is not among them: those checks answered by exiting 3 and need no

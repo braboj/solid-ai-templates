@@ -1,0 +1,32 @@
+# The checks allowed to await a reading, one title per line.
+#
+# `run_conformance.py` reports a check as REVIEW when its disposition
+# reaches no automatic verdict. The runner exits zero on a reading, because
+# a reading is not a failure -- so in CI the job is green, the summary line
+# scrolls past, and the set can grow with nothing registering that it did.
+#
+# This file is what registers it. A check awaiting a reading whose title is
+# not below fails the run, so growth is carried in the diff that causes it,
+# beside the reason it was accepted. A title here that reaches a verdict, or
+# reports it does not apply, passes freely: shrinking is the direction this
+# file exists to encourage, and the set moves with the release moment --
+# release-ordering answers "does not apply" while HEAD is the tag.
+#
+# Adding a line means answering first why the check cannot reach a verdict.
+# A pass condition that declares a threshold has one available and belongs
+# in a predicate instead.
+
+# Each pull request it lists as ready is a decision about which side of the
+# tag the work lands on, which the check states is not a warning it can
+# score.
+Release ordering against other ready pull requests
+
+# The finding is whether the change SAYS SO about the off-limits path it
+# touches, which is prose in a pull request body and not a count.
+A diff touching an off-limits path says so
+
+# Governance rather than a pass/fail metric: it decides review eligibility,
+# not whether the build is green. Every template change owes a disposition
+# in this repository's registry, which is itself a test edit, so scoring it
+# would fail each conforming change on arrival.
+A change to an existing test is visible

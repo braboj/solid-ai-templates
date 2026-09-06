@@ -421,6 +421,20 @@ scored verdict now, and each check that stays a judgement carries a
 `reason` in `tests/conformance.py` naming what about it takes a person.
 The runner refuses a judgement disposition that states none.
 
+Which checks may reach that status is fixed in `tests/reading-budget.txt`,
+one title per line above the reason it cannot reach a verdict. A reading
+the file does not name fails the run, so the set grows only in a diff that
+says why; a named check that reaches a verdict or reports it does not apply
+passes freely, which is what keeps the release moment from failing the run
+— the ordering check answers "does not apply" while HEAD is the tag. An
+empty budget is refused rather than obeyed. On a hosted runner the summary
+is written to the run summary as well as the log.
+
+Adding a judgement disposition therefore means two edits in the same
+change: the `reason` beside the disposition, and the title in the budget.
+Renaming a check means moving its budget line too — the runner reports the
+stale entry as an unbudgeted reading rather than ignoring it.
+
 ---
 
 ## Control-test a check you are changing
