@@ -60,6 +60,10 @@ CHECKS = [
      "title": "Documentation line width matches the declared one",
      "do": RUN, "expect": ["nonzero"]},
 
+    {"file": "base/core/docs.md", "find": "ungated figures",
+     "title": "A documentation figure comes from a generator",
+     "do": RUN, "expect": ["nonzero", "zero"]},
+
     {"file": "base/core/docs.md", "find": "(?:R|TD)[0-9]{2}",
      "title": "Risk and technical-debt identifiers stay in their owning doc",
      "do": RUN, "expect": ["nonzero", "nonzero", "nonzero"]},

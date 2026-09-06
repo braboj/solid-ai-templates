@@ -23,6 +23,9 @@ alters no template carries no entry.
 
 ### Added
 
+- `base-docs` requires a figure a document states about the tree to come
+  from a generator, or not be stated. It ships the check: no figure in
+  documentation prose outside a generated block.
 - `base-security` gains a CSRF section — when a defence is required, which
   pattern, and why a bearer-token API needs none. It reaches 12 of the 17
   stacks; `stack-htmx` had the only CSRF rule before.

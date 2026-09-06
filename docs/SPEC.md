@@ -387,8 +387,9 @@ states which categories a project MUST gate" — is not a directive and is
 not resolved. It costs reach instead: the referencing file and the
 referenced one sit at different depths in the graph, so the reference
 reads correctly in the chains carrying both and dangles in the rest.
-`base-git` resolves into all 17 chains and `base-examples` into 11, so a
-reference from the first to the second is unreadable in six.
+`base-git` resolves into every chain and `base-examples` into a subset
+of them, so a reference from the first to the second is unreadable in
+the rest.
 
 State the substance inline instead. Where a cross-file reference is
 genuinely wanted, the declaring file MUST be present in every chain that
