@@ -286,7 +286,51 @@ figures with no generator behind it, and the copy is what ages.
    characters as its own paragraph, which failed every root, to 98
    characters shorter than the narrow rule it replaced. Measured
    2026-09-03 on `base/core/git.md`.
-2. **Agent check**: attach `INTERVIEW.md` + the changed template to an agent
+
+   Where a cut lands several ceiling-raising branches, each rebase
+   conflicts on `tests/chain-budget.txt`, and resolving it line by line
+   is wrong twice over: the numbers are generated, and a branch's own
+   raises were measured against a tree that no longer exists. Take the
+   upstream file whole, then re-measure:
+
+   ```bash
+   git checkout main -- tests/chain-budget.txt
+   py - <<'EOF'
+import io, sys
+sys.path.insert(0, "tests")
+import run_smoke
+
+# A ceiling raised from an empty measurement records the chain as free.
+# The refusal is the finding: nothing here can tell a resolver that
+# stopped enumerating from a tree that shrank.
+measured, stacks, opt_in = run_smoke._measure_chains()
+if not (measured and stacks and opt_in):
+    raise SystemExit("refusing to rewrite: a kind of root measured empty")
+
+lines = io.open("tests/chain-budget.txt", "rb").read().decode("utf-8")
+lines = lines.replace(chr(13) + chr(10), chr(10)).replace(chr(13), "")
+raised, out = [], []
+for line in lines.split(chr(10)):
+    parts = line.split()
+    if len(parts) == 2 and not line.startswith("#") and parts[0] in measured:
+        root, ceiling = parts[0], int(parts[1])
+        if measured[root] > ceiling:
+            raised.append((root, ceiling, measured[root]))
+            line = line.replace(str(ceiling), str(measured[root]))
+    out.append(line)
+io.open("tests/chain-budget.txt", "wb").write(chr(10).join(out).encode("utf-8"))
+print("ceilings raised: %d" % len(raised))
+for root, ceiling, size in raised:
+    print("  %s: %d -> %d (+%d)" % (root, ceiling, size, size - ceiling))
+EOF
+   ```
+
+   Pass condition: it prints the raises, and `py tests/run_smoke.py`
+   then passes SYS-12. A raise larger than the branch's own diff means
+   the rebase pulled in someone else's growth — read it before
+   committing, because the number is what states the cost.
+
+3. **Agent check**: attach `INTERVIEW.md` + the changed template to an agent
    and review the output for coherence; or run the
    relevant E2E test if one exists:
    ```bash
