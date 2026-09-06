@@ -986,7 +986,7 @@ Nine minor releases landed in four calendar days. The `v2.71.0` audit reported
 
 ### 12.4 Debt categories
 
-#### Policy debt
+#### TD01 — Policy debt
 
 - oversized high-reach templates;
 - excessive absolute rules;
@@ -995,7 +995,7 @@ Nine minor releases landed in four calendar days. The `v2.71.0` audit reported
 - procedures mixed into persistent policy;
 - loaded but irrelevant content.
 
-#### Composition debt
+#### TD02 — Composition debt
 
 - graph semantics described in multiple places;
 - more than one manifest interpretation;
@@ -1003,21 +1003,21 @@ Nine minor releases landed in four calendar days. The `v2.71.0` audit reported
 - LLM-dependent merge and conflict handling;
 - generated artefacts rewritten across branches.
 
-#### Validation debt
+#### TD03 — Validation debt
 
 - extensive structural checks but stale live E2E;
 - internal correctness mistaken for user outcome evidence;
 - behavioural compliance weakly measured;
 - checks and dispositions recursively governing each other.
 
-#### Documentation debt
+#### TD04 — Documentation debt
 
 - repeated procedures across templates and playbooks;
 - large audit and journal surfaces;
 - counts and claims requiring synchronization;
 - ADR and documentation density disproportionate to product capability.
 
-#### Backlog debt
+#### TD05 — Backlog debt
 
 - every actionable audit finding becomes an issue;
 - unscheduled issues remain permanently active;
@@ -1025,7 +1025,7 @@ Nine minor releases landed in four calendar days. The `v2.71.0` audit reported
 - no backlog cap or admission economics;
 - meta-governance issues compete with adopter features.
 
-#### Product debt
+#### TD06 — Product debt
 
 - no canonical installed compiler experience;
 - limited output adapters;
@@ -1068,68 +1068,68 @@ flattening rate of governance defects. The current system does not yet converge.
 
 ### 14.1 Current-system risks
 
-#### Attention dilution
+#### R01 — Attention dilution
 
 Agents must reconcile too many independent instructions. Relevant rules may be
 buried even when the context window can technically hold the profile.
 
-#### Pathological literalism
+#### R02 — Pathological literalism
 
 Hundreds of `MUST` statements can drive overengineering or irrelevant work.
 
-#### False confidence
+#### R03 — False confidence
 
 Green structural tests can be mistaken for evidence that policies improve agent
 outcomes.
 
-#### Recursive governance
+#### R04 — Recursive governance
 
 Rules about checks, dispositions, audits, and release controls generate more
 policy surfaces than they retire.
 
-#### Backlog exhaustion
+#### R05 — Backlog exhaustion
 
 The tracker becomes an anxiety inventory rather than a set of plausible
 commitments.
 
-#### Product displacement
+#### R06 — Product displacement
 
 Maintainers can spend most available time keeping policy internally consistent
 instead of delivering a usable compiler and adapters.
 
-#### Supply-chain risk
+#### R07 — Supply-chain risk
 
 Future remote policy can inject unsafe instructions or change behaviour without
 review unless versions, hashes, provenance, and explicit trust are present.
 
 ### 14.2 Correction risks
 
-#### Hiding real debt
+#### R08 — Hiding real debt
 
 Closing low-value issues must not delete evidence. Persist findings in audits
 and link consolidated issues back to them.
 
-#### Overcompression
+#### R09 — Overcompression
 
 A smaller prompt can omit load-bearing policy. Compression must be evaluated
 against agent outcomes, not bytes alone.
 
-#### More governance to reduce governance
+#### R10 — More governance to reduce governance
 
 Do not give every admission rule its own metadata, checks, dispositions, and
 ADRs before the simple human policy has been tested.
 
-#### Misclassification
+#### R11 — Misclassification
 
 A manifest or generator issue may be directly adopter-visible. Classify by user
 impact, not filename.
 
-#### Lost downstream learning
+#### R12 — Lost downstream learning
 
 Quarantine new observations rather than discarding them. Promote only after the
 evidence threshold is met.
 
-#### Simultaneous compiler and policy rewrite
+#### R13 — Simultaneous compiler and policy rewrite
 
 Changing semantics and implementation together makes parity impossible to
 establish. Use existing content as fixtures while mechanics migrate.
@@ -1768,8 +1768,8 @@ Repository sources:
 - `docs/SPEC.md`
 - `docs/PLAYBOOK.md`
 - `docs/audits/2026-09-01-360.md`
-- `docs/meta/agent-context-tradeoffs.md`
-- `docs/meta/template-content-quality.md`
+- `docs/design/agent-context-tradeoffs.md`
+- `docs/design/template-content-quality.md`
 - `docs/decisions/011-provenance-principle.md`
 - `docs/decisions/033-periodic-review-scoped-to-minor-and-major.md`
 

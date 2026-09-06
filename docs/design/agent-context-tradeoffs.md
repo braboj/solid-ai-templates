@@ -120,7 +120,7 @@ tone of well-written templates is easier to track than mixed prose.
 The patterns that break this (redundant rules across templates,
 loaded-but-irrelevant templates) and what they imply for code review
 and audits are covered in detail in
-`docs/meta/template-content-quality.md` — that's the operational
+`docs/design/template-content-quality.md` — that's the operational
 home for keeping the template library in shape so this section's
 "mostly fine" stays true.
 

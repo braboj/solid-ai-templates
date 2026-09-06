@@ -62,7 +62,7 @@ These apply to all three models; the review process checks them.
   applies on the next turn — no changelogs, architecture notes, or
   progress logs. Keep the qualifier or scope a rule needs to be
   followed; never compress away a load-bearing clause. Optimize for
-  clarity, not bytes (see `docs/meta/agent-context-tradeoffs.md` and
+  clarity, not bytes (see `docs/design/agent-context-tradeoffs.md` and
   `templates/base/workflow/compression.md`).
 - **Concise rules.** Keep necessary scope and qualifiers. Length alone does
   not warrant an ADR; apply the decision threshold in

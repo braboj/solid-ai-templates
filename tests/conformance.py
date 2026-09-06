@@ -62,12 +62,7 @@ CHECKS = [
 
     {"file": "base/core/docs.md", "find": "(?:R|TD)[0-9]{2}",
      "title": "Risk and technical-debt identifiers stay in their owning doc",
-     "do": RUN, "expect": MANUAL,
-     "reason": "The register is opt-in, so the check reports at run time "
-               "that no chapter declares one and that it does not apply "
-               "here. Its first line ends in a document count in "
-               "parentheses rather than a bare number, which no predicate "
-               "reads."},
+     "do": RUN, "expect": ["nonzero", "nonzero", "nonzero"]},
 
     # -- base/core/examples.md ---------------------------------------------
 

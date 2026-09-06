@@ -18,7 +18,7 @@ when all three hold:
 
 - **Too big for every-turn context** — inlining the procedure in
   `CLAUDE.md` or a template would dilute rules the agent needs on every
-  turn (see `docs/meta/agent-context-tradeoffs.md`)
+  turn (see `docs/design/agent-context-tradeoffs.md`)
 - **Not needed every turn** — it applies only when a recognizable task
   arrives (write a post, score an article, deploy), not continuously
 - **Reusable** — the same procedure recurs across sessions; a one-off

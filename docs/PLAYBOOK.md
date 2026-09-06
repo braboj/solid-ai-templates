@@ -299,7 +299,7 @@ figures with no generator behind it, and the copy is what ages.
 ## Audit redundancy
 
 A rule stated in two active sections of the same resolved chain dilutes
-the agent's attention (see `docs/meta/template-content-quality.md`). The
+the agent's attention (see `docs/design/template-content-quality.md`). The
 audit scans every root a project can pick -- the 17 stacks and
 the 20 orthogonal templates alike -- and reports duplicates, excluding those the
 override model legitimately produces (one section `[OVERRIDE]`s the

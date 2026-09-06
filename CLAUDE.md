@@ -250,6 +250,7 @@ base/ ──┬── frontend/ ──┐
 | `CHANGELOG.md` | Released versions and what changed in each; versions up to v2.63.0 are in the GitHub Releases (ADR-029) |
 | `SECURITY.md` | Private disclosure route, supported versions, scope, acknowledgement window |
 | `CONTRIBUTING.md` | What a change is checked against — gates, manifest duty, authoring rules, branch and commit form |
+| `docs/design/` | Design documents about the library itself — the design record, agent-context tradeoffs, template-content quality (see SPEC "Design documents") |
 
 #### Documentation rules
 

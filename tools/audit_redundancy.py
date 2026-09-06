@@ -13,7 +13,7 @@ the agent loads it twice with neither marked as authoritative.
 Limitations: fingerprints the first line of each bullet, so a rule whose
 wording diverges only after a line wrap may slip past exact matching;
 use `--near` for paraphrases. Judgment still required — a duplicate is
-not always wrong (see docs/meta/template-content-quality.md).
+not always wrong (see docs/design/template-content-quality.md).
 
 `--check` is a CI ratchet: it fails only on exact duplicates NOT in the
 BASELINE below, so new redundancy is blocked while known dups are worked

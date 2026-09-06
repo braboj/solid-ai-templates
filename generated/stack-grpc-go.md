@@ -3491,8 +3491,9 @@ general writing-style and diagram rules above still apply.
   weakness, and the register is then the only surface that will ever
   raise it again — which is a choice, and is made deliberately
 - Check — every register id occurs in the chapter that defines it. Pass
-  condition: the command reports how many register chapters it found and
-  how many ids, then prints nothing after that. Zero ids means two
+  condition: the command reports the documents it scanned, how many
+  register chapters it found and how many ids, each as a line ending in a
+  bare count, then prints nothing after that. Zero ids means two
   different things and the two counts are what separate them: with no
   chapter declaring a register the project never adopted the convention
   and the check does not apply, which it reports with exit status 3 — the
@@ -3523,8 +3524,8 @@ for path in docs:
             if not defines:
                 stray.append("%s:%d cites %s outside the register"
                              % (path, number, hit))
-print("register chapters found: %d in %d document(s)"
-      % (len(owners), len(docs)))
+print("documents scanned: %d" % len(docs))
+print("register chapters found: %d" % len(owners))
 print("register ids found: %d" % found)
 if not owners and not found:
     print("no register chapter is declared and no ids are in use; "
