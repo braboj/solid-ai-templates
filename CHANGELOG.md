@@ -26,6 +26,9 @@ alters no template carries no entry.
 - `base-quality-gates` gains the corpus-narrowing retrofit shape: a
   gate with no per-file ignore widens the directories it reads as
   each slice cleans one, asserting a floor on the files enumerated.
+- `base-quality-gates` gains the freeze retirement order: entries whose
+  findings are raised at the caller come off callees-first, since a
+  caller's count cannot fall while its callees are frozen.
 
 ## [2.83.0] - 2026-09-07
 
