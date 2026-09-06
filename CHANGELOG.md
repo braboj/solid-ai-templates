@@ -26,6 +26,10 @@ alters no template carries no entry.
 - `base-quality` requires a shipped check to carry its verdict in its exit
   status, and a pass condition satisfied by silence to reach a non-zero one.
   Five `base-git` checks that printed findings and exited zero now exit.
+- `platform-github`'s commit-checks check reports that it does not apply
+  where HEAD is on no remote branch. A pull-request checkout inspects a
+  synthesised merge commit, whose run count is zero for every pull
+  request.
 
 ## [2.81.0] - 2026-09-06
 
