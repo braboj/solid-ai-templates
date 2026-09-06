@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- The README describes the root model — a project picks a stack, a
+  platform and any extras, each resolving independently — and lists the
+  20 platform and extra templates the stacks table never named.
+
 ### Changed
 
 - New template rules are adopted for local needs or material risks, not

@@ -3,6 +3,7 @@
 **Status:** Consolidated analysis and directional handoff  
 **Date:** 2026-09-01  
 **Customer-objective update:** 2026-09-05  
+**Competitor findings:** 2026-09-06; section 9 records approved v3.0 scope.
 **Audience:** Maintainer or agent evaluating the next project phase  
 **Decision status:** Directional proposals; implementation status is tracked in
 linked issues and PRs. Consequential architectural choices may need an ADR;
@@ -671,6 +672,87 @@ Agent platform   -> executes isolated work
 Human review     -> controls risk and what ships
 ```
 
+### 9.1 Competitor mechanisms selected for v3.0
+
+The owner selects the following adaptations for
+[v3.0 — Restructure](https://github.com/braboj/solid-ai-templates/milestone/8)
+on 2026-09-06. They address the customer needs in section 3 and refine the
+features in section 7. They are planned work, not shipped capabilities.
+
+The findings come from source and workflow-template inspection. Competitor code
+was not executed, and feature availability does not establish improved outcomes.
+Source links below pin the inspected revisions so later changes do not alter the
+evidence behind these notes.
+
+| Customer need | Inspected mechanism | v3.0 adaptation and acceptance evidence |
+|---------------|---------------------|----------------------------------------|
+| Custom templates fail clearly when invalid | OpenSpec validates schema shape, duplicate IDs, missing references, and cycles before resolution | Share manifest validation between tools and checks. Reject invalid inputs before producing output; report the missing dependency or full cycle path. Exercise invalid references, duplicates, self/long cycles, and a valid diamond dependency. [Source][v3-os-schema] |
+| Understand and customize inherited rules | Spec Kit resolves layers with source/version information and provides local authoring scaffolds | Explain inclusion paths and declared section overrides. Guide an engineer through one local template, validation, and reach preview using existing IDs and precedence. [Resolution][v3-sk-source], [scaffold][v3-sk-scaffold] |
+| Load relevant guidance without accumulating generated content | Ruler excludes skills from ordinary rule concatenation, identifies generated inputs, and isolates target capabilities behind adapters | Separate persistent policy, task procedures, and generated artifacts. Render proposed outputs before applying them. Verify repeat generation does not ingest its own output; test loading in each supported agent. [Discovery][v3-ruler-read], [adapters][v3-ruler-adapters] |
+| Update or remove templates without losing local work | Ruler previews output operations and supports original backups and revert | Provide a full diff, retain originals, and compare current content with the last generated digest before replacement/removal. Preserve local edits and report conflicts. Exercise repeated apply, unchanged output, edited output, and selective removal. [Writes][v3-ruler-backup], [revert][v3-ruler-revert] |
+| Report defects and conceptual friction easily | OpenSpec combines guided report preparation with a submission command | Default to an editable local draft containing selected version/stack/rule context and expected/actual behavior. Suggest related reports; submit the reviewed draft under explicit authorization. Exercise incomplete reports, duplicates, and sensitive-content exclusion. [Workflow][v3-os-feedback], [command][v3-os-submit] |
+| Concentrate on behavior while routine implementation is verified | BMAD separates an intent contract from implementation planning, verification, review triage, and terminal status | Integrate a bounded implementation/check/repair trial with an existing runner. Preserve agreed behavior, return verification evidence and unresolved decisions, and enforce time/retry limits in the runner. [Intent][v3-bmad-intent], [review][v3-bmad-review] |
+
+At SAT revision `93de71d55096fd0747e1a23811d0479a6adb28d6`, in-memory
+fixtures for `tools/resolve.py` confirmed the first gap: a valid dependency
+returned files in dependency order, a missing dependency was silently omitted,
+and a cycle raised `RecursionError` without a named cycle diagnostic. Smoke
+already checks manifest references; direct resolution needs the same validation.
+
+### 9.2 Boundaries and improvements over the inspected mechanisms
+
+- Preserve independent resolution roots and the existing section-ID contract.
+  Runtime validation does not require a folder move or new root-composition model.
+- SAT currently concatenates source material and relies on the agent for the
+  final merge. Explain declared overrides honestly; deterministic semantic
+  composition requires the compatibility work in sections 18 and 21. Spec Kit's
+  additional composition strategies are not required for this adaptation.
+- Ruler's inspected revert recognizes generated ownership using markers and
+  sidecars; it does not establish that the current output is locally unmodified.
+  Add digest-based drift detection. Its operation preview also does not substitute
+  for a full textual diff or establish all-or-nothing writes.
+- OpenSpec's review/anonymization step is an agent instruction; the inspected CLI
+  can submit directly when authenticated. Keep draft preparation separate from
+  submission, and select diagnostic fields explicitly rather than collecting
+  environment variables, whole transcripts, or project source automatically.
+- BMAD's inspected review template limits a spec-repair loop to five iterations,
+  but this is an instruction to the agent, not a global execution budget enforced
+  by code. Verification results must support completion; a status label alone
+  does not prove it. Intent ambiguity returns to the engineer.
+- Use proportional review and deduplicate findings before considering tickets.
+  BMAD's per-finding logs and append-only deferred entries are not adopted as
+  mandatory artifacts. Deferred observations do not automatically become issues
+  or ADRs; sections 22.4 and 22.5 govern the intake boundary.
+
+### 9.3 v3.0 delivery order and outcome checks
+
+1. Harden runtime validation and diagnostics in the existing resolver.
+2. Add inclusion explanations and a guided local customization example.
+3. Separate rendering from writes and establish output/loading boundaries.
+4. Add preview, local-edit protection, and reversible update/removal.
+5. Add draft-based reporting for users exercising those workflows.
+6. Trial the bounded behavior-driven loop through an existing runner, retaining
+   policy and verification ownership in SOLID-AI and orchestration outside core.
+
+Run the reference evaluation from #1184 alongside this work. Compare accepted
+outcomes and human effort with concise handwritten guidance and a relevant
+existing workflow. Reuse #1511 for quality scenarios, #414 for skill evaluation,
+and #1512 for intake rather than creating a ticket per borrowed mechanism.
+Choose a small set of agent targets from actual use; no new registry, marketplace,
+or general orchestration framework is a prerequisite for this v3.0 scope.
+
+[v3-os-schema]: https://github.com/Fission-AI/OpenSpec/blob/e062b9572be933564ba3899d059377dfa1393e32/src/core/artifact-graph/schema.ts#L23
+[v3-sk-source]: https://github.com/github/spec-kit/blob/4a7341a93d944d6efe153b71da4a1adb9c2b578c/src/specify_cli/presets/__init__.py#L5719
+[v3-sk-scaffold]: https://github.com/github/spec-kit/blob/4a7341a93d944d6efe153b71da4a1adb9c2b578c/presets/scaffold/README.md#L14
+[v3-ruler-read]: https://github.com/intellectronica/ruler/blob/0fa2caeef4efaef4c5f8ffbedee8feca4b0b00e2/src/core/FileSystemUtils.ts#L319
+[v3-ruler-adapters]: https://github.com/intellectronica/ruler/blob/0fa2caeef4efaef4c5f8ffbedee8feca4b0b00e2/src/agents/IAgent.ts
+[v3-ruler-backup]: https://github.com/intellectronica/ruler/blob/0fa2caeef4efaef4c5f8ffbedee8feca4b0b00e2/src/core/FileSystemUtils.ts#L492
+[v3-ruler-revert]: https://github.com/intellectronica/ruler/blob/0fa2caeef4efaef4c5f8ffbedee8feca4b0b00e2/src/core/revert-engine.ts#L164
+[v3-os-feedback]: https://github.com/Fission-AI/OpenSpec/blob/e062b9572be933564ba3899d059377dfa1393e32/src/core/templates/workflows/feedback.ts#L25
+[v3-os-submit]: https://github.com/Fission-AI/OpenSpec/blob/e062b9572be933564ba3899d059377dfa1393e32/src/commands/feedback.ts#L271
+[v3-bmad-intent]: https://github.com/bmad-code-org/BMAD-METHOD/blob/abe4eb1bce919c9d22cd18b3519353d5824c4b75/skills/bmad-build-auto/spec-template.md
+[v3-bmad-review]: https://github.com/bmad-code-org/BMAD-METHOD/blob/abe4eb1bce919c9d22cd18b3519353d5824c4b75/skills/bmad-build-auto/step-04-review.md
+
 ## 10. How AI-first engineering operates
 
 AI-first engineering is an operating model, not universal autocomplete.
@@ -1189,6 +1271,10 @@ reviewable diffs, signatures, and explicit trust.
 
 ## 18. Migration strategy
 
+Section 9 defines the selected v3.0 adaptations within this broader roadmap.
+Establish the reference benchmark first and use it throughout; Phase 4 expands
+verification rather than introducing outcome measurement for the first time.
+
 ### Phase 0: Stabilize
 
 1. Freeze universal-rule growth.
@@ -1529,7 +1615,8 @@ The current stack set is sufficient to exercise the architecture.
 
 ### 24.1 Working direction from the temporary reports
 
-These are consistent recommendations, not accepted repository decisions:
+These are consistent recommendations. The competitor-derived adaptations in
+section 9 are selected for v3.0; other proposals retain their directional status:
 
 - engineering policy is the core abstraction;
 - agent files are compilation targets;
@@ -1546,8 +1633,7 @@ These are consistent recommendations, not accepted repository decisions:
 
 ### 24.2 Open questions
 
-1. Is the primary outcome a catalogue, compiler, generated file, or measured
-   improvement in agent behaviour?
+1. Which reference tasks best measure the customer outcome defined in section 3?
 2. Which current rules have behavioural evidence?
 3. Which rules belong in the always-loaded kernel?
 4. Which rules are actually skills or procedures?
@@ -1567,6 +1653,10 @@ These are consistent recommendations, not accepted repository decisions:
 
 ## 25. Recommended decision sequence
 
+Section 9.3 orders the selected v3.0 competitor adaptations within this broader
+sequence. Runtime validation, explanation, and authoring improvements can proceed
+before the full compiler migration.
+
 1. Define the product outcome and boundary.
 2. Decide whether to pause universal-rule growth.
 3. Change audit-to-issue admission semantics.
@@ -1584,6 +1674,10 @@ This sequence avoids building new machinery before deciding which outcome the
 project optimizes.
 
 ## 26. Phase-one definition of done
+
+This describes the compiler target, distinct from the semantics-freezing phase
+in section 18. The first v3.0 improvements in section 9 can ship before the entire
+target is complete.
 
 Phase one is complete when a repository contains `solid-ai.yaml` and can run:
 
