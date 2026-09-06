@@ -255,7 +255,13 @@ def generate_all(core_ids, entries, stacks):
         files = resolve_chain(sid, core_ids, entries)
         content = concat_chain(files)
         out = GENERATED / f"{sid}.md"
-        io.open(out, "w", encoding="utf-8").write(content)
+
+        # Pin the line ending as well as the encoding. This artifact is
+        # committed, and Python translates every newline on a platform
+        # whose default is CRLF, so the file the repository holds would
+        # depend on the machine that regenerated it.
+        io.open(out, "w", encoding="utf-8",
+                newline="\n").write(content)
         print(f"  {sid} -> {out.relative_to(ROOT)}  ({len(files)} files)")
         count += 1
     print(f"\n{count} file(s) generated.")

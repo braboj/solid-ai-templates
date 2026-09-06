@@ -12,11 +12,14 @@ import sys
 import textwrap
 from pathlib import Path
 
-# Set the output encoding at the boundary rather than inheriting the
-# console default, which mangles any non-ASCII this program prints.
+# Set the output encoding and the line ending at the boundary rather
+# than inheriting the console defaults. The encoding mangles any
+# non-ASCII this program prints; the line ending is what another
+# program reads, and on Windows a bare `print` emits CRLF, so every
+# line reaches a consumer with a trailing carriage return.
 for _stream in (sys.stdout, sys.stderr):
     try:
-        _stream.reconfigure(encoding="utf-8")
+        _stream.reconfigure(encoding="utf-8", newline="\n")
     except (AttributeError, ValueError):
         pass
 
@@ -373,7 +376,11 @@ def _update_file(path, replacements, check_mode=False):
 
     if text != original:
         if not check_mode:
-            io.open(path, "w", encoding="utf-8").write(text)
+            # Pin the line ending as well as the encoding: this writes a
+            # committed document, and an unpinned write translates every
+            # newline on a platform whose default is CRLF.
+            io.open(path, "w", encoding="utf-8",
+                    newline="\n").write(text)
         return True
     return False
 

@@ -32,11 +32,14 @@ from lib import (ROOT, PASS, FAIL, ERR, write_report,
                  repository_files, template_files)
 from cases import ALL_TESTS
 
-# Set the output encoding at the boundary rather than inheriting the
-# console default, which mangles any non-ASCII this program prints.
+# Set the output encoding and the line ending at the boundary rather
+# than inheriting the console defaults. The encoding mangles any
+# non-ASCII this program prints; the line ending is what another
+# program reads, and on Windows a bare `print` emits CRLF, so every
+# line reaches a consumer with a trailing carriage return.
 for _stream in (sys.stdout, sys.stderr):
     try:
-        _stream.reconfigure(encoding="utf-8")
+        _stream.reconfigure(encoding="utf-8", newline="\n")
     except (AttributeError, ValueError):
         pass
 
