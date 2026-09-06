@@ -6822,3 +6822,89 @@ budgeted because HEAD is the tag and the branch-scoped checks answer that
 they do not apply. `v2.82.0` is tagged, published and verified.
 
 ---
+
+## 2026-09-07 — Everything needed to catch it was already in the tree
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** `v2.83.0` released, from a milestone scoped this session out
+of the unmilestoned backlog. Six defects, one shape: the fact needed to
+catch each was already computed, printed, recorded or registered somewhere
+in the tree, and nothing connected it to a verdict. The manifest already
+classified every stack by layer and no check asked whether a stack serving
+traffic carried the security tier. The deleted changelog bullet was in
+`CHANGELOG.md`'s own history and nothing looked back one tree. The context
+tier was computed into the README on every sync and nothing failed on it.
+The release gates were written, registered and never invoked.
+
+Three of the six turned up a second defect while being built, each in the
+control rather than the check. The changelog-deletion check compared a
+former bullet against the whole file, which is what keeps a release cut
+quiet — and this repository already carried an entry reading `base-git`
+gains a changelog-completeness check, which shares 64% of its content
+words with the entry the control deleted. The control reported clean over
+a missing entry. The comparison now reaches only where a cut could have
+carried the bullet: the current `Unreleased` section, and any version
+section whose heading did not yet exist when the bullet was recorded.
+
+The release gates were worse. Each resolves the release it follows with the
+newest reachable tag, which on the release commit is the previous release
+and at the tag itself is the tag being released. A naive tag-push trigger
+would have run four gates over an empty range — measured at `v2.82.0`, the
+baseline moves from `v2.82.0` to `v2.81.0` and the range from 0 commits to
+15. Shipping that would have been this milestone's own defect, at the
+moment it was being removed.
+
+The third was a plant that landed in the file and outside the construct:
+a non-existent path appended after the closing `]` of a `[DEPENDS ON: ...]`
+directive. `git diff --stat` confirmed one insertion, the parser never saw
+it, and smoke reported 29 checks and 0 failed — indistinguishable from the
+check being absent. A fourth, in the same pull request, asserted only that
+some manifest entry now held the planted value; `backend-api` already did.
+
+The cut then failed its own release-documentation gate, which shipped in
+`v2.82.0` and had never fired: the record named `quality-exemption-doc-duty`
+and no document a consumer reads did. And the release-gates workflow
+validated itself on the first release it could — it resolved `v2.83.0`
+and its milestone from the tag, and the four gates produced real verdicts
+where a routine push reports six not-applicable.
+
+Three open issues were corrected rather than implemented. #1551 argued its
+case against `tests/chain-budget.txt` and SYS-12, both deleted by ADR-041 the
+day before; #1480 and #1511 carried acceptance criteria pointing at a
+ceiling re-base that can no longer happen. Each gained a dated correction
+naming what replaced it. #1551's defect survived its premise intact, and
+ADR-041's own alternatives had already named the check as the better
+instrument.
+
+**PRs merged:** #1564, #1566, #1567, #1568, #1569, #1570, #1573, #1575
+
+**Issues closed:** #1561, #1548, #1560, #1544, #1551, #1468
+
+**Issues created:** #1565 (two smoke checks name spec files that do not
+exist), #1574 (seven control rules govern this repository and one ships)
+
+**Decisions:**
+- ADR-042: a tag push runs the release gates, with the version from the
+  tag and the milestone from its `v<major>.<minor>` prefix; the gates keep
+  their hand-set constants, and a gate resolves the release it follows
+  from the commit under release
+
+**Lessons:**
+- A control's landing assertion is the weakest link in the control.
+  Asserting that the planted value is present somewhere passes when a
+  sibling already carried it, so it holds whether or not the edit landed.
+  Name the entity and compare before and after. Now in `CLAUDE.md` §6.2
+- A check comparing text against a large corpus can be defeated by a
+  look-alike the corpus already contains, and the control is what exposes
+  it. Bounding the corpus to where the value could legitimately have gone
+  fixed it; raising the similarity threshold would have hidden it again
+- Three of the four parameterised release gates had never executed, so the
+  baseline defect could not have been found by reading them. It appeared
+  in the first minute they ran. A check that never runs is not merely
+  unenforced — it is unverified
+- The wrap-up audit filed #1574 and merged #1575, neither of which the
+  release cut could have named. The ordering that puts the journal last
+  held: this entry names both
+
+---
