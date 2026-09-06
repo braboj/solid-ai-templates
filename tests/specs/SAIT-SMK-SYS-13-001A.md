@@ -64,7 +64,8 @@ tags: [composition, adoption, readme, resolver-parity]
    membership
 6. Assert README still instructs the core-tier load, since the
    instruction is half of the pair under test
-7. Report the core-tier size, the roots compared, and how many files the
+7. Report the core-tier size, the stacks and opt-in roots compared as
+   two counts, and how many files the
    DEPENDS ON walk alone would miss summed over roots
 
 ### Assertions

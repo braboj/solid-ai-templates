@@ -143,6 +143,20 @@ def _opt_in_roots(core_ids, entries):
     return sorted(set(entries) - reached)
 
 
+def _roots_by_kind(core_ids, entries):
+    """The two kinds of root a project picks, returned apart.
+
+    A check covering both kinds reports each count rather than their sum.
+    One number cannot tell a tree where every root resolved from a
+    resolver that stopped enumerating one kind: 37 reads the same whether
+    it is 17 and 20 or 37 and 0. Two numbers move independently, so the
+    kind that empties takes its own count to zero where a reader sees it.
+    """
+    stacks = sorted(e["id"] for e in entries.values()
+                    if e["file"].startswith("templates/stack/"))
+    return stacks, _opt_in_roots(core_ids, entries)
+
+
 TEMPLATE_DIRS = [
     os.path.join("templates", "base", "core"),
     os.path.join("templates", "base", "security"),
@@ -1653,18 +1667,15 @@ def check_sys_11():
     # A stack is an entry under templates/stack/, the same selector MNF-02
     # uses -- reading the whole entry table instead resolves layer templates
     # as though they were stacks and inflates every count.
-    roots = [e["id"] for e in entries.values()
-             if e["file"].startswith("templates/stack/")]
-
     # A stack is one of two kinds of root. Extras and the platform are picked
     # independently of it, and a file reaching a consumer only that way sits
     # in no stack chain at all -- so restricting the corpus to stacks makes
     # the scan of that file vacuous: it is carried by zero chains, nothing
     # can be missing from zero chains, and the reference passes unread.
-    roots += _opt_in_roots(core_ids, entries)
+    stack_roots, opt_in_roots = _roots_by_kind(core_ids, entries)
 
     chains = {}
-    for root in roots:
+    for root in list(stack_roots) + list(opt_in_roots):
         files, _ = _resolve_stack(root, core_ids, entries)
         chains[root] = set(f.replace(os.sep, "/") for f in files)
 
@@ -1714,8 +1725,15 @@ def check_sys_11():
 
     # An empty result and a check that reached nothing look identical, so the
     # inputs are counted. Zero chains or zero references is a failure.
-    if not chains:
-        failures.append("  resolved no chains — the check reached nothing")
+    # Each kind is asserted on its own. A combined test passes on 17 stacks
+    # and no opt-in root, which is the corpus half-empty and reading full.
+    if not stack_roots:
+        failures.append("  resolved no stack chains — the check reached "
+                        "nothing")
+    if not opt_in_roots:
+        failures.append("  resolved no opt-in roots — every extra and "
+                        "platform file went unread, and a reference "
+                        "dangling only there passes unseen")
     if references == 0:
         failures.append(
             "  found no cross-file prose ID references — either the pattern "
@@ -1732,7 +1750,8 @@ def check_sys_11():
         f"  section IDs declared: {len(defined_in)}",
         f"  named in another file's prose: {len(cited)}",
         f"  cross-file references checked: {references}",
-        f"  roots resolved (stack, extra and platform): {len(chains)}",
+        f"  stacks resolved: {len(stack_roots)}",
+        f"  opt-in roots resolved: {len(opt_in_roots)}",
     ]
 
     return failures, notes
@@ -1767,22 +1786,22 @@ BUDGET_FILE = "tests/chain-budget.txt"
 
 
 def _measure_chains():
-    """Return {root_id: characters} for every root a project can pick."""
-    core_ids, entries, _ = _load_manifest()
+    """Sizes per root, with the two root kinds returned alongside them.
 
-    # Both kinds of root: a stack, and an orthogonal template picked
-    # independently of the stack, which resolves as its own root.
-    # Measuring stacks alone leaves every opt-in root uncapped, and a
-    # fifth of the corpus reaches a consumer only that way.
-    roots = [e["id"] for e in entries.values()
-             if e["file"].startswith("templates/stack/")]
-    roots += _opt_in_roots(core_ids, entries)
+    Both kinds of root: a stack, and an orthogonal template picked
+    independently of the stack, which resolves as its own root. Measuring
+    stacks alone leaves every opt-in root uncapped, and a fifth of the
+    corpus reaches a consumer only that way. The kinds come back separate
+    so a caller reports a count per kind rather than their sum.
+    """
+    core_ids, entries, _ = _load_manifest()
+    stacks, opt_in = _roots_by_kind(core_ids, entries)
 
     sizes = {}
-    for root in roots:
+    for root in list(stacks) + list(opt_in):
         files, _ = _resolve_stack(root, core_ids, entries)
         sizes[root] = sum(len(read(os.path.join(ROOT, f))) for f in files)
-    return sizes
+    return sizes, stacks, opt_in
 
 
 def _core_tier_files(core_ids, entries):
@@ -1833,7 +1852,13 @@ def check_sys_12():
                 f"nothing refuses growth"]
 
     seen = Inspected()
-    measured = seen.count("roots measured", _measure_chains())
+    measured, stacks, opt_in = _measure_chains()
+
+    # Counted per kind, not summed. Each count carries its own floor, so a
+    # kind that empties fails here instead of hiding inside a total that
+    # still looks close to right.
+    seen.count("stacks measured", stacks)
+    seen.count("opt-in roots measured", opt_in)
     ceilings = seen.count("ceilings recorded", _read_ceilings())
     failures = list(seen.failures())
 
@@ -1900,7 +1925,10 @@ def check_sys_13():
     seen = Inspected()
     core_files = seen.count("core-tier files seeded",
                             _core_tier_files(core_ids, entries))
-    roots = seen.count("roots compared", sorted(_measure_chains()))
+    sizes, stacks, opt_in = _measure_chains()
+    seen.count("stacks compared", stacks)
+    seen.count("opt-in roots compared", opt_in)
+    roots = sorted(sizes)
     failures = list(seen.failures())
 
     # The instruction is half the pair, so a README that stops naming the

@@ -58,7 +58,8 @@ tags: [composition, reach, context-cost, ratchet]
 3. Read the ceilings from `tests/chain-budget.txt`
 4. Compare each measured chain against its ceiling, in both directions of
    membership
-5. Report the roots measured, the ceilings recorded, the largest chain
+5. Report the stacks measured and the opt-in roots measured as two
+   counts, the ceilings recorded, the largest chain
    and the tightest headroom
 
 ### Assertions
