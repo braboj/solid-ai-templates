@@ -6726,3 +6726,99 @@ no stale branches, label conformance `[]`, 74 open issues. `v2.80.0` is tagged,
 published and verified.
 
 ---
+
+## 2026-09-06 — Every gate was green over the defect
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** `v2.82.0` released against a milestone scoped from a single
+shape — twelve defects that each passed a check able to catch them. The
+scope grew mid-groom: the first cut listed six issues, and the user asked
+for every open bug, which brought the count to twelve and the theme with it.
+Every open bug in the tracker is now closed.
+
+The root defect was that a shipped check had no way to say it had found
+something. `base-quality` now requires a check to carry its verdict in its
+exit status, and requires a pass condition satisfied by the absence of
+output to reach a non-zero one. Five `base-git` checks printed findings and
+exited zero; they exit now. Two conformance dispositions were judgements
+over pass conditions that decide, and the runner had no vocabulary for a
+check that mixes a verdict with a reading, so the only disposition that did
+not produce a false failure was the one producing no verdict at all. `READ`
+is that vocabulary.
+
+**Giving a check a real verdict is how its own defects surface.** The
+commit's-checks check counted workflow runs for `git rev-parse HEAD`; on a
+pull-request checkout that is the merge commit the host synthesises, never
+pushed, so the count was zero for every pull request ever run. It had been
+reporting that zero as a reading nobody scored. The first guard written for
+it passed anyway — the host also leaves a remote-tracking ref pointing at
+the merge commit, so an unscoped `git branch -r --contains HEAD` finds that
+ref and reports the commit as carried. Both were found by CI failing on a
+branch that passed locally, and both were controlled against a reproduced
+pull-request checkout rather than reasoned about.
+
+**A control that reads the wrong input is indistinguishable from a check
+that holds.** The release-documentation check reads the record from `HEAD`.
+Planting an undocumented capability in the working tree left its input
+untouched, and the run came back byte-identical to the clean one — the
+strongest thing a control can look like and the weakest thing it can be. It
+only fired once the plant was committed. `CLAUDE.md` gained that rule; the
+three control rules beside it each came from a different session, and this
+is the fourth way the same reading has been wrong.
+
+**The chain ceiling was removed at the user's instruction, and the history
+agreed.** Over 32 commits touching `tests/chain-budget.txt`, a ceiling moved
+up 702 times and down 37, every raise made by the author of the addition
+that caused it, none refused. A gate whose remedy is to write the new number
+into the file records rather than refuses. It also conflicted on four
+branches in this release alone, each resolved by taking the upstream file
+whole and re-measuring, which produced nothing at any of them. ADR-041
+supersedes ADR-036; `README.md`'s model-limits table, already gated by
+`sync --check`, is what still states the cost.
+
+**The size figure that does bind moved during the cut.** The gated-figure
+widening pushed the three library stacks from the 128K context tier to
+200K — the chain had been sitting under that boundary by roughly 800
+characters, so an ordinary core-tier rule crosses it. Nothing gates the
+crossing; it appears only as a changed cell in a generated table. Filed as
+#1551, which is the size question the ceiling's removal leaves open.
+
+**This release's own theme arrived during its cut.** `platform-github`'s
+changelog entry landed with its change and was deleted two pull requests
+later, when the `Unreleased` section was consolidated by hand after a merge
+conflict and one bullet did not survive the retyping. The
+changelog-completeness check ran on that tree and exited 0, correctly: six
+entries against fourteen carried commits is a legitimate reading, because a
+commit touching no template earns no entry, and nothing separates that from
+an entry someone removed. Restored in the cut, filed as #1560.
+
+**PRs merged:** #1545, #1546, #1547, #1549, #1550, #1552, #1553, #1554,
+#1555, #1557, #1558, #1559.
+**Issues closed:** #1478, #1376, #1453, #1467, #1542, #1535, #1454, #1463,
+#1446, #1062, #1397, #1398, #1462.
+**Issues opened:** #1548 (no gate asserts a stack serving HTTP resolves the
+security tier), #1551 (a context-tier crossing is visible only in a README
+diff), #1560 (a changelog gate cannot tell a commit owing no entry from one
+whose entry was deleted), #1561 (the conformance runner's verdict line is
+the one a truncated read drops).
+**Labelled for the parallel session:** #1544, #1556.
+**Upstream:** two patterns filed. Both are the release's own shape reaching
+the instruments that report it rather than the rules they check.
+**Milestones:** #88 (`v2.82`) closed at 22/22.
+**Records:** ADR-040 (a reading is budgeted, not scored or silenced),
+ADR-041 (chain size is reported, not capped), ADR-036 superseded.
+**Owed and not repaired:** ADR-039 is absent from the `v2.81.0` tree and
+present in `v2.82.0` while #1526 carries v2.81's milestone — a record
+landing on the far side of its own tag, which is the mirror of the defect
+#1398 fixes in this release. Recorded in #1559 and left as it stands: the
+milestone records what was planned and the tag records the tree, and
+rewriting the first to tidy the second would misstate it.
+**State at close:** smoke 29/29 — one fewer check, by construction — sync
+clean, `resolve.py --check` clean, redundancy 0 exact, conformance 19 passed
+and 0 failed, 0 open pull requests, no stale branches, label conformance
+`[]`, 65 open issues. The conformance run reports 0 readings against 3
+budgeted because HEAD is the tag and the branch-scoped checks answer that
+they do not apply. `v2.82.0` is tagged, published and verified.
+
+---
