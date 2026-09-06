@@ -3316,6 +3316,56 @@ for name in tracked:
   wrong. Point at the command or the generated artifact instead, and
   document only what it cannot state itself — why an option exists,
   which combinations are meaningful
+- A figure a document states about the tree MUST come from a generator,
+  or the document MUST NOT state it. A count, a ratio or a file total
+  written into a sentence is right on the day it is typed and wrong the
+  next time the tree moves, and nothing says so. Where the number carries
+  the point, emit it into a generated block the sync command rewrites and
+  its `--check` gates; where it does not, name the thing without counting
+  it. Check — no documentation figure sits outside a generated block.
+  Pass condition: the command reports the documents it scanned and the
+  ungated figures it found, the first non-zero and the second zero. A
+  table restating a generator is covered by the rule above, and a fenced
+  block is a transcript, so both are out of scope here:
+
+  ```bash
+  py - <<'EOF'
+import pathlib, re, subprocess
+NOUNS = ("file", "files", "template", "templates", "stack", "stacks",
+         "chain", "chains", "check", "checks", "test", "tests", "root",
+         "roots", "directory", "directories", "document", "documents",
+         "section", "sections", "example", "examples")
+FIGURE = re.compile(r"(?<![\w.\-])(\d{1,6})\s+(%s)\b" % "|".join(NOUNS), re.I)
+GENERATED = re.compile(r"<!--\s*/?generated:")
+FENCE = re.compile(r"^\s*```")
+HISTORY = ("CHANGELOG.md", "docs/dev-journal.md", "docs/decisions/",
+           "docs/audits/")
+out = subprocess.check_output(
+    ["git", "ls-files", "-z", ":(glob)*.md", "docs/*.md", "docs/**/*.md"])
+paths = [p for p in out.decode("utf-8").split(chr(0))
+         if p.endswith(".md") and not p.startswith(HISTORY)]
+findings = []
+for rel in sorted(paths):
+    generated = fenced = False
+    lines = pathlib.Path(rel).read_text(encoding="utf-8").splitlines()
+    for number, line in enumerate(lines, 1):
+        if FENCE.match(line):
+            fenced = not fenced
+            continue
+        if GENERATED.search(line):
+            generated = not generated
+            continue
+        if fenced or generated or line.lstrip().startswith("|"):
+            continue
+        for hit in FIGURE.finditer(line):
+            findings.append("%s:%d states '%s %s' outside a generated block"
+                            % (rel, number, hit.group(1), hit.group(2)))
+print("documents scanned: %d" % len(paths))
+print("ungated figures: %d" % len(findings))
+for finding in findings:
+    print(finding)
+EOF
+  ```
 
 ## Diagrams and assets
 

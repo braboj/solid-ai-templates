@@ -31,9 +31,9 @@ well-written templates an advantage:
   model has to reconcile — and reconciliation can drop the rule
   entirely if the variants seem to conflict.
 
-So 17 well-structured templates with unique, scoped rules behave
-roughly like 17 chapters of one well-organized reference. The same
-17 templates' content dumped into a single 100 KB CLAUDE.md would
+So a set of well-structured templates with unique, scoped rules behaves
+roughly like as many chapters of one well-organized reference. The
+same templates' content dumped into a single 100 KB CLAUDE.md would
 lose that advantage even though the bytes are identical.
 
 ---
