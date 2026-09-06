@@ -2,7 +2,7 @@
 
 **Status:** Consolidated analysis and directional handoff  
 **Date:** 2026-09-01  
-**Customer-objective update:** 2026-09-05  
+**Customer-objective update:** 2026-09-06
 **Competitor findings:** 2026-09-06; section 9 records approved v3.0 scope.
 **Audience:** Maintainer or agent evaluating the next project phase  
 **Decision status:** Directional proposals; implementation status is tracked in
@@ -29,9 +29,15 @@ It is a diagnostic and architectural handoff, not an implementation mandate.
 
 ## 2. Executive summary
 
-The customer objective is to reduce the human effort and total cost of delivering
-correct software changes. Engineers retain control of design and intended
-behaviour.
+The target users are small engineering teams pursuing autonomous coding and
+routine code review. The team develops specifications and architecture, defines
+tests, and validates the resulting behaviour. Agents implement, run automated
+checks, review changes, and repair defects within that agreed scope.
+
+SOLID-AI contributes engineering policy and verification guidance alongside the
+team's specification tools, agent runners, and test infrastructure. The objective
+is to find a workable balance of autonomy, correctness, human effort, and cost
+for each team and class of change.
 
 An **engineering-policy compiler for AI coding agents** is a proposed technical
 means to that outcome. Building a compiler or generating more context files does
@@ -100,8 +106,8 @@ higher long-term potential.
 
 Customer outcome:
 
-> Deliver correct software changes with less time spent supervising, reviewing,
-> and repairing AI-generated work, while retaining control of design and behaviour.
+> Enable small teams to delegate coding and routine code review to agents while
+> concentrating on specifications, architecture, tests, and acceptance of behaviour.
 
 The primary customer-value measure is human effort per accepted change. Measure
 specification, supervision, review, and repair time; include an allocated share
@@ -116,10 +122,16 @@ ones so the measure cannot improve by excluding difficult work.
 
 ### 3.2 Target users and their needs
 
-The initial users are engineers and engineering leads already using coding
-agents and spending material time reviewing or correcting their output. They
-need evidence that templates help, a dependable way to apply their own standards,
-and less supervision of routine implementation work.
+The initial users are small engineering teams already using coding agents and
+spending material time reviewing or correcting their output. They need to combine
+SOLID-AI with their existing tools, apply their own standards, and delegate routine
+implementation and review without continuous supervision.
+
+The team owns the specifications, architectural decisions, test expectations,
+and acceptance testing. Agents can assist with these activities, but generated
+code and agent-written tests do not redefine the intended behaviour. Automated
+test execution inside the agent loop supplies evidence for the team's testing
+and acceptance work.
 
 Start validation with one representative stack and a reference project, guided
 setup/customization, automated checks, and named model and agent versions.
@@ -143,6 +155,13 @@ before the final evaluation rather than adjusting them to flatter its result.
 Include the customer's setup, maintenance, model, and tooling costs when assessing
 the benefit. Saving tokens while spending more engineering time does not establish
 the intended improvement.
+
+Also measure the share of changes accepted without human implementation or
+routine code-review intervention after the team agrees the specification and test
+expectations. Record interventions, their causes, and escaped defects; required
+team acceptance remains part of total human effort. Increased autonomy counts as
+progress only when correctness and overall effort remain acceptable. The useful
+balance varies by task, model, stack, and team; it is not one universal setting.
 
 ### 3.4 Capabilities that serve the goals
 
@@ -295,6 +314,10 @@ or is packaged as an explicitly invoked skill.
 
 SOLID-AI should integrate with the adjacent abstractions rather than imitate
 them.
+
+Evaluate the combined toolchain on the same reference tasks with and without
+SOLID-AI. Its contribution should improve the team's outcomes without requiring
+replacement of their specification method, agent runner, or test infrastructure.
 
 ## 6. Current features and assets
 
@@ -755,21 +778,30 @@ or general orchestration framework is a prerequisite for this v3.0 scope.
 
 ## 10. How AI-first engineering operates
 
-AI-first engineering is an operating model, not universal autocomplete.
+The intended operating model lets a small team concentrate on defining and
+testing the system while agents perform routine implementation and code review.
 
-Humans remain responsible for product intent, acceptance criteria, architecture,
-risk, review, and release decisions. Agents investigate, implement, test,
-document, and prepare changes for review.
+| Participant | Responsibility |
+|-------------|----------------|
+| Engineering team | Develop specifications and architecture; define test expectations; perform acceptance testing; resolve design ambiguity and decide what is ready to ship |
+| Coding and review agents | Implement the agreed change, add appropriate implementation tests, run checks, review the actual diff, repair verified defects, and return evidence or unresolved questions |
+| SOLID-AI | Supply relevant engineering policy, composition and override rules, and verification guidance that work with the team's tools |
+| Specification tools, agent runners, and CI | Carry specifications, execute isolated work and automated checks, enforce configured limits, and expose results to the team |
 
 ```text
-Product intent
-      -> measurable work item
-      -> agent investigation and plan
-      -> isolated implementation
-      -> automated tests and policy gates
-      -> agent and human review
-      -> controlled merge and deployment
+Team: specifications + architecture + test expectations
+      -> agreed change and engineering policy
+      -> agents: implement -> check -> review -> repair
+      -> evidence or unresolved design questions
+      -> team: acceptance testing and delivery decision
 ```
+
+The loop is bounded by the team's scope and the runner's execution limits.
+Agents escalate ambiguous intent, architectural changes outside that scope, and
+verification failures they cannot resolve. They preserve the agreed acceptance
+criteria instead of weakening tests to obtain a pass. Routine code review is
+delegated; human intervention is driven by unresolved questions and the team's
+chosen boundaries rather than a mandatory duplicate review of every change.
 
 Repositories must be legible to machines: predictable structure, deterministic
 commands, explicit boundaries, schemas, searchable documentation, reproducible
