@@ -163,9 +163,13 @@ your project
   `-- any extras       caching, jobs, release, deployment, ...
 ```
 
-`python3 tools/resolve.py --roots` lists every root a project can pick — 17
-stacks and 20 orthogonal templates. The stacks are below; the rest are the
-extras table that follows them.
+`python3 tools/resolve.py --roots` lists every root a project can pick. The
+stacks are below; the rest are the extras table that follows them.
+
+<!-- generated:readme-root-counts -->
+Measured: 17 stacks and 20 orthogonal templates, 37 roots in all. An extra
+resolves to the 6 core-tier files plus 1 to 5 of its own.
+<!-- /generated:readme-root-counts -->
 
 ## Supported stacks
 
@@ -222,11 +226,12 @@ meets templates the stacks table does not list.
 | `templates/platform/linear.md` | platform | Label groups, native priority, sub-issues, code-host sync |
 <!-- /generated:readme-extras -->
 
-`generated/` holds a pre-resolved chain for each of the 17 stacks and not
-for these 20. A stack chain spans dozens of files and is tedious to
-assemble by hand; an extra is one file plus the core tier, so the file
-itself is the shortest path to it. Attach the template directly, or run
-`python3 tools/resolve.py <root> --concat` to get its chain the same way.
+`generated/` holds a pre-resolved chain for each stack and none for these.
+A stack chain spans dozens of files and is tedious to assemble by hand,
+which is what a pre-resolved file is for; an extra brings a handful at
+most, so reading the template and the core tier is the shorter path.
+Attach the template directly, or run `python3 tools/resolve.py <root>
+--concat` to get its chain the same way.
 
 ## Supported agents
 
