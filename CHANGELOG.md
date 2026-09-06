@@ -33,6 +33,12 @@ alters no template carries no entry.
   template pin bumps or upstream issues solely because a newer tag or a
   reusable-looking convention exists.
 
+### Fixed
+
+- The comment-layout check reads the repository's Python rather than
+  walking the disk, so a vendored tree, build output or scratch checkout
+  no longer produces findings in files the project cannot change.
+
 ## [2.79.0] - 2026-09-05
 
 ### Fixed

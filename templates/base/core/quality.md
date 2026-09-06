@@ -916,18 +916,18 @@ git ls-files --eol |
 - Check — comment layout, for the two violations that are mechanically
   visible: a comment block with code directly above it and no blank line
   between them, and an aside to the right of code that is not a tool
-  directive. Scope: the repository's Python sources — what git tracks plus
-  the untracked files a commit could still add, never what `.gitignore`
-  excludes, because a vendored or generated tree is not the project's code
-  to fix. They are read through `tokenize` — a line-based grep reports the
-  `#` in a usage example inside a docstring, which is not a comment at all. `OPENERS` carries the exemption above; test it against
+  directive. Scope: the repository's Python — what git tracks plus the
+  untracked files a commit could still add, never what `.gitignore`
+  excludes, which is not the project's code to fix. Read through
+  `tokenize` — a line-based grep reports the
+  `#` in a usage example inside a docstring, which is not a comment at all.
+  `OPENERS` carries the exemption above; test it against
   the code the line above *ends* with, since a line closing the previous
   entry (`],`) opens nothing and its comment is a real finding. Whether a
   comment sits above the *right* item is not mechanical and stays
   declarative; wrap width is the formatter's. Pass condition: the command
   reports how many files it checked and prints nothing after that. A count
-  of zero fails it — the enumeration reached nothing, which prints the same
-  as a clean tree:
+  of zero fails it — the enumeration reached nothing:
 
   ```bash
   py - <<'EOF'
@@ -936,12 +936,9 @@ DIRECTIVES = ("noqa", "nosec", "type:", "pragma:", "pylint:", "fmt:", "mypy:")
 SKIP = (".venv", "venv", "build", "dist", ".git", ".tox")
 OPENERS = (":", "(", "[", "{")
 
-# Ask git what belongs to the repository instead of walking the disk. A walk
-# cannot read .gitignore, so it reads a vendored tree, build output or a
-# scratch checkout as the project's own source and reports findings in files
-# the project did not write and cannot change. --cached covers tracked files
-# and --others --exclude-standard the untracked ones a commit could still
-# add, which is the case this check exists for.
+# A walk cannot read .gitignore and reads a vendored or generated tree as
+# the project's own source. Tracked files plus the untracked ones a commit
+# could still add, and nothing that is ignored.
 listed = subprocess.run(
     ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard",
      "*.py"], capture_output=True).stdout.decode("utf-8").split("\0")
@@ -949,9 +946,7 @@ paths = [pathlib.Path(name) for name in listed if name
          and not any(part in SKIP for part in pathlib.Path(name).parts)]
 print("Python files checked: %d" % len(paths))
 
-# A count of zero and a clean tree print the same thing otherwise. The
-# enumeration reads the index and the work tree, so an empty list means git
-# did not answer, not that the project has no Python.
+# Zero files and a clean tree print the same thing otherwise.
 if not paths:
     print("no Python file was listed; the enumeration is broken, "
           "not the tree clean")
