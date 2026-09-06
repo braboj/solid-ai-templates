@@ -21,6 +21,10 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+- `base-quality` gains `quality-exemption-doc-duty`: changing what a
+  check exempts is a documentation edit too, and the rule ships the
+  sweep that finds every document making a claim about it.
+
 - `base-git` gains the changelog-deletion check: a bullet that stood
   under `Unreleased` in an earlier tree and is absent from the current
   one, with no release cut between, is reported against the commit that

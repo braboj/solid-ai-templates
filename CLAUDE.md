@@ -392,8 +392,8 @@ Run `py tests/run_smoke.py` before every PR. It checks:
 - No duplicate IDs across layers
 - All stacks resolve to valid, non-empty file lists
 - All resolved chains include core tier files
-- Every stack outside the `library` and `embedded` layers resolves
-  the security tier
+- SYS-15: every stack outside the `library` and `embedded` layers
+  resolves the security tier
 - Prompt builds for all stacks
 
 ## 6. Session protocol

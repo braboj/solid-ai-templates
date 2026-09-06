@@ -303,6 +303,57 @@ they were never checked.
   the other call sites are found at all — from a comment rather than
   from a diff
 
+## A document's account of what a check ignores decays from the code
+
+[ID: quality-exemption-doc-duty]
+
+A check's exemptions are written twice: once in the check, and once in
+whatever document explains it. The second copy has no gate. The check's
+own tests exercise the exemptions rather than the sentence describing
+them, and the diff that adds an exemption touches one source module and
+has no reason to open a Markdown file — so a reviewer of that diff sees a
+correct, well-tested change, and the document silently stops being true.
+
+The direction is what the neighbouring rules miss. They protect a check
+from a document, or ask a document to name its check. This is a document
+making a claim about a check's internals, and it decays from the check's
+side.
+
+- Changing what a check exempts is a documentation edit as well as a code
+  edit. Before adding or removing an exemption, sweep the documents for
+  the check's name and re-read every hit against the new exemption set
+- Sweep for the name a document would plausibly use, not only the source
+  identifier. A check's module name and the name its documentation calls
+  it by are routinely different, and the sweep reports a clean zero under
+  the wrong one
+- Prose SHOULD point at the exemption constant rather than enumerate what
+  it holds. A document saying "what `EXCLUDED` names" cannot go stale by a
+  count; one saying "two things are deliberately excluded" goes stale the
+  moment a third is added
+- Where the enumeration is the more readable choice, write the list
+  without a cardinal in front of it. The number is the falsifiable half,
+  and dropping it costs nothing
+
+This is the documentation half of `quality-rejected-mechanism-sweep`, which
+sweeps the source from a comment. This one sweeps the documents from a
+check, at the same kind of well-defined moment and for one command.
+
+```bash
+# The check whose exemptions are changing, named as a document would
+# refer to it.
+module="<check-name>"
+
+scanned=$(git ls-files '*.md')
+echo "documents scanned: $(echo "$scanned" | grep -c .)"
+naming=$(echo "$scanned" | xargs grep -l "$module")
+echo "documents naming ${module}: $(echo "$naming" | grep -c .)"
+echo "$naming"
+```
+
+Pass condition: the scanned count is non-zero — a zero means the search
+reached no documents rather than that none mentions the check — and every
+listed document is read against the new exemption set. A naming count of
+zero under a non-zero scan is a real answer, and is the common one.
 ## Destructive operations
 
 [ID: quality-destructive-ownership]
