@@ -3375,9 +3375,23 @@ for name in tracked:
   its `--check` gates; where it does not, name the thing without counting
   it. Check — no documentation figure sits outside a generated block.
   Pass condition: the command reports the documents it scanned and the
-  ungated figures it found, the first non-zero and the second zero. A
+  ungated figures it found, the first non-zero and the second zero, and
+  exits zero; any figure it lists reaches a non-zero status. A
   table restating a generator is covered by the rule above, and a fenced
-  block is a transcript, so both are out of scope here:
+  block is a transcript, so both are out of scope here.
+
+  The corpus is every tracked Markdown document: a document stating a
+  figure about the tree is one wherever it sits, and a path list drawn
+  around the documents someone thought of leaves the rest unchecked. What
+  the check excludes it excludes by kind. A **dated record** states what
+  was true on its date; a document whose whole purpose is that is named as
+  a path, and a live document carrying such a passage marks it with a
+  comment naming the date, which is what makes the figure a record rather
+  than an exemption. A file whose numerals are the project's **source
+  material** — a rule stating a threshold, a fixture, anything generated
+  from one — states a specification and not a measurement; name those
+  roots, and a project whose Markdown is all documentation leaves the list
+  empty:
 
   ```bash
   py - <<'EOF'
@@ -3388,16 +3402,33 @@ NOUNS = ("file", "files", "template", "templates", "stack", "stacks",
          "section", "sections", "example", "examples")
 FIGURE = re.compile(r"(?<![\w.\-])(\d{1,6})\s+(%s)\b" % "|".join(NOUNS), re.I)
 GENERATED = re.compile(r"<!--\s*/?generated:")
+
+# A passage stating the date it was measured on: a record of a tree, not
+# a claim about this one.
+MEASURED = re.compile(r"<!--\s*measured:\s*\d{4}-\d{2}-\d{2}")
+MEASURED_END = re.compile(r"<!--\s*/measured\s*-->")
 FENCE = re.compile(r"^\s*```")
+# A dated record states what was true on its date.
 HISTORY = ("CHANGELOG.md", "docs/dev-journal.md", "docs/decisions/",
            "docs/audits/")
-out = subprocess.check_output(
-    ["git", "ls-files", "-z", ":(glob)*.md", "docs/*.md", "docs/**/*.md"])
+
+# Roots whose numerals are the project's own subject matter. Set per
+# project; leave empty where all Markdown is documentation.
+SOURCES = ("templates/", "generated/", "examples/")
+
+out = subprocess.check_output(["git", "ls-files", "-z", "*.md"])
 paths = [p for p in out.decode("utf-8").split(chr(0))
-         if p.endswith(".md") and not p.startswith(HISTORY)]
+         if p.endswith(".md") and not p.startswith(HISTORY)
+         and not p.startswith(SOURCES)]
+
+# A corpus the command did not produce is not a corpus. An empty list here
+# means the pathspec reached nothing, which reports zero findings from a
+# scan that never ran.
+if not paths:
+    raise SystemExit("no tracked Markdown reached; the pathspec drifted")
 findings = []
 for rel in sorted(paths):
-    generated = fenced = False
+    generated = fenced = measured = False
     lines = pathlib.Path(rel).read_text(encoding="utf-8").splitlines()
     for number, line in enumerate(lines, 1):
         if FENCE.match(line):
@@ -3406,7 +3437,16 @@ for rel in sorted(paths):
         if GENERATED.search(line):
             generated = not generated
             continue
-        if fenced or generated or line.lstrip().startswith("|"):
+
+        # Matched separately: a toggle cannot tell which end it met, so
+        # an unterminated record would exempt the rest of the file.
+        if MEASURED.search(line):
+            measured = True
+            continue
+        if MEASURED_END.search(line):
+            measured = False
+            continue
+        if fenced or generated or measured or line.lstrip().startswith("|"):
             continue
         for hit in FIGURE.finditer(line):
             findings.append("%s:%d states '%s %s' outside a generated block"
@@ -3415,6 +3455,9 @@ print("documents scanned: %d" % len(paths))
 print("ungated figures: %d" % len(findings))
 for finding in findings:
     print(finding)
+
+# The counts are the reading; the status is the verdict.
+raise SystemExit(1 if findings else 0)
 EOF
   ```
 

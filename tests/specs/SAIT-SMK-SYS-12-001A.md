@@ -77,7 +77,7 @@ tags: [composition, reach, context-cost, ratchet]
 
 1. Append a rule to a file resolving into every chain; the check MUST
    fail and name every root carrying it. Observed 2026-09-01: 47
-   characters added to `base/core/quality.md` failed all 37 roots
+   characters added to `base/core/quality.md` failed every root
 2. Delete one ceiling; the check MUST fail on that root as unmeasured and
    print the exact line to restore
 3. Record a ceiling for a root that does not resolve; the check MUST fail
@@ -93,8 +93,12 @@ tags: [composition, reach, context-cost, ratchet]
   is about what the resolution costs
 - ADR-035 — why the corpus is every root and not the stacks alone
 - ADR-034 — why the counts are reported and floored
+<!-- measured: 2026-09-01 -->
+
 - Measured basis, 2026-09-01: 37 roots (17 stacks, 20 orthogonal), the
   largest chain `stack-django` at 453,564 characters. The corpus went
   from 387KB and 359 RFC-2119 occurrences at v2.1.0 to 782KB and 858 at
   v2.72.0 with the file count flat, and `sync.py --check` reported the
   size on every run without ever refusing it
+
+<!-- /measured -->
