@@ -324,7 +324,7 @@ All rules in templates use RFC 2119 keywords:
 
 ### 3.1 Testing
 
-Seven files in `tests/`:
+Eight files in `tests/`:
 
 | File | Purpose |
 |------|---------|
@@ -332,6 +332,7 @@ Seven files in `tests/`:
 | `tests/cases.py` | E2E test case definitions, grouped by area (STK, FMT, ITV, DPL) |
 | `tests/run_smoke.py` | Smoke test runner (structural checks) |
 | `tests/run_e2e.py` | E2E test runner (agent-based tests) |
+| `tests/providers.py` | Model backends the e2e runner selects between |
 | `tests/conformance.py` | Disposition per embedded check — run here, or skip with a reason |
 | `tests/run_conformance.py` | Runs the templates' own embedded checks against this repository |
 | `tests/chain-budget.txt` | Ceiling per root for resolved chain size — SYS-12 fails on an overage |
@@ -355,7 +356,8 @@ py tests/run_e2e.py --dry-run      # print prompts, skip execution
   `tests/reports/` after every run (gitignored)
 - Spec files live in `tests/specs/` — see `tests/CODIFICATION.md`
   for the ID scheme and `tests/INDEX.md` for the full list
-- CI runs smoke + gitleaks on PRs and on push to main
+- CI runs smoke, conformance, `sync.py --check`, `resolve.py --check`,
+  the redundancy audit and gitleaks on PRs and on push to main
 - Live e2e calls an LLM via the API — run manually on the
   dev machine for functional validation
 - To validate a new template: run `py tests/run_smoke.py` and
