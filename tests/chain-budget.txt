@@ -45,7 +45,7 @@ stack-go-lib          366429
 stack-go-service      435222
 stack-grpc-go         414168
 stack-grpc-python     431999
-stack-htmx            290861
+stack-htmx            301271
 stack-nestjs          359057
 stack-nodejs-lib      303283
 stack-python-lib      384203

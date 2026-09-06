@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- `stack-htmx` resolves `base-security`. A server-rendered web stack
+  shipped no rule on injection, authentication, session management,
+  secrets or transport security.
+
 ### Changed
 
 - `base-quality` requires a shipped check to carry its verdict in its exit
