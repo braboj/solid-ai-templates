@@ -458,6 +458,12 @@ Run `py tests/run_smoke.py` before every PR. It checks:
   writes nothing to a file already in its target state reports clean
   because it never executed, and that reads as the tool being innocent
   of what it is suspected of
+- Plant the mutation where the check actually reads, not merely in the
+  working tree. A check that reads committed state — `git show HEAD:`,
+  `git ls-files`, a tag's tree — is untouched by an edit that is not
+  staged or committed, so the run comes back byte-identical to the clean
+  one. An identical result is the strongest thing a control can look
+  like and the weakest thing it can be
 - Report only measurements this session took. An issue states its
   measurement against the tree on its filing date; repeating that figure
   in a commit message or pull request body asserts it about the tree
