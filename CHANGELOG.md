@@ -21,6 +21,11 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+- `base-git` gains the changelog-deletion check: a bullet that stood
+  under `Unreleased` in an earlier tree and is absent from the current
+  one, with no release cut between, is reported against the commit that
+  added it.
+
 ## [2.82.0] - 2026-09-06
 
 ### Added

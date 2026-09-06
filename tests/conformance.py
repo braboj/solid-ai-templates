@@ -139,6 +139,10 @@ CHECKS = [
      "title": "The tree being tagged documents what the release claims",
      "do": RUN, "expect": ["nonzero", "nonzero", "any", "zero"]},
 
+    {"file": "base/core/git.md",
+     "find": "bullets ever under Unreleased in that range",
+     "title": "A bullet deleted from Unreleased is reported",
+     "do": RUN, "expect": ["nonzero", "nonzero", "zero"]},
     {"file": "base/core/git.md", "find": "entries in Unreleased",
      "title": "The Unreleased section accounts for what the release carries",
      "do": RUN, "expect": MANUAL,

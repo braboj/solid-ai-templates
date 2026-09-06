@@ -2154,6 +2154,150 @@ entry is added by the change that causes it, per `base-docs`; a project
 relying on this check to reconstruct the block at release time has already
 lost the information it needs to do so.
 
+**The changelog-deletion check** — not a step of the sequence above. It
+reads committed history rather than the operator's intent, so it runs on
+any tree on any day, and it is the one changelog gate that does not wait
+for a release.
+
+It exists because the completeness check above is deliberately loose in
+one direction. A commit touching no consumer-visible file earns no entry,
+so a carried commit with nothing answering it is the expected reading. That
+makes "this commit legitimately has no entry" and "this commit's entry was
+deleted" the same observation, and the second is a regression the first is
+indistinguishable from. What separates them is not in the release moment at
+all: a bullet added by one commit and absent from a later tree, with no
+release cut between, was removed rather than never written, and the file's
+own history says so.
+```bash
+py - <<'EOF'
+import re, subprocess, sys
+
+sys.stdout.reconfigure(encoding="utf-8")
+
+RUN = dict(capture_output=True, text=True, encoding="utf-8")
+PATH = "CHANGELOG.md"
+
+# How much of a former bullet's wording must survive for it to read as
+# reworded rather than removed.
+KEPT = 0.6
+
+
+def sections(text):
+    """The file's `## ` headings, each mapped to its own lines."""
+    out, head = {}, None
+    for line in text.splitlines():
+        if line.startswith("## "):
+            head = line.strip()
+            out[head] = []
+        elif head and line.strip():
+            out[head].append(line.strip())
+    return out
+
+
+def words(line):
+    return set(re.findall("[a-z0-9]+", line.lower()))
+
+
+previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0"],
+                          **RUN).stdout.strip()
+
+# A baseline the command did not produce is not a baseline: with no tag
+# the range is empty and the check would report nothing from a comparison
+# it never made.
+if not previous:
+    print("no tag bounds the range; the missing tag is the finding")
+    raise SystemExit(1)
+
+revs = subprocess.run(["git", "rev-list", "--reverse", previous + "..HEAD"],
+                      **RUN).stdout.split()
+print("commits inspected: %d" % len(revs))
+if not revs:
+    print("no commit since %s; nothing to compare" % previous)
+    raise SystemExit(3)
+
+current = sections(subprocess.run(["git", "show", "HEAD:" + PATH],
+                                  **RUN).stdout)
+
+# Each bullet is recorded with the headings that already existed when it
+# was seen. A release cut can only move a bullet into a section the cut
+# creates, never into one that was already there, so those older sections
+# are not somewhere it can legitimately have gone.
+seen = {}
+for rev in revs:
+    shown = subprocess.run(["git", "show", rev + ":" + PATH], **RUN)
+    if shown.returncode:
+        continue
+    at_rev = sections(shown.stdout)
+    for head, lines in at_rev.items():
+        if "unreleased" not in head.lower():
+            continue
+        for line in lines:
+            if line.startswith("- "):
+                seen.setdefault(line, (rev, set(at_rev)))
+
+print("bullets ever under Unreleased in that range: %d" % len(seen))
+
+# An empty corpus reports what a clean tree reports. Right after a cut the
+# section is legitimately empty, so say so rather than certifying a
+# comparison that had nothing to compare.
+if not seen:
+    print("no bullet stood under Unreleased in that range; "
+          "this check does not apply")
+    raise SystemExit(3)
+
+missing = []
+for line, (rev, existing) in seen.items():
+    w = words(line)
+    if not w:
+        continue
+    reachable = []
+    for head, lines in current.items():
+        if "unreleased" in head.lower() or head not in existing:
+            reachable.extend(lines)
+    best = max((len(w & words(l)) / float(len(w)) for l in reachable),
+               default=0.0)
+    if best < KEPT:
+        missing.append((line, rev, best))
+
+print("bullets absent from where a cut could have moved them: %d"
+      % len(missing))
+for line, rev, best in sorted(missing, key=lambda m: m[0]):
+    print("  added in %s, now nowhere a cut could have put it (closest "
+          "line keeps %.0f%%): %s" % (rev[:7], best * 100, line))
+raise SystemExit(1 if missing else 0)
+EOF
+```
+
+Pass condition: `bullets absent from the current file` is zero. A former
+bullet counts as surviving when some line of the current file keeps at
+least 60% of its content words, so a rewording is not a deletion and a
+release cut is not either — cutting moves a bullet under a version
+heading, where it is still a line of the file. Only a bullet that is
+nowhere in the tree is reported, against the commit that introduced it.
+
+The comparison reaches past the `Unreleased` section, and that is what
+makes a release cut invisible to it. A check reading only `Unreleased`
+sees every bullet vanish at each release and reports the defect shape on
+the most ordinary day the file has.
+
+It reaches only as far as a cut could have carried the bullet: the
+current `Unreleased` section, and any version section whose heading did
+not yet exist when the bullet was recorded. Comparing against the whole
+file instead lets an older release's entry absorb a newly deleted one,
+which was observed while this check was being built: an entry reading
+`base-git` gains a changelog-completeness check masked the
+deletion of `base-git` gains the changelog-deletion check at 64%
+shared wording, and the control passed while the entry was gone.
+
+Where the section is empty the check reports that it does not apply, on
+exit status 3. That is the guaranteed state directly after a cut, and a
+comparison with nothing to compare must say so rather than pass: an empty
+corpus otherwise reports what a clean tree reports.
+
+The 60% figure is a threshold and inherits what attaches to one — it is
+chosen to admit the rewording a consolidation performs and to reject a
+different entry that happens to share vocabulary. A project that reworks
+its entries more heavily raises it and states the new figure here.
 ### A currency gate compares non-strictly
 
 The periodic project-wide audit above is the pre-release step a project
