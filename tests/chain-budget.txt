@@ -31,7 +31,7 @@ base-deployment       277673
 base-release          272933
 base-skills           276785
 base-two-pass-review  349020
-platform-github       379933
+platform-github       380636
 platform-gitlab       346891
 platform-linear       290029
 stack-astro           389263

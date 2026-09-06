@@ -149,6 +149,15 @@ gate categories to GitHub Actions workflows and GitHub-native features.
 
 ```bash
 SHA=$(git rev-parse HEAD)
+
+# A commit no remote carries cannot have runs. On a pull-request checkout
+# HEAD is the merge commit the host synthesised for the run, which was
+# never pushed, so counting runs for it reports a zero that means only
+# that the question was asked about the wrong commit.
+if [ -z "$(git branch -r --contains "$SHA" 2>/dev/null)" ]; then
+  echo "$SHA is on no remote branch, so no workflow can have run for it"
+  exit 3
+fi
 echo "commit inspected: $SHA"
 gh run list --commit "$SHA" --json workflowName,conclusion --jq '"workflow runs found: \(length)"'
 gh run list --commit "$SHA" --json workflowName,conclusion --jq '.[] | select(.conclusion != "success") | "\(.workflowName): \(.conclusion // "still running")"'
@@ -158,7 +167,11 @@ gh run list --commit "$SHA" --json workflowName,conclusion --jq '.[] | select(.c
   runs it found there, then lists every run that did not succeed. A found
   count of zero means either the query was malformed or nothing has run,
   and the command cannot tell you which — resolve that before reading it
-  either way. Printing the rows alone, as this check once did, left the
+  either way. The rows are the reading; the count is the verdict, and a
+  zero reaches a non-zero status. Where HEAD is on no remote branch the
+  question is not live and the command says so on exit status 3, which is
+  the ordinary state of a pull-request checkout and of any unpushed
+  commit. Printing the rows alone, as this check once did, left the
   reader to count them and left a zero looking like a clean result. A
   poll waiting on an abbreviated SHA waits out its whole budget and
   reports silence, which reads as a workflow that never fired; a one-shot
