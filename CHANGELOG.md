@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Changed
+
+- `base-quality` requires a shipped check to carry its verdict in its exit
+  status, and a pass condition satisfied by silence to reach a non-zero one.
+  Five `base-git` checks that printed findings and exited zero now exit.
+
 ## [2.81.0] - 2026-09-06
 
 ### Added

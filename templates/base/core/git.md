@@ -111,14 +111,16 @@ regeneration never ran.
 
 ```bash
 <regenerate-command>
-git diff --stat -- <artifact-path>
+git diff --exit-code --stat -- <artifact-path>
 ```
 
-  Pass condition: empty. Any output means the committed artifact does not
-  match what its sources produce, and the regeneration is part of this
-  change rather than a follow-up. A regenerator that is not idempotent
-  fails this against an already-current artifact, which is a defect in the
-  generator rather than in the change under review
+  Pass condition: no diff, on a zero status — `--exit-code` is what
+  makes the absence of output a verdict. Any output means the committed
+  artifact does not match what its sources produce, and the
+  regeneration is part of this change rather than a follow-up. A
+  regenerator that is not idempotent fails this against an
+  already-current artifact, which is a defect in the generator rather
+  than in the change under review
 
 After regenerating derived artifacts and before staging them, verify
 the diff is real and the output is correct.
@@ -267,6 +269,7 @@ HEADING = re.compile(r"^(#{1,6}) +([0-9]+(?:\.[0-9]+)*)\.? ")
 LISTITEM = re.compile(r"^\s*([0-9]+)\. ")
 PLAIN = re.compile(r"^#{1,6} ")
 
+failed = False
 for path in PATHS:
     group, runs, problems, total = "(top)", {}, [], 0
     for n, line in enumerate(open(path, encoding="utf-8"), 1):
@@ -301,12 +304,18 @@ for path in PATHS:
         print(problem)
     if not total:
         print("  no ordinals found; the pattern drifted")
+    if problems or not total:
+        failed = True
+
+# The counts are the reading; the status is the verdict.
+raise SystemExit(1 if failed else 0)
 EOF
 ```
 
 Pass condition: the command reports, for each document, how many ordinals
-it inspected and how many groups they fall into, then prints nothing else.
-A count of zero is a failure rather than a flat document — it means the
+it inspected and how many groups they fall into, and exits zero. A
+collision line, or a count of zero, reaches a non-zero status instead. A
+count of zero is a failure rather than a flat document — it means the
 numbering pattern drifted and the check reached nothing. Adapt the two
 patterns to the document's own convention before trusting a clean result;
 a check calibrated against the wrong convention reports zero either way.
@@ -360,7 +369,9 @@ git diff --stat :3:<path> :2:<path>
   Pass condition: the command names the file and reports the lines
   resolving to the branch would add, remove and change. Additions only,
   with nothing removed and nothing changed, is the evidence that the
-  branch discards nothing. Any removal is content on the base that B
+  branch discards nothing. The reading is the operator's — the command
+  runs mid-conflict against a path only the person resolving it can name,
+  and reaches no status of its own. Any removal is content on the base that B
   lacks, and taking B's side drops it
 - MUST NOT apply "resolve in favour of the branch" without that
   evidence. The instruction is sound only while B is a strict superset
@@ -437,13 +448,17 @@ for name in unsafe:
     print("  %s is %r -- nothing deletes a merged head branch, so every "
           "deletion is the manual kind, which closes any pull request "
           "targeting it" % (name, settings[name]))
+
+# An unread setting is a finding too: the check established nothing.
+raise SystemExit(1 if unsafe or not settings else 0)
 EOF
 ```
 
   Pass condition: the first count is above zero, proving the settings
   were read rather than the command failing quietly, and the second is
-  zero. Reading the setting is not by itself a check — both values print,
-  so on the older form no configuration was ever a finding
+  zero; either one failing reaches a non-zero status. Reading the setting
+  is not by itself a check — both values print, so on the older form no
+  configuration was ever a finding
 - The setting licenses nothing. `true` describes what an *automatic*
   deletion does. Passing a delete-branch flag explicitly takes the manual
   path on a `true` repository exactly as it does on a `false` one, and
@@ -727,14 +742,18 @@ print("resolved: %d pull request(s), %d closed issue(s), "
          kinds["open issue named in passing"]))
 for finding in findings:
     print(finding)
+
+# The counts are the reading and the findings are the verdict.
+raise SystemExit(1 if findings or not merged else 0)
 EOF
 ```
 
 Pass condition: with `MILESTONE` set, the command reports the previous
 tag, how many references it found in the subjects since, and how many of
-those resolved to a pull request and how many to an issue — then prints
-nothing. An empty result is a failure too, since no references found
-means either nothing is unreleased or the commit subject format drifted.
+those resolved to a pull request and how many to an issue, then exits
+zero. Every line after those counts is a finding and reaches a non-zero
+status. An empty result is a failure too, since no references found means
+either nothing is unreleased or the commit subject format drifted.
 A repository with no tag yet fails on that rather than on the count: the
 range the count comes from is undefined, and a first release is exactly
 the case where the two are hardest to tell apart.
@@ -762,16 +781,28 @@ last — a repository with more than one workflow answers a different
 question otherwise.
 
 ```bash
-gh run list --workflow <release-workflow>.yml --limit 100 --json databaseId --jq 'length'
+# A count the command did not produce is not a count. An unknown workflow
+# name errors, and the empty string it leaves behind compares as neither
+# zero nor non-zero, so refuse rather than test it.
+if ! runs=$(gh run list --workflow <release-workflow>.yml --limit 100 --json databaseId --jq 'length'); then
+  echo "the workflow name does not resolve, so no history was read"
+  exit 1
+fi
+echo "runs found: $runs"
+if [ "$runs" -eq 0 ]; then
+  echo "this tag would be the workflow's first execution; step 6 applies"
+  exit 1
+fi
 ```
 
 Pass condition: the command prints how many runs it found, capped by
-`--limit`; the question is only whether that number is zero. A non-zero
-count is the evidence the tag path has executed. `0` is the finding, not a
-clean result — it prints `0` and exits `0`, so nothing surfaces it on its
-own, and it means the tag about to be pushed is the workflow's first
-execution and step 6 applies. An error naming an unknown workflow means
-the filename drifted, which is a failure rather than an absence of runs.
+`--limit`, and exits zero; the question is only whether that number is
+zero. A non-zero count is the evidence the tag path has executed. `0` is
+the finding, not a clean result, and it reaches a non-zero status: it
+means the tag about to be pushed is the workflow's first execution and
+step 6 applies. An error
+naming an unknown workflow means the filename drifted, which the command
+refuses as a failure rather than counting as an absence of runs.
 
 **The release-ordering check** — step 7 of the sequence above. Run it from
 the release commit before the tag is pushed. Nothing else reports this:
@@ -1025,8 +1056,9 @@ EOF
 ```
 
 Pass condition: the command declares two counts — how many audit records
-exist, and how many of them cover the previous release — and prints
-nothing after them. Both MUST be non-zero. A record count of zero is a
+exist, and how many of them cover the previous release — and exits zero.
+Both MUST be non-zero, and each way of failing reaches a non-zero status
+beside the line that explains it. A record count of zero is a
 failure rather than an empty tree, since a project reaching this check
 runs the audit, so no record means none was written. A version the check
 cannot read is a failure and never an exemption, and so is a missing
@@ -1138,8 +1170,11 @@ done
 ```
 
 Pass condition: both repositories print the same keys with the same
-statuses. A control `enabled` on the source and `disabled` or absent on
-the destination was lost in the migration. `to_entries cannot be applied
+statuses. The comparison is the operator's: the command reports two key
+sets and cannot say which differences the migration intended, so it
+reaches no status of its own and MUST be read. A control `enabled` on the
+source and `disabled` or absent on the destination was lost in the
+migration. `to_entries cannot be applied
 to: null` under a repository name is a failure, not an absence of
 controls — the field is returned only to an administrator of that
 repository, so the message means the token cannot read it and the
