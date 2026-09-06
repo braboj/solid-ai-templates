@@ -28,7 +28,7 @@ import re
 import subprocess
 import sys
 
-from lib import (ROOT, PASS, FAIL, ERR, write_report,
+from lib import (ROOT, PASS, FAIL, ERR, write_report, print_verdict,
                  repository_files, template_files)
 from cases import ALL_TESTS
 
@@ -2233,7 +2233,10 @@ def main():
         ERR: render_err,
     })
 
-    sys.exit(0 if results[FAIL] == 0 and results[ERR] == 0 else 1)
+    ok = results[FAIL] == 0 and results[ERR] == 0
+    print_verdict(ok, "%d checks, %d failed, %d errors"
+                  % (total, results[FAIL], results[ERR]))
+    sys.exit(0 if ok else 1)
 
 
 if __name__ == "__main__":

@@ -163,6 +163,22 @@ def write_report(run_results, started_at, runner_name, columns):
     print(f"\nReport: {os.path.relpath(report_path, ROOT)}")
 
 
+def print_verdict(ok, detail):
+    """Print the run outcome as the very last line the runner emits.
+
+    Args:
+        ok: True when the run is clean, False otherwise
+        detail: the counts to state beside the verdict, already formatted
+    """
+
+    # Every other summary line -- the counts, the advisory, the report
+    # path -- can be the last one a truncated read keeps, and each of
+    # them reads as a complete summary with no failure in it. The
+    # verdict goes after all of them, so a reader who keeps one line
+    # keeps this one.
+    print("VERDICT: %s - %s" % ("PASS" if ok else "FAIL", detail))
+
+
 def parse_args(argv):
     """Parse common CLI args: filter IDs, --fail-fast, --area, --dry-run, --all."""
     flags = set()

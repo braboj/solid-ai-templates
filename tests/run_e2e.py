@@ -30,7 +30,8 @@ import os
 import sys
 import time
 
-from lib import ROOT, PASS, FAIL, SKIP, ERR, read, parse_args, load_dotenv
+from lib import (ROOT, PASS, FAIL, SKIP, ERR, read, parse_args,
+                 load_dotenv, print_verdict)
 from cases import ALL_TESTS, CANARY_TESTS
 
 # Import shared resolver from tools/
@@ -315,7 +316,11 @@ def main():
 
     write_report(run_results, started_at, dry_run)
 
-    sys.exit(0 if results[FAIL] == 0 and results[ERR] == 0 else 1)
+    ok = results[FAIL] == 0 and results[ERR] == 0
+    print_verdict(ok, "%d passed, %d failed, %d skipped, %d errors"
+                  % (results[PASS], results[FAIL], results[SKIP],
+                     results[ERR]))
+    sys.exit(0 if ok else 1)
 
 
 if __name__ == "__main__":

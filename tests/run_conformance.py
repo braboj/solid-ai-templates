@@ -36,7 +36,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from conformance import CHECKS, RUN, SKIP, SILENT, MANUAL, READ
 from lib import (PASS, FAIL, SKIP as SKIPPED, ROOT, write_report,
-                 template_documents)
+                 print_verdict, template_documents)
 
 ERR = "ERR"
 
@@ -463,7 +463,20 @@ def main():
         NA: reading,
     })
 
-    sys.exit(1 if results[FAIL] or results[ERR] or unbudgeted else 0)
+    ok = not (results[FAIL] or results[ERR] or unbudgeted)
+    detail = ("%d passed, %d failed, %d errors, %d not applicable"
+              % (results[PASS], results[FAIL], results[ERR],
+                 results[NA]))
+
+    # A budgeted reading is not a failure, so the verdict word stays
+    # PASS. It is also not a clean run, and the word alone would be
+    # read as one, so the line says what is still owed.
+    if results[REVIEW]:
+        detail += ("; %d reading(s) still to read, so this run is not"
+                   " clean yet" % results[REVIEW])
+
+    print_verdict(ok, detail)
+    sys.exit(0 if ok else 1)
 
 
 if __name__ == "__main__":
