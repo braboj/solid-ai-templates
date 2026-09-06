@@ -96,6 +96,8 @@ tags: [composition, reach, section-ids]
 - `SAIT-SMK-TPL-04-001A` — covers EXTEND/OVERRIDE directives, which are
   structural; a prose reference is checked by neither it nor TPL-06
 - `SAIT-SMK-TPL-06-001A` — the same reachability question for directives
+<!-- measured: 2026-09-01 -->
+
 - Measured basis, 2026-09-01: 365 declared section IDs, 29 cross-file
   prose references across 37 roots — 17 stacks and 20 orthogonal
   templates — none dangling. The prefix pattern this check used earlier
@@ -104,3 +106,5 @@ tags: [composition, reach, section-ids]
   that followed scanned `base-agents`, `base-skills` and `base-issues`
   against zero chains apiece; all three named a section their readers do
   not receive
+
+<!-- /measured -->

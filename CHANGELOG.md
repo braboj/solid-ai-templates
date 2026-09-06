@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Changed
+
+- `base-docs`' gated-figure check reads every tracked Markdown, not a
+  path list. A dated record is excluded by kind: a `<!-- measured:
+  YYYY-MM-DD -->` marker exempts a passage, and an undated one does not.
+
 ### Added
 
 - `stack-htmx` resolves `base-security`. A server-rendered web stack

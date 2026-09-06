@@ -86,5 +86,9 @@ None.
 - `SAIT-SMK-SYS-11-001A` — the same reachability question for a section
   named in running prose rather than by a directive
 - Context: issue #283, discovered via #276
+<!-- measured: 2026-09-01 -->
+
 - Measured basis, 2026-09-01: 218 directives across 37 roots — 17 stacks
   and 20 orthogonal templates
+
+<!-- /measured -->

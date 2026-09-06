@@ -113,8 +113,12 @@ have landed before its result was read.
   one is between the instruction and the resolver
 - ADR-035 — why the corpus is every root and not the stacks alone
 - ADR-034 — why the counts are reported and floored
+<!-- measured: 2026-09-03 -->
+
 - Measured basis, 2026-09-03: 6 core-tier files, 37 roots, and 148 files
   the DEPENDS ON walk alone would miss summed over roots. Before the
   README was corrected, `templates/base/core/readme.md` and
   `templates/base/core/review.md` were missed by 17 of 17 stacks, so the
   documented manual path lost the code-review rules on every chain
+
+<!-- /measured -->
