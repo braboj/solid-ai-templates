@@ -1,0 +1,61 @@
+name: Release gates
+
+# The release gates are parameterised by the version being released, and
+# nothing in a repository's state distinguishes a release commit from an
+# ordinary one -- so they reported "does not apply" on every run and only
+# executed when an operator remembered to set the constant by hand. A tag
+# push is the one event that does say a release is happening.
+on:
+  push:
+    tags:
+      - 'v*'
+  # The tag is pushed after the irreversible step, so the automatic run
+  # reports rather than prevents. This input is how the same gates run at
+  # the release commit, where they can still refuse.
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Version being released, e.g. v2.83.0'
+        required: true
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      # The gates read the tag history to resolve the release they
+      # follow, so a shallow clone resolves no baseline.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pyyaml
+      - name: Resolve the release and its milestone
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISPATCH_RELEASE: ${{ inputs.release }}
+        run: |
+          release="${DISPATCH_RELEASE:-${GITHUB_REF_NAME}}"
+          echo "RELEASE=${release}" >> "$GITHUB_ENV"
+
+          # A milestone is named for the minor line rather than the
+          # patch, so match on the v<major>.<minor> prefix. A release
+          # never scoped to one leaves this unset, and the check reports
+          # that it does not apply -- the correct reading, not a failure.
+          PREFIX="$(echo "${release}" | cut -d. -f1,2)"
+          export PREFIX
+          title="$(gh api "repos/${GITHUB_REPOSITORY}/milestones?state=all" --paginate --jq '[.[] | select(.title | startswith(env.PREFIX))] | .[0].title // empty')"
+          echo "RELEASE_MILESTONE=${title}" >> "$GITHUB_ENV"
+
+          echo "release:   ${release}"
+          echo "milestone: ${title:-<none resolved>}"
+      - name: Run the release gates
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python tests/run_conformance.py
