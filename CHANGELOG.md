@@ -35,6 +35,9 @@ alters no template carries no entry.
 - `base-quality-gates` gains the family-sizing check: run the linter past
   its configuration with the rule family named, since an unfiltered bypass
   drops the project's selection and measures the tool's defaults.
+- `base-quality-gates` gains the narrowing control: a slice that changes
+  what the code catches or returns names the test that would fail if it
+  went too far, since a suite passing beforehand cannot report that.
 
 ## [2.83.0] - 2026-09-07
 
