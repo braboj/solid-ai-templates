@@ -6564,6 +6564,85 @@ worktrees and one stash outstanding, none of it mine to remove.
 
 ---
 
+## 2026-09-06 — What the gates cannot see
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** `v2.81.0` released, from a milestone scoped this session out
+of the four open findings of the previous day's 360 audit plus the template
+feedback that generalises them. Five defects, one shape: a check certifying
+something it never looked at.
+
+The load-bearing one was the template corpus. `all_template_files()` read a
+hardcoded twelve-directory list with a non-recursive `os.listdir` and defined
+what six authoring checks could see. A planted `templates/rogue.md` declaring
+a duplicate `base-git` and an empty section passed the whole gate stack; it
+now fails three checks, and the scanned count moves from 74 to 75 — which is
+what makes the count worth printing. The conformance runner's `os.walk` and
+TPL-08's six-directory walk went the same way, onto one enumeration in
+`lib.py` built from `git ls-files`.
+
+The composition defect had been shipping for months. `docs/SPEC.md` calls two
+templates overriding one ID an error and states no winner; `stack-tutorial`
+did it three times, carrying two contradictory bodies for
+`static-site-content`. No check counted multiplicity. Both templates now
+follow the pattern `go-lib` → `go-service` → `go-echo` already used without
+anyone stating it, TPL-10 fails a chain that overrides an ID twice, and
+ADR-039 records the choice against the live alternative of letting the later
+template win.
+
+The README claimed OWASP and no chain carried it; CSRF reached one chain of
+seventeen, so a Django, Flask, Express or NestJS adopter had no CSRF rule at
+all. `base-security` gains the section and names the standard, taking OWASP
+from 0 chains to 12 and CSRF from 1 to 13. Measuring that turned up something
+worse and separate, filed as its own issue: `stack-htmx` is a server-rendered
+web stack whose nine-file chain carries no security file whatsoever.
+
+`docs/meta/` was renamed to `docs/design/` rather than the newcomer moving
+into it, on the user's call. Its arrival had also flipped the register check
+into a permanent reading — a standing finding is one a reader learns to
+dismiss — so chapters 12 and 14 adopted the id convention, and the check's
+output was reshaped into three lines a predicate can read. Conformance went
+from six checks awaiting a reading to three.
+
+The last one generalises the first: a figure a document states about the tree
+must come from a generator, or not be stated. The rule ships with its check,
+this repository had seven violations in prose, and the counts were available
+from `resolve.py --roots` throughout.
+
+**PRs merged:** #1533, #1534, #1536, #1537, #1538, #1539 (the cut), #1540
+(ADR-039), #1541 (PLAYBOOK)
+
+**Issues closed:** #1525, #1526, #1527, #1528, #1530
+
+**Issues created:** #1535 (HTMX ships no security rules, P1), #1542 (the
+gated-figure check stops at `docs/`)
+
+**Decisions:**
+- ADR-039: a chain overrides each section ID once, and specialises through a
+  new ID at each level
+
+**Lessons:**
+- Three PRs each raised chain ceilings and each rebase conflicted on
+  `tests/chain-budget.txt`. Resolving it by reading is wrong twice: the
+  numbers are generated, and a branch's raises were measured against a tree
+  that no longer exists. On the first one `git checkout --theirs` took the
+  commit being applied rather than the upstream file — the inversion cost a
+  recovery from the stash. The recipe is now in PLAYBOOK
+- The cut raised 37 ceilings by 2,433 characters and 2,360 of that was a
+  shipped check's Python, not a rule. Every consumer carries it in context on
+  every turn and only CI executes it. Recorded on the chain-ceiling spike,
+  because it may be the larger half of the question that spike asks
+- A rule shipped with a corpus boundary leaves the outside ungated, and the
+  outside is where the drift already is. The check written this session
+  passes on `docs/` and leaves ten stale figures in `tests/specs/`, one of
+  them matching no count in the tree
+- Writing a template check through a shell heredoc turned `\b` into a literal
+  backspace character inside the committed Markdown. Invisible in every
+  rendering, and the regex silently stopped matching word boundaries
+
+---
+
 ## 2026-09-06 — The fix that landed on one enumerator, and the audit that found the other two
 
 **Tool:** Claude Code (Opus 5, 1M context)
