@@ -174,9 +174,12 @@ References: [ImContext product plan][context-imcontext], [ImCost][context-imcost
 and [Code with Branko][context-teaching]. These describe possible supporting
 capabilities; their availability and benefit need validation before reliance.
 
-[context-imcontext]: https://github.com/Imbra-Ltd/imbra-explore/blob/main/projects/im-context/IMCONTEXT.md
-[context-imcost]: https://github.com/Imbra-Ltd/imbra-explore/blob/main/projects/im-cost/IMCOST.md
-[context-teaching]: https://github.com/Imbra-Ltd/imbra-explore/blob/main/projects/codewithbranko/CODEWITHBRANKO.md
+[context-imcontext]:
+  https://github.com/Imbra-Ltd/imbra-explore/blob/main/projects/im-context/IMCONTEXT.md
+[context-imcost]:
+  https://github.com/Imbra-Ltd/imbra-explore/blob/main/projects/im-cost/IMCOST.md
+[context-teaching]:
+  https://github.com/Imbra-Ltd/imbra-explore/blob/main/projects/codewithbranko/CODEWITHBRANKO.md
 
 ### 3.6 Customer-driven priorities
 
@@ -1482,7 +1485,8 @@ Existing work owns the implementation:
   skills, extended with optional triage, evaluation, and contribution review.
 - [#1368](https://github.com/braboj/solid-ai-templates/issues/1368): live test
   execution; [#368](https://github.com/braboj/solid-ai-templates/issues/368):
-  latency measurement; [#1462](https://github.com/braboj/solid-ai-templates/issues/1462):
+  latency measurement;
+  [#1462](https://github.com/braboj/solid-ai-templates/issues/1462):
   chain-budget meaning.
 - [#1353](https://github.com/braboj/solid-ai-templates/issues/1353) and
   [#1506](https://github.com/braboj/solid-ai-templates/issues/1506): selective
