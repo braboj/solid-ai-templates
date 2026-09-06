@@ -2002,6 +2002,76 @@ def check_sys_14():
             )
     return seen.failures() + failures, seen.notes()
 
+
+# ---------------------------------------------------------------------------
+# SYS-15 -- a stack outside the exempt layers resolves the security tier
+# ---------------------------------------------------------------------------
+# A stack that serves traffic and carries no security rules is the one shape
+# the chain cannot recover from downstream: the consumer's context file is
+# silent on input handling, auth and headers, and nothing in the generated
+# output says a tier is missing. `stack-htmx` shipped nine files and no
+# security template, and every other check passed.
+#
+# The manifest already classifies every stack by `layer`, so the exemption
+# is a property the tree states rather than a list of stack IDs that goes
+# stale as stacks are added.
+
+# A library is imported into a caller that owns the trust boundary, and an
+# embedded target has no HTTP surface, sessions or TLS to rule on. Both
+# would resolve a file whose rules are addressed to somebody else.
+SECURITY_EXEMPT_LAYERS = {
+    "library": "imported by a caller that owns the trust boundary",
+    "embedded": "no HTTP surface, sessions or TLS to rule on",
+}
+
+SECURITY_TIER_ID = "base-security"
+
+
+def check_sys_15():
+    if not HAS_YAML:
+        return [MISSING_YAML]
+
+    core_ids, entries, _ = _load_manifest()
+    failures = []
+    seen = Inspected()
+
+    stacks = [e for e in entries.values()
+              if e["file"].startswith("templates/stack/")]
+    seen.count("stacks classified by layer", stacks)
+    seen.count("exempt layers named with a reason",
+               SECURITY_EXEMPT_LAYERS)
+
+    # The exemption is read off the manifest, so a stack that declares no
+    # layer would be classified by omission. Fail rather than guess: an
+    # unclassified stack is the case this check exists to notice.
+    governed = []
+    for stack in stacks:
+        layer = stack.get("layer")
+        if not layer:
+            failures.append(
+                f"  {stack['id']}: no 'layer' in the manifest, so this "
+                f"check cannot tell whether the security tier is "
+                f"required of it"
+            )
+            continue
+        if layer not in SECURITY_EXEMPT_LAYERS:
+            governed.append(stack)
+
+    seen.count("stacks required to resolve the security tier", governed)
+
+    for stack in governed:
+        sid = stack["id"]
+        _, resolved_ids = _resolve_stack(sid, core_ids, entries)
+        if SECURITY_TIER_ID not in resolved_ids:
+            failures.append(
+                f"  {sid}: layer '{stack['layer']}' resolves no "
+                f"{SECURITY_TIER_ID}; only "
+                f"{', '.join(sorted(SECURITY_EXEMPT_LAYERS))} are "
+                f"exempt, and this layer is not among them"
+            )
+
+    return seen.failures() + failures, seen.notes()
+
 CHECKS = [
     {"id": "SYS-01", "spec": "SAIT-SMK-SYS-01-001A",
      "title": "DEPENDS ON paths resolve to existing files", "fn": check_sys_01},
@@ -2062,6 +2132,10 @@ CHECKS = [
     {"id": "SYS-14", "spec": "SAIT-SMK-SYS-14-001A",
      "title": "resolve.py accounts for every argument it is given",
      "fn": check_sys_14},
+
+    {"id": "SYS-15", "spec": "SAIT-SMK-SYS-15-001A",
+     "title": "A stack outside the exempt layers resolves the security tier",
+     "fn": check_sys_15},
     {"id": "ADR-01", "spec": "SAIT-SMK-ADR-01-001A",
      "title": "ADR frontmatter matches the ADR-010 schema", "fn": check_adr_01},
     {"id": "E2E-01", "spec": "SAIT-SMK-E2E-01-001A",
