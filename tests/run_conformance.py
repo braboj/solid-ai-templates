@@ -34,7 +34,7 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from conformance import CHECKS, RUN, SKIP, SILENT, MANUAL
+from conformance import CHECKS, RUN, SKIP, SILENT, MANUAL, READ
 from lib import (PASS, FAIL, SKIP as SKIPPED, ROOT, write_report,
                  template_documents)
 
@@ -140,11 +140,18 @@ def verdict(entry, code, out):
     """Apply the entry's pass predicate. Returns a list of failures.
 
     `expect` is either SILENT, MANUAL, or a list naming what each line the
-    check declares must hold -- "nonzero", "zero" or "any". Anything after
-    the declared lines is a finding. The per-line form is needed because a
-    check's own pass condition mixes the two directions: a scanned count
-    MUST be non-zero, since zero means it reached nothing, while the
-    violation count beside it MUST be zero.
+    check declares must hold -- "nonzero", "zero", "any", or "line" for a
+    declared line that carries no count. Anything after the declared lines
+    is a finding. The per-line form is needed because a check's own pass
+    condition mixes the two directions: a scanned count MUST be non-zero,
+    since zero means it reached nothing, while the violation count beside
+    it MUST be zero.
+
+    READ ends the scored run. The lines from there on are a reading
+    addressed to whoever the verdict's failure summons, so they are carried
+    into the report and never scored -- which is what lets a check reach a
+    verdict on the counts that are decided without failing on the lines
+    that are not.
     """
     expect = entry.get("expect")
 
@@ -161,10 +168,17 @@ def verdict(entry, code, out):
     if isinstance(expect, list):
         if exit_matters and code != 0:
             return ["exited %d: %s" % (code, out[-1] if out else "")]
-        if len(out) < len(expect):
+
+        # Everything from READ on is the reading, so only the lines
+        # before it are declared, and only they set the length the
+        # check must reach.
+        scored = expect[:expect.index(READ)] if READ in expect else expect
+        if len(out) < len(scored):
             return ["printed %d line(s), expected at least %d"
-                    % (len(out), len(expect))]
-        for rule, line in zip(expect, out):
+                    % (len(out), len(scored))]
+        for rule, line in zip(scored, out):
+            if rule == "line":
+                continue
             number = re.search(r"(\d+)\s*$", line)
             if not number:
                 return ["'%s' does not end in a count" % line]
@@ -174,7 +188,9 @@ def verdict(entry, code, out):
                         % line]
             if rule == "zero" and value != 0:
                 return ["'%s' should be zero" % line]
-        extra = out[len(expect):]
+        if READ in expect:
+            return []
+        extra = out[len(scored):]
         return ["%d finding(s), first: %s" % (len(extra), extra[0])] \
             if extra else []
 
@@ -232,6 +248,15 @@ def main():
         # difference stops being visible.
         if entry.get("expect") == MANUAL and not entry.get("reason"):
             problems.append("%s: manual with no reason -- %s"
+                            % (entry["file"], entry["title"][:40]))
+
+        # A check mixing a verdict with a reading MUST say which lines
+        # are which. Left unstated, the unscored tail cannot be told
+        # from a predicate that stopped short.
+        declared = entry.get("expect")
+        if isinstance(declared, list) and READ in declared \
+                and not entry.get("reading"):
+            problems.append("%s: a reading with nothing said about it -- %s"
                             % (entry["file"], entry["title"][:40]))
 
         hits = [b for b in runnable

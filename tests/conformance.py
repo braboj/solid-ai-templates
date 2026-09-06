@@ -20,9 +20,18 @@ SKIP = "skip"
 #   [...]     a list naming what each line the check declares must hold:
 #             "nonzero" for a count that proves the check reached its
 #             inputs, "zero" for a violation count, "any" where zero is a
-#             real answer. Anything printed after the declared lines is a
-#             finding. A check's own pass condition mixes the two
-#             directions, so a single rule for the whole head does not fit
+#             real answer, "line" for a declared line carrying no count.
+#             Anything printed after the declared lines is a finding. A
+#             check's own pass condition mixes the two directions, so a
+#             single rule for the whole head does not fit
+#   READ      ends the scored run inside such a list: the lines from
+#             there on are a reading for whoever the verdict's failure
+#             summons, carried into the report and never scored. An
+#             entry using it MUST carry "reading", saying which lines
+#             those are and who they are for; the runner refuses one
+#             that does not. It is how a check reaches a verdict on the
+#             counts its pass condition decides without failing on the
+#             lines it leaves to a person
 #   silent    the check prints nothing at all
 #   manual    the check runs and its output is reported, but no automatic
 #             verdict is possible -- the operator reads it. A manual entry
@@ -36,6 +45,7 @@ SKIP = "skip"
 # carries no verdict.
 SILENT = "silent"
 MANUAL = "manual"
+READ = "read"
 
 CHECKS = [
 
@@ -274,11 +284,15 @@ CHECKS = [
 
     {"file": "base/workflow/quality-gates.md", "find": "CHECK_LANGUAGES = (",
      "title": "A shipped check is safe to run where it is documented",
-     "do": RUN, "expect": MANUAL,
-     "reason": "A non-zero continuation count is not a failure. It is the "
-               "set to read against what was written, because the check "
-               "cannot tell a continuation that is safe where it sits from "
-               "one a reader would lose."},
+     "do": RUN, "expect": ["nonzero", "nonzero", READ],
+     "reading": "The continuation count and the lines under it. A non-zero "
+                "count is not a failure -- it is the set to read against "
+                "what was written, because the check cannot tell a "
+                "continuation that is safe where it sits from one a reader "
+                "would lose. The two counts above it are decided: its pass "
+                "condition says zero on either is a failure, the first "
+                "meaning the fence pattern drifted and the second the "
+                "language filter."},
 
     {"file": "base/workflow/quality-gates.md",
      "find": "checks stated outside a fence",
@@ -305,10 +319,14 @@ CHECKS = [
 
     {"file": "platform/github.md", "find": "gh run list --commit",
      "title": "A commit's checks have started, not merely not failed",
-     "do": RUN, "expect": MANUAL,
-     "reason": "A found count of zero means either a malformed query or a "
-               "workflow that never fired, and the check states it cannot "
-               "tell which."},
+     "do": RUN, "expect": ["line", "nonzero", READ],
+     "reading": "The rows under the count, one per run that did not "
+                "succeed. Whether a run still going is acceptable depends "
+                "on what is being decided, so the rows go to whoever the "
+                "count summons. The count itself is decided: its pass "
+                "condition says a zero must be resolved either way, since "
+                "the check cannot tell a malformed query from a workflow "
+                "that never fired."},
 
     {"file": "platform/github.md", "find": "code-scanning/analyses",
      "title": "Code scanning is entitled before the workflow is committed",
@@ -342,8 +360,11 @@ CHECKS = [
                "distribution."},
 
     {"file": "stack/python-lib.md", "find": "from importlib import import_module",
-     "title": "Every name in __all__ imports", "do": SKIP,
-     "reason": "This repository ships no importable package."},
+     "title": "A deferred import binds its name on first access", "do": SKIP,
+     "reason": "This repository ships no importable package. The block is "
+               "the module `__getattr__` pattern itself; the check that "
+               "every advertised name resolves is `base/core/testing.md`'s "
+               "and carries its own entry."},
 
     {"file": "stack/python-lib.md", "find": "_RENAMED = {\"OldName\"",
      "title": "A renamed public symbol resolves through the deferred map",
