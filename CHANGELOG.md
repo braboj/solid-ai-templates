@@ -21,11 +21,19 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- `base-security` gains a CSRF section — when a defence is required, which
+  pattern, and why a bearer-token API needs none. It reaches 12 of the 17
+  stacks; `stack-htmx` had the only CSRF rule before.
+
 ### Changed
 
 - The Astro and tutorial stacks give each overriding section an `[ID:]` of
   its own, so a chain overrides an ID once. `static-site-tutorial` no longer
   re-overrides what `static-site-astro` overrode.
+- `base-security` names the OWASP Top 10 categories its sections cover, and
+  the output-encoding section names XSS. Both were unnamed and ungreppable.
 
 ### Added
 

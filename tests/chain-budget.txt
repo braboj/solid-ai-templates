@@ -15,11 +15,11 @@
 # It reports each overage and the exact line to write.
 
 backend-caching       270868
-backend-edge          289404
+backend-edge          290768
 backend-jobs          270544
 backend-microservices 287967
 backend-monitoring    274818
-backend-webhooks      292969
+backend-webhooks      294333
 base-360              288770
 base-agents           286334
 base-ai-workflow      306449
@@ -34,20 +34,20 @@ base-two-pass-review  346587
 platform-github       377500
 platform-gitlab       344458
 platform-linear       287596
-stack-astro           385466
+stack-astro           386830
 stack-c-embedded      272999
-stack-django          465482
-stack-express         351619
-stack-fastapi         460172
-stack-flask           455675
-stack-go-echo         432180
+stack-django          466846
+stack-express         352983
+stack-fastapi         461536
+stack-flask           457039
+stack-go-echo         433544
 stack-go-lib          361396
-stack-go-service      428825
-stack-grpc-go         407771
-stack-grpc-python     425602
+stack-go-service      430189
+stack-grpc-go         409135
+stack-grpc-python     426966
 stack-htmx            285828
-stack-nestjs          352660
+stack-nestjs          354024
 stack-nodejs-lib      298250
 stack-python-lib      379170
-stack-python-service  451474
-stack-tutorial        414306
+stack-python-service  452838
+stack-tutorial        415670
