@@ -760,6 +760,22 @@ verdict unreached.
   reached. The counts that say whether a check reached its inputs are what
   a failure is read against, so dropping them when a verdict is reached
   drops them exactly when they are needed
+- A shipped check MUST carry its verdict in its exit status: zero where its
+  pass condition holds, non-zero where it does not. A pass condition
+  satisfied by the absence of output declares no verdict at all — the run
+  that reported the defect exits exactly as the clean run does, so a
+  consumer wiring the check into a pipeline gets a pass over the finding,
+  and the only reader it reaches is whoever was watching the output
+- Where the verdict genuinely takes a person, the check MUST say so beside
+  itself and name what the judgement is. That is a declaration a check
+  makes, not a state it falls into by leaving its status at zero, and
+  downstream the two are the same check
+- Prove the status separates the two cases before trusting it: run the
+  check against a tree that violates the rule and one that does not, and
+  confirm the planted violation reached the output before reading either
+  status. A check exiting zero on both signals nothing, one exiting
+  non-zero on both signals nothing, and both satisfy a rule asking only
+  that an exit status exist
 - A check that determines at run time that it does not apply MUST say so
   with a reserved exit status, 3, beside the sentence that explains it.
   The status is what a runner reads: a phrase matched in output is a
