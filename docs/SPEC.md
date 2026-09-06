@@ -290,15 +290,18 @@ the relevant wiki pages as one-line conventions.
 Current wiki pages: `backend.md`, `cicd.md`, `devsecops.md`,
 `frontend.md`, `security.md`, `testing.md`.
 
-### Meta documents
+### Design documents
 
-Meta documents (`docs/meta/`) are reference material *about the
+Design documents (`docs/design/`) are reference material *about the
 template library itself* — not conventions for projects using it.
 They cover how the library should be reasoned about, audited, and
 maintained.
 
-Current meta documents:
+Current design documents:
 
+- `design-notes.md` — the library's design record: the customer
+  objective, the operating model it implies, the measured technical
+  debt and the standing risks
 - `agent-context-tradeoffs.md` — how CLAUDE.md size and
   startup-block design affect agent latency and quality
 - `template-content-quality.md` — operational companion: how to

@@ -29,6 +29,8 @@ alters no template carries no entry.
 
 ### Changed
 
+- `base-docs`' register check prints each count on its own line, so a
+  predicate reads its verdict instead of a person.
 - The Astro and tutorial stacks give each overriding section an `[ID:]` of
   its own, so a chain overrides an ID once. `static-site-tutorial` no longer
   re-overrides what `static-site-astro` overrode.
