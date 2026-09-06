@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- `base-quality-gates` gains the corpus-narrowing retrofit shape: a
+  gate with no per-file ignore widens the directories it reads as
+  each slice cleans one, asserting a floor on the files enumerated.
+
 ## [2.83.0] - 2026-09-07
 
 ### Added

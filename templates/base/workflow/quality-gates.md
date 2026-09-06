@@ -274,7 +274,7 @@ one leaves a gate behind.
 ### Retrofitting a linter
 
 Adopting a modern linter on an existing codebase produces a finding count
-that makes the gate unadoptable as written. Three responses, two of which
+that makes the gate unadoptable as written. Four responses, two of which
 are traps:
 
 | Response | Outcome |
@@ -282,6 +282,7 @@ are traps:
 | Fix everything first | Buries the gate change under a mechanical diff no reviewer can separate from a behavioural one, and gates untouched code the change was never about |
 | Ignore the offending rule families globally | Never ends. New code is ungated on exactly the rules the project says it wants, nothing ever fails, so nothing is ever fixed |
 | Freeze per file | Works |
+| Narrow the gate's corpus, widening it per slice | Works, where the tool has no per-file ignore |
 
 - Enable the full rule selection, then record the violations existing on
   adoption day in a per-file ignore table, each file listed with exactly the
@@ -301,6 +302,41 @@ are traps:
 State the known cost rather than discovering it later: a file-level freeze
 does not newly gate an existing file when it is edited. Line-level would,
 and no widely available linter offers it.
+
+### Where the gate cannot freeze per file
+
+A freeze needs a per-file ignore mechanism and some gates have none — a
+check written as a test, reading a corpus it enumerates itself. For those
+the table above offers only "fix everything first", which the same table
+rejects.
+
+The inverse of the ratchet works instead. The gate ships carrying the list
+of directories it examines, and each slice cleans one directory and widens
+that list in the same change. The tree and the gate's reach move together,
+so no slice merges unverified and the gate is green from its first commit
+with no freeze table at all.
+
+```
+slice 1   ROOTS = ("scripts", "examples")     scripts/ and examples/ cleaned
+slice 2   ROOTS = ("src", ...)                src/ cleaned
+slice 3   ROOTS = ("src", "tests", ...)       tests/ cleaned
+```
+
+A ratchet freezes which instances fail and leaves the analysis whole; this
+narrows the corpus and leaves the rule whole. Both are legitimate and they
+suit different tools.
+
+- The gate MUST assert a floor on the number of files it enumerated, and
+  that floor is re-sized in the same change that widens the corpus. A
+  configured scope is verified by coverage, not by exit status — a mistyped
+  root enumerates nothing and reports a clean tree, which a narrowed corpus
+  is otherwise indistinguishable from
+- Widening MUST be the last thing a slice does, never the first. Widened
+  before the directory is clean, the slice's own gate run is red and the
+  author reads it as the gate being wrong
+- The corpus MUST be one list read by the gate, not a filter repeated at
+  each call site. A list that has to be widened in two places is widened in
+  one, and the gate then reports on a corpus no document states
 
 ### The suppression beside the table
 
