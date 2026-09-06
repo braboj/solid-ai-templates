@@ -8349,6 +8349,47 @@ in entries untouched since the linter was adopted. A project can be gated on
 a rule it believes it is not gated on, which is harmless until someone reads
 the table as a statement of what the codebase violates.
 
+Sizing one rule family before taking it on is a question the table cannot
+answer, since it suppresses exactly the findings being counted. The
+destructive route — delete every entry naming the family, run the gate, read
+the number, put the config back — edits the file the whole gate depends on in
+order to size a decision, and is easy to restore imperfectly.
+
+- Run the linter past its configuration instead, naming the family. Nothing
+  is edited, the output is every finding the family hides, and the same
+  command verifies the work afterwards by going to zero
+- The family MUST be named. Bypassing the configuration drops the project's
+  rule *selection* along with its ignores, so an unfiltered bypass measures
+  the tool's defaults and prints a number that reads like the answer
+
+```bash
+# Sizes one rule family against the project's own gate without editing the
+# freeze. The equivalents are `flake8 --isolated --select`, `eslint
+# --no-eslintrc --rule`, `golangci-lint run --no-config --enable` and
+# `pylint --rcfile=/dev/null --disable=all --enable`.
+FAMILY="N802,N803"
+ROOT="src"
+
+if [ -z "$FAMILY" ]; then
+  echo "FAIL: no rule family named -- an unfiltered bypass measures the"
+  echo "tool's defaults, not this project's gate"
+  exit 1
+fi
+
+echo "family: $FAMILY"
+ruff check --isolated --select "$FAMILY" --statistics "$ROOT"
+```
+
+Pass condition: the command prints the family it measured, then a per-rule
+count for it. Zero findings means the family is already clear and every entry
+naming it is dead. An omitted family is refused rather than answered — the
+two runs below both exit clean and only one of them is about this project:
+
+```
+ruff check --isolated --select N802,N803 src/   ->    0 findings, family clear
+ruff check --isolated src/                      ->  366 findings, ruff defaults
+```
+
 ### The suppression beside the table
 
 The freeze answers "this file was already broken on adoption day". It does
