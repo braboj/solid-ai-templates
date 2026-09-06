@@ -43,9 +43,11 @@ A pull request whose `generated/` files do not match its templates fails CI.
   `docs/decisions/TEMPLATE.md`
 - **What it costs every chain carrying it.** A rule added to a widely
   resolved file is read by every project on those chains, on every turn.
-  Nothing refuses the growth; `README.md`'s model-limits table reports the
-  resulting size and the smallest context window that still fits it, and
-  `py tools/sync.py --check` fails when that table drifts from the tree.
+  Nothing refuses the size; `README.md`'s model-limits table reports it
+  per stack category beside the smallest context window that still fits,
+  and `py tools/sync.py --check` fails when that table drifts from the
+  tree. Crossing to a larger window is refused: SYS-16 fails until the
+  new tier is recorded in `tests/context-tiers.txt` in the same change.
   Say in the pull request what the addition is worth, and prefer stating a
   widened rule inside the paragraph that already carries the narrow version
 

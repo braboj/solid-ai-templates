@@ -394,6 +394,8 @@ Run `py tests/run_smoke.py` before every PR. It checks:
 - All resolved chains include core tier files
 - SYS-15: every stack outside the `library` and `embedded` layers
   resolves the security tier
+- SYS-16: no stack category crosses a context-window tier without
+  `tests/context-tiers.txt` being updated in the same change
 - Prompt builds for all stacks
 
 ## 6. Session protocol

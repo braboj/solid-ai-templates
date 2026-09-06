@@ -2072,6 +2072,107 @@ def check_sys_15():
 
     return seen.failures() + failures, seen.notes()
 
+
+# -----------------------------------------------------------------------
+# SYS-16 -- a stack category's context tier moves only on purpose
+# -----------------------------------------------------------------------
+# The README's model-limits table states, per stack category, the
+# smallest context window that still holds the largest chain plus the
+# interview. sync.py regenerates it, so a change that crosses a tier
+# updates the cell and passes sync --check: the crossing arrives as one
+# changed word in a generated table, in a diff whose author is reading
+# something else.
+#
+# Chain size is reported rather than capped (ADR-041), and that stands.
+# A tier is a different quantity: not what a rule costs the chain, but
+# which models can still run the stack at all. Crossing one changes the
+# category's stated requirements, and it is rare -- so it is recorded
+# where a diff shows it, and raised in the change that causes it.
+
+CONTEXT_TIERS = os.path.join("tests", "context-tiers.txt")
+
+
+def _recorded_tiers():
+    """The tier recorded per stack category, as {layer: window label}."""
+    out = {}
+    path = os.path.join(ROOT, CONTEXT_TIERS)
+    with io.open(path, encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            layer, window = line.split()
+            out[layer] = window
+    return out
+
+
+def check_sys_16():
+    if not HAS_YAML:
+        return [MISSING_YAML]
+
+    sys.path.insert(0, os.path.join(ROOT, "tools"))
+    from sync import (CHARS_PER_TOKEN, OVERHEAD_TOKENS, CONTEXT_WINDOWS,
+                      _window_label)
+    from resolve import load_manifest, resolve_chain, concat_chain
+
+    failures = []
+    seen = Inspected()
+
+    core_ids, entries, stacks = load_manifest()
+    seen.count("stacks measured", stacks)
+
+    largest = {}
+    for stack in stacks:
+        size = len(concat_chain(resolve_chain(stack['id'], core_ids,
+                                              entries)))
+        layer = stack.get("layer", "unclassified")
+        if size > largest.get(layer, (0, None))[0]:
+            largest[layer] = (size, stack["id"])
+
+    recorded = _recorded_tiers()
+    seen.count("categories measured", largest)
+    seen.count("categories recorded", recorded)
+
+    for layer in sorted(largest):
+        size, stack_id = largest[layer]
+        needed = size / CHARS_PER_TOKEN + OVERHEAD_TOKENS
+        window = next((w for w in CONTEXT_WINDOWS if w >= needed), None)
+
+        # A category beyond every window a model sells is a finding
+        # about the chain, not a tier to record.
+        if window is None:
+            failures.append(
+                f"  {layer}: {stack_id} needs ~{round(needed / 1000)}K "
+                f"tokens, beyond every context window a model sells"
+            )
+            continue
+
+        now = _window_label(window)
+        was = recorded.get(layer)
+        if was is None:
+            failures.append(
+                f"  {layer}: measured at {now} and not recorded in "
+                f"{CONTEXT_TIERS}; a category the record does not name "
+                f"cannot cross a tier the check would notice"
+            )
+        elif was != now:
+            failures.append(
+                f"  {layer}: recorded {was}, now {now} — {stack_id} is "
+                f"the largest chain at {size} characters. A crossing "
+                f"changes what the category requires of a model. If it is "
+                f"intended, record {now} in {CONTEXT_TIERS} in this same "
+                f"change so the diff carries it"
+            )
+
+    for layer in sorted(set(recorded) - set(largest)):
+        failures.append(
+            f"  {layer}: recorded in {CONTEXT_TIERS} and measured "
+            f"nowhere; a record for a category that no longer exists "
+            f"reports nothing on every run"
+        )
+
+    return seen.failures() + failures, seen.notes()
+
 CHECKS = [
     {"id": "SYS-01", "spec": "SAIT-SMK-SYS-01-001A",
      "title": "DEPENDS ON paths resolve to existing files", "fn": check_sys_01},
@@ -2136,6 +2237,10 @@ CHECKS = [
     {"id": "SYS-15", "spec": "SAIT-SMK-SYS-15-001A",
      "title": "A stack outside the exempt layers resolves the security tier",
      "fn": check_sys_15},
+
+    {"id": "SYS-16", "spec": "SAIT-SMK-SYS-16-001A",
+     "title": "A stack category's context tier moves only on purpose",
+     "fn": check_sys_16},
     {"id": "ADR-01", "spec": "SAIT-SMK-ADR-01-001A",
      "title": "ADR frontmatter matches the ADR-010 schema", "fn": check_adr_01},
     {"id": "E2E-01", "spec": "SAIT-SMK-E2E-01-001A",

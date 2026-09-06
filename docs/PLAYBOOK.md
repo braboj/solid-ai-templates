@@ -274,12 +274,16 @@ figures with no generator behind it, and the copy is what ages.
 
    A rule added to a widely resolved file is read by every project on
    every chain carrying it, on every turn, and nothing refuses that
-   growth. `README.md`'s model-limits table reports the resulting size
-   per stack category and the smallest context window that still holds
-   it, and `py tools/sync.py --check` fails when the table drifts from
-   the tree. Read the table's diff before merging, and say in the pull
-   request what the addition is worth. A category crossing to a larger
-   window is a change to what a consumer needs to run the stack at all.
+   size. `README.md`'s model-limits table reports it per stack
+   category beside the smallest context window that still holds it, and
+   `py tools/sync.py --check` fails when the table drifts from the
+   tree. Read the table's diff before merging, and say in the pull
+   request what the addition is worth.
+
+   A category crossing to a larger window is a change to what a consumer
+   needs to run the stack at all, and that is refused rather than
+   reported: SYS-16 fails until the new tier is recorded in
+   `tests/context-tiers.txt` in the same change.
 
    Before adding a paragraph, try stating the rule inside the one that
    already carries the narrow version of it. A widened rule folded in
