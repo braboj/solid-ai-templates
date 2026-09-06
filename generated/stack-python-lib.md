@@ -922,24 +922,40 @@ git ls-files --eol |
 - Check — comment layout, for the two violations that are mechanically
   visible: a comment block with code directly above it and no blank line
   between them, and an aside to the right of code that is not a tool
-  directive. Scope: Python sources, read through `tokenize` — a line-based
-  grep reports the `#` in a usage example inside a docstring, which is not
-  a comment at all. `OPENERS` carries the exemption above; test it against
+  directive. Scope: the repository's Python — what git tracks plus the
+  untracked files a commit could still add, never what `.gitignore`
+  excludes, which is not the project's code to fix. Read through
+  `tokenize` — a line-based grep reports the
+  `#` in a usage example inside a docstring, which is not a comment at all.
+  `OPENERS` carries the exemption above; test it against
   the code the line above *ends* with, since a line closing the previous
   entry (`],`) opens nothing and its comment is a real finding. Whether a
   comment sits above the *right* item is not mechanical and stays
   declarative; wrap width is the formatter's. Pass condition: the command
-  reports how many files it checked and prints nothing after that:
+  reports how many files it checked and prints nothing after that. A count
+  of zero fails it — the enumeration reached nothing:
 
   ```bash
   py - <<'EOF'
-import io, pathlib, tokenize
+import io, pathlib, subprocess, tokenize
 DIRECTIVES = ("noqa", "nosec", "type:", "pragma:", "pylint:", "fmt:", "mypy:")
 SKIP = (".venv", "venv", "build", "dist", ".git", ".tox")
 OPENERS = (":", "(", "[", "{")
-paths = [p for p in sorted(pathlib.Path(".").rglob("*.py"))
-         if not any(part in SKIP for part in p.parts)]
+
+# A walk cannot read .gitignore and reads a vendored or generated tree as
+# the project's own source. Tracked files plus the untracked ones a commit
+# could still add, and nothing that is ignored.
+listed = subprocess.run(
+    ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard",
+     "*.py"], capture_output=True).stdout.decode("utf-8").split("\0")
+paths = [pathlib.Path(name) for name in listed if name
+         and not any(part in SKIP for part in pathlib.Path(name).parts)]
 print("Python files checked: %d" % len(paths))
+
+# Zero files and a clean tree print the same thing otherwise.
+if not paths:
+    print("no Python file was listed; the enumeration is broken, "
+          "not the tree clean")
 for path in paths:
     src = path.read_text(encoding="utf-8").splitlines()
     with io.open(str(path), "rb") as fh:
