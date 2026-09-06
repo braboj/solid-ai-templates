@@ -230,6 +230,7 @@ stacks:
       - base-docs
       - base-quality
       - base-config
+      - base-security
       - backend-templating
 
   - id: stack-astro

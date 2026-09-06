@@ -125,7 +125,7 @@ effective; declining a new rule needs no ADR or ticket. See the
 | abstract | 2 | `stack-python-service` — 459K chars | ~131K tokens | 200K |
 | backend | 8 | `stack-django` — 473K chars | ~135K tokens | 200K |
 | embedded | 1 | `stack-c-embedded` — 279K chars | ~80K tokens | 128K |
-| hypermedia | 1 | `stack-htmx` — 291K chars | ~83K tokens | 128K |
+| hypermedia | 1 | `stack-htmx` — 302K chars | ~86K tokens | 128K |
 | library | 3 | `stack-python-lib` — 385K chars | ~110K tokens | 128K |
 | static | 2 | `stack-tutorial` — 422K chars | ~120K tokens | 200K |
 <!-- /generated:readme-model-limits -->
