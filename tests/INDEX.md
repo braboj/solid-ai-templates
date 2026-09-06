@@ -36,6 +36,7 @@ restated in each.
 | `SAIT-SMK-SYS-11-001A` | SMK | P2 | Prose ID references resolve in every chain carrying the file |
 | `SAIT-SMK-SYS-13-001A` | SMK | P1 | The instructed manual walk reaches what the resolver carries |
 | `SAIT-SMK-SYS-15-001A` | SMK | P1 | A stack outside the exempt layers resolves the security tier |
+| `SAIT-SMK-SYS-16-001A` | SMK | P1 | A stack category's context tier moves only on purpose |
 | `SAIT-SMK-TPL-04-001A` | SMK | P1 | All EXTEND and OVERRIDE directives reference existing IDs |
 | `SAIT-INT-TPL-01-001A` | INT | P0 | DEPENDS ON chain assembles a complete rule set |
 | `SAIT-INT-TPL-02-001A` | INT | P1 | EXTEND adds rules without removing base rules |

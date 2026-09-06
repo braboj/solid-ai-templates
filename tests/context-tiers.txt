@@ -1,0 +1,13 @@
+# The smallest context window that still holds a stack category's
+# largest chain plus the interview. A crossing is a change to what
+# the category requires of a model, so it is recorded here and
+# raised deliberately, in the change that causes it. Chain size
+# itself is not capped -- see ADR-041.
+#
+# <layer> <window>
+abstract 200K
+backend 200K
+embedded 128K
+hypermedia 128K
+library 200K
+static 200K
