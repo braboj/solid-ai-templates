@@ -33,11 +33,14 @@ from difflib import SequenceMatcher
 
 from resolve import load_manifest, opt_in_roots, resolve_chain, read_file
 
-# Set the output encoding at the boundary rather than inheriting the
-# console default, which mangles any non-ASCII this program prints.
+# Set the output encoding and the line ending at the boundary rather
+# than inheriting the console defaults. The encoding mangles any
+# non-ASCII this program prints; the line ending is what another
+# program reads, and on Windows a bare `print` emits CRLF, so every
+# line reaches a consumer with a trailing carriage return.
 for _stream in (sys.stdout, sys.stderr):
     try:
-        _stream.reconfigure(encoding="utf-8")
+        _stream.reconfigure(encoding="utf-8", newline="\n")
     except (AttributeError, ValueError):
         pass
 
