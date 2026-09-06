@@ -150,11 +150,20 @@ gate categories to GitHub Actions workflows and GitHub-native features.
 ```bash
 SHA=$(git rev-parse HEAD)
 
-# A commit no remote carries cannot have runs. On a pull-request checkout
-# HEAD is the merge commit the host synthesised for the run, which was
-# never pushed, so counting runs for it reports a zero that means only
-# that the question was asked about the wrong commit.
-if [ -z "$(git branch -r --contains "$SHA" 2>/dev/null)" ]; then
+# A commit no remote branch carries cannot have runs. On a pull-request
+# checkout HEAD is the merge commit the host synthesised for the run, which
+# was never pushed, so counting runs for it reports a zero meaning only that
+# the question was asked about the wrong commit.
+#
+# Ask about the branches of a configured remote, not about every ref under
+# refs/remotes. The host leaves a remote-tracking ref pointing AT the merge
+# commit, so an unscoped --contains finds that ref and the guard passes on
+# the one checkout it exists for.
+carried=""
+for remote in $(git remote); do
+  carried="$carried$(git branch -r --contains "$SHA" --list "$remote/*" 2>/dev/null)"
+done
+if [ -z "$carried" ]; then
   echo "$SHA is on no remote branch, so no workflow can have run for it"
   exit 3
 fi
