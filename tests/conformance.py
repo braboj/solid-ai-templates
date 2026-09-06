@@ -189,6 +189,13 @@ CHECKS = [
      "reason": "The jq filter carries `#<N>` for the issue being checked. "
                "Run per issue when picking up work, not against a tree."},
 
+    {"file": "base/core/review.md", "find": "pull requests linked to it",
+     "title": "A sibling's shipped route, not the one it proposed",
+     "do": SKIP,
+     "reason": "Takes the sibling issue number as a placeholder. Run per "
+               "issue when picking one up that defers to another, not "
+               "against a tree."},
+
     {"file": "base/core/review.md", "find": "--since=<filing date>",
      "title": "A filed issue's claim is re-measured against the tree",
      "do": SKIP,
