@@ -445,6 +445,14 @@ replace the placeholder line in `body` before calling `run_block`. The
 placeholder is not always what the issue or the prose calls it:
 `MILESTONE = None` rather than an empty string cost a first attempt here.
 
+Changing what a check **exempts** is a documentation edit as well as a
+code edit. Sweep the documents for the check's name before merging and
+re-read every hit against the new exemption set: the check's own tests
+exercise the exemptions rather than the sentence describing them, so a
+document's account of them decays with nothing reporting it.
+`quality-exemption-doc-duty` in `templates/base/core/quality.md` is the
+rule, and ships the sweep.
+
 ---
 
 ## Regenerate pre-resolved files
