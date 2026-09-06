@@ -9,6 +9,8 @@ content collections and zero client-side JS.
 > - Stack source: `templates/stack/static-site-astro.md`
 > - Resolved chain: `generated/stack-astro.md` (base + frontend +
 >   static-site-astro)
+> - Platform: `templates/platform/github.md` — the second axis, which
+>   follows from where the repository is hosted and not from the stack
 > - Output format: `templates/base/core/agents.md` (hybrid model)
 > - Project brief: Starfield Blog — Alex Rivera — astronomy /
 >   astrophotography blog — TypeScript strict / Astro 4 (static) /
@@ -42,6 +44,7 @@ overrides and additions follow below.
 > 10. `docs/solid-ai-templates/templates/frontend/ux.md`
 > 11. `docs/solid-ai-templates/templates/frontend/static-site.md`
 > 12. `docs/solid-ai-templates/templates/stack/static-site-astro.md`
+> 13. `docs/solid-ai-templates/templates/platform/github.md`
 
 ## Adoption boundary
 
@@ -175,8 +178,10 @@ order. Apply `docs/solid-ai-templates/templates/base/core/quality.md`,
 Verify MUSTs from `docs/solid-ai-templates/templates/base/core/docs.md`,
 `docs/solid-ai-templates/templates/base/core/readme.md`,
 `docs/solid-ai-templates/templates/base/core/git.md`,
-`docs/solid-ai-templates/templates/frontend/static-site.md`, and
-`docs/solid-ai-templates/templates/stack/static-site-astro.md`.
+`docs/solid-ai-templates/templates/frontend/static-site.md`,
+`docs/solid-ai-templates/templates/stack/static-site-astro.md`, and
+`docs/solid-ai-templates/templates/platform/github.md` for the
+Actions workflow and the security tooling it maps.
 
 ## 6. Session protocol
 
