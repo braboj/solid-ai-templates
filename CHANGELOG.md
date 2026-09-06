@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.82.0] - 2026-09-06
+
 ### Added
 
 - `stack-htmx` resolves `base-security`. A server-rendered web stack
@@ -44,6 +46,10 @@ alters no template carries no entry.
 - `base-docs`' gated-figure check reads every tracked Markdown, not a
   path list. A dated record is excluded by kind: a `<!-- measured:
   YYYY-MM-DD -->` marker exempts a passage, and an undated one does not.
+- `platform-github`'s commit-checks check reports that it does not apply
+  where HEAD is on no remote branch. A pull-request checkout inspects a
+  synthesised merge commit, whose run count is zero for every pull
+  request.
 
 ## [2.81.0] - 2026-09-06
 
