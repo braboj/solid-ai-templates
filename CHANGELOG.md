@@ -21,18 +21,23 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
-- `base-git`'s release gates read their parameter from the environment, so a
-  pipeline can run them, and each resolves the release it follows from the
-  commit under release rather than from a tag pointing at HEAD.
+## [2.83.0] - 2026-09-07
 
-- `base-quality` gains `quality-exemption-doc-duty`: changing what a
-  check exempts is a documentation edit too, and the rule ships the
-  sweep that finds every document making a claim about it.
+### Added
 
 - `base-git` gains the changelog-deletion check: a bullet that stood
   under `Unreleased` in an earlier tree and is absent from the current
   one, with no release cut between, is reported against the commit that
   added it.
+- `base-quality` gains `quality-exemption-doc-duty`: changing what a
+  check exempts is a documentation edit too, and the rule ships the
+  sweep that finds every document making a claim about it.
+
+### Changed
+
+- `base-git`'s release gates read their parameter from the environment, so a
+  pipeline can run them, and each resolves the release it follows from the
+  commit under release rather than from a tag pointing at HEAD.
 
 ## [2.82.0] - 2026-09-06
 
