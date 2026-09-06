@@ -7504,6 +7504,33 @@ ruff check --isolated --select N802,N803 src/   ->    0 findings, family clear
 ruff check --isolated src/                      ->  366 findings, ruff defaults
 ```
 
+Two different edits empty an entry and the gate cannot tell them apart. Take
+one freezing a blind-except rule: using the caught exception silences the rule
+while the blind handler stays exactly where it was, and narrowing the handler
+to what its body can raise does the work the freeze stood in for. Both empty
+the entry, both leave the gate green, and the cheap one is what a tired
+migration reaches for.
+
+- Where retiring an entry changes what the code catches, accepts or returns,
+  name the test that would fail if the change went too far. Narrowing has a
+  failure mode the gate cannot see: catch too little and a raw exception
+  escapes through a clause nobody wrote, loosening the contract the module
+  documents while every rule stays quiet
+- A suite that passed before the slice is not that control. It passes
+  afterwards for the same reason it passed before — none of its cases
+  provokes the type the change stopped catching
+- The control walks the family, not the site the slice touched. A contract
+  test that builds every class in the hierarchy with a value the interface
+  cannot carry, and asserts the declared error type comes back, reports the
+  sites a per-file review does not reach
+
+Narrowing seventy handlers in one downstream migration left four sites wrong:
+three where a constructor argument is taken on trust, so a caller passing the
+wrong object raises `AttributeError`, and one where arithmetic runs before the
+encode and raises `TypeError`. All four were found by a contract test that
+existed for its own reasons. Without it the slice would have merged green and
+shipped a narrower error contract than the module documents.
+
 ### The suppression beside the table
 
 The freeze answers "this file was already broken on adoption day". It does
