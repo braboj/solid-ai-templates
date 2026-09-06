@@ -104,6 +104,11 @@ repository — it is a consumer of its own base tier:
 py tests/run_conformance.py
 ```
 
+Both runners end with a `VERDICT:` line, printed after the report path so
+that reading the last line alone cannot report success over a failed run.
+A conformance run is not clean until any reading it lists is read: the
+counts cover the automatic verdicts only.
+
 Then run the system end-to-end with an agent:
 
 1. Open Claude Code in any project directory
