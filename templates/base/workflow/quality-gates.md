@@ -338,6 +338,40 @@ suit different tools.
   each call site. A list that has to be widened in two places is widened in
   one, and the gate then reports on a corpus no document states
 
+### Retiring a freeze
+
+The table is the backlog and shrinking it is the migration. Which entry to
+take next reads as a question the counts answer, and for one common class of
+gate they answer it backwards.
+
+- A freeze whose findings are raised where they are fixed comes off in any
+  order, and cheapest-first is a reasonable heuristic. A freeze whose
+  findings are raised at the *caller* — a strict type checker's
+  unannotated-call code is the common one — comes off in dependency order,
+  callees before callers
+- Derive that order from the import graph before sizing the slices. A
+  module's count is its own findings plus one for every call it makes into
+  something still frozen, so a caller's count cannot fall while its callees
+  are frozen. Cheapest-first lands on a leaf caller, which is then cleaned
+  in full while its count barely moves
+- State the retirement order at the freeze, not at the first slice. Nothing
+  in the table records it and the counts point the other way, so an order
+  left unstated is rediscovered at the cost of a wasted slice
+
+The shape, with four modules and 514 findings taken root-first:
+
+| Slice | Module | Own findings | Total remaining after |
+| --- | --- | --- | --- |
+| 1 | graph root | 330 | 152 |
+| 2 | imports the root | 42 | 113 |
+| 3 | imports both | 63 | 61 |
+| 4 | leaf | 61 | 0 |
+
+The first slice cleared 362 of the 514 while owning 330. The extra 32 were
+caller-side findings in the three modules that import it, cleared without
+touching them. Run cheapest-first, slice one is the 42 and clears well under
+half of its own 42, which reads as the migration not working.
+
 ### The suppression beside the table
 
 The freeze answers "this file was already broken on adoption day". It does
