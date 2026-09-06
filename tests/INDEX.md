@@ -34,7 +34,6 @@ restated in each.
 | `SAIT-SMK-SYS-09-001A` | SMK | P2 | sync.py --check inspects without writing |
 | `SAIT-SMK-SYS-10-001A` | SMK | P2 | A quoted DEPENDS ON in prose is not a declaration |
 | `SAIT-SMK-SYS-11-001A` | SMK | P2 | Prose ID references resolve in every chain carrying the file |
-| `SAIT-SMK-SYS-12-001A` | SMK | P1 | No resolved chain exceeds its recorded ceiling |
 | `SAIT-SMK-SYS-13-001A` | SMK | P1 | The instructed manual walk reaches what the resolver carries |
 | `SAIT-SMK-TPL-04-001A` | SMK | P1 | All EXTEND and OVERRIDE directives reference existing IDs |
 | `SAIT-INT-TPL-01-001A` | INT | P0 | DEPENDS ON chain assembles a complete rule set |

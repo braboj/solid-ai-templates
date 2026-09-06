@@ -336,7 +336,6 @@ Eight files in `tests/`:
 | `tests/providers.py` | Model backends the e2e runner selects between |
 | `tests/conformance.py` | Disposition per embedded check — run here, or skip with a reason |
 | `tests/run_conformance.py` | Runs the templates' own embedded checks against this repository |
-| `tests/chain-budget.txt` | Ceiling per root for resolved chain size — SYS-12 fails on an overage |
 
 ```bash
 py tests/run_smoke.py              # structural checks
