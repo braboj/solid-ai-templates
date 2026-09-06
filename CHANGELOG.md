@@ -32,6 +32,9 @@ alters no template carries no entry.
 - `stack-htmx` resolves `base-security`. A server-rendered web stack
   shipped no rule on injection, authentication, session management,
   secrets or transport security.
+- `base-review` names a seventh shape a filed issue takes: one deferring
+  to a sibling's approach cites a plan, and a plan changes during
+  implementation. It ships the check on what the sibling shipped.
 
 ### Changed
 

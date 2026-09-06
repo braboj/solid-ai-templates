@@ -5208,8 +5208,11 @@ something that was not the problem — or re-does something already in review.
       none of them moves what the issue proposes. An issue is correct as of
       its filing date, and the tree it was measured against is not the tree
       it will land in
+- [ ] Where the issue defers to another issue's approach, read what that
+      one shipped rather than what it proposed. A cited approach is a plan,
+      and a plan is what changes during implementation
 
-Six shapes, all of which change what gets built:
+Seven shapes, all of which change what gets built:
 
 | Shape | What it looks like |
 |-------|--------------------|
@@ -5218,10 +5221,12 @@ Six shapes, all of which change what gets built:
 | Wrong as filed | The rule it proposes, run against the tree, flags code that is correct |
 | Already in flight | The issue is open and unassigned while a complete implementation sits in an open pull request |
 | Superseded as filed | A decision accepted since the filing date moved the rule, the home, or the mechanism it names |
+| Stale by a sibling's route | The issue defers to another issue's approach; that issue shipped a different one, so a criterion names a mechanism nobody built |
 | Classification does not cover every member | The acceptance criteria sort a set into named branches, and a member falls outside all of them |
 
-The sixth is the one that resists checking, and it is the most dangerous
-of the six. The other five are found by comparing the issue to the tree.
+The last is the one that resists checking, and it is the most dangerous
+of the seven. The other six are found by comparing the issue to the tree,
+or to what a sibling shipped.
 This one is found only by disagreeing with a criterion you are meant to
 satisfy: acceptance criteria carrying a closed classification — each of
 these is either A or B, and the Bs are deleted — read as a checklist, and
@@ -5247,13 +5252,14 @@ whose docstring held the only statement in that repository of why a
 checksum goes onto the wire low byte first — not an entry point, so the
 first branch missed it; not throwaway, so the second would have deleted it.
 
-"Wrong as filed" is the closest of the other five and does not fit: the
+"Wrong as filed" is the closest of the other six and does not fit: the
 rule the issue proposes does not flag correct work, and every member it
 named was classified correctly.
 
-The two mechanically checkable shapes are already in flight and superseded
-as filed, and both fail the same way: an empty result reads as a clear
-field whether the query found nothing or reached nothing.
+Three shapes are mechanically checkable — already in flight, superseded
+as filed, and stale by a sibling's route — and all three fail the same way:
+an empty result reads as a clear field whether the query found nothing or
+reached nothing.
 
 ```bash
 gh pr list --state open --limit 100 --json number,body --jq 'length as $n | "open pull requests inspected: " + ($n|tostring), (.[] | select(.body | test("[Cc]loses #<N>([^0-9]|$)")) | "already in flight: #" + (.number|tostring))'
@@ -5277,6 +5283,35 @@ same empty listing. Where a record does move it, implement the decision and
 state the deviation from the filed acceptance criteria in the pull request:
 the issue is not wrong and does not need re-filing, its criteria need reading
 against the record that superseded them.
+
+Where the issue defers to a sibling, the thing to read is what the sibling
+shipped. Its body is the proposal, it stays as written after the
+implementation diverges from it, and nothing in either issue records that
+they now disagree. Read the files the merged work touched:
+
+```bash
+SIBLING=<N>
+echo "sibling #$SIBLING state: $(gh issue view "$SIBLING" --json state --jq '.state')"
+linked=$(gh issue view "$SIBLING" --json closedByPullRequestsReferences --jq '.closedByPullRequestsReferences | length')
+echo "pull requests linked to it: $linked"
+if [ "$linked" -eq 0 ]; then
+  echo "nothing links a pull request to it; read the route from the merge commit naming the issue, not from the issue body"
+  exit 1
+fi
+for pr in $(gh issue view "$SIBLING" --json closedByPullRequestsReferences --jq '.closedByPullRequestsReferences[].number'); do
+  echo "  #$pr $(gh pr view "$pr" --json state --jq '.state')"
+  gh pr diff "$pr" --name-only | sed 's/^/    /'
+done
+```
+
+Pass condition: the command names the sibling's state, reports at least one
+linked pull request, and lists the files each one touched; a zero reaches a
+non-zero status. Zero on a closed sibling does not mean the route is
+unchanged — it means the link is absent and the merge commit is where the
+route is recorded. Then check the criterion that defers to the sibling
+against those files. A criterion naming a mechanism that appears in none of
+them is the finding, and the issue is not wrong: it described a plan
+accurately, and the plan changed.
 
 ## Plan before implementing
 
