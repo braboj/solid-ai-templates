@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.80.0] - 2026-09-06
+
 ### Added
 
 - The README describes the root model — a project picks a stack, a

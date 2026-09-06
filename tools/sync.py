@@ -9,6 +9,7 @@ Usage:
 import io
 import re
 import sys
+import textwrap
 from pathlib import Path
 
 # Set the output encoding at the boundary rather than inheriting the
@@ -149,6 +150,40 @@ def _readme_extras(core_ids, entries, stacks):
         lines.append("| `%s` | %s | %s |"
                      % (entry["file"], kind, entry.get("description", "")))
     return "\n".join(lines)
+
+
+def _readme_root_counts(core_ids, entries, stacks):
+    """Generate the README's measured statement of the root model.
+
+    Written by hand these counts sit outside every gate: rewriting
+    "20 orthogonal templates" to "99" left sync --check clean and smoke
+    at 29/29, because nothing reads a number in prose. Generated here,
+    the same edit fails --check. The file span is measured too -- an
+    extra resolving to the core tier plus one file is the smallest case,
+    not the only one, and the prose said otherwise for half the roots.
+    """
+    from resolve import opt_in_roots, resolve_chain
+
+    extras = opt_in_roots(core_ids, entries, stacks)
+    beyond = []
+    for root in extras:
+        resolved = resolve_chain(root, core_ids, entries)
+        files = resolved[0] if isinstance(resolved, tuple) else resolved
+        beyond.append(len(files) - len(core_ids))
+    low, high = min(beyond), max(beyond)
+    span = ("%d" % low) if low == high else ("%d to %d" % (low, high))
+    sentence = (
+        "Measured: %d stacks and %d orthogonal templates, %d roots in all. "
+        "An extra resolves to the %d core-tier files plus %s of its own."
+        % (len(stacks), len(extras), len(stacks) + len(extras),
+           len(core_ids), span)
+    )
+
+    # Wrapped here rather than left as one long line: the width rule the
+    # project declares applies to the README like any other document, and
+    # a generated block that violates it makes the gate report a defect
+    # no author can fix by editing the file.
+    return NEWLINE.join(textwrap.wrap(sentence, 76))
 
 
 def _interview_stacks(manifest):
@@ -408,6 +443,7 @@ def main():
 
     core_ids, entries, stacks = load_manifest()
     readme_extras = _readme_extras(core_ids, entries, stacks)
+    readme_root_counts = _readme_root_counts(core_ids, entries, stacks)
     model_limits = _readme_model_limits()
     agent_outputs = _readme_agents()
     interview_content = _interview_stacks(manifest)
@@ -425,6 +461,7 @@ def main():
             {
                 "readme-stacks": readme_content,
                 "readme-extras": readme_extras,
+                "readme-root-counts": readme_root_counts,
                 "readme-model-limits": model_limits,
                 "readme-agents": agent_outputs,
             },
