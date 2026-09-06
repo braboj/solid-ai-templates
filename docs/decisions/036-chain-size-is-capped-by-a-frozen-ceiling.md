@@ -1,10 +1,10 @@
 ---
 id: "036"
-status: Accepted
+status: Superseded
 date: 2026-09-01
 category: tooling
 supersedes: []
-superseded_by: []
+superseded_by: ["041"]
 ---
 
 # ADR-036: Chain size is capped by a frozen ceiling, not merely reported

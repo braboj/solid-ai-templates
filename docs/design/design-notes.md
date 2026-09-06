@@ -1604,8 +1604,10 @@ Existing work owns the implementation:
 - [#1368](https://github.com/braboj/solid-ai-templates/issues/1368): live test
   execution; [#368](https://github.com/braboj/solid-ai-templates/issues/368):
   latency measurement;
-  [#1462](https://github.com/braboj/solid-ai-templates/issues/1462):
-  chain-budget meaning.
+  [#1462](https://github.com/braboj/solid-ai-templates/issues/1462) asked
+  what the chain budget meant and is answered by removing it (ADR-041);
+  [#1551](https://github.com/braboj/solid-ai-templates/issues/1551) carries
+  the size question that remains, which is the context tier.
 - [#1353](https://github.com/braboj/solid-ai-templates/issues/1353) and
   [#1506](https://github.com/braboj/solid-ai-templates/issues/1506): selective
   adoption and ADR thresholds, with implementation proposed in

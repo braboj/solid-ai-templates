@@ -272,63 +272,21 @@ figures with no generator behind it, and the copy is what ages.
    This verifies all `[DEPENDS ON: ...]` paths, unique IDs, `[EXTEND: ...]` /
    `[OVERRIDE: ...]` references, and `manifest.yaml` consistency in one pass.
 
-   A rule added to a widely resolved file fails SYS-12, because every chain
-   carrying that file is now over the ceiling recorded for it in
-   `tests/chain-budget.txt`. That is the check working: raise the ceilings in
-   the same change, having read what the addition costs. A 47-character rule
-   in a core-tier file moves every root. Do not raise them reflexively —
-   the numbers are the only place the aggregate cost of a rule is stated.
+   A rule added to a widely resolved file is read by every project on
+   every chain carrying it, on every turn, and nothing refuses that
+   growth. `README.md`'s model-limits table reports the resulting size
+   per stack category and the smallest context window that still holds
+   it, and `py tools/sync.py --check` fails when the table drifts from
+   the tree. Read the table's diff before merging, and say in the pull
+   request what the addition is worth. A category crossing to a larger
+   window is a change to what a consumer needs to run the stack at all.
 
-   Before raising anything, try stating the rule inside the paragraph
-   that already carries the narrow version of it. A widened rule folded
-   in place is often shorter than the text it replaces, and then no
-   ceiling moves at all: the release-proposal record went from +472
-   characters as its own paragraph, which failed every root, to 98
-   characters shorter than the narrow rule it replaced. Measured
-   2026-09-03 on `base/core/git.md`.
-
-   Where a cut lands several ceiling-raising branches, each rebase
-   conflicts on `tests/chain-budget.txt`, and resolving it line by line
-   is wrong twice over: the numbers are generated, and a branch's own
-   raises were measured against a tree that no longer exists. Take the
-   upstream file whole, then re-measure:
-
-   ```bash
-   git checkout main -- tests/chain-budget.txt
-   py - <<'EOF'
-import io, sys
-sys.path.insert(0, "tests")
-import run_smoke
-
-# A ceiling raised from an empty measurement records the chain as free.
-# The refusal is the finding: nothing here can tell a resolver that
-# stopped enumerating from a tree that shrank.
-measured, stacks, opt_in = run_smoke._measure_chains()
-if not (measured and stacks and opt_in):
-    raise SystemExit("refusing to rewrite: a kind of root measured empty")
-
-lines = io.open("tests/chain-budget.txt", "rb").read().decode("utf-8")
-lines = lines.replace(chr(13) + chr(10), chr(10)).replace(chr(13), "")
-raised, out = [], []
-for line in lines.split(chr(10)):
-    parts = line.split()
-    if len(parts) == 2 and not line.startswith("#") and parts[0] in measured:
-        root, ceiling = parts[0], int(parts[1])
-        if measured[root] > ceiling:
-            raised.append((root, ceiling, measured[root]))
-            line = line.replace(str(ceiling), str(measured[root]))
-    out.append(line)
-io.open("tests/chain-budget.txt", "wb").write(chr(10).join(out).encode("utf-8"))
-print("ceilings raised: %d" % len(raised))
-for root, ceiling, size in raised:
-    print("  %s: %d -> %d (+%d)" % (root, ceiling, size, size - ceiling))
-EOF
-   ```
-
-   Pass condition: it prints the raises, and `py tests/run_smoke.py`
-   then passes SYS-12. A raise larger than the branch's own diff means
-   the rebase pulled in someone else's growth — read it before
-   committing, because the number is what states the cost.
+   Before adding a paragraph, try stating the rule inside the one that
+   already carries the narrow version of it. A widened rule folded in
+   place is often shorter than the text it replaces: the
+   release-proposal record went from +472 characters as its own
+   paragraph to 98 characters shorter than the narrow rule it replaced.
+   Measured 2026-09-03 on `base/core/git.md`.
 
 3. **Agent check**: attach `INTERVIEW.md` + the changed template to an agent
    and review the output for coherence; or run the
