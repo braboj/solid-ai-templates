@@ -6563,3 +6563,87 @@ shared checkout sits on the parallel session's branch with two of its
 worktrees and one stash outstanding, none of it mine to remove.
 
 ---
+
+## 2026-09-06 — The fix that landed on one enumerator, and the audit that found the other two
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:** `v2.80.0` released, finishing the milestone about the tools
+measuring 17 of the 37 roots a project can pick. Four checks stopped walking
+the filesystem or reporting one number where the model has two, and the README
+started naming the twenty roots it never named. The 360 audit the cut owed was
+run rather than dispositioned, and three of its findings are defects in this
+session's own work.
+
+The session began with a check failing on a tree that had no defect: `SYS-07`
+walked into two scratch worktrees under gitignored `temp/` and reported their
+copies of `docs/audits/*-360.md` as misplaced files. It now asks git what
+belongs to the repository. The same defect turned out to be shipping to
+consumers — `quality.md`'s comment-layout check read 17 Python files, seven of
+them a vendored tree, and every one of its 86 findings named a third party's
+code. That fix cost 789 characters on every chain, so all 37 ceilings moved in
+the same commit.
+
+`SYS-11`, `SYS-12` and `SYS-13` each resolved both kinds of root and printed
+their sum. A single 37 reads the same whether it is 17 and 20 or 37 and 0,
+which is the case ADR-035 asks the separation to catch. Controls confirmed each
+count now moves alone: an added opt-in root took 20 to 21 with stacks fixed,
+an added stack took 17 to 18 with opt-in fixed. `SYS-13` was not in the issue
+and carried the same defect; fixing two of three would have left the third for
+the next audit.
+
+**The audit found three defects in this session.** The README root-model
+section merged hours earlier claimed an extra is one file plus the core tier;
+ten of the twenty opt-in roots exceed that, `backend-webhooks` by five. Nothing
+caught it because the counts were prose outside the generated blocks —
+rewriting "20 orthogonal templates" to "99" passed `sync --check` and smoke
+alike. It is generated now, and that control fails. Second, the ceiling raise
+was 86% of the only reduction ever made to `chain-budget.txt`, undone inside
+twenty-four hours; the raise was honest and the ratchet is what only prices
+growth. Third, the enumeration fix landed on one check while
+`all_template_files()` and `run_conformance.py` kept walking the disk — and the
+first defines the corpus for six authoring checks, so a planted template with a
+duplicate section ID shipped past all five gates green while the printed counts
+sat unmoved at 74 files and 366 IDs.
+
+**A `git add -A` published the user's unreviewed work.** Their parallel session
+was editing `docs/design/design-notes.md`; the sweep took 97 lines of it into
+PR #1522, which merged under a commit describing only README work. They
+accepted it after the fact and asked for the remainder committed too, which
+`#1523` did. The rule not to stage with `-A` here is now in memory rather than
+in this repository, because it is about how the agent works and not about the
+templates.
+
+**Pull requests merged:** #1516, #1517, #1519, #1521, #1522, #1523, #1529 (the
+cut), and the wrap-up's own.
+**Issues closed:** #1515, #1465, #1520, #1471, #1353, #1506 in `v2.80.0`,
+joining #1464 and #1466 already closed. #1353 and #1506 were found unmilestoned
+by the milestone-coverage gate and assigned during the cut.
+**Issues opened:** #1525 (P1, three enumerators still walk the disk), #1526,
+#1527 and #1528 from the audit; #1530 as template feedback. #1518 was the
+parallel session's and was labelled in passing.
+**Upstream:** one pattern filed as #1530 — a figure a document states about the
+tree is not gated unless a generator writes it. Both instances this session met
+are the same shape: a count in README prose that no gate read, and a corpus
+count that could not move because the enumerator never looked.
+**Milestones:** #86 (`v2.80`) closed at 10/10.
+**Audit:** `docs/audits/2026-09-06-360.md`. Seven context-isolated reviewers,
+headless adaptation. Overall D+, down from C-: Authoring B+, Documentation B+,
+Value B, Architecture B-, Testing B-, Viability C, Discovery D+. Two rose, one
+held, four fell — none by regression in the tree; each fell on measuring
+something the prior pass asserted. Discovery's clone figure was checked further
+after the fan-out: the 2,438 clones against 76 views track workflow runs almost
+exactly, four to six per run, so the traffic is this project's own CI rather
+than bots or adopters.
+**Owed and not repaired:** the audit's four open findings, of which #1525 is
+P1 and unmilestoned because no next cut is scoped. The Documentation
+dimension's smaller staleness — ONBOARDING's PyYAML count, the CHANGELOG
+preamble's version range, CONTRIBUTING's missing width exemption, and `py`
+versus `python3` in three contributor documents — is recorded in the audit and
+not filed. `CLAUDE.md`'s test inventory was the one repaired here.
+**State at close:** smoke 29/29, sync clean, `resolve.py --check` clean,
+redundancy 0 exact, conformance 14 passed and 0 failed, 0 open pull requests,
+no stale branches, label conformance `[]`, 74 open issues. `v2.80.0` is tagged,
+published and verified.
+
+---
