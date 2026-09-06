@@ -32,6 +32,9 @@ alters no template carries no entry.
 - `base-quality-gates` gains the stale-entry rule: a freeze entry records
   one day's findings and is never re-derived, so a slice empties it and
   re-runs the gate before any code is touched.
+- `base-quality-gates` gains the family-sizing check: run the linter past
+  its configuration with the rule family named, since an unfiltered bypass
+  drops the project's selection and measures the tool's defaults.
 
 ## [2.83.0] - 2026-09-07
 

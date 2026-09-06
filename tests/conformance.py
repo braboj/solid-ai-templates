@@ -291,6 +291,14 @@ CHECKS = [
 
     # -- base/workflow/quality-gates.md -----------------------------------
 
+    {"file": "base/workflow/quality-gates.md",
+     "find": "family: $FAMILY",
+     "title": "Sizing one frozen rule family", "do": SKIP,
+     "reason": "Names a rule family and a source root as placeholders, and "
+               "runs `ruff` against a project that has adopted a freeze. "
+               "This repository ships Markdown, has no `pyproject.toml`, no "
+               "linter freeze and no `src/`, so there is no family to size."},
+
     {"file": "base/workflow/quality-gates.md", "find": "SUPPRESSIONS = (",
      "title": "A suppression names the rule it suppresses", "do": RUN,
      "expect": ["nonzero", "any", "zero"]},
