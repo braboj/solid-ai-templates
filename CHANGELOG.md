@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.81.0] - 2026-09-06
+
 ### Added
 
 - `base-docs` requires a figure a document states about the tree to come
@@ -29,6 +31,8 @@ alters no template carries no entry.
 - `base-security` gains a CSRF section — when a defence is required, which
   pattern, and why a bearer-token API needs none. It reaches 12 of the 17
   stacks; `stack-htmx` had the only CSRF rule before.
+- `docs/SPEC.md` states how a three-level chain specialises without a
+  double override.
 
 ### Changed
 
@@ -39,11 +43,6 @@ alters no template carries no entry.
   re-overrides what `static-site-astro` overrode.
 - `base-security` names the OWASP Top 10 categories its sections cover, and
   the output-encoding section names XSS. Both were unnamed and ungreppable.
-
-### Added
-
-- `docs/SPEC.md` states how a three-level chain specialises without a
-  double override.
 
 ## [2.80.0] - 2026-09-06
 
