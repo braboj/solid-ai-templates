@@ -10,6 +10,7 @@ Implements:
   SAIT-SMK-TPL-04-001A  — all EXTEND/OVERRIDE directives reference existing IDs
   SAIT-SMK-TPL-08-001A  — every base template has at least one [ID:] tag
   SAIT-SMK-TPL-09-001A  — no empty [ID:] sections
+  SAIT-SMK-TPL-10-001A  — at most one OVERRIDE of an ID per chain
   SAIT-SMK-ADR-01-001A  — ADR frontmatter matches the ADR-010 schema
   SAIT-INT-TPL-06-001A  — EXTEND/OVERRIDE targets reachable in resolved chain
   SAIT-INT-MNF-01-001A  — all manifest entries reference valid paths and IDs
@@ -859,6 +860,65 @@ def check_tpl_07():
                         break
 
     seen.count("EXTEND sections compared against a parent", compared)
+    return seen.failures() + failures, seen.notes()
+
+
+# ---------------------------------------------------------------------------
+# TPL-10 -- at most one OVERRIDE of a given ID per resolved chain
+# ---------------------------------------------------------------------------
+
+# SPEC's conflict table calls two templates overriding one ID an error the
+# agent MUST surface. TPL-03, TPL-04 and TPL-06 check that an EXTEND or
+# OVERRIDE target exists and is reachable; none checks multiplicity, so the
+# error SPEC names is one no tool reports. A chain that carries two
+# replacements of one section leaves the agent to pick, and the resolved
+# file states both.
+#
+# The way a three-level chain specialises without colliding is the pattern
+# go-lib -> go-service -> go-echo already uses: a section that overrides
+# declares an [ID:] of its own, and the next level overrides that.
+
+def check_tpl_10():
+    if not HAS_YAML:
+        return [MISSING_YAML]
+
+    core_ids, entries, _ = _load_manifest()
+    override_pattern = re.compile(r'\[OVERRIDE:\s*([^\]]+)\]')
+    failures = []
+    seen = Inspected()
+
+    stack_roots, opt_in_roots = _roots_by_kind(core_ids, entries)
+    seen.count("stacks resolved", stack_roots)
+
+    # An opt-in root resolves its own chain, so a collision inside one is
+    # invisible to a scan of stacks alone.
+    seen.count("opt-in roots resolved", opt_in_roots)
+
+    overrides = 0
+    for sid in list(stack_roots) + list(opt_in_roots):
+        chain_files, _ = _resolve_stack(sid, core_ids, entries)
+
+        # rel path -> the IDs it overrides, in chain order
+        overridden = {}
+        for f in chain_files:
+            rel = f.replace("\\", "/")
+            content = read(os.path.join(ROOT, f))
+            for match in override_pattern.finditer(content):
+                target = match.group(1).strip()
+                overrides += 1
+                overridden.setdefault(target, []).append(rel)
+
+        for target, homes in sorted(overridden.items()):
+            if len(homes) > 1:
+                failures.append(
+                    f"  {sid}: `{target}` is overridden by "
+                    f"{len(homes)} templates ({', '.join(homes)}) — SPEC "
+                    f"calls this an error and states no winner. Give the "
+                    f"earlier override an [ID:] of its own and have the "
+                    f"later one override that"
+                )
+
+    seen.count("OVERRIDE directives read in a resolved chain", overrides)
     return seen.failures() + failures, seen.notes()
 
 
@@ -2073,6 +2133,9 @@ CHECKS = [
      "title": "Every base template has at least one [ID:] tag", "fn": check_tpl_08},
     {"id": "TPL-09", "spec": "SAIT-SMK-TPL-09-001A",
      "title": "No empty [ID:] sections", "fn": check_tpl_09},
+    {"id": "TPL-10", "spec": "SAIT-SMK-TPL-10-001A",
+     "title": "At most one OVERRIDE of an ID per resolved chain",
+     "fn": check_tpl_10},
     {"id": "SYS-09", "spec": "SAIT-SMK-SYS-09-001A",
      "title": "sync.py --check inspects without writing", "fn": check_sys_09},
     {"id": "SYS-10", "spec": "SAIT-SMK-SYS-10-001A",

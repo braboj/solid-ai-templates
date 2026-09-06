@@ -21,6 +21,17 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Changed
+
+- The Astro and tutorial stacks give each overriding section an `[ID:]` of
+  its own, so a chain overrides an ID once. `static-site-tutorial` no longer
+  re-overrides what `static-site-astro` overrode.
+
+### Added
+
+- `docs/SPEC.md` states how a three-level chain specialises without a
+  double override.
+
 ## [2.80.0] - 2026-09-06
 
 ### Added

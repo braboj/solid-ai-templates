@@ -7673,6 +7673,7 @@ Extends the static site stack with Astro-specific rules.
 ---
 
 ## Component architecture
+[ID: astro-architecture]
 [OVERRIDE: static-site-architecture]
 
 - Default to `.astro` components — they are static by default, zero JS shipped
@@ -7690,6 +7691,7 @@ Extends the static site stack with Astro-specific rules.
 ---
 
 ## Content structure
+[ID: astro-content]
 [OVERRIDE: static-site-content]
 
 All editable content lives in `src/data/` as JSON.
@@ -7821,6 +7823,7 @@ files into `src/content/`.
 ---
 
 ## Assets
+[ID: astro-assets]
 [OVERRIDE: static-site-assets]
 
 - Images: `public/images/` — reference as `/images/filename.ext`
@@ -8554,7 +8557,8 @@ pipeline, CI/CD, and licensing.
 ---
 
 ## Content layer
-[OVERRIDE: static-site-content]
+[ID: tutorial-content]
+[OVERRIDE: astro-content]
 
 Canonical tutorial content lives in `chapters/` as SSG-agnostic
 Markdown. The Astro site imports from this directory — never edit
@@ -8621,7 +8625,8 @@ and Quiz sections.
 ---
 
 ## Assets
-[OVERRIDE: static-site-assets]
+[ID: tutorial-assets]
+[OVERRIDE: astro-assets]
 
 ```
 assets/
@@ -8640,7 +8645,8 @@ assets/
 ---
 
 ## Project structure
-[OVERRIDE: static-site-architecture]
+[ID: tutorial-architecture]
+[OVERRIDE: astro-architecture]
 
 ```
 chapters/              # Canonical tutorial content (SSG-agnostic)

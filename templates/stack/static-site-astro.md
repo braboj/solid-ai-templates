@@ -33,6 +33,7 @@ Extends the static site stack with Astro-specific rules.
 ---
 
 ## Component architecture
+[ID: astro-architecture]
 [OVERRIDE: static-site-architecture]
 
 - Default to `.astro` components — they are static by default, zero JS shipped
@@ -50,6 +51,7 @@ Extends the static site stack with Astro-specific rules.
 ---
 
 ## Content structure
+[ID: astro-content]
 [OVERRIDE: static-site-content]
 
 All editable content lives in `src/data/` as JSON.
@@ -181,6 +183,7 @@ files into `src/content/`.
 ---
 
 ## Assets
+[ID: astro-assets]
 [OVERRIDE: static-site-assets]
 
 - Images: `public/images/` — reference as `/images/filename.ext`

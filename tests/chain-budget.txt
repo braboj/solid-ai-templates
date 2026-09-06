@@ -34,7 +34,7 @@ base-two-pass-review  346587
 platform-github       377500
 platform-gitlab       344458
 platform-linear       287596
-stack-astro           385402
+stack-astro           385466
 stack-c-embedded      272999
 stack-django          465482
 stack-express         351619
@@ -50,4 +50,4 @@ stack-nestjs          352660
 stack-nodejs-lib      298250
 stack-python-lib      379170
 stack-python-service  451474
-stack-tutorial        414187
+stack-tutorial        414306

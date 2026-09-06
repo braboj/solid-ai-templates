@@ -430,6 +430,23 @@ section ID with different directives (`OVERRIDE` vs `EXTEND`).
 | Two templates both `OVERRIDE` the same ID | Error — the agent MUST surface this conflict to the user and ask which override to apply |
 | Two templates both `EXTEND` the same ID | Both extensions are applied; order follows the dependency declaration in the stack template |
 
+### Specialising across three levels
+
+A stack that depends on another stack MUST NOT override an ID its
+dependency already overrides — that is the error above, and the chain
+states no winner. The overriding section declares an `[ID:]` of its own,
+and the next level overrides that:
+
+```
+frontend/static-site.md   [ID: static-site-content]
+stack/static-site-astro.md    [ID: astro-content]    [OVERRIDE: static-site-content]
+stack/static-site-tutorial.md [ID: tutorial-content] [OVERRIDE: astro-content]
+```
+
+Each ID is overridden once, and every level stays available to a stack
+that wants to specialise it. `SAIT-SMK-TPL-10-001A` fails a chain that
+overrides one ID twice.
+
 **When a conflict cannot be resolved by the rules above**, the agent must:
 
 1. Show the user both conflicting rules
