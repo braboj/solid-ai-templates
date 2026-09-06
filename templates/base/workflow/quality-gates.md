@@ -338,6 +338,32 @@ suit different tools.
   each call site. A list that has to be widened in two places is widened in
   one, and the gate then reports on a corpus no document states
 
+A slice starts before any code is touched, because the table is a record of
+one day's findings and is never re-derived. A rule name outlives the findings
+behind it — an unrelated refactor, a formatter pass, a dependency bump that
+changes what a rule matches, another entry's cleanup — and a live entry and a
+dead one are the same line of configuration.
+
+- Empty the entry and re-run the gate first. A rule reporting nothing is
+  deleted from the entry as a finding about the table, not as work done. The
+  measurement costs one run per entry and is the first step of taking the
+  slice on anyway, so it is free to whoever knows to read the result that way
+- Read a stale entry as inverting the number the migration is planned
+  against. The table says how much is suppressed and a maintainer sizes the
+  next slice from it, so dead names make the work look larger than it is —
+  the direction that keeps a migration parked
+- Deleting a dead rule name from an entry is a hand edit, and the rule
+  against curating the table by hand does not reach it. That rule forbids
+  *widening*: an entry gaining a rule, or a file gaining an entry, to make a
+  gate pass. Narrowing an entry to what the gate still reports is the
+  migration itself
+
+Retiring two entries in one downstream project found three of the thirty-two
+rule codes they named had nothing behind them — a little under ten per cent,
+in entries untouched since the linter was adopted. A project can be gated on
+a rule it believes it is not gated on, which is harmless until someone reads
+the table as a statement of what the codebase violates.
+
 ### The suppression beside the table
 
 The freeze answers "this file was already broken on adoption day". It does

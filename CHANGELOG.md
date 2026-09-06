@@ -26,6 +26,9 @@ alters no template carries no entry.
 - `base-quality-gates` gains the corpus-narrowing retrofit shape: a
   gate with no per-file ignore widens the directories it reads as
   each slice cleans one, asserting a floor on the files enumerated.
+- `base-quality-gates` gains the stale-entry rule: a freeze entry records
+  one day's findings and is never re-derived, so a slice empties it and
+  re-runs the gate before any code is touched.
 
 ## [2.83.0] - 2026-09-07
 
