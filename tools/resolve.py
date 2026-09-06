@@ -255,6 +255,7 @@ def generate_all(core_ids, entries, stacks):
         files = resolve_chain(sid, core_ids, entries)
         content = concat_chain(files)
         out = GENERATED / f"{sid}.md"
+
         # Pin the line ending as well as the encoding. This artifact is
         # committed, and Python translates every newline on a platform
         # whose default is CRLF, so the file the repository holds would
