@@ -30,3 +30,15 @@ A diff touching an off-limits path says so
 # in this repository's registry, which is itself a test edit, so scoring it
 # would fail each conforming change on arrival.
 A change to an existing test is visible
+
+# Reached only on a tag push, where the pipeline supplies the milestone.
+# The check resolves each reference to a pull request or a closed issue
+# and reports the split; whether an issue named in passing should have
+# carried the milestone is a judgement about intent, not a count.
+Every issue closed since the previous tag carries the milestone
+
+# Reached only on a tag push, where the pipeline supplies the release.
+# Its pass condition states that the two counts are deliberately NOT
+# required to match, so there is no threshold to score: the operator
+# confirms each carried commit is represented or deliberately not.
+The Unreleased section accounts for what the release carries

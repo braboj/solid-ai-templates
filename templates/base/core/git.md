@@ -621,7 +621,7 @@ nested line into a shallower one.
 
 ```bash
 py - <<'EOF'
-import json, re, subprocess, sys
+import json, os, re, subprocess, sys
 
 # The check prints a milestone title, which may hold characters the
 # console code page cannot encode. Without this the check raises
@@ -632,7 +632,12 @@ sys.stdout.reconfigure(encoding="utf-8")
 # that was never scoped as one. Setting it is the decision the step asks
 # for: a release with no milestone skips the check rather than reporting
 # every issue closed since the tag.
-MILESTONE = None
+#
+# A release pipeline answers instead by exporting RELEASE_MILESTONE.
+# A tag push is the one repository event that does say a release is
+# happening, so a pipeline running on one knows what the operator
+# would have typed.
+MILESTONE = os.environ.get("RELEASE_MILESTONE") or None
 
 # Decode every subprocess as UTF-8 rather than the locale encoding. `gh`
 # and `git` emit UTF-8; on a console whose code page is not, text=True
@@ -645,10 +650,16 @@ if MILESTONE is None:
     print("release not scoped to a milestone; this check does not apply")
     raise SystemExit(3)
 
-# Resolve the tag this release follows from the commit under release, not
-# from a position in a list of tags.
-previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0"],
-                          **RUN).stdout.strip()
+# On the release commit the newest tag is the previous release. On the
+# tag itself -- where a run triggered by the tag push happens -- the same
+# command returns the tag being released and `..HEAD` is an empty range,
+# so the check would report nothing from a comparison it never made.
+# Resolve from the commit under release either way.
+at_head = subprocess.run(["git", "tag", "--points-at", "HEAD"],
+                         **RUN).stdout.split()
+ref = at_head[0] + "^" if at_head else "HEAD"
+previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0",
+                           ref], **RUN).stdout.strip()
 
 # A baseline the command did not produce is not a baseline. With no tag
 # `git describe` prints nothing, `..HEAD` is an empty range, and the
@@ -858,13 +869,15 @@ freezes it is the file nobody reads and the one a consumer opens first.
 
 ```bash
 py - <<'EOF'
-import re, subprocess, sys
+import os, re, subprocess, sys
 
 sys.stdout.reconfigure(encoding="utf-8")
 
 # The version being released, or empty on an ordinary day. Setting it is
-# the decision the step asks for.
-RELEASE = ""
+# the decision the step asks for; a release pipeline answers instead by
+# exporting RELEASE, a tag push being the one repository event that does
+# say a release is happening.
+RELEASE = os.environ.get("RELEASE", "")
 
 # Where the release record lives, and which paths in the tree count as
 # the documentation a consumer reads. A capability named in the record and
@@ -969,14 +982,23 @@ the commit range by hand — the work the changelog existed to save.
 # The release this check is preparing, or empty on an ordinary day.
 # Setting it is the decision the step asks for: the check reads the
 # `Unreleased` section against the commits a cut would carry, and no state
-# of the repository distinguishes that moment from an ordinary one.
-RELEASE=
+# of the repository distinguishes that moment from an ordinary one. A
+# release pipeline answers instead by exporting RELEASE, a tag push being
+# the one event that does.
+RELEASE="${RELEASE:-}"
 
 if [ -z "$RELEASE" ]; then
   echo "no release is in preparation; this check does not apply"
   exit 3
 fi
-previous=$(git describe --tags --abbrev=0)
+# On the tag itself the same command returns the tag being released and
+# the range is empty, so resolve from the commit under release either way.
+at_head=$(git tag --points-at HEAD | head -1)
+if [ -n "$at_head" ]; then
+  previous=$(git describe --tags --abbrev=0 "${at_head}^")
+else
+  previous=$(git describe --tags --abbrev=0)
+fi
 echo "commits since $previous: $(git log --format='%s' "$previous..HEAD" | wc -l)"
 echo "entries in Unreleased: $(awk '/^## /{ n++ } n==1 && /^- /' CHANGELOG.md | wc -l)"
 git log --format='  carried: %s' "$previous..HEAD"
@@ -1059,8 +1081,16 @@ def words(line):
     return set(re.findall("[a-z0-9]+", line.lower()))
 
 
-previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0"],
-                          **RUN).stdout.strip()
+# On the release commit the newest tag is the previous release. On the
+# tag itself -- where a run triggered by the tag push happens -- the same
+# command returns the tag being released and `..HEAD` is an empty range,
+# so the check would report nothing from a comparison it never made.
+# Resolve from the commit under release either way.
+at_head = subprocess.run(["git", "tag", "--points-at", "HEAD"],
+                         **RUN).stdout.split()
+ref = at_head[0] + "^" if at_head else "HEAD"
+previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0",
+                           ref], **RUN).stdout.strip()
 
 # A baseline the command did not produce is not a baseline: with no tag
 # the range is empty and the check would report nothing from a comparison
@@ -1248,8 +1278,10 @@ py - <<'EOF'
 import os, re, subprocess
 
 # The version being released, or empty on an ordinary day. Setting it is
-# the decision the step asks for.
-RELEASE = ""
+# the decision the step asks for; a release pipeline answers instead by
+# exporting RELEASE, a tag push being the one repository event that does
+# say a release is happening.
+RELEASE = os.environ.get("RELEASE", "")
 
 # Where the project keeps its dated periodic audits, and the date shape
 # its filenames carry.
@@ -1274,8 +1306,16 @@ if patch:
           % (major, minor, patch))
     raise SystemExit(3)
 
-previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0"],
-                          capture_output=True, text=True).stdout.strip()
+# On the release commit the newest tag is the previous release. On the
+# tag itself -- where a run triggered by the tag push happens -- the same
+# command returns the tag being released and `..HEAD` is an empty range,
+# so the check would report nothing from a comparison it never made.
+# Resolve from the commit under release either way.
+at_head = subprocess.run(["git", "tag", "--points-at", "HEAD"],
+                         capture_output=True, text=True).stdout.split()
+ref = at_head[0] + "^" if at_head else "HEAD"
+previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0",
+                           ref], capture_output=True, text=True).stdout.strip()
 
 # The same refusal the unreadable version gets, for the same reason. With
 # no previous tag `git describe` prints nothing and every date compares

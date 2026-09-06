@@ -700,6 +700,17 @@ printed `a subject names closed issue 1456, which carries no milestone`
 and exited `0`. An operator reading the status alone ships the defect the
 gate just named.
 
+Each gate below reads its parameter from the environment as well as from
+the constant, so `RELEASE=v2.83.0 py tests/run_conformance.py` runs the
+whole set in one pass without editing a template. The `Release gates`
+workflow does exactly that on every tag push, resolving the milestone
+from the tag's `v<major>.<minor>` prefix, and can be dispatched with the
+version as an input to run them at the release commit.
+
+That automatic run is the backstop, not the mechanism. It happens after
+the tag, which cannot be taken back cleanly, so it reports what the steps
+below exist to prevent. Run them here anyway.
+
 1. Confirm the milestone's issues are all closed and `main` is green
    (`py tests/run_smoke.py` passes) and up to date (`git pull`)
 2. Confirm the inverse — every issue closed since the previous tag

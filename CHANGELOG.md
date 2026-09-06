@@ -21,6 +21,10 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+- `base-git`'s release gates read their parameter from the environment, so a
+  pipeline can run them, and each resolves the release it follows from the
+  commit under release rather than from a tag pointing at HEAD.
+
 - `base-quality` gains `quality-exemption-doc-duty`: changing what a
   check exempts is a documentation edit too, and the rule ships the
   sweep that finds every document making a claim about it.
