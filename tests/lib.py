@@ -3,6 +3,7 @@
 import datetime
 import io
 import os
+import subprocess
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -25,6 +26,67 @@ FAIL = "FAIL"
 SKIP = "SKIP"
 ERR  = "ERR "
 
+
+
+# Directories git may list in full -- an unignored virtual environment, a
+# dependency tree, a nested worktree -- that no check has ever read as
+# repository content. Applied to git's answer so a corpus does not depend
+# on whether a given toolchain happens to write its own .gitignore.
+SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".idea",
+             ".claude"}
+
+# templates/INTERVIEW.md is written by tools/sync.py from the manifest. It
+# is a document the templates directory holds, not a template: it declares
+# no [ID:] section and takes no manifest entry. Naming it here keeps the
+# exception in one place, so a second generated document dropped beside it
+# is a finding rather than a silent member of the corpus.
+GENERATED_TEMPLATE_DOCS = frozenset(["templates/INTERVIEW.md"])
+
+
+def repository_files():
+    """Every repo-relative path git tracks or would track, ignored ones out.
+
+    A filesystem walk cannot read .gitignore, so it descends into build
+    output, virtual environments and nested worktrees, and reports their
+    copies of a file as repository content. Git decides what belongs to the
+    repository, so ask git: --cached covers tracked files and --others
+    --exclude-standard the untracked ones a commit could still add, leaving
+    out everything .gitignore excludes.
+    """
+    out = subprocess.check_output(
+        ["git", "-C", ROOT, "ls-files", "-z", "--cached", "--others",
+         "--exclude-standard"],
+        stderr=subprocess.STDOUT,
+    )
+    paths = [p for p in out.decode("utf-8").split("\0") if p]
+    return [
+        p for p in paths
+        if not any(part in SKIP_DIRS for part in p.split("/"))
+    ]
+
+
+def template_documents(prefix="templates/"):
+    """Every Markdown file the repository holds under templates/.
+
+    A hardcoded directory list defines what the checks reading it can see,
+    so a template outside the list is invisible to all of them and the
+    corpus count cannot move to say so. Asking git makes the count evidence:
+    it differs when the tree differs.
+    """
+    return sorted(
+        p for p in repository_files()
+        if p.startswith(prefix) and p.endswith(".md")
+    )
+
+
+def template_files(prefix="templates/"):
+    """The template corpus the manifest governs, repo-relative.
+
+    Every Markdown file under templates/ except the documents sync.py
+    generates there, which carry no manifest entry and declare no sections.
+    """
+    return [p for p in template_documents(prefix)
+            if p not in GENERATED_TEMPLATE_DOCS]
 
 
 def read(rel_path):
