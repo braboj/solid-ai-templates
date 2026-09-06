@@ -62,7 +62,8 @@ tags: [composition, reach, section-ids]
 4. For each such reference, compare the chains carrying the referencing
    file against those carrying the declaring file
 5. Report the number of declared IDs, the number named in another file's
-   prose, the references checked and the roots resolved
+   prose, the references checked, and the stacks and opt-in roots
+   resolved as two counts
 
 ### Assertions
 
