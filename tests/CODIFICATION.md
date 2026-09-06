@@ -189,6 +189,7 @@ corrected prerequisites where test intent is unchanged.
 | `SAIT-INT-TPL-07-001A` | Integration — composition — duplication — spec 1, version A |
 | `SAIT-SMK-TPL-08-001A` | Smoke — composition — ID presence — spec 1, version A |
 | `SAIT-SMK-TPL-09-001A` | Smoke — composition — section content — spec 1, version A |
+| `SAIT-SMK-TPL-10-001A` | Smoke — composition — override multiplicity — spec 1, version A |
 | `SAIT-INT-MNF-01-001A` | Integration — manifest — manifest entries — spec 1, version A |
 | `SAIT-INT-MNF-02-001A` | Integration — manifest — resolution — spec 1, version A |
 | `SAIT-INT-MNF-03-001A` | Integration — manifest — core tier — spec 1, version A |

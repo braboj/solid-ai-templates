@@ -8,7 +8,8 @@ pipeline, CI/CD, and licensing.
 ---
 
 ## Content layer
-[OVERRIDE: static-site-content]
+[ID: tutorial-content]
+[OVERRIDE: astro-content]
 
 Canonical tutorial content lives in `chapters/` as SSG-agnostic
 Markdown. The Astro site imports from this directory — never edit
@@ -75,7 +76,8 @@ and Quiz sections.
 ---
 
 ## Assets
-[OVERRIDE: static-site-assets]
+[ID: tutorial-assets]
+[OVERRIDE: astro-assets]
 
 ```
 assets/
@@ -94,7 +96,8 @@ assets/
 ---
 
 ## Project structure
-[OVERRIDE: static-site-architecture]
+[ID: tutorial-architecture]
+[OVERRIDE: astro-architecture]
 
 ```
 chapters/              # Canonical tutorial content (SSG-agnostic)

@@ -386,6 +386,7 @@ Run `py tests/run_smoke.py` before every PR. It checks:
 - All `[DEPENDS ON: ...]` reference existing files
 - All `[EXTEND: ...]` and `[OVERRIDE: ...]` reference valid IDs
 - All EXTEND/OVERRIDE targets are reachable in the resolved chain
+- No chain overrides one section ID from two templates
 - All manifest entries point to existing files
 - All template files have a manifest entry
 - No duplicate IDs across layers
