@@ -35,7 +35,8 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from conformance import CHECKS, RUN, SKIP, SILENT, MANUAL
-from lib import PASS, FAIL, SKIP as SKIPPED, ROOT, write_report
+from lib import (PASS, FAIL, SKIP as SKIPPED, ROOT, write_report,
+                 template_documents)
 
 ERR = "ERR"
 
@@ -53,8 +54,6 @@ REVIEW = "REVIEW"
 NOT_APPLICABLE = 3
 NA = "N/A"
 
-TEMPLATES = os.path.join(ROOT, "templates")
-
 FENCE = re.compile(r"^(\s*)```(\w*)\s*$")
 RUNNABLE = ("bash", "python", "sh", "py")
 
@@ -71,23 +70,24 @@ def iter_blocks():
     silently stops matching looks identical to a template that lost its
     checks.
     """
-    for base, _dirs, files in os.walk(TEMPLATES):
-        for name in sorted(files):
-            if not name.endswith(".md"):
-                continue
-            path = os.path.join(base, name)
-            rel = os.path.relpath(path, TEMPLATES).replace(os.sep, "/")
-            lines = io.open(path, encoding="utf-8").read().splitlines()
-            index = 0
-            while index < len(lines):
-                match = FENCE.match(lines[index])
-                if match and match.group(2):
-                    start = index
-                    index += 1
-                    while index < len(lines) and lines[index].strip() != "```":
-                        index += 1
-                    yield rel, start + 1, match.group(2), lines[start + 1:index]
+
+    # Ask git what belongs to the repository. A walk of the directory reads
+    # whatever happens to sit there, so a gitignored scratch file becomes a
+    # block with no disposition and fails the gate.
+    for tracked in template_documents():
+        rel = tracked[len("templates/"):]
+        path = os.path.join(ROOT, tracked.replace("/", os.sep))
+        lines = io.open(path, encoding="utf-8").read().splitlines()
+        index = 0
+        while index < len(lines):
+            match = FENCE.match(lines[index])
+            if match and match.group(2):
+                start = index
                 index += 1
+                while index < len(lines) and lines[index].strip() != "```":
+                    index += 1
+                yield rel, start + 1, match.group(2), lines[start + 1:index]
+            index += 1
 
 
 def unwrap(body):
