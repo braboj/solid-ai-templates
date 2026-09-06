@@ -27,7 +27,8 @@ import re
 import subprocess
 import sys
 
-from lib import ROOT, PASS, FAIL, ERR, write_report
+from lib import (ROOT, PASS, FAIL, ERR, write_report,
+                 repository_files, template_files)
 from cases import ALL_TESTS
 
 # Set the output encoding at the boundary rather than inheriting the
@@ -157,17 +158,20 @@ def _roots_by_kind(core_ids, entries):
     return stacks, _opt_in_roots(core_ids, entries)
 
 
+# The directories the template corpus is expected to fill. The corpus itself
+# comes from git; this list exists so a renamed or emptied directory is a
+# finding rather than a corpus that quietly shrinks.
 TEMPLATE_DIRS = [
-    os.path.join("templates", "base", "core"),
-    os.path.join("templates", "base", "security"),
-    os.path.join("templates", "base", "infra"),
-    os.path.join("templates", "base", "workflow"),
-    os.path.join("templates", "base", "language"),
-    os.path.join("templates", "base", "data"),
-    os.path.join("templates", "backend"),
-    os.path.join("templates", "frontend"),
-    os.path.join("templates", "platform"),
-    os.path.join("templates", "stack"),
+    "templates/base/core",
+    "templates/base/security",
+    "templates/base/infra",
+    "templates/base/workflow",
+    "templates/base/language",
+    "templates/base/data",
+    "templates/backend",
+    "templates/frontend",
+    "templates/platform",
+    "templates/stack",
 ]
 
 
@@ -176,13 +180,28 @@ TEMPLATE_DIRS = [
 # ---------------------------------------------------------------------------
 
 def all_template_files():
-    files = []
-    for d in TEMPLATE_DIRS:
-        dirpath = os.path.join(ROOT, d)
-        for name in os.listdir(dirpath):
-            if name.endswith(".md"):
-                files.append(os.path.join(dirpath, name))
-    return files
+    """Absolute paths to every template the manifest governs.
+
+    Sourced from git rather than from a walk of TEMPLATE_DIRS. A hardcoded
+    directory list defines what the checks reading it can see: a template
+    outside the list is invisible to all of them, and the corpus count they
+    print cannot move to say so -- a stale count and a correct one read
+    alike when the enumerator never looked.
+    """
+    return [os.path.join(ROOT, p.replace("/", os.sep))
+            for p in template_files()]
+
+
+def missing_template_dirs():
+    """Expected directories that contribute no file to the corpus.
+
+    A directory that is not there is a finding, not a skip. Skipping it
+    makes a rename silent: every listed directory disappears and the check
+    reports the same pass as a clean tree.
+    """
+    present = template_files()
+    return [d for d in TEMPLATE_DIRS
+            if not any(p.startswith(d + "/") for p in present)]
 
 
 def read(path):
@@ -869,6 +888,15 @@ def check_sys_03():
     seen.count("files named in the manifest", len(manifest_files))
 
     files = seen.count("template files scanned", all_template_files())
+
+    # The corpus comes from git, so an emptied or renamed directory shrinks
+    # it silently. Naming the expected directories makes that a finding.
+    for d in missing_template_dirs():
+        failures.append(
+            f"  {d}: expected template directory holds no tracked "
+            f"template — the corpus lost a directory it is built to cover"
+        )
+
     for filepath in files:
         rel = os.path.relpath(filepath, ROOT)
         rel_fwd = rel.replace(os.sep, "/")
@@ -946,13 +974,18 @@ def check_sys_04():
 # TPL-08 — every base/core template has at least one [ID:] tag
 # ---------------------------------------------------------------------------
 
+# The base tier the check is pointed at. Its files come from git, so a
+# template added in a new base subdirectory is inspected without this list
+# being edited; the list survives to make an emptied directory a finding.
+BASE_PREFIX = "templates/base/"
+
 CORE_DIRS = [
-    os.path.join("templates", "base", "core"),
-    os.path.join("templates", "base", "security"),
-    os.path.join("templates", "base", "infra"),
-    os.path.join("templates", "base", "workflow"),
-    os.path.join("templates", "base", "language"),
-    os.path.join("templates", "base", "data"),
+    "templates/base/core",
+    "templates/base/security",
+    "templates/base/infra",
+    "templates/base/workflow",
+    "templates/base/language",
+    "templates/base/data",
 ]
 
 
@@ -961,31 +994,24 @@ def check_tpl_08():
     seen = Inspected()
     seen.count("directories the check is pointed at", len(CORE_DIRS))
 
-    inspected_files = 0
+    base_files = seen.count("files inspected for an [ID:] tag",
+                            template_files(BASE_PREFIX))
+
+    # A directory that is not there is a finding, not a skip. Skipping it
+    # makes a rename silent: every listed directory disappears and the
+    # check reports the same pass as a clean tree.
     for d in CORE_DIRS:
-        dirpath = os.path.join(ROOT, d)
-
-        # A directory that is not there is a finding, not a skip. Skipping
-        # it makes a rename silent: every listed directory disappears and
-        # the check reports the same pass as a clean tree.
-        if not os.path.isdir(dirpath):
+        if not any(rel.startswith(d + "/") for rel in base_files):
             failures.append(
-                f"  {d.replace(os.sep, '/')}: listed directory does not "
-                f"exist — the check inspects nothing in it"
+                f"  {d}: listed directory holds no template — the check "
+                f"inspects nothing in it"
             )
-            continue
 
-        for name in os.listdir(dirpath):
-            if not name.endswith(".md"):
-                continue
-            filepath = os.path.join(dirpath, name)
-            inspected_files += 1
-            content = read(filepath)
-            if not any(True for _ in iter_id_declarations(content)):
-                rel = os.path.relpath(filepath, ROOT).replace(os.sep, "/")
-                failures.append(f"  {rel}: missing [ID:] tag")
+    for rel in base_files:
+        content = read(os.path.join(ROOT, rel.replace("/", os.sep)))
+        if not any(True for _ in iter_id_declarations(content)):
+            failures.append(f"  {rel}: missing [ID:] tag")
 
-    seen.count("files inspected for an [ID:] tag", inspected_files)
     return seen.failures() + failures, seen.notes()
 
 
@@ -1405,42 +1431,11 @@ _AUDIT_DIR = "docs/audits"
 # dated report (*-360.md). The 360.md template itself matches neither.
 _AUDIT_NAME = re.compile(r"(?:360-audit.*|.*-360)\.md$")
 _DATED_AUDIT_NAME = re.compile(r"^\d{4}-\d{2}-\d{2}-360\.md$")
-_SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".idea", ".claude"}
-
-
-def _repository_files():
-    """Every repo-relative path git tracks or would track, ignored ones out.
-
-    A filesystem walk cannot read .gitignore, so it descends into build
-    output, virtual environments and the nested worktrees under temp/, and
-    reports their copies of a file as repository content -- a checkout of an
-    older commit fails the check for where that commit put its files. Git
-    decides what belongs to the repository, so ask git: --cached covers
-    tracked files and --others --exclude-standard the untracked ones a
-    commit could still add, leaving out everything .gitignore excludes.
-    """
-    out = subprocess.check_output(
-        ["git", "-C", ROOT, "ls-files", "-z", "--cached", "--others",
-         "--exclude-standard"],
-        stderr=subprocess.STDOUT,
-    )
-    paths = [p for p in out.decode("utf-8").split("\0") if p]
-
-    # Git lists an unignored virtual environment or dependency tree in full.
-    # The skip list is what this check has always declined to read, so apply
-    # it to git's answer rather than letting the corpus depend on whether a
-    # given toolchain happens to write its own .gitignore.
-    return [
-        p for p in paths
-        if not any(part in _SKIP_DIRS for part in p.split("/"))
-    ]
-
-
 def check_sys_07():
     failures = []
     seen = Inspected()
     reports = 0
-    walked = _repository_files()
+    walked = repository_files()
     for rel in walked:
         name = rel.rsplit("/", 1)[-1]
         if _AUDIT_NAME.match(name):
