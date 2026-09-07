@@ -148,10 +148,12 @@ genericity before it becomes template content:
 ## Author a new ADR
 
 Use this workflow only after applying the decision threshold in
-`templates/base/core/docs.md`. Routine naming, directory moves, and policy
-repairs need no ADR. One coherent architectural decision may cover related
-work across several issues or PRs. ADRs live in `docs/decisions/`; ADR-010
-records the frontmatter schema.
+`templates/base/core/docs.md`: a record is owed when the decision changes
+what a consuming project observes without reading this repository — the
+composition model. Prose style, tool choice, release procedure, naming and
+file layout need no ADR, however consequential they are. One coherent
+architectural decision may cover related work across several issues or PRs.
+ADRs live in `docs/decisions/`; ADR-010 records the frontmatter schema.
 
 1. Copy the template:
    ```bash
@@ -205,7 +207,10 @@ For consumers adopting the selective-adoption and ADR-threshold update:
 - Inline the adoption boundary in the root context file before applying newly
   read template rules. Update copied inline rules as well as the submodule pin.
 - Replace old directory-move, paragraph-length, and per-issue ADR triggers in
-  the local context, wrap-up checklist, and authoring instructions.
+  the local context, wrap-up checklist, and authoring instructions, along with
+  any threshold phrased as a judgement about how consequential a decision is.
+  The test is what a user of the thing observes without reading the
+  repository's internals.
 - Keep existing ADRs as history. Put routine refinements in current docs and
   the PR; do not create a consolidation project or a decline register.
 - Reconcile the reference list if a chosen update changes dependencies, and
