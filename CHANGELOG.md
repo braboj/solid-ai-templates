@@ -27,6 +27,8 @@ alters no template carries no entry.
   thing observes without reading the repository's internals. Prose style,
   tool choice, release procedure, naming and file layout no longer qualify,
   however consequential
+- The end-of-session audit's ADR item states that same test, replacing the
+  narrower list it carried
 
 ## [2.85.0] - 2026-09-07
 

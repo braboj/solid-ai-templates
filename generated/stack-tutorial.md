@@ -9355,8 +9355,11 @@ summarize — visible sequential execution prevents missed steps.
    what is done (verify auto-close worked)
 3. **Epic checklists** — update epic checklists if relevant
 4. **ADRs** — apply the decision threshold in
-   `templates/base/core/docs.md`. Routine moves, naming, and compliance
-   repairs need no ADR; one coherent architectural choice may span PRs.
+   `templates/base/core/docs.md`: a record is owed when the decision
+   changes what a user of the thing observes without reading the
+   repository's internals. Prose style, tool choice, release procedure,
+   naming and file layout need none; one coherent architectural choice
+   may span PRs.
 5. **CLAUDE.md** — for each new convention/rule, apply the doc-placement
    decision tree in `ai-workflow.md` (Doc placement decision tree
    section): evaluate code → ADR → README → PLAYBOOK → CLAUDE.md →
