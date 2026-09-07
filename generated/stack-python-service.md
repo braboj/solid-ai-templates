@@ -3752,7 +3752,11 @@ for name in tracked:
   next time the tree moves, and nothing says so. Where the number carries
   the point, emit it into a generated block the sync command rewrites and
   its `--check` gates; where it does not, name the thing without counting
-  it. Check — no documentation figure sits outside a generated block.
+  it. A figure is a numeral and the thing it counts, spelled or in digits
+  and with or without a modifier between them — `Eight files`, `14
+  manifest-reading checks` and `7 top-level directories` are one form, and
+  a detector reading a digit against a bare noun finds none of them.
+  Check — no documentation figure sits outside a generated block.
   Pass condition: the command reports the documents it scanned and the
   ungated figures it found, the first non-zero and the second zero, and
   exits zero; any figure it lists reaches a non-zero status. A
@@ -3779,7 +3783,26 @@ NOUNS = ("file", "files", "template", "templates", "stack", "stacks",
          "chain", "chains", "check", "checks", "test", "tests", "root",
          "roots", "directory", "directories", "document", "documents",
          "section", "sections", "example", "examples")
-FIGURE = re.compile(r"(?<![\w.\-])(\d{1,6})\s+(%s)\b" % "|".join(NOUNS), re.I)
+
+# Prose style favours a spelled numeral under ten, which is where most
+# counts fall. Below five it is an ordinary quantifier -- "two templates",
+# "four sections" -- and states no measurement, so the list starts at five.
+WORDS = ("five", "six", "seven", "eight", "nine", "ten", "eleven",
+         "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
+         "seventeen", "eighteen", "nineteen", "twenty", "dozen")
+
+# A modifier may sit between the numeral and its noun: "14
+# manifest-reading checks", "75 Markdown template files". A function word
+# or a unit may not -- "a 15 KB document" measures a size, not a
+# population, and "5 means tests" is two clauses.
+STOP = ("of|in|on|at|to|for|from|and|or|the|a|an|is|are|was|were|be"
+        "|means|per|than|as|by|with|that|which|into|out|up|down|over"
+        "|under|kb|mb|gb|kib|mib|byte|bytes|character|characters|word"
+        "|words|line|lines|minute|minutes|second|seconds|token|tokens"
+        "|page|pages")
+GAP = r"(?:\s+(?!(?:%s)\b)[\w-]+){0,2}" % STOP
+FIGURE = re.compile(r"(?<![\w.\-])(\d{1,6}|%s)%s\s+(%s)\b"
+                    % ("|".join(WORDS), GAP, "|".join(NOUNS)), re.I)
 GENERATED = re.compile(r"<!--\s*/?generated:")
 
 # A passage stating the date it was measured on: a record of a tree, not
