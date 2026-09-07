@@ -94,6 +94,15 @@
   - When a PR branch is behind `main`, merge `main` into the branch —
     do not rebase and force-push. On GitHub, use the "Update branch"
     button or `gh pr update-branch <N>`.
+  - Updating the branch is half the recovery. The merge brings in the
+    other branch's sources and re-derives nothing, so a repository
+    holding regenerated artifacts now has a branch whose artifact was
+    built from a tree lacking them. Git reports the branch `MERGEABLE`
+    throughout, because the two changes fall in different regions of
+    the same files, so nothing warns that the derived output is stale.
+    Regenerate and re-run the staleness comparison AFTER the update,
+    and stage what they produce. This is what happens on every release
+    carrying more than one pull request, not an edge case
   - Squash-merge collapses the merge commit on merge, so local branch
     shape does not pollute `main` history.
 - **After a PR is merged**, delete both remote and local branch, then pull main:
@@ -118,8 +127,9 @@ regeneration never ran.
 - MUST name the regeneration trigger beside the sources it derives from,
   so an author editing a source meets the obligation without having to
   know the build graph
-- MUST run the staleness comparison AFTER the edit. Run before it, the
-  comparison reports the previous state and reads as a pass:
+- MUST run the staleness comparison AFTER the edit, and again after any
+  merge that brings another branch's sources into this one. Run before
+  either, the comparison reports the previous state and reads as a pass:
 
 ```bash
 <regenerate-command>
