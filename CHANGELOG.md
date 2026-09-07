@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.84.0] - 2026-09-07
+
 ### Added
 
 - `base-quality-gates` gains the corpus-narrowing retrofit shape: a
