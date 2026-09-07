@@ -234,9 +234,17 @@ wrong before changing either.
 - Render "Alternatives considered" and "Consequences" as tables where the
   content fits — they scan faster than prose lists
 - Preserve merged ADR claims as history. Supersession metadata and format-only
-  edits that change no claim are allowed. For format-only edits, state
-  "format-only, no decision change" in the commit and verify with
-  `git diff --word-diff`; do not rewrite historical reasoning
+  edits that change no claim are allowed. A format-only edit states
+  "format-only, no decision change" in the commit and carries a word-level
+  diff as its evidence; do not rewrite historical reasoning
+
+  ```bash
+  git diff --word-diff=porcelain HEAD~1 -- docs/decisions/
+  ```
+
+  Pass condition: every changed word is punctuation, whitespace or line
+  wrapping. A changed word that carries meaning is a decision change, and
+  it needs a new record rather than an edit to the old one
 - Current requirements live in the specification or project conventions, not
   in a chain of historical corrections. If a later change invalidates a minor
   premise or revisit trigger, state the correction in the current docs and PR.

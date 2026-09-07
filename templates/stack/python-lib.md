@@ -85,8 +85,14 @@ for wheel in wheels:
   other, for the include patterns of a build target
 - When adopting `src/`, delete every `sys.path` manipulation from the
   test suite rather than repointing it — importing the package under
-  test is the installation's job. Check: `grep -rn "sys.path" tests/`,
-  output MUST be empty
+  test is the installation's job
+
+  ```bash
+  grep -rn "sys.path" tests/
+  ```
+
+  Pass condition: no output. A surviving `sys.path` line means the suite
+  imports the working tree rather than the installation
 - Prove the layout took by running the suite against an uninstalled
   package (`pip uninstall -y [package] && pytest --collect-only`) —
   collection MUST fail with `ModuleNotFoundError`. A suite that still
@@ -144,11 +150,15 @@ def __getattr__(name: str) -> object:
   is what decides whether the mechanism is still earning its place
 - Pair the deferral with a test that a plain import loads neither the
   submodule nor its heavy dependency, or it regresses to eager the first
-  time someone tidies the file. Check:
-  `python -c "import pkg, sys; assert 'pkg.heavy' not in sys.modules"`,
-  which MUST exit 0. Run it in a fresh interpreter — inside the suite
-  the submodule is usually imported already, so the assertion passes or
-  fails on unrelated state
+  time someone tidies the file
+
+  ```bash
+  python -c "import pkg, sys; assert 'pkg.heavy' not in sys.modules"
+  ```
+
+  Pass condition: exit 0. Run it in a fresh interpreter — inside the
+  suite the submodule is usually imported already, so the assertion
+  passes or fails on unrelated state
 - The map is also a rename table, and that is where a renamed public symbol
   keeps its old spelling. An entry keyed by the old name resolves to the
   module defining the new one, the removal version is stated beside it, and
@@ -294,9 +304,16 @@ def __getattr__(name: str) -> object:
   usually correct because its `packages` entry already carries a
   separator. Only the sdist carries the extra files, and only listing it
   shows them
-- Check: `python -m build`, then `tar -tzf dist/*.tar.gz` — the listing
-  MUST contain no path under a vendored directory or submodule. Run it
-  from a working checkout with submodules populated. A release workflow
+- List what the sdist actually carries:
+
+  ```bash
+  python -m build
+  tar -tzf dist/*.tar.gz
+  ```
+
+  Pass condition: the listing contains no path under a vendored directory
+  or submodule. Run it from a working checkout with submodules populated.
+  A release workflow
   that checks out without submodules finds an empty directory, so the
   unanchored pattern selects nothing and the check passes while
   measuring nothing; adding `submodules: recursive` to that job for an

@@ -134,11 +134,19 @@ CLAUDE.md
 - `examples/` MUST be excluded from the published package. The `files`
   field in `package.json` is an allowlist — a directory absent from it
   is already excluded, and `npm pack --dry-run` lists what would ship
-- Smoke check: pack and install the tarball into a clean directory —
-  `npm pack`, then `npm install <tarball>` — and run each example
-  against it. Installing the workspace with `--omit=dev` is the weaker
-  form: it proves the example runs beside the source tree, not against
-  what npm serves
+- Run each example against the packed tarball, never the workspace:
+
+  ```bash
+  npm pack
+  consumer="$(mktemp -d)"
+  npm --prefix "$consumer" install "$PWD"/*.tgz
+  cp examples/*.mjs "$consumer"/
+  for example in "$consumer"/*.mjs; do node "$example" || exit 1; done
+  ```
+
+  Pass condition: every example exits zero. Installing the workspace with
+  `--omit=dev` is the weaker form: it proves the example runs beside the
+  source tree, not against what npm serves
 
 ---
 

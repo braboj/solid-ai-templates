@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Fixed
+
+- The check finding a check stated in prose matches over the paragraph now,
+  with a wider phrase list, so one split across two lines by the wrap rule
+  is no longer invisible. The checks it found are now fenced
+
 ## [2.84.0] - 2026-09-07
 
 ### Added

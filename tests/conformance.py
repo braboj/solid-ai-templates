@@ -78,6 +78,12 @@ CHECKS = [
      "title": "Risk and technical-debt identifiers stay in their owning doc",
      "do": RUN, "expect": ["nonzero", "nonzero", "nonzero"]},
 
+    {"file": "base/core/docs.md", "find": "git diff --word-diff=porcelain",
+     "title": "A format-only ADR edit moved no claim", "do": SKIP,
+     "reason": "Takes the format-only commit under review as its argument; "
+               "`HEAD~1` is a placeholder. There is no standing corpus of "
+               "format-only ADR edits to run it over."},
+
     # -- base/core/examples.md ---------------------------------------------
 
     {"file": "base/core/examples.md", "find": "example failed: $f",
@@ -387,7 +393,40 @@ CHECKS = [
      "title": "Build commands for the embedded stack", "do": SKIP,
      "reason": "A stack's Commands section, not a check."},
 
+    # -- stack/go-lib.md ---------------------------------------------------
+
+    {"file": "stack/go-lib.md", "find": "for program in examples",
+     "title": "Every example program builds and runs", "do": SKIP,
+     "reason": "Runs `go vet`, `go test` and each program under "
+               "`examples/`. This repository ships no Go module."},
+
+    # -- stack/nodejs-lib.md -----------------------------------------------
+
+    {"file": "stack/nodejs-lib.md", "find": "npm --prefix",
+     "title": "Every example runs against the packed tarball", "do": SKIP,
+     "reason": "Packs an npm distribution and installs it into a clean "
+               "directory. This repository publishes no npm package."},
+
     # -- stack/python-lib.md ----------------------------------------------
+
+    {"file": "stack/python-lib.md", "find": "grep -rn \"sys.path\" tests/",
+     "title": "The suite imports the installation, not the working tree",
+     "do": SKIP,
+     "reason": "Scoped to a packaged library adopting `src/`. This "
+               "repository ships no importable package, so its `tests/` "
+               "has no installation to import instead."},
+
+    {"file": "stack/python-lib.md", "find": "assert 'pkg.heavy' not in",
+     "title": "A plain import loads neither the submodule nor its dependency",
+     "do": SKIP,
+     "reason": "`pkg` is a placeholder for the library under test. This "
+               "repository ships no importable package."},
+
+    {"file": "stack/python-lib.md", "find": "tar -tzf dist/",
+     "title": "The sdist carries no vendored or submodule path", "do": SKIP,
+     "reason": "Builds a source distribution and lists it. This repository "
+               "builds no distribution."},
+
 
     {"file": "stack/python-lib.md", "find": "pathlib.Path(\"dist\").glob",
      "title": "The built wheel contains what it should", "do": SKIP,

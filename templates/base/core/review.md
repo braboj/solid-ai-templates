@@ -38,10 +38,10 @@ such as
       sentence is correct only in relation to its neighbours, and each one
       reads fine alone, so a diff review cannot catch the contradiction
 - [ ] Every claim the text makes **about itself** ("each section covers X",
-      "the table below compares N criteria") was verified by counting or
-      grepping the thing claimed — `grep -c` the sections, count the rows —
-      not by reading. Scope both checks to changed sections, so the cost
-      stays proportional to the diff
+      "the table below compares N criteria") was verified by counting the
+      thing claimed with a tool rather than by reading it. Scope both
+      checks to changed sections, so the cost stays proportional to the
+      diff
 
 ## MUST checklist — state and boundaries
 

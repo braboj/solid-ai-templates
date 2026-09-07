@@ -2194,6 +2194,19 @@ echo "entries in Unreleased: $(awk '/^## /{ n++ } n==1 && /^- /' CHANGELOG.md | 
 git log --format='  carried: %s' "$previous..HEAD"
 ```
 
+Pass condition: the command prints both counts and lists every carried
+commit once `RELEASE` names the release being prepared, and the operator
+confirms each carried commit is either represented by an entry or is
+deliberately not notable. The two counts are NOT required to match — not
+every commit earns an entry. Zero entries against commits carried is a
+failure where any carried commit is notable; where every one of them is
+deliberately not, zero is the correct reading. That is the guaranteed
+state directly after a cut, whose first commit is the journal entry the
+release procedure records as owed. A count of entries the listed commits
+cannot account for is the failure in the other direction. Read the two
+numbers together: the observed failure this check exists for was 37
+commits against 2 entries, which no single-sided assertion detects.
+
 Its moment is the release commit before the `Unreleased` section is cut,
 so it asks first whether that moment is live — and asks the operator,
 because nothing in the repository's state answers it. An untagged HEAD does
@@ -2202,20 +2215,6 @@ the last tag, which is the ordinary condition of a repository between
 releases, so a detector reading it as the moment reports the failure shape
 on almost every day. A check whose ordinary output is its defect output
 trains its reader to skip it.
-
-Pass condition: the command prints both counts and lists every carried
-commit once `RELEASE` names the release being prepared, and the operator
-confirms each carried commit is either represented by an entry or is
-deliberately not notable. The two
-counts are NOT required to match — not every commit earns an entry. Zero
-entries against commits carried is a failure where any carried commit is
-notable; where every one of them is deliberately not, zero is the correct
-reading. That is the guaranteed state directly after a cut, whose first
-commit is the journal entry the release procedure records as owed. A count
-of entries the listed commits cannot account for is the failure in the
-other direction. Read the two numbers together: the observed failure this
-check exists for was 37 commits against 2 entries, which no single-sided
-assertion detects.
 
 With `RELEASE` left empty the command reports that the check does not
 apply, on exit status 3 — the same reserved status the milestone-coverage
@@ -3050,9 +3049,17 @@ wrong before changing either.
 - Render "Alternatives considered" and "Consequences" as tables where the
   content fits — they scan faster than prose lists
 - Preserve merged ADR claims as history. Supersession metadata and format-only
-  edits that change no claim are allowed. For format-only edits, state
-  "format-only, no decision change" in the commit and verify with
-  `git diff --word-diff`; do not rewrite historical reasoning
+  edits that change no claim are allowed. A format-only edit states
+  "format-only, no decision change" in the commit and carries a word-level
+  diff as its evidence; do not rewrite historical reasoning
+
+  ```bash
+  git diff --word-diff=porcelain HEAD~1 -- docs/decisions/
+  ```
+
+  Pass condition: every changed word is punctuation, whitespace or line
+  wrapping. A changed word that carries meaning is a decision change, and
+  it needs a new record rather than an edit to the old one
 - Current requirements live in the specification or project conventions, not
   in a chain of historical corrections. If a later change invalidates a minor
   premise or revisit trigger, state the correction in the current docs and PR.
@@ -5465,10 +5472,10 @@ such as
       sentence is correct only in relation to its neighbours, and each one
       reads fine alone, so a diff review cannot catch the contradiction
 - [ ] Every claim the text makes **about itself** ("each section covers X",
-      "the table below compares N criteria") was verified by counting or
-      grepping the thing claimed — `grep -c` the sections, count the rows —
-      not by reading. Scope both checks to changed sections, so the cost
-      stays proportional to the diff
+      "the table below compares N criteria") was verified by counting the
+      thing claimed with a tool rather than by reading it. Scope both
+      checks to changed sections, so the cost stays proportional to the
+      diff
 
 ## MUST checklist — state and boundaries
 
@@ -6506,11 +6513,19 @@ CLAUDE.md
 - `examples/` MUST be excluded from the published package. The `files`
   field in `package.json` is an allowlist — a directory absent from it
   is already excluded, and `npm pack --dry-run` lists what would ship
-- Smoke check: pack and install the tarball into a clean directory —
-  `npm pack`, then `npm install <tarball>` — and run each example
-  against it. Installing the workspace with `--omit=dev` is the weaker
-  form: it proves the example runs beside the source tree, not against
-  what npm serves
+- Run each example against the packed tarball, never the workspace:
+
+  ```bash
+  npm pack
+  consumer="$(mktemp -d)"
+  npm --prefix "$consumer" install "$PWD"/*.tgz
+  cp examples/*.mjs "$consumer"/
+  for example in "$consumer"/*.mjs; do node "$example" || exit 1; done
+  ```
+
+  Pass condition: every example exits zero. Installing the workspace with
+  `--omit=dev` is the weaker form: it proves the example runs beside the
+  source tree, not against what npm serves
 
 ---
 
