@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.86.0] - 2026-09-07
+
 ### Added
 
 - A negative control MUST force the path under test to run, name the entity
