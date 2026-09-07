@@ -65,10 +65,13 @@ HEREDOC_OPEN = re.compile(r"^\s*py - <<'EOF'\s*$")
 def iter_blocks():
     """Yield (rel_path, line, language, body) for every fenced block.
 
-    Counts blocks in EVERY language, not only the runnable ones. The total
-    is what the extraction is reconciled against: a language filter that
-    silently stops matching looks identical to a template that lost its
-    checks.
+    Counts blocks in every language AND the untagged ones, not only the
+    runnable set. The total is what the extraction is reconciled against:
+    a language filter that silently stops matching looks identical to a
+    template that lost its checks, and a fence whose tag is dropped is the
+    cheapest way for that to happen -- a typo, a reflow, a `txt` that
+    should have been `bash`. An untagged block yields a language of "",
+    which no disposition is keyed to and every count includes.
     """
 
     # Ask git what belongs to the repository. A walk of the directory reads
@@ -81,7 +84,7 @@ def iter_blocks():
         index = 0
         while index < len(lines):
             match = FENCE.match(lines[index])
-            if match and match.group(2):
+            if match:
                 start = index
                 index += 1
                 while index < len(lines) and lines[index].strip() != "```":
@@ -254,8 +257,10 @@ def main():
 
     blocks = list(iter_blocks())
     runnable = [b for b in blocks if b[2] in RUNNABLE]
+    untagged = [b for b in blocks if not b[2]]
     print("fenced blocks in templates/: %d" % len(blocks))
     print("of those, runnable-language:  %d" % len(runnable))
+    print("of those, carrying no tag:    %d" % len(untagged))
     print("registered dispositions:      %d" % len(CHECKS))
 
     if not blocks:
@@ -289,8 +294,26 @@ def main():
                 if b[0] == entry["file"] and any(entry["find"] in l
                                                  for l in b[3])]
         if len(hits) != 1:
-            problems.append("%s: 'find' matched %d blocks, expected 1 -- %s"
-                            % (entry["file"], len(hits), entry["find"][:40]))
+            # A block its entry can no longer reach is two different
+            # defects. Say which: an entry whose check was deleted or
+            # reworded is registry drift, and a check still sitting there
+            # under a fence that lost its language tag is a check that
+            # left the runnable set without leaving the templates. The
+            # second reads as the first unless the untagged blocks are
+            # searched too, and the remedy for it is the fence, not the
+            # registry.
+            stray = [b for b in untagged
+                     if b[0] == entry["file"] and any(entry["find"] in l
+                                                      for l in b[3])]
+            if not hits and stray:
+                problems.append(
+                    "%s:%d fence carries no language, so its check no "
+                    "longer runs -- %s"
+                    % (stray[0][0], stray[0][1], entry["title"][:40]))
+            else:
+                problems.append(
+                    "%s: 'find' matched %d blocks, expected 1 -- %s"
+                    % (entry["file"], len(hits), entry["find"][:40]))
             continue
         key = (hits[0][0], hits[0][1])
         if key in matched:
@@ -307,7 +330,7 @@ def main():
         print("\nRegistry does not account for the templates:\n")
         for line in problems:
             print("  %s" % line)
-        print("\n%d problem(s). Add a disposition in tests/conformance.py."
+        print("\n%d problem(s). Fix the entry or the fence each line names."
               % len(problems))
         sys.exit(1)
 
