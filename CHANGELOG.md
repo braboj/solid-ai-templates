@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.87.0] - 2026-09-07
+
 ### Added
 
 - A check that has read its whole corpus MUST report every finding before
