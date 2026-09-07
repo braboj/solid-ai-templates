@@ -325,7 +325,7 @@ All rules in templates use RFC 2119 keywords:
 
 ### 3.1 Testing
 
-Eight files in `tests/`:
+The suite lives in `tests/`:
 
 | File | Purpose |
 |------|---------|

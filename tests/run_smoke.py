@@ -2284,10 +2284,12 @@ def render_err(r):
 # ---------------------------------------------------------------------------
 
 # PyYAML is a precondition of this suite, not a property of the tree the
-# suite checks. Fourteen checks read `templates/manifest.yaml` through it,
+# suite checks. Many checks read `templates/manifest.yaml` through it,
 # and each reports the missing dependency itself -- so an incomplete
-# environment reads as fourteen defects in a clean tree, which is what an
-# external contributor sees on their first command.
+# environment reads as that many defects in a clean tree, which is what
+# an external contributor sees on their first command. The count is not
+# stated here: it moves with every check that reads the manifest, and
+# the runner computes it at refusal time.
 #
 # Which checks need it is asked of the checks rather than listed here. A
 # hand-kept list duplicates the guards and drifts from them; a guarded
