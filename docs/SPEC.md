@@ -276,6 +276,30 @@ Everything else is explicit. Stacks declare what they need:
 | Specialized | data-quality, 360, ai-workflow |
 | Platform | github, gitlab |
 
+### Governed tiers
+
+Two opt-in tiers are not left to whatever the dependency declarations
+produce. Their membership is stated by stack category — the `layer` each
+stack declares in the manifest — with a reason per exempt category, and a
+smoke check enforces it in both directions. A stack in a governed category
+resolving no member of the tier fails, and a stack declaring no category
+fails rather than passing by omission.
+
+| Tier | Exempt categories | Reason | Check |
+|------|-------------------|--------|-------|
+| Security | library, embedded | a library is imported by a caller that owns the trust boundary; an embedded target has no HTTP surface, sessions or TLS to rule on | SYS-15 |
+| Quality gates | hypermedia, embedded | both are recorded at the most constrained context tier, and admitting the tier would change which models can run the stack | SYS-18 |
+
+Where an exemption's reason is a property recorded elsewhere in the tree,
+the check asserts the reason still holds. The quality-gate exemptions are
+read against `tests/context-tiers.txt`, so a category that later moves off
+the most constrained tier stops being exempt rather than staying exempt by
+omission. See ADR-044.
+
+Membership stated as a list of stack identifiers is what this replaces: a
+list is correct on the day it is written and silently wrong at the next
+stack.
+
 ### File header policy
 
 `[DEPENDS ON: ...]` headers MUST list direct dependencies only —
