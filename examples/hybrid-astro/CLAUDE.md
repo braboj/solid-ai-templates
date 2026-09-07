@@ -202,31 +202,70 @@ work) — stay within the agreed scope. Run `npm run check` and
 
 ### 6.3 End of session
 
-On "wrap up" / "close out", read
-`docs/solid-ai-templates/templates/base/workflow/scope.md` (End of
-session audit) and execute each item sequentially; do not summarize or
-skip. Print the checklist and mark each item done (with result) before
-moving to the next. At minimum, confirm in order:
+When the user signals end of session ("wrap up", "let's finish", "end
+session", "close out", or similar), print the full checklist below and
+execute each item sequentially. Mark each item done (with result) before
+moving to the next. Do not batch, skip, or summarize — visible sequential
+execution prevents missed steps.
 
-1. Commits and push — all changes committed and pushed (via PR if
+1. **Commits and push** — all changes committed and pushed (via PR if
    branch-protected)
-2. Close issues — close completed issues; verify auto-close worked
-3. Dev journal — add a session entry to `docs/dev-journal.md` (date,
-   tool, key changes, PRs merged, issues closed/created)
-4. ADRs — A consequential, durable architectural choice with meaningful alternatives
-     MUST have an Architecture Decision Record (ADR) in `docs/decisions/` when
-     future maintainers need its tradeoffs to safely reconsider it. Examples:
-     ownership boundaries, compatibility contracts, or a major dependency strategy.
-   Routine naming, formatting, directory creation, document moves, check-output
-     refinements, and compliance repairs belong in the issue/PR and current docs.
-     They need no ADR unless their consequences meet the threshold above; no
-     separate justification for not writing an ADR is required.
-5. CLAUDE.md — for each new convention, decide whether it belongs here
-   (a rule the agent MUST apply every turn) or in another doc
-6. README.md / docs — for each new command, dependency, or content
-   rule, confirm it is reflected; name the section
-7. Build and checks — run `npm run check` and `npm run build` and
-   confirm both pass
-8. Flag gaps — report any item that cannot be completed as pending,
-   never as done, before closing
-9. Summary — summarize what was done and what is next
+2. **Close issues** — reconcile the open-issue list against the work
+   shipped this session, from the tracker rather than memory, and close
+   what is done (verify auto-close worked)
+3. **Epic checklists** — update epic checklists if relevant
+4. **ADRs** — apply the decision threshold in
+   `docs/solid-ai-templates/templates/base/core/docs.md`: a record is
+   owed when the decision changes what a user of the thing observes
+   without reading the repository's internals. Prose style, tool choice,
+   release procedure, naming and file layout need none; one coherent
+   architectural choice may span PRs.
+5. **CLAUDE.md** — for each new convention/rule, apply the doc-placement
+   decision tree in `ai-workflow.md` (Doc placement decision tree
+   section): evaluate code → ADR → README → PLAYBOOK → CLAUDE.md →
+   memory in order. CLAUDE.md is the home ONLY if the agent MUST apply
+   the rule on every turn.
+
+   CLAUDE.md contains rules only — not changelogs, package architecture,
+   per-feature progress, or session logs. Keep rules concise without
+   removing necessary qualifiers; paragraph length does not require an
+   ADR.
+6. **README.md** — for each new command, dependency, or structural
+   change, is it reflected? Name the section.
+7. **ONBOARDING.md** — ensure `docs/ONBOARDING.md` exists and covers
+   each new tool, prerequisite, or setup step. Create it if missing;
+   name the section. A missing doc is work to do here, not a gap to
+   report.
+8. **PLAYBOOK.md** — ensure `docs/PLAYBOOK.md` exists and covers each
+   new command, script, or workflow added. Create it if missing; name
+   the section. A missing doc is work to do here, not a gap to report.
+9. **Submodules** — review updates needed for the current task or a
+   material security risk. A newer template tag alone creates no update
+   obligation; follow the adoption boundary above before changing a pin.
+10. **Template feedback** — propose upstream work for a demonstrated
+    shared defect or recurring need. Check existing issues first. A
+    reusable-looking preference alone requires no issue, ADR, or
+    `Upstream:` bookkeeping; contribute when the user has authorized
+    that work.
+11. **Build and checks** — run `npm run check` and `npm run build` and
+    confirm both pass.
+12. **Flag gaps** — if any item cannot be completed this session, report
+    it as pending (never as done) before closing — including deferred
+    cross-repo work, such as an upstream contribution that was flagged
+    but not yet landed. Reserve "pending" for work that is genuinely
+    blocked — it needs a decision, a credential, or the user. Work the
+    agent could do but has not done is not pending; do it.
+13. **Dev journal** — add a session entry to `docs/dev-journal.md`
+    (date, tool, key changes, PRs merged, issues closed/created). This
+    item sits after flagging gaps because it is the only one whose
+    output is a record of the others, and flagging a gap resolves into a
+    change whenever the fix is small enough to apply on the spot — which
+    is when a wrap-up should apply one. Written earlier, its
+    merged-pull-request, issue and upstream lines are incomplete by
+    construction, and an entry's account is fixed once written, so the
+    correction costs a second entry for one session
+    - Where the checklist runs more than once in a session — a release
+      wrap-up, then a close-out — only the last pass writes the entry.
+      An earlier pass records that the session owes one. The entry is
+      owed by the session and discharged once, at the end
+14. **Summary** — summarize what was done and what is next
