@@ -220,6 +220,7 @@ The core-tier base templates apply to every project. They are declared in
 `templates/manifest.yaml` under `core:` and included during
 resolution — stacks do not need to list them in `depends_on`:
 
+<!-- generated:spec-core-tier -->
 - `templates/base/core/quality.md`
 - `templates/base/core/git.md`
 - `templates/base/core/docs.md`
@@ -227,11 +228,17 @@ resolution — stacks do not need to list them in `depends_on`:
 - `templates/base/core/testing.md`
 - `templates/base/core/review.md`
 
-No `[DEPENDS ON:]` directive anywhere in the tree declares them, so the
-seeding is the only way they are reached — a chain assembled by walking
-the directives alone is missing them and reports nothing, because
-nothing declares what is absent. SYS-13 compares the walk the README
-documents against the resolver for every root, in both directions.
+Measured: 43 `[DEPENDS ON]` tokens across 19 templates name one of these
+files, and 19 manifest entries name a core id in `depends_on`. Declaring one
+is redundant rather than forbidden — the seeding reaches the file either
+way, and the directive documents a dependency a reader would otherwise
+infer. Reached by the seeding alone: `base-readme`. A chain assembled by
+walking the directives does not reach that set and reports nothing about it,
+because nothing declares what is absent.
+<!-- /generated:spec-core-tier -->
+
+SYS-13 compares the walk the README documents against the resolver for
+every root, in both directions.
 
 ### Orthogonal templates
 
@@ -265,7 +272,7 @@ Everything else is explicit. Stacks declare what they need:
 | Security (app) | security |
 | Security (pipeline) | devsecops |
 | Infrastructure | containers, deployment, release |
-| Session | scope, issues, review |
+| Session | scope, issues |
 | Specialized | data-quality, 360, ai-workflow |
 | Platform | github, gitlab |
 
