@@ -276,6 +276,27 @@ that has since lifted reads exactly like a live one.
   directly, listing both in `__all__` so the linter does not flag them
   unused. Constants travel with the functions that use them — a central
   `constants.py` orphans provenance from the code and fights cohesion
+- The untouched-suite oracle certifies a MOVE: same call graph, same
+  signatures, new file boundaries. Confirm the seam is crossable without
+  changing a signature before invoking it. Where the cohesive seam runs
+  through a class — methods becoming free functions, a strategy protocol,
+  dependencies becoming parameters — that is a design change, not a split.
+  The suite stays green over rewritten call paths it was never written to
+  distinguish, so the recipe certifies a neutrality it cannot establish,
+  and it does so most confidently where the suite is thinnest. Sequence
+  the two instead: reshape first under whatever verification the reshape
+  actually needs, then split mechanically once the seam is clean, with the
+  oracle intact for the second step
+- The oracle assumes nothing in the suite reads module identity, and a
+  mature suite usually has something that does. A helper filtering
+  candidates on the module a class reports, a coverage gate enumerating
+  submodules without recursing, a check parsing the package file for its
+  declarations — after the split each reads an `__init__` that declares
+  nothing. They break by examining an empty set rather than by finding a
+  difference, which is the shape `testing-negative-assertion-coverage`
+  warns about, arriving through a restructure rather than a bad query; a
+  negative assertion among them passes vacuously instead of breaking.
+  Search the suite for module identity before the split, not after
 - Verify a split with the cheap static gates before the slow suite:
   linter undefined-name/unused, an import smoke check, then test
   collection. They catch every mechanical split error instantly, so the
