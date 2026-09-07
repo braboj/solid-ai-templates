@@ -862,8 +862,8 @@ verdict unreached.
   ASCII it resembles turns all three into guesswork — a Cyrillic `а`
   in a variable name reads as Latin `a` and matches nothing. The
   check is language-specific, because only a tokenizer can tell an
-  identifier from the prose around it. The Python one, which prints
-  nothing when clean:
+  identifier from the prose around it. The Python one, which states what
+  it read and what it found:
 
   ```bash
   py - <<'EOF'
@@ -873,6 +873,7 @@ import io, subprocess, token, tokenize
 # documentation and carry no charset restriction.
 tracked = subprocess.run(["git", "ls-files", "*.py"], capture_output=True,
                          text=True).stdout.split()
+findings = []
 for name in tracked:
     with io.open(name, "rb") as handle:
         for item in tokenize.tokenize(handle.readline):
@@ -881,9 +882,21 @@ for name in tracked:
             bad = sorted({ord(c) for c in item.string if ord(c) > 127})
             if bad:
                 codes = " ".join("U+%04X" % c for c in bad)
-                print("%s:%d %s %s" % (name, item.start[0], item.string, codes))
+                findings.append("%s:%d %s %s"
+                                % (name, item.start[0], item.string, codes))
+
+# A check printing only its findings cannot say whether it read anything:
+# an empty corpus and a clean tree produce the same silence.
+print("python files inspected: %d" % len(tracked))
+print("non-ASCII identifiers: %d" % len(findings))
+for finding in findings:
+    print("  " + finding)
   EOF
   ```
+
+  Pass condition: the inspected count is above zero and the identifier
+  count is zero. Zero inspected means the pathspec reached no Python at
+  all, which is the check reading nothing rather than a clean tree.
 
 - Comments, docstrings and string content carry NO charset
   restriction, and neither does documentation. They are written for
@@ -921,12 +934,22 @@ for name in tracked:
   where a malformed write put one
 
 ```bash
-git ls-files --eol |
-  awk -F'\t' '$1 !~ /^i\/lf/ &&
-              $2 ~ /\.(md|py|ya?ml|json|txt|toml|cfg|ini|sh|sql|css|js|ts)$/ { print }'
+git ls-files --eol | awk -F'\t' '
+  $2 ~ /\.(md|py|ya?ml|json|txt|toml|cfg|ini|sh|sql|css|js|ts)$/ {
+    seen++
+    if ($1 !~ /^i\/lf/) { bad[++n] = $0 }
+  }
+  END {
+    printf "text files inspected: %d\n", seen + 0
+    printf "files not filed i/lf: %d\n", n + 0
+    for (i = 1; i <= n; i++) print "  " bad[i]
+  }'
 ```
 
-  Pass condition: the command prints nothing. Every committed text blob
+  Pass condition: the inspected count is above zero and the count of files
+  not filed `i/lf` is zero. Zero inspected means the extension filter
+  matched nothing, which is the check reading nothing rather than a tree
+  with no text in it. Every committed text blob
   reports `i/lf` on the index side, whatever the checkout convention is.
   Match on "not `i/lf`" rather than on `i/crlf`: a file carrying CRLF
   *and* a lone carriage return is filed `i/-text`, so a check naming

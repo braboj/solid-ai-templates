@@ -30,6 +30,9 @@ alters no template carries no entry.
   separated from its noun by a modifier, so `Eight files` and `14
   manifest-reading checks` are found. A function word or a unit between
   the two still marks it as no figure
+- The ASCII-identifier and CRLF checks state how many files they
+  inspected, so an empty corpus fails instead of passing silently. A
+  check that prints nothing cannot say whether it read anything
 
 ## [2.84.0] - 2026-09-07
 
