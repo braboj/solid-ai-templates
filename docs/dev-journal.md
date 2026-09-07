@@ -6998,3 +6998,77 @@ absolute), #1588 (nothing states which stacks carry a rule family),
   operating experience — which lands in the always-loaded waist — while
   nothing prices growth and deletion is not an available move. #1480 already
   names it and sizes the remedy at 44%
+
+## 2026-09-07 — Six checks that certified what they could not observe
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+Cut `v2.85.0`. The scope wrote itself: six open bugs, four of them filed by
+yesterday's 360 audit that graded the repository D, and all six the same
+shape — a check that passed over the thing it exists to find.
+
+Two of the six were one class inside that shape, and it is the interesting
+one. The ADR-031 detector matched its verification phrase and its command on
+the same line; this repository wraps prose at 88 characters, so a check
+written inline puts the phrase on one line and the command on the next, and
+each half reads as innocent. The figure check wanted a digit beside a bare
+noun; prose style spells numerals under ten, so `Eight files` walked past it.
+Neither rule was wrong. Each detector was written against one rendering of
+what it forbids, and the project's own style guide produces another. The
+style guide is the adversary, and it is a written one — which means the
+control set can be enumerated rather than guessed. Filed as #1604.
+
+Widening the ADR-031 detector surfaced eight checks stated in prose, none of
+them visible before. Six moved into fences with dispositions, `review.md`
+turned out to name no runnable command, and `git.md`'s pass condition had
+drifted eleven lines from the fence it belongs beside. Widening the figure
+detector surfaced four ungated figures, two of them in the specification
+counting the core tier in prose. Both widenings cost a false-positive fight:
+admitting spelled numerals from `two` turned 4 findings into 22, eighteen of
+them ordinary quantifier prose, so the list starts at `five` and a function
+word or a unit in the gap disqualifies the match.
+
+The tooling three were cheaper and sharper. `iter_blocks` documented itself
+as counting every language and guarded on a non-empty language tag, so 54 of
+156 fences were invisible to the total the docstring says exists to catch a
+filter that stops matching. `SILENT` scored a pass on printing nothing, which
+is ADR-034's exact case arriving through the disposition vocabulary rather
+than through a check's output; both `SILENT` entries now state their corpus
+and the disposition is retired. And a skip reason was found describing a
+placeholder workflow that had been shipping for weeks — the fix gives an
+entry a `substitute` map so a check unrunnable only for naming a placeholder
+runs instead of being skipped around, which turned the stale skip into a
+passing check on its first run.
+
+**PRs merged:** #1593, #1594, #1595, #1596, #1597, #1598, #1599, #1600, #1603
+
+**Issues closed:** #1584, #1591, #1582, #1585, #1586, #1587
+
+**Issues created:** #1604 (a prose detector is not tested against the forms
+the project's own style rules produce)
+
+**Decisions:**
+- ADR-043 — declaring a core-tier file is redundant, not forbidden. The
+  specification said no directive anywhere declares one, which the tree
+  contradicts 43 times across 19 templates; correcting it required deciding
+  what those declarations mean, and the alternative was sweeping all 43 and
+  gating against their return. Rejected: the resolver has always
+  deduplicated them, the sweep would reorder every resolved chain, and the
+  directive documents a dependency a reader would otherwise infer
+
+**Lessons:**
+- A control must mutate the check's INPUT, never the string its disposition
+  uses to find it. Emptying the CRLF check's corpus by editing its extension
+  list — which is also its `find` string — stopped the registry locating the
+  block, and the run reported drift between the registry and the templates.
+  A different defect, in a different file, saying nothing about the check.
+  Landed in the PLAYBOOK (#1603); it ships nowhere, which is #1574's subject
+- The release procedure said to set `MILESTONE` and the gate reads
+  `RELEASE_MILESTONE`. Setting the constant's name leaves it reporting that
+  the release is not scoped to a milestone, which is the one answer
+  indistinguishable from a clean pass. Also #1603
+- Widening a detector is not free and the cost is measurable before shipping.
+  Both widenings here were tuned against the whole corpus first, and in both
+  cases the obvious widening the issue proposed was too loose — two or three
+  intervening words matched arbitrary prose, and spelled numerals from `two`
+  matched five times more noise than signal
