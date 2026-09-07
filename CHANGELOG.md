@@ -26,6 +26,9 @@ alters no template carries no entry.
 - A negative control MUST force the path under test to run, name the entity
   its landing assertion compares on both sides, and stage the tree before
   mutating it
+- A detector whose corpus is prose MUST be controlled against the forms the
+  project's own style rules produce — the wrap column, the numeral
+  convention, the heading case — not only the form its author had in mind
 
 ### Changed
 
