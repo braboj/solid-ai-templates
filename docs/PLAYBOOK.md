@@ -527,9 +527,12 @@ hand.
 Per `templates/base/workflow/360.md`, a 360 assesses the whole project
 from independent stakeholder perspectives as parallel, context-isolated
 subagents (the headless adaptation re-projects Quality into engineering
-dimensions). Run one before a minor or major release, after a milestone, or
-quarterly. A patch release owes neither the audit nor a record
-declining it.
+dimensions). Run one on demand — before a launch, after a milestone or a
+major feature, or when a stakeholder needs the whole picture. A release
+does not trigger one by itself: the pre-release check asks only whether
+the newest record still falls inside the 90-day review interval, so a
+release whose record is current owes neither the audit nor a record
+declining it, whatever version it moves.
 
 - Store each audit as a dated report at `docs/audits/YYYY-MM-DD-360.md`
   (per §360-tracking) — this is the only audit location; never use a
@@ -721,9 +724,8 @@ commit the tag names.
 Run `base/core/git.md`'s pre-release checks first — that sequence is the
 source, and the nine steps below are this repository's release procedure
 proper, not a restatement of it. Two of those checks bind here and neither
-has a step below: the periodic-review-scope check, which a minor or major
-release owes and a patch does not (set its `RELEASE` to the version being
-cut; this repository keeps its records in `docs/audits/`), and the
+has a step below: the periodic-review-scope check, which reads the age of
+the newest record in `docs/audits/` and takes no release version, and the
 pipeline-history check.
 
 Read each gate's output, not its exit status. Most of these checks state

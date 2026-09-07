@@ -1,10 +1,10 @@
 ---
 id: "033"
-status: Accepted
+status: Superseded
 date: 2026-09-01
 category: process
 supersedes: []
-superseded_by: []
+superseded_by: ["045"]
 ---
 
 # ADR-033: A periodic review is owed by minor and major releases only

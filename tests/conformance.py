@@ -166,7 +166,7 @@ CHECKS = [
                "required to match and the operator reconciles them."},
 
     {"file": "base/core/git.md", "find": "audit records found",
-     "title": "A minor or major release carries a current periodic review",
+     "title": "The newest periodic-review record is inside the interval",
      "do": RUN, "expect": ["nonzero", "nonzero"]},
 
     {"file": "base/core/git.md", "find": "<source-owner>/<source-repo>",
