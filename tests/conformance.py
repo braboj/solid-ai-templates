@@ -143,9 +143,9 @@ CHECKS = [
      "substitute": {"<release-workflow>.yml": "release-gates.yml"}},
 
     {"file": "base/core/git.md",
-     "find": "single-commit subjects naming no issue",
+     "find": "closing issues the subject does not name",
      "title": "A single-commit branch names its issue in the subject",
-     "do": RUN, "expect": ["nonzero", "zero"]},
+     "do": RUN, "expect": ["nonzero", "nonzero", "zero"]},
 
     {"file": "base/core/git.md", "find": "ready but unmerged",
      "title": "Release ordering against other ready pull requests",

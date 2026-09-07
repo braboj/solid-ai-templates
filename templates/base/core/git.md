@@ -200,56 +200,102 @@ remaining commits are silently lost.
   check reads — and the commit looks correct, because the half a
   human reads is the half that survived
 - MUST carry the issue reference in the commit subject when the branch
-  holds exactly one commit. The host squashes using the pull request
-  title only where the branch holds two or more; with one, the commit
-  subject is the default, and a number that lives only in the title
-  never reaches the default branch. The merged history is what a release
-  note, a bisect and the release gates all read, and the breach is
-  silent: the issue still closes from the body's keyword, the pull
-  request page shows the title with the number in it, and the subject
-  that will actually be used is one click away. Assert it before the
-  merge, where the count is available and the defect is still fixable:
+  holds exactly one commit and its pull request closes an issue. The host
+  squashes using the pull request title only where the branch holds two or
+  more; with one, the commit subject is the default, and a number that
+  lives only in the title never reaches the default branch. The merged
+  history is what a release note, a bisect and the release gates all read,
+  and the breach is silent: the issue still closes from the body's
+  keyword, the pull request page shows the title with the number in it,
+  and the subject that will actually be used is one click away
+- A pull request closing no issue — a changelog cut, a journal entry — is
+  outside the rule. The squash appends the pull request number in either
+  case, so the merged subject still resolves to the work, and there is no
+  issue number in existence to demand
+- Assert it before the merge, against the pull request rather than the
+  checkout. What the host squashes with is a property of the pull request,
+  and on a pull-request event the checkout is a merge commit whose local
+  range holds one commit more than the branch does — a check counting
+  there reports that a single-commit branch is a two-commit one, and says
+  it does not apply on exactly the branch it exists for:
 
 ```bash
 py - <<'EOF'
-import re, subprocess
+import json, os, re, subprocess
 
 RUN = dict(capture_output=True, text=True, encoding="utf-8")
 
-# Which subject the host squashes with is decided by how many commits the
-# branch adds, so the count comes from the branch point rather than from a
-# fixed depth.
-base = subprocess.run(["git", "merge-base", "origin/main", "HEAD"], **RUN)
-if base.returncode != 0 or not base.stdout.strip():
-    print("no merge base with origin/main, so the branch's commits cannot "
-          "be counted; fetch the default branch and run again")
-    raise SystemExit(1)
-
-subjects = subprocess.run(
-    ["git", "log", "--format=%s", base.stdout.strip() + "..HEAD"],
-    **RUN).stdout.splitlines()
-print("commits on this branch: %d" % len(subjects))
-
-# A branch of any other size is squashed with the title, which carries the
-# reference by the convention above, so there is nothing here to assert.
-if len(subjects) != 1:
-    print("a branch of %d commits is squashed using the pull request "
-          "title; this check does not apply" % len(subjects))
+# On a pull-request event the checkout is a merge commit, so the branch
+# name comes from the event rather than from HEAD, which is detached.
+branch = os.environ.get("GITHUB_HEAD_REF") or subprocess.run(
+    ["git", "rev-parse", "--abbrev-ref", "HEAD"], **RUN).stdout.strip()
+if branch in ("", "HEAD", "main", "master"):
+    print("not on a branch, so no pull request names this work; this "
+          "check does not apply")
     raise SystemExit(3)
 
-missing = [s for s in subjects if not re.search(r"\(#\d+\)\s*$", s)]
-print("single-commit subjects naming no issue: %d" % len(missing))
-for subject in missing:
-    print("reaches the default branch with no reference: %s" % subject)
+listed = subprocess.run(
+    ["gh", "pr", "list", "--head", branch, "--state", "open",
+     "--json", "number"], **RUN)
+
+# `gh` prints its error body to stdout, so output is not evidence the
+# call succeeded. Ask the exit status, and refuse rather than reading an
+# empty list as a branch with no pull request.
+if listed.returncode != 0:
+    print("the pull requests for %s could not be read, so the branch's "
+          "shape is unknown" % branch)
+    raise SystemExit(1)
+
+prs = json.loads(listed.stdout)
+if not prs:
+    print("no open pull request for %s, so the squash subject is not "
+          "decided yet; open it and run again" % branch)
+    raise SystemExit(3)
+
+number = prs[0]["number"]
+detail = subprocess.run(
+    ["gh", "pr", "view", str(number), "--json",
+     "commits,closingIssuesReferences"], **RUN)
+if detail.returncode != 0:
+    print("pull request %d could not be read" % number)
+    raise SystemExit(1)
+
+body = json.loads(detail.stdout)
+commits = body["commits"]
+print("commits on pull request %d: %d" % (number, len(commits)))
+
+# A branch of any other size is squashed with the title, which carries
+# the reference by the convention above.
+if len(commits) != 1:
+    print("a branch of %d commits is squashed using the pull request "
+          "title; this check does not apply" % len(commits))
+    raise SystemExit(3)
+
+closes = [ref["number"] for ref in body["closingIssuesReferences"]]
+print("issues pull request %d closes: %d" % (number, len(closes)))
+if not closes:
+    print("the pull request closes no issue, so the appended pull "
+          "request number is the whole reference; this check does not "
+          "apply")
+    raise SystemExit(3)
+
+subject = commits[0]["messageHeadline"]
+named = {int(n) for n in re.findall(r"\(#(\d+)\)", subject)}
+missing = [n for n in closes if n not in named]
+print("closing issues the subject does not name: %d" % len(missing))
+for issue in missing:
+    print("subject reaches the default branch without issue %d: %s"
+          % (issue, subject))
 raise SystemExit(1 if missing else 0)
 EOF
 ```
 
-  Pass condition: the command prints how many commits the branch adds
-  and, where that is exactly one, a count of zero subjects naming no
-  issue, then exits zero. Any line after those counts is a finding. A
-  branch of any other size exits 3 — the title is what the host uses
-  there, so the check has nothing to assert rather than nothing to find
+  Pass condition: the command prints the pull request's commit count, how
+  many issues it closes and a count of zero closing issues the subject
+  does not name, then exits zero. Any line after those counts is a
+  finding. It exits 3 where there is nothing to assert — a branch of any
+  other size, a pull request closing no issue, or no pull request yet —
+  and refuses with a finding where it cannot read the pull request at all
 - SHOULD enable "automatically delete head branches" in repository
   settings to prevent stale branches from accumulating. It fires on
   merge only — a PR closed without merging leaves its branch behind
