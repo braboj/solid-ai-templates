@@ -29,6 +29,9 @@ alters no template carries no entry.
 - A detector whose corpus is prose MUST be controlled against the forms the
   project's own style rules produce — the wrap column, the numeral
   convention, the heading case — not only the form its author had in mind
+- A suite MUST refuse the run when its own precondition is missing, naming
+  it once and scoping the refusal to the selected checks, rather than
+  reporting a dependency gap as findings about the tree
 
 ### Changed
 

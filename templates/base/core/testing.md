@@ -398,6 +398,42 @@ both checks were blind.
 
 ---
 
+## A missing suite precondition is refused, not reported as findings
+[ID: testing-suite-precondition-refusal]
+
+`testing-negative-assertion-coverage` covers one check that reports
+nothing. A suite has a coarser version of the same problem: its own
+precondition is absent — a parser the language does not ship, a database,
+a browser, a compiler toolchain, a network — and the default behaviour is
+that every dependent check fails. Each message can be accurate and the
+summary still wrong: N failures are N claims about the tree, and the tree
+has none. The reader harmed is the one least able to tell the difference,
+running the documented first command on a fresh machine and seeing a
+broken repository rather than an incomplete environment.
+
+- A suite MUST refuse the run when its own precondition is absent, name
+  the missing thing once, and MUST NOT report it in the vocabulary of
+  findings. A finding is a claim about the subject under test, and a
+  missing dependency is a claim about the environment
+- The refusal MUST be scoped to the work actually selected. Refusing a
+  run of checks that need nothing from the missing dependency is the same
+  overreach in the other direction, and it is the more tempting one
+  because it is easier to compute
+- The precondition is answered once, before the first check, not by a
+  guard inside each one. A per-check guard states the condition N times
+  and still produces N results a summary will count
+- The refusal MUST be distinguishable from a failing run by exit status,
+  not only by the text above it. A caller deciding whether the tree is
+  bad or the environment cannot answer reads the status, and both are
+  non-zero
+
+Measured on a suite of 28 checks, 14 of which needed a YAML parser. With
+the parser shadowed by a stub that raises on import, the run reported 13
+passed and 14 failed. Nothing was hidden — every one of the 14 printed an
+actionable message — and the summary was still a false statement about
+the tree.
+
+---
 
 ## A remedy naming another check is a claim about that check
 [ID: testing-remedy-cross-reference]
