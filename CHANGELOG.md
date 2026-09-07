@@ -35,6 +35,9 @@ alters no template carries no entry.
 - Verifying a filed issue covers a cited version identifier that has been
   superseded: a tag or pinned revision that still resolves passes every
   existence check and is no longer the one to build against
+- The closing-keyword rule covers quoting the trap, not only writing it: a
+  post-mortem reproducing the offending sentence closes the issue again,
+  so break the adjacency when quoting
 
 ### Changed
 

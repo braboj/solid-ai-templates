@@ -1272,6 +1272,18 @@ so every hit is a real finding rather than a judgement call.
   on merge. To reference an issue without closing it, write "part of #N"
   or `#N` alone — never a closing keyword next to the number unless the
   change truly resolves it
+- **Quoting that trap re-fires it** — the rule above is written for the
+  author of the original reference, and it does not reach the person
+  documenting the mistake. A post-mortem, journal entry or pull request
+  body explaining what happened has to reproduce the offending sentence,
+  because a paraphrase does not show it, and the reproduction closes the
+  issue a second time. Break the adjacency when quoting: put a word
+  between the keyword and the number, split them across a line break,
+  name the issue in prose without the sigil, or quote the shape with a
+  placeholder that matches no real issue. The failure is self-concealing
+  — the document that would have warned the next reader is the document
+  that closed the issue — and the host scans the pull request body as
+  well as the commit message, so a check reading the log finds nothing
 - **Regenerate derived artifacts in the same PR** — when a change
   affects generated or derived files committed to the repo (extractor
   outputs, snapshot fixtures, generated docs), regenerate them in the
