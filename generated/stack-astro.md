@@ -7280,6 +7280,11 @@ one leaves a gate behind.
   deleted and the case is checked again. A narrowed comparison leaves no
   record that the property was ever checked, so nothing prompts anyone to
   restore it
+- An exemption is a holding position, not an outcome. It stops the gate
+  reporting the instance and changes nothing about the instance, so the
+  gate is now green over the defect it was added to catch. An entry whose
+  remedy is known MUST be retired by applying it, not carried forward
+  because the list is honest and documented
 - When the failing case is a genuine defect and the fix is small, fix it. A
   check narrowed to accommodate one known defect is a permanent price paid
   for a temporary problem
