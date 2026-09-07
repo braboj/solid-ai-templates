@@ -7586,6 +7586,43 @@ worth confirming rather than accepting.
 
 ---
 
+## A gate bounding a length discovers its exemptions
+
+[ID: quality-gates-length-bound-exemptions]
+
+`quality-gates-retrofit-ratchet` and `quality-gates-scope-agreement` both
+assume a gate whose findings can be listed on adoption day — that is what
+makes a freeze table generatable. A gate that bounds a LENGTH does not
+behave that way. Its exemptions are not knowable before it runs: they
+surface one slice at a time, and a list that stopped growing while the
+corpus is still growing is a finding rather than a finished adoption.
+
+- Where a gate bounds a length, treat the exemption list as DISCOVERED
+  rather than derived. Generating the freeze on adoption day is complete
+  for a gate that finds instances; for one that bounds a length it is
+  complete only for the slice adopted so far
+- Test each candidate against one question: is the number of lines the
+  author's choice? Where something else sets the count — a licence text,
+  one label per line of code, a banner ruled top and bottom, a table whose
+  rows are a published specification's fields — the bound is not measuring
+  what it was written to measure, and the exemption is real
+- Express the exemption as the SHAPE that makes the count external —
+  ruled on both sides, rows naming byte offsets — never as the file or the
+  directory it was found in. A path-scoped exemption absorbs every future
+  violation in that neighbourhood, which is exactly what the freeze exists
+  to avoid
+- An exemption arriving in a later slice is not a defect in the earlier
+  ones. Adopt in slices, and expect the list to grow while the corpus does
+
+Measured on a project adopting a two-line comment bound and a ten-line
+docstring-prose bound across roughly 99 files. Four exemptions surfaced
+across two slices — a licence header, comments trailing consecutive lines
+of code, a banner ruled top and bottom, and a wire-layout table — and all
+four share the property that something other than the author sets the
+count.
+
+---
+
 ## Editing a test moves the standard, not the work
 
 [ID: quality-gates-test-edit-boundary]
