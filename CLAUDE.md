@@ -416,7 +416,12 @@ Run `py tests/run_smoke.py` before every PR. It checks:
 - Adding a fenced `bash`/`python` block to a template MUST add its
   disposition in `tests/conformance.py` — run it here, or skip it with
   the reason it does not apply. `py tests/run_conformance.py` fails on a
-  block with no entry. A block whose pass condition declares a threshold
+  block with no entry, and on a skip stating no reason. A block unrunnable
+  only because it names a placeholder is not a skip: resolve the
+  placeholder with `substitute` so it runs, because a skip written against
+  a placeholder describes the repository on the day it was written and
+  nothing re-reads it when the repository grows the thing. A block whose
+  pass condition declares a threshold
   takes a predicate, not a judgement; a judgement disposition MUST state
   what takes a person, and MUST name the check in
   `tests/reading-budget.txt` beside that reason. The runner fails on a

@@ -111,14 +111,21 @@ def is_python(body):
     return any(HEREDOC_OPEN.match(line) for line in body)
 
 
-def run_block(body, language, workdir):
+def run_block(body, language, workdir, substitute=None):
     """Run one check FROM the repository root, with its source OUTSIDE it.
 
     A check written into the tree it inspects can match its own source, so
     the extracted file is placed in a scratch directory instead. See the
     self-match rule in `base-quality`.
+
+    `substitute` resolves the placeholders a template leaves for its
+    consumer to fill in. A check naming one is otherwise unrunnable here
+    and skipped, and a skip written for that reason ages against a tree
+    that later grows the thing the placeholder stood for.
     """
     lines = unwrap(body)
+    for placeholder, actual in (substitute or {}).items():
+        lines = [line.replace(placeholder, actual) for line in lines]
     if is_python(body) or language in ("python", "py"):
         suffix, argv = ".py", [sys.executable]
     else:
@@ -275,6 +282,13 @@ def main():
             problems.append("%s: manual with no reason -- %s"
                             % (entry["file"], entry["title"][:40]))
 
+        # A skip is a check that does not run, and its reason is the whole
+        # of the justification. Left ungated it is prose nothing reads,
+        # over the largest population in the registry.
+        if entry["do"] == SKIP and not entry.get("reason"):
+            problems.append("%s: skip with no reason -- %s"
+                            % (entry["file"], entry["title"][:40]))
+
         # A check mixing a verdict with a reading MUST say which lines
         # are which. Left unstated, the unscored tail cannot be told
         # from a predicate that stopped short.
@@ -364,7 +378,8 @@ def main():
                 continue
 
             try:
-                code, out = run_block(block[3], block[2], workdir)
+                code, out = run_block(block[3], block[2], workdir,
+                                      entry.get("substitute"))
             except Exception as exc:
                 print("  %-6s %s\n        %s -- %s" % (ERR, title, where, exc))
                 results[ERR] += 1

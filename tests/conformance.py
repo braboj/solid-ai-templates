@@ -42,6 +42,16 @@ SKIP = "skip"
 # "grep": True marks a check whose last command is a grep. grep exits 1
 # when it matches nothing, which is the CLEAN result, so the exit code
 # carries no verdict.
+#
+# "substitute": {placeholder: actual} resolves what a template leaves for
+# its consumer to fill in, so a check written against a placeholder runs
+# here instead of being skipped for naming one. A skip taken for that
+# reason ages badly: it describes the repository on the day it was
+# written, and nothing re-reads it when the repository grows the thing.
+#
+# "reason" is required on every SKIP and every MANUAL entry. A skip is a
+# check that does not run, and the reason is the whole of what justifies
+# it.
 MANUAL = "manual"
 READ = "read"
 
@@ -128,9 +138,9 @@ CHECKS = [
                "milestone and does not apply."},
 
     {"file": "base/core/git.md", "find": "<release-workflow>.yml",
-     "title": "The release pipeline has executed before", "do": SKIP,
-     "reason": "Names the release workflow as a placeholder; run at release "
-               "time with the real filename."},
+     "title": "The release pipeline has executed before", "do": RUN,
+     "expect": ["nonzero"],
+     "substitute": {"<release-workflow>.yml": "release-gates.yml"}},
 
     {"file": "base/core/git.md", "find": "ready but unmerged",
      "title": "Release ordering against other ready pull requests",

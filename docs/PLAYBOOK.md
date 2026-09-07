@@ -377,6 +377,15 @@ answered, which is why it is counted apart. That is different from a
 runs nothing at all. Recording them as passes is what let four
 over-long changelog entries sit inside a green report for two sessions.
 
+A `SKIP` carries a `reason`, and the runner refuses one that does not —
+the skips are the largest population in the registry, and each is a check
+that does not run, justified by prose. Where the only obstacle is a
+placeholder the template left for its consumer to fill in, the entry takes
+a `substitute` map instead and the check runs. That distinction is not
+cosmetic: the release-pipeline check was skipped for naming
+`<release-workflow>.yml` while `.github/workflows/release-gates.yml` had
+been shipping for weeks, and nothing re-read the reason.
+
 A check only earns that status where nothing in its output can be decided.
 The changelog bound declares a limit and counts against it, so it is a
 scored verdict now, and each check that stays a judgement carries a
