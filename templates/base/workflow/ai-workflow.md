@@ -199,9 +199,10 @@ CLAUDE.md or memory. Evaluate in priority order:
 
 1. **Code / JSDoc / docstrings** — naming, typing, or invariant rules
    a developer reads while editing the relevant code
-2. **ADR** — consequential, durable architectural choices with meaningful
-   alternatives, per the decision threshold in `templates/base/core/docs.md`;
-   routine conventions and corrections stay in the issue/PR and current docs
+2. **ADR** — a choice a user of the thing can observe without reading the
+   repository's internals, per the decision threshold in
+   `templates/base/core/docs.md`; everything else stays in the issue/PR
+   and current docs
 3. **README** (project or package) — discoverable user-facing setup,
    usage, or capability
 4. **PLAYBOOK** — operational workflow (commands, recipes)

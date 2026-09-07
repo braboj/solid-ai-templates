@@ -280,9 +280,11 @@ base/ ──┬── frontend/ ──┐
 
 #### Decision logs
 
-- Apply the ADR threshold in `templates/base/core/docs.md`: consequential,
-  durable architectural choices with meaningful alternatives need a record.
-  Routine naming, moves, check refinements, and compliance repairs do not.
+- Apply the ADR threshold in `templates/base/core/docs.md`: a record is
+  owed when a decision changes something a consuming project can observe
+  without reading this repository — the composition model. Prose style,
+  tooling, release procedure, naming and file layout do not, however
+  consequential they are.
 - Each ADR documents: context, decision, alternatives considered,
   consequences
 - One coherent architectural decision may cover related choices across
