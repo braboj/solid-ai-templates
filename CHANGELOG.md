@@ -26,9 +26,10 @@ alters no template carries no entry.
 - A check that has read its whole corpus MUST report every finding before
   it exits, rather than stopping at the first and turning one review into
   as many runs as there are offenders
-- A branch holding exactly one commit MUST name its issue in the commit
-  subject: the host squashes with the pull request title only from two
-  commits up. Shipped with a check that asserts it before the merge
+- A single-commit branch MUST name the issues its pull request closes in
+  the commit subject: the host squashes with the title only from two
+  commits up. Shipped with a check reading the pull request before the
+  merge
 - An exemption is a holding position, not an outcome. Where an example was
   exempted because it needs a peer, the runnable demonstration moves to the
   examples directory and the exemption retires in the same change
