@@ -127,8 +127,8 @@ effective; declining a new rule needs no ADR or ticket. See the
 | backend | 8 | `stack-django` — 519K chars | ~148K tokens | 200K |
 | embedded | 1 | `stack-c-embedded` — 310K chars | ~88K tokens | 128K |
 | hypermedia | 1 | `stack-htmx` — 333K chars | ~95K tokens | 128K |
-| library | 3 | `stack-python-lib` — 430K chars | ~123K tokens | 200K |
-| static | 2 | `stack-tutorial` — 467K chars | ~133K tokens | 200K |
+| library | 3 | `stack-python-lib` — 431K chars | ~123K tokens | 200K |
+| static | 2 | `stack-tutorial` — 467K chars | ~134K tokens | 200K |
 <!-- /generated:readme-model-limits -->
 
 Measured rather than estimated. Each row takes the largest resolved
