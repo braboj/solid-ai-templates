@@ -7269,3 +7269,71 @@ closed at 15/15, release-gates green on the tag push.
   Milestone-coverage named one unmilestoned issue per run, so three
   offenders cost three runs and the scale of the problem was visible only
   after it was fixed (#1628)
+
+---
+
+## 2026-09-07 — A result that reports less than the run knows
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:**
+- A check that has read its whole corpus now reports every finding before
+  it exits. `base-examples`' smoke runner was the one shipped check
+  breaching that: it stopped at the first failing example, so a project
+  with four broken examples learned of them in four runs. It counts
+  failures and exits once
+- An exemption is a holding position, not an outcome. Where an example was
+  exempted because it needs a peer, the runnable demonstration moves into
+  the examples directory and the exemption retires in the same change;
+  the docstring then names the example rather than carrying a shortened
+  copy of it
+- A branch updated from `main` re-derives nothing, so the regeneration and
+  its staleness comparison are owed again after the update. Git reports
+  the branch `MERGEABLE` throughout, because the two changes fall in
+  different regions of the same files, and a suite that does not read the
+  generated directory passes on the stale artifact
+- A single-commit branch names in its commit subject the issues its pull
+  request closes, with a check asserting it before the merge. The host
+  squashes using the pull request title only from two commits up, so a
+  number living only in the title never reaches `main`
+
+**Released:** v2.87.0 — tag `ba8ff59` on the changelog cut, milestone #93
+closed 5/5.
+
+**Pull requests merged:** #1630 (#1628), #1631 (#1408), #1632 (#1249),
+#1633 (#1623), #1635 (#1634), #1637 (the v2.87.0 changelog cut), #1639
+(the CLAUDE.md carve-out).
+
+**Issues closed:** #1628, #1408, #1249, #1623, #1634. **Issues filed:**
+#1634, #1638.
+
+**Decisions:**
+- No ADR. Four rules were added to templates and none of them changes what
+  a consuming project can observe without reading this repository — the
+  composition model, the ID system and the inheritance rules are untouched
+- The rule about reporting every finding went to `base-quality-gates`
+  rather than `base-examples`, measured: `resolve.py` puts quality-gates
+  in 18 roots of 37 and examples in 11, and every chain carrying examples
+  carries quality-gates, so the cross-reference does not dangle
+- The milestone-coverage instance #1628 named was dropped rather than
+  fixed. The check accumulates findings and reaches a single exit, at
+  `v2.85.0` as well as on `main`, so the one-finding-per-run behaviour
+  observed during the v2.86 cut had another cause
+
+**Lessons:**
+- A check controlled where it was written can ship into an environment
+  that answers differently. The single-commit check passed four local
+  negative controls and then reported "not applicable" in CI on the very
+  branch that introduced it, because a `pull_request` checkout is a merge
+  commit whose local range holds one commit more than the branch does.
+  The first run in the target environment was the run that disproved it,
+  and it read as a green pipeline. Filed as #1638
+- A rule shipped without its exception fails on the repository's own
+  routine work within the hour. The single-commit rule blocked this
+  session's changelog cut, which closes no issue and therefore has no
+  number to name — caught only because the check ran against the cut
+  before the tag
+- The groom is where a stale issue is caught, not the implementation. Of
+  the four issues scoped, one named an instance that had never held; the
+  measurement took a minute and would have cost a wrong fix to a correct
+  check
