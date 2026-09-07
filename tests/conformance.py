@@ -32,7 +32,6 @@ SKIP = "skip"
 #             that does not. It is how a check reaches a verdict on the
 #             counts its pass condition decides without failing on the
 #             lines it leaves to a person
-#   silent    the check prints nothing at all
 #   manual    the check runs and its output is reported, but no automatic
 #             verdict is possible -- the operator reads it. A manual entry
 #             MUST carry "reason", naming what about the check takes a
@@ -43,7 +42,6 @@ SKIP = "skip"
 # "grep": True marks a check whose last command is a grep. grep exits 1
 # when it matches nothing, which is the CLEAN result, so the exit code
 # carries no verdict.
-SILENT = "silent"
 MANUAL = "manual"
 READ = "read"
 
@@ -183,7 +181,8 @@ CHECKS = [
                "tree."},
 
     {"file": "base/core/quality.md", "find": "Identifiers only",
-     "title": "Identifiers stay ASCII", "do": RUN, "expect": SILENT},
+     "title": "Identifiers stay ASCII", "do": RUN,
+     "expect": ["nonzero", "zero"]},
 
     {"file": "base/core/quality.md", "find": "aside to the right of code",
      "title": "Comment layout", "do": RUN, "expect": ["nonzero"]},
@@ -197,7 +196,7 @@ CHECKS = [
     {"file": "base/core/quality.md",
      "find": "ya?ml|json|txt|toml|cfg|ini|sh|sql|css|js|ts",
      "title": "No committed text file carries CRLF", "do": RUN,
-     "expect": SILENT},
+     "expect": ["nonzero", "zero"]},
 
     {"file": "base/core/quality.md", "find": "eol() { git ls-files --eol",
      "title": "The checkout carries the line ending the index does",

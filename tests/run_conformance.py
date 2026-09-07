@@ -34,7 +34,7 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from conformance import CHECKS, RUN, SKIP, SILENT, MANUAL, READ
+from conformance import CHECKS, RUN, SKIP, MANUAL, READ
 from lib import (PASS, FAIL, SKIP as SKIPPED, ROOT, write_report,
                  print_verdict, template_documents)
 
@@ -142,7 +142,7 @@ def run_block(body, language, workdir):
 def verdict(entry, code, out):
     """Apply the entry's pass predicate. Returns a list of failures.
 
-    `expect` is either SILENT, MANUAL, or a list naming what each line the
+    `expect` is either MANUAL or a list naming what each line the
     check declares must hold -- "nonzero", "zero", "any", or "line" for a
     declared line that carries no count. Anything after the declared lines
     is a finding. The per-line form is needed because a check's own pass
@@ -161,12 +161,6 @@ def verdict(entry, code, out):
     # grep exits 1 when it matches nothing, which is the clean result for
     # a check whose second command must print nothing.
     exit_matters = not entry.get("grep")
-
-    if expect == SILENT:
-        if exit_matters and code != 0:
-            return ["exited %d" % code]
-        return ["printed %d line(s), expected none: %s"
-                % (len(out), out[0])] if out else []
 
     if isinstance(expect, list):
         if exit_matters and code != 0:
