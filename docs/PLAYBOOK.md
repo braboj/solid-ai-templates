@@ -303,7 +303,10 @@ figures with no generator behind it, and the copy is what ages.
    ```bash
    py tests/run_e2e.py STK-01   # example — replace with the relevant ID
    ```
-   Reports are written to `tests/reports/` after every run.
+   Reports are written to `tests/reports/` after every run, named for
+   the time and the tree — `<timestamp>-<runner>-<short-hash>.md`, with
+   `-dirty` where the working tree was not that commit, and no suffix
+   where there is no repository to read.
 
 ---
 
