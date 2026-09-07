@@ -189,6 +189,60 @@ def _readme_root_counts(core_ids, entries, stacks):
     return NEWLINE.join(textwrap.wrap(sentence, 76))
 
 
+def _spec_core_tier(core_ids, entries):
+    """Generate SPEC's statement of the core tier and how it is reached.
+
+    Hand-written, the seeding claim sat outside every gate and was false:
+    it said no directive anywhere declares a core file while dozens did.
+    The list and the counts are measured here, so the same claim cannot
+    ship again without `--check` reporting it.
+    """
+    import os
+    import subprocess
+
+    names = {os.path.basename(entries[c]["file"]): c for c in core_ids}
+    tracked = subprocess.check_output(
+        ["git", "ls-files", "templates/*.md"], text=True).split()
+    tokens, templates, declared = 0, set(), set()
+    for path in tracked:
+        body = io.open(ROOT / path, encoding="utf-8").read()
+        for directive in re.finditer(r"\[DEPENDS ON:([^\]]*)\]", body):
+            for token in directive.group(1).split(","):
+                token = token.strip()
+                if not token or "base/core/" not in token:
+                    continue
+                if os.path.basename(token) in names:
+                    tokens += 1
+                    templates.add(path)
+                    declared.add(names[os.path.basename(token)])
+    seeded_only = [c for c in core_ids if c not in declared]
+    manifest_declarers = [k for k, e in entries.items()
+                          if set(e.get("depends_on") or []) & set(core_ids)]
+
+    listing = NEWLINE.join("- `%s`" % entries[c]["file"] for c in core_ids)
+    if seeded_only:
+        tail = (
+            "Reached by the seeding alone: %s. A chain assembled by walking "
+            "the directives does not reach that set and reports nothing "
+            "about it, because nothing declares what is absent."
+            % ", ".join("`%s`" % c for c in seeded_only))
+    else:
+        tail = ("Every core file is declared somewhere as well, so the walk "
+                "happens to reach all of them; the seeding is what "
+                "guarantees it, and a directive being dropped would not "
+                "be reported.")
+    sentence = (
+        "Measured: %d `[DEPENDS ON]` tokens across %d templates name one "
+        "of these files, and %d manifest entries name a core id in "
+        "`depends_on`. Declaring one is redundant rather than forbidden "
+        "— the seeding reaches the file either way, and the directive "
+        "documents a dependency a reader would otherwise infer. %s"
+        % (tokens, len(templates), len(manifest_declarers), tail)
+    )
+    return listing + NEWLINE + NEWLINE + NEWLINE.join(
+        textwrap.wrap(sentence, 76))
+
+
 def _interview_stacks(manifest):
     """Generate INTERVIEW.md stack selection table."""
     stacks = manifest.get("stacks", [])
@@ -449,6 +503,7 @@ def main():
     from resolve import load_manifest
 
     core_ids, entries, stacks = load_manifest()
+    spec_core_tier = _spec_core_tier(core_ids, entries)
     readme_extras = _readme_extras(core_ids, entries, stacks)
     readme_root_counts = _readme_root_counts(core_ids, entries, stacks)
     model_limits = _readme_model_limits()
@@ -460,6 +515,7 @@ def main():
             ROOT / "docs" / "SPEC.md",
             {
                 "spec-directories": spec_content,
+                "spec-core-tier": spec_core_tier,
                 "spec-chain-examples": chain_examples,
             },
         ),

@@ -61,8 +61,9 @@ Use solid-ai-templates/ to generate a CLAUDE.md for this
 project. Start by reading templates/manifest.yaml to discover
 the available stacks. Load every id in its core: list, then
 follow the [DEPENDS ON] chain for the stack that fits. The
-resolver seeds the core tier and no [DEPENDS ON] declares it,
-so the chain alone misses it.
+resolver seeds the core tier; a template may declare a core
+file as well, but not every core file is declared, so the
+chain alone is not enough.
 ```
 
 3. The agent picks a matching stack, resolves the chain, and
