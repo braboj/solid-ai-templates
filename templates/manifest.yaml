@@ -366,6 +366,7 @@ stacks:
       - base-git
       - base-docs
       - base-quality
+      - base-quality-gates
       - base-typescript
       - base-config
       - backend-http
@@ -388,6 +389,7 @@ stacks:
       - base-git
       - base-docs
       - base-quality
+      - base-quality-gates
       - base-typescript
       - base-config
       - backend-http
@@ -439,6 +441,7 @@ stacks:
       - base-git
       - base-docs
       - base-quality
+      - base-quality-gates
       - base-typescript
       - base-cli
       - base-examples

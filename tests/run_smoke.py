@@ -2092,6 +2092,17 @@ def check_sys_15():
 CONTEXT_TIERS = os.path.join("tests", "context-tiers.txt")
 
 
+def _tier_sort_key(label):
+    """Order tier labels by the window they name, not by their text.
+
+    `1M` sorts before `200K` lexically and after it numerically, and the
+    exemption is about which window is smallest.
+    """
+    if label.endswith("M"):
+        return float(label[:-1]) * 1000
+    return float(label.rstrip("K"))
+
+
 def _recorded_tiers():
     """The tier recorded per stack category, as {layer: window label}."""
     out = {}
@@ -2223,6 +2234,97 @@ def check_sys_17():
 
     return seen.failures() + failures, seen.notes()
 
+# ---------------------------------------------------------------------------
+# SYS-18 -- a stack outside the constrained categories resolves the gate tier
+# ---------------------------------------------------------------------------
+
+# `base-quality-gates` answers how a gate is retrofitted, ratcheted and
+# retired, which is as relevant to an eslint migration as to a ruff one.
+# Membership in it used to be whatever three `depends_on` declarations
+# produced: a Node library sat outside a family both its library-layer
+# siblings carry, and no check had an opinion in either direction.
+#
+# The line is the recorded context tier, not the language. A category whose
+# largest chain sits at the smallest tier a stack category is recorded at
+# cannot take the file without moving what the category requires of a
+# model, so it is exempt and the tier file is where the reason lives. The
+# exemption is asserted against that file rather than trusted, so a
+# category that later moves off the tier stops being exempt by omission.
+
+QUALITY_GATES_EXEMPT_LAYERS = {
+    "hypermedia": "recorded at the most constrained context tier",
+    "embedded": "recorded at the most constrained context tier",
+}
+
+QUALITY_GATES_ID = "base-quality-gates"
+
+
+def check_sys_18():
+    if not HAS_YAML:
+        return [MISSING_YAML]
+
+    core_ids, entries, _ = _load_manifest()
+    failures = []
+    seen = Inspected()
+
+    recorded = _recorded_tiers()
+    constrained = min(recorded.values(), key=_tier_sort_key) if recorded else None
+    seen.count("categories recorded", recorded)
+    seen.count("exempt layers named with a reason",
+               QUALITY_GATES_EXEMPT_LAYERS)
+
+    # An exemption whose stated reason has expired is worse than none: it
+    # reads as a decision and behaves as an omission.
+    for layer in sorted(QUALITY_GATES_EXEMPT_LAYERS):
+        was = recorded.get(layer)
+        if was is None:
+            failures.append(
+                f"  {layer}: exempt from {QUALITY_GATES_ID} for its "
+                f"context tier, and no tier is recorded for it in "
+                f"{CONTEXT_TIERS}"
+            )
+        elif was != constrained:
+            failures.append(
+                f"  {layer}: exempt from {QUALITY_GATES_ID} because it "
+                f"sits at the most constrained tier, and it is recorded "
+                f"at {was} while the most constrained is {constrained}. "
+                f"The reason has expired -- either the exemption goes or "
+                f"the reason changes"
+            )
+
+    stacks = [e for e in entries.values()
+              if e["file"].startswith("templates/stack/")]
+    seen.count("stacks classified by layer", stacks)
+
+    governed = []
+    for stack in stacks:
+        layer = stack.get("layer")
+        if not layer:
+            failures.append(
+                f"  {stack['id']}: no 'layer' in the manifest, so this "
+                f"check cannot tell whether {QUALITY_GATES_ID} is "
+                f"required of it"
+            )
+            continue
+        if layer not in QUALITY_GATES_EXEMPT_LAYERS:
+            governed.append(stack)
+
+    seen.count("stacks required to resolve the gate tier", governed)
+
+    for stack in governed:
+        sid = stack["id"]
+        _, resolved_ids = _resolve_stack(sid, core_ids, entries)
+        if QUALITY_GATES_ID not in resolved_ids:
+            failures.append(
+                f"  {sid}: layer '{stack['layer']}' resolves no "
+                f"{QUALITY_GATES_ID}; only "
+                f"{', '.join(sorted(QUALITY_GATES_EXEMPT_LAYERS))} are "
+                f"exempt, and this layer is not among them"
+            )
+
+    return seen.failures() + failures, seen.notes()
+
+
 CHECKS = [
     {"id": "SYS-01", "spec": "SAIT-SMK-SYS-01-001A",
      "title": "DEPENDS ON paths resolve to existing files", "fn": check_sys_01},
@@ -2299,6 +2401,10 @@ CHECKS = [
     {"id": "SYS-17", "spec": "SAIT-SMK-SYS-17-001A",
      "title": "Every registered check names a spec document that exists",
      "fn": check_sys_17},
+
+    {"id": "SYS-18", "spec": "SAIT-SMK-SYS-18-001A",
+     "title": "A stack outside the constrained categories resolves the gate tier",
+     "fn": check_sys_18},
 ]
 
 

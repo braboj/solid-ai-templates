@@ -398,6 +398,11 @@ Run `py tests/run_smoke.py` before every PR. It checks:
   resolves the security tier
 - SYS-16: no stack category crosses a context-window tier without
   `tests/context-tiers.txt` being updated in the same change
+- SYS-17: every registered check names a spec document that exists and
+  has a row in `tests/INDEX.md`
+- SYS-18: every stack outside the categories recorded at the most
+  constrained context tier resolves `base-quality-gates`, and each
+  exemption's recorded reason still holds (ADR-044)
 - Prompt builds for all stacks
 
 ## 6. Session protocol

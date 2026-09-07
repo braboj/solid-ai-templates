@@ -41,6 +41,9 @@ alters no template carries no entry.
 - A gate bounding a length discovers its exemptions slice by slice rather
   than deriving them on adoption day, and each is expressed as the shape
   that makes the count external, never as a path
+- The Express, NestJS and Node.js library stacks resolve the quality-gate
+  tier, which their siblings already carried. Membership is now declared by
+  stack category rather than produced by the dependency graph
 
 ### Changed
 
