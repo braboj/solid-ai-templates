@@ -403,36 +403,49 @@ execute each item sequentially. Mark each item done (with result) before
 moving to the next. Do not batch, skip, or summarize — visible
 sequential execution prevents missed steps.
 
-1. Commits and push — all changes committed and pushed (via PR if
+1. **Commits and push** — all changes committed and pushed (via PR if
    branch-protected)
-2. Close issues — close completed issues (verify auto-close worked)
-3. Epic checklists — update epic checklists if relevant
-4. Dev journal — add a session entry to `docs/dev-journal.md` (date,
-   tool, key changes, PRs merged, issues closed/created)
-5. ADRs — A consequential, durable architectural choice with meaningful alternatives
-     MUST have an Architecture Decision Record (ADR) in `docs/decisions/` when
-     future maintainers need its tradeoffs to safely reconsider it. Examples:
-     ownership boundaries, compatibility contracts, or a major dependency strategy.
-   Routine naming, formatting, directory creation, document moves, check-output
-     refinements, and compliance repairs belong in the issue/PR and current docs.
-     They need no ADR unless their consequences meet the threshold above; no
-     separate justification for not writing an ADR is required.
-6. Migrations — confirm every schema change has a reversible Alembic
-   migration committed and applied (`alembic upgrade head`)
-7. OpenAPI contract — confirm the `version` was bumped if any route,
-   schema, or error response changed, and the change is noted in the
-   changelog so consumers can regenerate clients
-8. CLAUDE.md — for each new convention, decide whether it belongs here
-   (a rule the agent MUST apply every turn) or in another doc; keep each
-   rule to one line
-9. README.md — for each new command, dependency, or env var, confirm it
-   is reflected; name the section
-10. docs/ONBOARDING.md — for each new tool, prerequisite, or setup step,
-    confirm it is documented; name the section
-11. docs/PLAYBOOK.md — for each new command, script, or workflow,
-    confirm it is documented; name the section
-12. Tests and types — run `pytest && mypy src/ --strict` and confirm
-    both pass
-13. Flag gaps — if any item cannot be completed this session, report it
-    as pending (never as done) before closing
-14. Summary — summarize what was done and what is next
+2. **Close issues** — reconcile the open-issue list against the work
+   shipped this session, from the tracker rather than memory, and close
+   what is done (verify auto-close worked)
+3. **Epic checklists** — update epic checklists if relevant
+4. **ADRs** — a record is owed when the decision changes what a user of
+   the thing observes without reading the repository's internals.
+   Prose style, tool choice, release procedure, naming and file layout
+   need none, however consequential they are. One coherent architectural
+   choice may span several issues and PRs
+5. **CLAUDE.md** — for each new convention, evaluate the homes in order:
+   code → ADR → README → PLAYBOOK → CLAUDE.md. CLAUDE.md is the home ONLY
+   if the agent MUST apply the rule on every turn. It contains rules only
+   — not changelogs, architecture, or session logs. Keep rules concise
+   without removing necessary qualifiers; paragraph length does not
+   require an ADR
+6. **README.md** — for each new command, dependency, or structural
+   change, is it reflected? Name the section
+7. **docs/ONBOARDING.md** — ensure it exists and covers each new tool,
+   prerequisite, or setup step. Create it if missing; name the section. A
+   missing doc is work to do here, not a gap to report
+8. **docs/PLAYBOOK.md** — ensure it exists and covers each new command,
+   script, or workflow added. Create it if missing; name the section. A
+   missing doc is work to do here, not a gap to report
+9. **Migrations** — confirm every schema change has a reversible
+   Alembic migration committed and applied (`alembic upgrade head`)
+10. **OpenAPI contract** — confirm the `version` was bumped if any
+    route, schema, or error response changed, and the change is noted in
+    the changelog so consumers can regenerate clients
+11. **Tests and types** — run `pytest && mypy src/ --strict` and
+    confirm both pass
+12. **Flag gaps** — if any item cannot be completed this session, report
+    it as pending (never as done) before closing. Reserve "pending" for
+    work that is genuinely blocked — it needs a decision, a credential, or
+    the user. Work the agent could do but has not done is not pending; do
+    it
+13. **Dev journal** — add a session entry to `docs/dev-journal.md` (date,
+    tool, key changes, PRs merged, issues closed/created). It sits after
+    flagging gaps because it is the only item whose output is a record of
+    the others, and a flagged gap resolves into a change whenever the fix
+    is small enough to apply on the spot. Written earlier, its
+    merged-pull-request and issue lines are incomplete by construction.
+    Where the checklist runs twice in a session, only the last pass writes
+    the entry
+14. **Summary** — summarize what was done and what is next
