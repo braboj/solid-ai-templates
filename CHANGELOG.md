@@ -32,6 +32,9 @@ alters no template carries no entry.
 - A suite MUST refuse the run when its own precondition is missing, naming
   it once and scoping the refusal to the selected checks, rather than
   reporting a dependency gap as findings about the tree
+- Verifying a filed issue covers a cited version identifier that has been
+  superseded: a tag or pinned revision that still resolves passes every
+  existence check and is no longer the one to build against
 
 ### Changed
 

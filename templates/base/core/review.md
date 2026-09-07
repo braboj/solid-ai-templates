@@ -166,8 +166,15 @@ something that was not the problem — or re-does something already in review.
 - [ ] Where the issue defers to another issue's approach, read what that
       one shipped rather than what it proposed. A cited approach is a plan,
       and a plan is what changes during implementation
+- [ ] Resolve a cited version identifier against its source rather than
+      confirming it exists. A tag, release, pinned revision or schema
+      version named in the issue was the current one on the filing date,
+      and existence is the wrong predicate for currency: a superseded
+      identifier still resolves, still checks out, and everything the issue
+      says about it is still true. Ask what the source calls current now,
+      and compare
 
-Seven shapes, all of which change what gets built:
+Eight shapes, all of which change what gets built:
 
 | Shape | What it looks like |
 |-------|--------------------|
@@ -177,11 +184,12 @@ Seven shapes, all of which change what gets built:
 | Already in flight | The issue is open and unassigned while a complete implementation sits in an open pull request |
 | Superseded as filed | A decision accepted since the filing date moved the rule, the home, or the mechanism it names |
 | Stale by a sibling's route | The issue defers to another issue's approach; that issue shipped a different one, so a criterion names a mechanism nobody built |
+| Cited version is no longer current | The issue names a tag, release, pinned revision or schema version that was newest on the filing date; it still resolves, so every existence check passes, and it is no longer the one to build against |
 | Classification does not cover every member | The acceptance criteria sort a set into named branches, and a member falls outside all of them |
 
 The last is the one that resists checking, and it is the most dangerous
-of the seven. The other six are found by comparing the issue to the tree,
-or to what a sibling shipped.
+of the eight. The other seven are found by comparing the issue to the
+tree, to a source of record, or to what a sibling shipped.
 This one is found only by disagreeing with a criterion you are meant to
 satisfy: acceptance criteria carrying a closed classification — each of
 these is either A or B, and the Bs are deleted — read as a checklist, and
