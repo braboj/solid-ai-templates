@@ -6908,3 +6908,93 @@ exist), #1574 (seven control rules govern this repository and one ships)
   held: this entry names both
 
 ---
+## 2026-09-07 — Retiring a freeze, and four detectors blind to their subject
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+Groomed the backlog and cut `v2.84.0`. The groom found one clean unblocked
+cluster in 41 unmilestoned issues: six tickets, all against
+`quality-gates-retrofit-ratchet`, all measured on the same downstream
+migration, saying the same thing from six angles — the section says how to
+build a per-file freeze and nothing about how to retire one. Two of the six
+were the same rule filed twice on the same day from different snapshots, so
+#1556 closed into #1572 with its measurement carried across.
+
+The rest of the backlog is gated on #1480. Nine issues reference it, five are
+hard trigger-blocked, and the reason applies to any new rule in `base/core` or
+`base/workflow` — the spike decides where those sections live. The freeze
+cluster was pickable precisely because it lands on the KEEP side of that split:
+the ratchet is the invariant gate model, not this project's operating
+discipline.
+
+Five pull requests, one concern each, in the order a slice actually runs:
+the corpus-narrowing shape for gates with no per-file ignore (#1518), the
+retirement order for caller-raised findings (#1572), an entry outliving its
+findings (#1563), sizing a rule family without a destructive edit (#1406),
+and the control a behaviour-changing slice owes (#1571).
+
+**The release gate refused the cut**, correctly. A minor release owes a current
+periodic review and the newest record was a day old. The alternative on offer
+was to call `v2.84.0` a patch, which would have been a finding cleared by
+changing the gate's input — the exact antipattern three of the five pull
+requests in this release are about. Ran the audit instead.
+
+Seven isolated reviewers. Overall **D**, down from D+, and the reason matters
+more than the grade: three of the four dimensions that fell measured something
+a prior pass had asserted rather than tested. Nothing degraded overnight; the
+instruments improved.
+
+Four detectors were found blind in one day, each certifying its own subject:
+
+- ADR-031's check matches its phrase and its command on one line, and
+  `CLAUDE.md` §2.7 mandates wrapping at 88 characters. Joining three lines of
+  `go-lib.md` with no other edit moved the count 0 to 1. Two rules, each
+  correct, combining into a blind spot (#1584)
+- The conformance runner's `SILENT` verdict scores a check by printing
+  nothing, so one pointed at a glob matching no files passed — ADR-034's case
+  arriving through the disposition vocabulary instead of a check's output
+  (#1585)
+- `iter_blocks` documents itself as counting every language and skips untagged
+  fences. Re-measured against a stateful parse: 54 of 150 blocks invisible,
+  not the two the issue named (#1582)
+- `base-docs` ships the rule that a stated figure comes from a generator, and
+  a check for it that passed all week over two violations. Its regex wants a
+  digit next to a bare noun; the tree had `Eight files` and `14
+  manifest-reading checks`. A three-way control at the wrap-up settled it —
+  spelled-out numeral 0, digit-plus-adjective 0, digit-plus-noun 1 (#1591)
+
+The specification also states an absolute that 43 `[DEPENDS ON]` directives
+contradict, and lists `review` in two tiers at once (#1587).
+
+**PRs merged:** #1577, #1579, #1580, #1581, #1583, #1589, #1590
+
+**Issues closed:** #1518, #1572, #1563, #1406, #1571, #1556 (duplicate)
+
+**Issues created:** #1578 (length-bound exemptions, split out of #1518),
+#1582 (untagged fences leave the conformance corpus), #1584 (the ADR-031
+detector reads one line), #1585 (a SILENT disposition certifies no input),
+#1586 (a skip reason is ungated and one is stale), #1587 (SPEC's core-tier
+absolute), #1588 (nothing states which stacks carry a rule family),
+#1591 (the documentation-figure check misses both shipped forms)
+
+**Decisions:**
+- No ADR. The five rules are content inside an existing section with no
+  architectural alternative weighed, and the audit's findings are open
+  questions rather than settled choices. Recording the absence because the
+  wrap-up asks the question and a deliberate no is not the same as a skip
+
+**Lessons:**
+- A branch inserting at the same anchor as a merged sibling conflicts on
+  every generated file. Resolving by taking main's version whole and
+  re-applying the branch's block after it — rather than rebasing — kept the
+  no-force-push rule and made the ordering explicit in the merge commit
+- A gate refusing a release is the cheapest moment to discover the release is
+  wrong. The audit it forced produced five issues and cost more than the cut
+  it was gating, which is the correct ratio for a gate nobody wants to run
+- The user asked why the templates are degrading. They are not: measured
+  `v2.83.0..v2.84.0` at +3.4 KB on all 37 chains, +0.94% in one release, and
+  `v2.60.0..v2.84.0` at 26 modified, 0 added, 0 deleted. Quality is flat and
+  density is falling, because the work is generated by this repository's own
+  operating experience — which lands in the always-loaded waist — while
+  nothing prices growth and deletion is not an available move. #1480 already
+  names it and sizes the remedy at 44%
