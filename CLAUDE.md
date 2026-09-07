@@ -76,7 +76,10 @@ py tools/audit_redundancy.py --check          # CI gate — fail on new dups
   as commits, with issue number(s) at the end
 - A single-commit PR MUST carry the issue number in the commit subject
   too: GitHub squashes using the PR title only when the branch holds two
-  or more commits, and the commit subject when it holds one
+  or more commits, and the commit subject when it holds one. A PR that
+  closes no issue — a changelog cut, a journal entry — is outside this:
+  the squash appends the PR number either way, so the merged subject
+  still resolves to the work
 - Issue titles: sentence case, imperative verb — no type prefix
   (labels carry the type)
 - PRs are small and focused — one concern per PR, merged once its
