@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.85.0] - 2026-09-07
+
 ### Fixed
 
 - The check finding a check stated in prose matches over the paragraph now,
