@@ -199,6 +199,57 @@ remaining commits are silently lost.
   the append, so the reference is absent from the only record such a
   check reads — and the commit looks correct, because the half a
   human reads is the half that survived
+- MUST carry the issue reference in the commit subject when the branch
+  holds exactly one commit. The host squashes using the pull request
+  title only where the branch holds two or more; with one, the commit
+  subject is the default, and a number that lives only in the title
+  never reaches the default branch. The merged history is what a release
+  note, a bisect and the release gates all read, and the breach is
+  silent: the issue still closes from the body's keyword, the pull
+  request page shows the title with the number in it, and the subject
+  that will actually be used is one click away. Assert it before the
+  merge, where the count is available and the defect is still fixable:
+
+```bash
+py - <<'EOF'
+import re, subprocess
+
+RUN = dict(capture_output=True, text=True, encoding="utf-8")
+
+# Which subject the host squashes with is decided by how many commits the
+# branch adds, so the count comes from the branch point rather than from a
+# fixed depth.
+base = subprocess.run(["git", "merge-base", "origin/main", "HEAD"], **RUN)
+if base.returncode != 0 or not base.stdout.strip():
+    print("no merge base with origin/main, so the branch's commits cannot "
+          "be counted; fetch the default branch and run again")
+    raise SystemExit(1)
+
+subjects = subprocess.run(
+    ["git", "log", "--format=%s", base.stdout.strip() + "..HEAD"],
+    **RUN).stdout.splitlines()
+print("commits on this branch: %d" % len(subjects))
+
+# A branch of any other size is squashed with the title, which carries the
+# reference by the convention above, so there is nothing here to assert.
+if len(subjects) != 1:
+    print("a branch of %d commits is squashed using the pull request "
+          "title; this check does not apply" % len(subjects))
+    raise SystemExit(3)
+
+missing = [s for s in subjects if not re.search(r"\(#\d+\)\s*$", s)]
+print("single-commit subjects naming no issue: %d" % len(missing))
+for subject in missing:
+    print("reaches the default branch with no reference: %s" % subject)
+raise SystemExit(1 if missing else 0)
+EOF
+```
+
+  Pass condition: the command prints how many commits the branch adds
+  and, where that is exactly one, a count of zero subjects naming no
+  issue, then exits zero. Any line after those counts is a finding. A
+  branch of any other size exits 3 — the title is what the host uses
+  there, so the check has nothing to assert rather than nothing to find
 - SHOULD enable "automatically delete head branches" in repository
   settings to prevent stale branches from accumulating. It fires on
   merge only — a PR closed without merging leaves its branch behind
