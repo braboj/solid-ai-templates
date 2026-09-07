@@ -85,9 +85,15 @@ no HTTP layer.
   invocation, a flag-driven journey
 - Each program under `examples/` MUST be `package main`, so it cannot
   be imported as library API and cannot widen the module's surface
-- Smoke check: `go vet ./... && go test ./...` covers the `Example`
-  functions; `go run ./examples/<name>` covers the directory. Pass
-  condition — every program exits zero
+- One smoke run covers both forms:
+
+  ```bash
+  go vet ./... && go test ./...
+  for program in examples/*/; do go run "./$program" || exit 1; done
+  ```
+
+  Pass condition: `go test` reports the `Example` functions passing and
+  every program under `examples/` exits zero
 
 ---
 

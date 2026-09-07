@@ -1004,6 +1004,19 @@ echo "entries in Unreleased: $(awk '/^## /{ n++ } n==1 && /^- /' CHANGELOG.md | 
 git log --format='  carried: %s' "$previous..HEAD"
 ```
 
+Pass condition: the command prints both counts and lists every carried
+commit once `RELEASE` names the release being prepared, and the operator
+confirms each carried commit is either represented by an entry or is
+deliberately not notable. The two counts are NOT required to match — not
+every commit earns an entry. Zero entries against commits carried is a
+failure where any carried commit is notable; where every one of them is
+deliberately not, zero is the correct reading. That is the guaranteed
+state directly after a cut, whose first commit is the journal entry the
+release procedure records as owed. A count of entries the listed commits
+cannot account for is the failure in the other direction. Read the two
+numbers together: the observed failure this check exists for was 37
+commits against 2 entries, which no single-sided assertion detects.
+
 Its moment is the release commit before the `Unreleased` section is cut,
 so it asks first whether that moment is live — and asks the operator,
 because nothing in the repository's state answers it. An untagged HEAD does
@@ -1012,20 +1025,6 @@ the last tag, which is the ordinary condition of a repository between
 releases, so a detector reading it as the moment reports the failure shape
 on almost every day. A check whose ordinary output is its defect output
 trains its reader to skip it.
-
-Pass condition: the command prints both counts and lists every carried
-commit once `RELEASE` names the release being prepared, and the operator
-confirms each carried commit is either represented by an entry or is
-deliberately not notable. The two
-counts are NOT required to match — not every commit earns an entry. Zero
-entries against commits carried is a failure where any carried commit is
-notable; where every one of them is deliberately not, zero is the correct
-reading. That is the guaranteed state directly after a cut, whose first
-commit is the journal entry the release procedure records as owed. A count
-of entries the listed commits cannot account for is the failure in the
-other direction. Read the two numbers together: the observed failure this
-check exists for was 37 commits against 2 entries, which no single-sided
-assertion detects.
 
 With `RELEASE` left empty the command reports that the check does not
 apply, on exit status 3 — the same reserved status the milestone-coverage

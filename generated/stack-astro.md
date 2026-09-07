@@ -2194,6 +2194,19 @@ echo "entries in Unreleased: $(awk '/^## /{ n++ } n==1 && /^- /' CHANGELOG.md | 
 git log --format='  carried: %s' "$previous..HEAD"
 ```
 
+Pass condition: the command prints both counts and lists every carried
+commit once `RELEASE` names the release being prepared, and the operator
+confirms each carried commit is either represented by an entry or is
+deliberately not notable. The two counts are NOT required to match — not
+every commit earns an entry. Zero entries against commits carried is a
+failure where any carried commit is notable; where every one of them is
+deliberately not, zero is the correct reading. That is the guaranteed
+state directly after a cut, whose first commit is the journal entry the
+release procedure records as owed. A count of entries the listed commits
+cannot account for is the failure in the other direction. Read the two
+numbers together: the observed failure this check exists for was 37
+commits against 2 entries, which no single-sided assertion detects.
+
 Its moment is the release commit before the `Unreleased` section is cut,
 so it asks first whether that moment is live — and asks the operator,
 because nothing in the repository's state answers it. An untagged HEAD does
@@ -2202,20 +2215,6 @@ the last tag, which is the ordinary condition of a repository between
 releases, so a detector reading it as the moment reports the failure shape
 on almost every day. A check whose ordinary output is its defect output
 trains its reader to skip it.
-
-Pass condition: the command prints both counts and lists every carried
-commit once `RELEASE` names the release being prepared, and the operator
-confirms each carried commit is either represented by an entry or is
-deliberately not notable. The two
-counts are NOT required to match — not every commit earns an entry. Zero
-entries against commits carried is a failure where any carried commit is
-notable; where every one of them is deliberately not, zero is the correct
-reading. That is the guaranteed state directly after a cut, whose first
-commit is the journal entry the release procedure records as owed. A count
-of entries the listed commits cannot account for is the failure in the
-other direction. Read the two numbers together: the observed failure this
-check exists for was 37 commits against 2 entries, which no single-sided
-assertion detects.
 
 With `RELEASE` left empty the command reports that the check does not
 apply, on exit status 3 — the same reserved status the milestone-coverage
@@ -3050,9 +3049,17 @@ wrong before changing either.
 - Render "Alternatives considered" and "Consequences" as tables where the
   content fits — they scan faster than prose lists
 - Preserve merged ADR claims as history. Supersession metadata and format-only
-  edits that change no claim are allowed. For format-only edits, state
-  "format-only, no decision change" in the commit and verify with
-  `git diff --word-diff`; do not rewrite historical reasoning
+  edits that change no claim are allowed. A format-only edit states
+  "format-only, no decision change" in the commit and carries a word-level
+  diff as its evidence; do not rewrite historical reasoning
+
+  ```bash
+  git diff --word-diff=porcelain HEAD~1 -- docs/decisions/
+  ```
+
+  Pass condition: every changed word is punctuation, whitespace or line
+  wrapping. A changed word that carries meaning is a decision change, and
+  it needs a new record rather than an edit to the old one
 - Current requirements live in the specification or project conventions, not
   in a chain of historical corrections. If a later change invalidates a minor
   premise or revisit trigger, state the correction in the current docs and PR.
@@ -5465,10 +5472,10 @@ such as
       sentence is correct only in relation to its neighbours, and each one
       reads fine alone, so a diff review cannot catch the contradiction
 - [ ] Every claim the text makes **about itself** ("each section covers X",
-      "the table below compares N criteria") was verified by counting or
-      grepping the thing claimed — `grep -c` the sections, count the rows —
-      not by reading. Scope both checks to changed sections, so the cost
-      stays proportional to the diff
+      "the table below compares N criteria") was verified by counting the
+      thing claimed with a tool rather than by reading it. Scope both
+      checks to changed sections, so the cost stays proportional to the
+      diff
 
 ## MUST checklist — state and boundaries
 
@@ -7884,8 +7891,13 @@ self-check it.
   carries, not only to the ones a gate runs
 
 The unrunnable form is mechanically findable. A verification phrase and a
-backticked command on one line of running prose, with no fence beside it
-to hold the runnable form, is a check no tool can extract:
+backticked command in the same sentence of running prose, with no fence
+beside it to hold the runnable form, is a check no tool can extract. Match
+over the paragraph and not over the line: prose wraps, so a check written
+inline is split across two lines by the project's own line-width rule, and
+a line-scoped detector reads each half as innocent. Two rules that are
+individually correct combine into a blind spot, and every line-scoped
+detector over a wrapped corpus carries that exposure.
 
 ```bash
 py - <<'EOF'
@@ -7896,20 +7908,54 @@ import io, os, re
 # a check.
 ROOTS = ["templates"]
 
-# A stated check pairs a verification phrase with a command. This finds
-# that pair in running prose: outside a fence, not inside a table cell,
-# and with no fence within five lines to hold the runnable form.
+# A stated check pairs a verification phrase with the command it
+# introduces. The pair is matched over a paragraph, because a wrapped
+# check puts the phrase on one line and the command on the next.
 PHRASE = re.compile(
-    r"verify with|pass condition|check with|confirm with", re.IGNORECASE)
+    r"(?:verify|check|confirm)\s+with"
+    r"|(?:verified|checked|confirmed)\s+by"
+    r"|pass condition"
+    r"|\b(?:[\w-]+\s+)?checks?:",
+    re.IGNORECASE)
 COMMAND = re.compile(r"[`][^`]+[`]")
+
+# A sentence boundary between the phrase and the command means the
+# paragraph talks ABOUT a check and names a command somewhere else.
+# Requiring the phrase to introduce the command is what separates a check
+# stated in prose from prose that mentions one.
+BREAK = re.compile(r"[.]\s")
 WINDOW = 5
 
 # Written rather than spelled literally: three backticks at the start of a
 # line would close the block this check is quoted inside. Fenced lines are
 # skipped, so the check does not match its own source either way.
 FENCE = "`" * 3
+BULLET = re.compile(r"\s*(?:[-*+]\s|\d+[.]\s)")
 
 inspected, findings = 0, []
+
+
+def examine(path, para, numbers, marks):
+    """Record a finding where the paragraph states a check no fence holds."""
+    if not para:
+        return 0
+    near = min(min(abs(m - n) for m in marks) for n in numbers) if marks \
+        else WINDOW + 1
+    if near <= WINDOW:
+        return 1
+    joined = " ".join(line.strip() for line in para)
+    for phrase in PHRASE.finditer(joined):
+        command = COMMAND.search(joined, phrase.end())
+        if not command:
+            continue
+        if BREAK.search(joined[phrase.end():command.start()]):
+            continue
+        findings.append("%s:%d %s" % (
+            path, numbers[0], joined[phrase.start():command.end()]))
+        break
+    return 1
+
+
 for root in ROOTS:
     for parent, _, names in os.walk(root):
         for name in sorted(names):
@@ -7919,21 +7965,24 @@ for root in ROOTS:
             lines = io.open(path, encoding="utf-8").read().splitlines()
             marks = [n for n, line in enumerate(lines, 1)
                      if line.lstrip().startswith(FENCE)]
-            fenced = False
+            fenced, para, numbers = False, [], []
             for number, line in enumerate(lines, 1):
-                if line.lstrip().startswith(FENCE):
+                stripped = line.lstrip()
+                skip = (stripped.startswith(FENCE) or not line.strip()
+                        or stripped.startswith("|") or stripped.startswith("#"))
+                if skip or (para and BULLET.match(line)):
+                    inspected += examine(path, para, numbers, marks)
+                    para, numbers = [], []
+                if stripped.startswith(FENCE):
                     fenced = not fenced
                     continue
-                if fenced or line.lstrip().startswith("|"):
+                if fenced or skip:
                     continue
-                inspected += 1
-                if not (PHRASE.search(line) and COMMAND.search(line)):
-                    continue
-                near = min([abs(m - number) for m in marks] or [WINDOW + 1])
-                if near > WINDOW:
-                    findings.append("%s:%d %s" % (path, number, line.strip()))
+                para.append(line)
+                numbers.append(number)
+            inspected += examine(path, para, numbers, marks)
 
-print("prose lines inspected: %d" % inspected)
+print("prose paragraphs inspected: %d" % inspected)
 print("checks stated outside a fence: %d" % len(findings))
 for finding in findings:
     print("  " + finding)
@@ -7943,6 +7992,13 @@ EOF
 Pass condition: the inspected count is above zero and the finding count is
 zero. An inspected count of zero means `ROOTS` named nothing that exists,
 which is the check reaching no input rather than a clean tree.
+
+`PHRASE` is a vocabulary, not a pattern. Add a literal when a check in the
+project is found announcing itself with wording the list does not carry,
+and add it together with the instance that motivated it; a phrase nobody
+writes widens the false positives and finds nothing. Any edit to it MUST
+be controlled in both directions: a check announced in prose is reported,
+and that same check moved inside a fence is not.
 
 A rule states intent; its paired check is what makes the intent hold.
 
