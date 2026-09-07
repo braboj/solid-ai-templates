@@ -323,10 +323,10 @@ replacement of their specification method, agent runner, or test infrastructure.
 
 The current repository provides:
 
-- 75 Markdown template files;
+- Markdown template files;
 - core, language, workflow, security, infrastructure, data, backend, frontend,
   platform, and stack concerns;
-- 17 generated stack chains;
+- a generated chain per stack;
 - Python, Go, Node.js, Astro, HTMX, gRPC, and embedded C coverage;
 - a dependency manifest;
 - core-tier inclusion and transitive dependency resolution;

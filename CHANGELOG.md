@@ -26,6 +26,10 @@ alters no template carries no entry.
 - The check finding a check stated in prose matches over the paragraph now,
   with a wider phrase list, so one split across two lines by the wrap rule
   is no longer invisible. The checks it found are now fenced
+- The documentation-figure check reads spelled numerals and a numeral
+  separated from its noun by a modifier, so `Eight files` and `14
+  manifest-reading checks` are found. A function word or a unit between
+  the two still marks it as no figure
 
 ## [2.84.0] - 2026-09-07
 

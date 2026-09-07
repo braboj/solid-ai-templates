@@ -216,7 +216,7 @@ See ADR-004 for the full rationale.
 
 ### Core tier
 
-Six base templates apply to every project. They are declared in
+The core-tier base templates apply to every project. They are declared in
 `templates/manifest.yaml` under `core:` and included during
 resolution — stacks do not need to list them in `depends_on`:
 
@@ -399,7 +399,7 @@ rationale.
 
 An orthogonal template is the sharpest case. It reaches a reader through
 no stack chain at all, so its guaranteed context is the core tier plus
-its own `depends_on` tree — six files and whatever it declares. A
+its own `depends_on` tree, and nothing beyond what it declares. A
 reference out of that is unreadable for every project that opts in.
 
 ---

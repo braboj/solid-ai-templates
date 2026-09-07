@@ -122,12 +122,12 @@ effective; declining a new rule needs no ADR or ticket. See the
 <!-- generated:readme-model-limits -->
 | Stack category | Stacks | Largest chain | Prompt | Min context |
 |----------------|--------|---------------|--------|-------------|
-| abstract | 2 | `stack-python-service` — 492K chars | ~140K tokens | 200K |
-| backend | 8 | `stack-django` — 506K chars | ~145K tokens | 200K |
-| embedded | 1 | `stack-c-embedded` — 300K chars | ~86K tokens | 128K |
-| hypermedia | 1 | `stack-htmx` — 324K chars | ~92K tokens | 128K |
-| library | 3 | `stack-python-lib` — 417K chars | ~119K tokens | 200K |
-| static | 2 | `stack-tutorial` — 454K chars | ~130K tokens | 200K |
+| abstract | 2 | `stack-python-service` — 493K chars | ~141K tokens | 200K |
+| backend | 8 | `stack-django` — 507K chars | ~145K tokens | 200K |
+| embedded | 1 | `stack-c-embedded` — 302K chars | ~86K tokens | 128K |
+| hypermedia | 1 | `stack-htmx` — 325K chars | ~93K tokens | 128K |
+| library | 3 | `stack-python-lib` — 419K chars | ~120K tokens | 200K |
+| static | 2 | `stack-tutorial` — 455K chars | ~130K tokens | 200K |
 <!-- /generated:readme-model-limits -->
 
 Measured rather than estimated. Each row takes the largest resolved
