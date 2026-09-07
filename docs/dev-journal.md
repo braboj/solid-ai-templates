@@ -7206,3 +7206,66 @@ number the convention puts in its subject)
   composition-model change is reflected in the specification; the answer
   was no for the new tier and no for the security tier that has been
   enforced since it shipped
+
+---
+
+## 2026-09-07 — The review that was paced by the release, not by the project
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:**
+- Re-paced the periodic project-wide review: the obligation is decided by
+  the age of the newest record against a declared interval, defaulting to
+  ninety days, rather than by whether the release moves the minor or major
+  version. A release whose record is current owes nothing whatever version
+  it moves; a release whose record is stale owes a review whatever version
+  it moves
+- Rewrote `base-git`'s `periodic-review-scope` check accordingly. It reads
+  no release version, so it runs in this repository rather than reporting
+  as not applicable, and it exempts a project with no audit directory
+  while treating an empty one as a project that owes a review and wrote
+  none
+- `360-when` dropped its quarterly bullet and now defers to the interval
+  declared beside the check
+- Generalised the currency-gate section above it: the non-strict
+  comparison is against the day being compared to, not specifically the
+  previous release
+
+**Released:** v2.86.0 — tag `a085962` on the changelog cut, milestone #92
+closed at 15/15, release-gates green on the tag push.
+
+**Pull requests merged:** #1626 (#1625), #1627 (the v2.86.0 changelog cut).
+
+**Issues closed:** #1625. **Issues filed:** #1628.
+
+**Decisions:**
+- ADR-045 supersedes ADR-033. The earlier record rejected a calendar
+  cadence because it decouples the review from the changes it reads — a
+  quiet quarter would owe one and a busy one might not. The first half
+  holds and the second does not survive the on-demand triggers staying in
+  force: a busy period reaches an audit through a milestone or a major
+  feature long before an interval expires, so the interval only ever
+  decides the quiet case, which is the case a cadence is for
+- The interval is declared beside the check rather than beside the events
+  that trigger a review. `resolve.py` puts `core/git.md` in 37 of 37 roots
+  and `workflow/360.md` in 1, so stating the figure in the audit template
+  would have given 36 projects a check enforcing an interval and no line
+  declaring one
+
+**Lessons:**
+- The narrowing that fixed a gate can reproduce it one level up. Scoping
+  the review to minor and major releases removed the patch case and left
+  the frequency coupling intact, so a repository cutting a minor most days
+  wrote six whole-project reviews, four of them inside a week
+- A range match that never finds its end marker runs to the end of the
+  file and reports a plausible number. `awk` from `## [Unreleased]` to
+  `## [v2.85` counted 112 changelog entries because the heading in the
+  file is `## [2.85.0]`, with no `v`. The true figure was 11, and nothing
+  in the output said the range was open
+- The release-documentation gate reads `git show HEAD:`, so the changelog
+  cut had to be committed before it would pass. The rule was already in
+  `CLAUDE.md` section 6.2 and the run still cost one confused re-read
+- A gate that has already scanned its corpus should report every finding.
+  Milestone-coverage named one unmilestoned issue per run, so three
+  offenders cost three runs and the scale of the problem was visible only
+  after it was fixed (#1628)
