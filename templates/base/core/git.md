@@ -548,12 +548,13 @@ When NOT to close-and-resubmit:
      — investigate any results before proceeding
   2. Check for orphaned commits: `git fsck --unreachable --no-reflogs
      | grep commit` — verify no unique work is lost
-  3. Where the project runs a periodic project-wide audit and this
-     release moves the minor or major version, run one before the
-     release — it SHOULD NOT ship with critical findings unresolved. A
-     patch release owes neither the audit nor a record declining it, and
-     a project with no such audit skips this step rather than inventing
-     one for the release. The check is below
+  3. Where the project runs a periodic project-wide audit and its newest
+     record falls outside the review interval the project declares, run
+     one before the release — it SHOULD NOT ship with critical findings
+     unresolved. A release whose newest record still falls inside the
+     interval owes neither the audit nor a record declining it, whatever
+     version it moves, and a project with no such audit skips this step
+     rather than inventing one for the release. The check is below
   4. Where the release is scoped to a milestone, verify that every issue
      closed since the previous tag carries that milestone — the check is
      below. Confirming a milestone's issues are all closed checks one
@@ -1200,14 +1201,16 @@ The 60% figure is a threshold and inherits what attaches to one — it is
 chosen to admit the rewording a consolidation performs and to reject a
 different entry that happens to share vocabulary. A project that reworks
 its entries more heavily raises it and states the new figure here.
+
 ### A currency gate compares non-strictly
 
-The periodic project-wide audit above is the pre-release step a project
-most often gates, by requiring the dated artifact it names — an audit, a
-review, a sign-off — to be current with respect to the last release. Where
-that artifact carries a date and no time, the comparison MUST admit a
-record dated the release day. Requiring strictly-later makes a second
-release on the day of the first impossible rather than merely unaudited:
+A pre-release step that requires a dated artifact — an audit, a review, a
+sign-off — to be current is the gate a project most often writes, and the
+periodic project-wide audit above is the step it most often attaches to.
+Where that artifact carries a date and no time, the comparison MUST admit
+a record dated the day it is compared against. Requiring strictly-later
+makes a second release on the day of the first impossible rather than
+merely unaudited:
 
 ```
 previous release   2026-08-31          (shipped this morning)
@@ -1230,8 +1233,8 @@ operator is invited to decline and cannot satisfy in any form — a worse
 state than the ambiguity the strictness guarded against.
 
 Comparing non-strictly leaves the case the gate exists for untouched: a
-record older than the previous release still fails, and a missing record
-still fails. One record then covers two same-day releases, which is the
+record older than the day compared against still fails, and a missing
+record still fails. One record then covers two same-day releases, which is the
 intended outcome rather than a side effect. Recording a timestamp rather
 than a date removes the ambiguity properly, and costs a rename of every
 existing artifact plus every check that reads the filename shape — take
@@ -1243,133 +1246,123 @@ the same change MUST add an assertion for the same-day case, so a
 comparison tightened back to strictly-later fails something rather than
 passing green.
 
-### A periodic review is owed by the releases that can move it
+### A periodic review is owed by the calendar, not by the release count
 
 A project that runs a periodic project-wide audit and gates the release on
-it has attached a review to the release event. Most releases are patches,
-and a patch fixes a defect and changes no interface, so a review whose
-subject is the shape of the project has nothing new to read on one. The
-operator writes a record saying so and the tag proceeds.
+it has attached a review to the release event. That pacing is wrong in
+both directions, and each direction fails in its own way.
 
-That inverts the gate. A gate firing on an event class whose members
-mostly cannot produce a finding trains the operator to produce the
-artifact that clears it, and here the artifact is a document declining the
-work — so the cheapest compliant path stops involving the work at all.
-Nothing in the surrounding rules catches this: the check exists, it runs
-correctly, and every signal available says it is working. The gate is not
-too weak or too strong. It is scoped to the wrong event.
+Most releases are patches, and a patch fixes a defect and changes no
+interface, so a review whose subject is the shape of the project has
+nothing new to read on one. The operator writes a record saying so and the
+tag proceeds. A gate firing on an event class whose members mostly cannot
+produce a finding trains the operator to produce the artifact that clears
+it, and here the artifact is a document declining the work — so the
+cheapest compliant path stops involving the work at all.
 
-The obligation MUST therefore be scoped to the releases that change what
-the review reads. A minor or major release owes the audit; a patch owes
-nothing, neither report nor decline.
+Narrowing the event class to the releases that move an interface does not
+fix it, because release frequency is not a property of the project's
+shape. A repository cutting a minor most days owes a fresh review most
+days, and writes one three days after the last, reading nothing the record
+before it did not. The gate again collects an artifact rather than a
+reading, and every signal available says it is working.
 
-Two details travel with the narrowing, and both are easy to omit:
+The obligation MUST therefore be paced by the age of the newest record
+against an interval the project declares, not by the release kind or the
+release count. A release whose newest record falls inside the interval
+owes nothing, whatever version it moves; a release whose newest record
+falls outside it owes a review, whatever version it moves.
 
-- A version the gate cannot parse MUST be a finding, never a pass. An
-  unreadable version and an exempt version both mean the comparison does
-  not run, and reading them alike turns a typo in a version literal into
-  a silent exemption
-- Narrowing a gate can retire its own negative controls. Fixtures named
-  with a patch version stop firing the moment the gate skips patches, so
-  the suite stays green while testing nothing. Re-point them at a minor
-  or major version in the same change, and confirm each still fails
-  before believing the narrowed gate
+The interval is a floor under the schedule, not the schedule. The events
+that make a review worth reading — a milestone closing, a major feature
+landing, a launch, a stakeholder needing the whole picture — trigger one
+on demand and reach it long before the interval expires; the interval
+catches only the project that hits none of them. A project that lists
+those events elsewhere states the figure once, beside the check that
+reads it, and defers to it from wherever the events are listed.
 
-The deferral this replaces MUST NOT be a condition nothing polls. Making
-the next audit due when some backlog reaches zero schedules nothing,
-because no release meets the condition and nothing watches it — a
-deferral with no watcher reads exactly like a live obligation.
+Three details travel with the pacing, and each is easy to omit:
+
+- A value the gate cannot read MUST be a finding, never a pass. A value it
+  cannot read and a value that exempts the release both mean the
+  comparison does not run, and reading them alike turns a typo into a
+  silent exemption
+- Re-scoping a gate can retire its own negative controls. A fixture built
+  to fire under the old scope stops firing the moment the scope moves, so
+  the suite stays green while testing nothing. Re-point every control in
+  the same change, and confirm each still fails before believing the new
+  scope
+- The pacing MUST NOT be a condition nothing polls. Making the next audit
+  due when some backlog reaches zero schedules nothing, because no release
+  meets the condition and nothing watches it — a deferral with no watcher
+  reads exactly like a live obligation. A date is polled by every release,
+  which is why it can carry an obligation a backlog condition cannot
 
 **The periodic-review-scope check** — step 3 of the pre-release sequence
-above. It answers whether this release owes the review, and where it does,
-whether the record is current.
+above. It answers whether the newest record still falls inside the
+interval the project declares.
 
 ```bash
 py - <<'EOF'
-import os, re, subprocess
-
-# The version being released, or empty on an ordinary day. Setting it is
-# the decision the step asks for; a release pipeline answers instead by
-# exporting RELEASE, a tag push being the one repository event that does
-# say a release is happening.
-RELEASE = os.environ.get("RELEASE", "")
+import os, re, datetime
 
 # Where the project keeps its dated periodic audits, and the date shape
 # its filenames carry.
 AUDITS = "docs/audits"
 DATED = re.compile(r"(\d{4}-\d{2}-\d{2})")
 
-if not RELEASE:
-    print("no release is in preparation; this check does not apply")
+# The review interval, in days. Ninety days is a quarter, the rhythm an
+# active project most often reviews on. A project reviewing on another
+# rhythm states its figure here, and this is the only place it is
+# declared -- everything else defers to it.
+INTERVAL_DAYS = 90
+
+# A project that keeps no audit directory runs no periodic review, and
+# this step is conditional on running one. That is the only exemption:
+# a directory holding no record is a project that owes one and wrote
+# none, which is a finding rather than an empty tree.
+if not os.path.isdir(AUDITS):
+    print("%s does not exist; this project runs no periodic review" % AUDITS)
     raise SystemExit(3)
 
-# An unreadable version and an exempt one both mean the comparison does
-# not run. Reading them alike turns a typo in a version literal into a
-# silent exemption, so refuse the version rather than skipping on it.
-parsed = re.match(r"v?(\d+)\.(\d+)\.(\d+)$", RELEASE)
-if parsed is None:
-    print("release %r is not a version this check can read" % RELEASE)
-    raise SystemExit(1)
-
-major, minor, patch = (int(part) for part in parsed.groups())
-if patch:
-    print("%d.%d.%d is a patch release; the periodic review is not owed"
-          % (major, minor, patch))
-    raise SystemExit(3)
-
-# On the release commit the newest tag is the previous release. On the
-# tag itself -- where a run triggered by the tag push happens -- the same
-# command returns the tag being released and `..HEAD` is an empty range,
-# so the check would report nothing from a comparison it never made.
-# Resolve from the commit under release either way.
-at_head = subprocess.run(["git", "tag", "--points-at", "HEAD"],
-                         capture_output=True, text=True).stdout.split()
-ref = at_head[0] + "^" if at_head else "HEAD"
-previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0",
-                           ref], capture_output=True, text=True).stdout.strip()
-
-# The same refusal the unreadable version gets, for the same reason. With
-# no previous tag `git describe` prints nothing and every date compares
-# greater than the empty string, so a first release -- one that owes the
-# review -- would pass on a record of any age.
-if not previous:
-    print("no previous tag, so the record's currency cannot be compared")
-    raise SystemExit(1)
-
-released = subprocess.run(["git", "log", "-1", "--format=%cs", previous],
-                          capture_output=True, text=True).stdout.strip()
-names = os.listdir(AUDITS) if os.path.isdir(AUDITS) else []
+names = os.listdir(AUDITS)
 dates = sorted(DATED.search(n).group(1) for n in names if DATED.search(n))
 
-# Non-strict, per the currency rule above: a record dated the release day
-# covers that release. Both counts are declared before any finding, so the
-# check states what it read whichever verdict it reaches.
-covering = [date for date in dates if date >= released]
-print("audit records found: %d" % len(dates))
-print("records covering %s, released %s: %d"
-      % (previous, released, len(covering)))
-if not dates:
-    print("no audit record exists; this release owes one")
+# An unreadable interval and an exempt release both mean the comparison
+# does not run, so refuse the figure rather than skipping on it.
+if not isinstance(INTERVAL_DAYS, int) or INTERVAL_DAYS <= 0:
+    print("review interval %r is not a number of days" % (INTERVAL_DAYS,))
     raise SystemExit(1)
-if not covering:
-    print("newest record %s predates %s; this release owes one"
-          % (dates[-1], released))
+
+cutoff = (datetime.date.today()
+          - datetime.timedelta(days=INTERVAL_DAYS)).isoformat()
+
+# Non-strict, per the currency rule above: a record dated the cutoff day
+# still falls inside the interval. Both counts are declared before any
+# finding, so the check states what it read whichever verdict it reaches.
+current = [date for date in dates if date >= cutoff]
+print("audit records found: %d" % len(dates))
+print("records dated %s or later: %d" % (cutoff, len(current)))
+if not dates:
+    print("no audit record exists; the review is owed")
+    raise SystemExit(1)
+if not current:
+    print("newest record %s falls outside the %d-day interval; the review "
+          "is owed" % (dates[-1], INTERVAL_DAYS))
     raise SystemExit(1)
 EOF
 ```
 
 Pass condition: the command declares two counts — how many audit records
-exist, and how many of them cover the previous release — and exits zero.
+exist, and how many of them fall inside the interval — and exits zero.
 Both MUST be non-zero, and each way of failing reaches a non-zero status
-beside the line that explains it. A record count of zero is a
-failure rather than an empty tree, since a project reaching this check
-runs the audit, so no record means none was written. A version the check
-cannot read is a failure and never an exemption, and so is a missing
-previous tag: with nothing to compare against, a record of any age would
-otherwise satisfy the comparison.
+beside the line that explains it. A record count of zero is a failure
+rather than an empty tree, since a project keeping the directory runs the
+audit, so no record means none was written. An interval the check cannot
+read is a failure and never an exemption.
 
-With the release left empty the command reports that the check does not
-apply, on exit status 3.
+With no audit directory the command reports that the project runs no
+periodic review, on exit status 3.
 
 ### Projects with a version manifest
   9. `git checkout -b chore/release-vX.Y.Z`

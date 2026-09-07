@@ -59,6 +59,10 @@ alters no template carries no entry.
   however consequential
 - The end-of-session audit's ADR item states that same test, replacing the
   narrower list it carried
+- A periodic project-wide review is owed when the newest record falls
+  outside the project's declared interval, not when a release moves the
+  minor or major version. The interval is a floor under the on-demand
+  triggers and is declared once
 
 ## [2.85.0] - 2026-09-07
 
