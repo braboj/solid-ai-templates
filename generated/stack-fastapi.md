@@ -9345,6 +9345,12 @@ project fails there, where nobody wrote it and nobody can debug it.
   that reached zero files and a command that found zero violations print
   the same thing. Report the count of inputs examined. The same rule for
   an assertion inside a test suite is `testing-negative-assertion-coverage`
+- A check that has read its whole corpus MUST report every finding it
+  holds before it exits. Stopping at the first turns one review into as
+  many runs as there are offenders, and the operator learns the size of
+  the problem only by fixing it one item at a time. Where the check
+  genuinely cannot continue past a finding, it MUST say so, or the one
+  it names reads as the only one there is
 - Where a check states both a verdict and a reading, which of its counts
   carry the verdict and which are for the reader it escalates to is
   governed by `quality-cross-validation`, together with the rule that a
@@ -9897,17 +9903,20 @@ exception, it has skipped the seam.
 # Replace <run> with the project's own way of executing one example
 # file: python "$f", node "$f", go run "$f".
 count=0
+failed=0
 for f in examples/*; do
   count=$((count + 1))
-  <run> "$f" || { echo "example failed: $f"; exit 1; }
+  <run> "$f" || { echo "example failed: $f"; failed=$((failed + 1)); }
 done
-echo "examples executed: $count"
+echo "examples executed: $count, failed: $failed"
+[ "$failed" -eq 0 ]
 ```
 
-  Pass condition: the loop exits zero, and the count it prints is at
-  least one. A count of zero means the glob matched nothing, so the leg
-  ran no example and reported success -- report what was inspected, not
-  only what failed
+  Pass condition: the command exits zero, the failure count it prints is
+  zero, and the executed count is at least one. A count of zero means the
+  glob matched nothing, so the leg ran no example and reported success --
+  report what was inspected, not only what failed. The loop runs every
+  example before it exits, so one broken example does not hide the next
 
 
 <!-- templates/stack/python-lib.md -->

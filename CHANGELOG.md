@@ -21,6 +21,17 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- A check that has read its whole corpus MUST report every finding before
+  it exits, rather than stopping at the first and turning one review into
+  as many runs as there are offenders
+
+### Changed
+
+- The examples smoke runner counts failures and exits once, so one broken
+  example no longer hides the rest
+
 ## [2.86.0] - 2026-09-07
 
 ### Added
