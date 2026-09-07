@@ -35,6 +35,12 @@ alters no template carries no entry.
 
 ### Changed
 
+- The module-split rule states its precondition: the untouched-suite oracle
+  certifies a move, and a seam running through a class is a design change to
+  be sequenced before the split, not certified by it
+- A split also breaks tests that read module identity — a class's reported
+  module, a non-recursive submodule walk, the package file — which fail by
+  examining an empty set, so search for them first
 - A decision record is owed when a decision changes what a user of the
   thing observes without reading the repository's internals. Prose style,
   tool choice, release procedure, naming and file layout no longer qualify,
