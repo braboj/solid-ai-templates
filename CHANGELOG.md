@@ -32,6 +32,10 @@ alters no template carries no entry.
 
 ### Changed
 
+- Updating a branch that is behind `main` re-derives nothing, so the
+  regeneration and its staleness comparison run again after the update —
+  git reports `MERGEABLE` while the artifact is built from a tree missing
+  the other branch's sources
 - The examples smoke runner counts failures and exits once, so one broken
   example no longer hides the rest
 
