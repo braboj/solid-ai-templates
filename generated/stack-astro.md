@@ -4753,6 +4753,47 @@ reported" a finding about the check rather than about the fixture.
 
 ---
 
+## A detector reading prose is controlled against the style guide
+[ID: testing-detector-style-forms]
+
+`testing-control-corpus-moves` asks a control to prove the fixture entered
+the corpus, which is a question about reach. A detector whose corpus is
+PROSE has a second question: whether its pattern matches the renderings
+the prose actually takes. Both rules can be correct — the one the
+detector enforces and the style rule that shapes the text — and combine
+into a blind spot, because each was written without the other in view. A
+detector defeated this way runs clean over a tree that violates it, and a
+clean run and an absent check look identical.
+
+- A detector whose corpus is prose MUST be controlled against the forms
+  the project's own style rules produce — the wrap column, the numeral
+  convention, the heading case, the dash and quote characters — and not
+  only against the form the author had in mind when writing the pattern
+- The style guide is a written adversary, so the control set is
+  enumerated rather than guessed: read the style rules, and plant one
+  fixture per rule that can re-render the thing the detector forbids
+- Where the style guide sets a wrap column, a construct spanning more
+  than one word MUST be matched over the paragraph rather than the line.
+  Line-anchored matching is the default, and the wrap rule is what
+  defeats it
+- A control's plant MUST take a form the check actually inspects. A
+  detector that fingerprints bullet lines is not exercised by a plant
+  written as a prose paragraph: the run comes back clean, and that reads
+  as the check holding rather than as the plant missing it
+- Where the detector and the style rule are both correct, the pattern is
+  what changes. Rewriting the prose to suit the detector fixes one
+  instance and leaves every future rendering unmatched
+
+Measured on two checks that shipped defeated: one requiring a command to
+sit in a fenced block matched a phrase and the command on one line, and
+an 88-column wrap rule put them on separate lines; one requiring a figure
+to come from a generator matched a digit, and a rule spelling numerals
+under ten made `Eight files` invisible to it. Neither rule was wrong and
+both checks were blind.
+
+---
+
+
 ## A remedy naming another check is a claim about that check
 [ID: testing-remedy-cross-reference]
 
