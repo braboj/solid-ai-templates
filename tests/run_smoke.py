@@ -2173,6 +2173,56 @@ def check_sys_16():
 
     return seen.failures() + failures, seen.notes()
 
+# ---------------------------------------------------------------------------
+# SYS-17 -- every registered check names a spec document that exists
+# ---------------------------------------------------------------------------
+
+# The templates gate this class of reference for the things they ship: a
+# manifest entry pointing at a missing file fails, and so does a DEPENDS ON.
+# The suite's own references had no equivalent, so the registry could name a
+# document nobody wrote and the run stayed green. The information needed to
+# catch it was already in the registry, beside the function the runner does
+# resolve.
+
+def check_sys_17():
+    failures = []
+    seen = Inspected()
+
+    spec_dir = os.path.join(ROOT, "tests", "specs")
+    on_disk = set()
+    for name in os.listdir(spec_dir):
+        if name.endswith(".md"):
+            on_disk.add(os.path.splitext(name)[0])
+
+    with io.open(os.path.join(ROOT, "tests", "INDEX.md"),
+                 encoding="utf-8") as handle:
+        index = handle.read()
+
+    seen.count("checks registered", CHECKS)
+    seen.count("spec documents on disk", on_disk)
+
+    for check in CHECKS:
+        spec = check.get("spec")
+        if not spec:
+            failures.append(
+                f"  {check['id']}: registered with no spec field"
+            )
+            continue
+        if spec not in on_disk:
+            failures.append(
+                f"  {check['id']}: spec {spec} names no document under "
+                f"tests/specs/ -- a registry entry can cite a document "
+                f"nobody wrote and the run stays green"
+            )
+        if spec not in index:
+            failures.append(
+                f"  {check['id']}: spec {spec} has no row in "
+                f"tests/INDEX.md, which is where a reader goes for the "
+                f"list of what the suite checks"
+            )
+
+    return seen.failures() + failures, seen.notes()
+
 CHECKS = [
     {"id": "SYS-01", "spec": "SAIT-SMK-SYS-01-001A",
      "title": "DEPENDS ON paths resolve to existing files", "fn": check_sys_01},
@@ -2245,6 +2295,10 @@ CHECKS = [
      "title": "ADR frontmatter matches the ADR-010 schema", "fn": check_adr_01},
     {"id": "E2E-01", "spec": "SAIT-SMK-E2E-01-001A",
      "title": "All cases.py paths resolve to existing files", "fn": check_e2e_01},
+
+    {"id": "SYS-17", "spec": "SAIT-SMK-SYS-17-001A",
+     "title": "Every registered check names a spec document that exists",
+     "fn": check_sys_17},
 ]
 
 

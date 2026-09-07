@@ -35,8 +35,10 @@ restated in each.
 | `SAIT-SMK-SYS-10-001A` | SMK | P2 | A quoted DEPENDS ON in prose is not a declaration |
 | `SAIT-SMK-SYS-11-001A` | SMK | P2 | Prose ID references resolve in every chain carrying the file |
 | `SAIT-SMK-SYS-13-001A` | SMK | P1 | The instructed manual walk reaches what the resolver carries |
+| `SAIT-SMK-SYS-14-001A` | SMK | P1 | resolve.py accounts for every argument it is given |
 | `SAIT-SMK-SYS-15-001A` | SMK | P1 | A stack outside the exempt layers resolves the security tier |
 | `SAIT-SMK-SYS-16-001A` | SMK | P1 | A stack category's context tier moves only on purpose |
+| `SAIT-SMK-SYS-17-001A` | SMK | P2 | Every registered check names a spec document that exists |
 | `SAIT-SMK-TPL-04-001A` | SMK | P1 | All EXTEND and OVERRIDE directives reference existing IDs |
 | `SAIT-INT-TPL-01-001A` | INT | P0 | DEPENDS ON chain assembles a complete rule set |
 | `SAIT-INT-TPL-02-001A` | INT | P1 | EXTEND adds rules without removing base rules |
@@ -48,6 +50,7 @@ restated in each.
 | `SAIT-SMK-TPL-09-001A` | SMK | P1 | No empty [ID:] sections |
 | `SAIT-SMK-TPL-10-001A` | SMK | P1 | At most one OVERRIDE of an ID per resolved chain |
 | `SAIT-SMK-ADR-01-001A` | SMK | P1 | ADR frontmatter matches the ADR-010 schema |
+| `SAIT-SMK-E2E-01-001A` | SMK | P2 | All cases.py paths resolve to existing files |
 | `SAIT-INT-MNF-01-001A` | INT | P0 | All manifest entries reference valid paths and IDs |
 | `SAIT-INT-MNF-02-001A` | INT | P0 | All stacks resolve to valid, non-empty file lists |
 | `SAIT-INT-MNF-03-001A` | INT | P0 | All resolved chains include core tier files |
