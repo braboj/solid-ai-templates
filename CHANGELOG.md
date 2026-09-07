@@ -26,6 +26,9 @@ alters no template carries no entry.
 - A check that has read its whole corpus MUST report every finding before
   it exits, rather than stopping at the first and turning one review into
   as many runs as there are offenders
+- An exemption is a holding position, not an outcome. Where an example was
+  exempted because it needs a peer, the runnable demonstration moves to the
+  examples directory and the exemption retires in the same change
 
 ### Changed
 

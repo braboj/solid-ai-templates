@@ -8375,6 +8375,11 @@ one leaves a gate behind.
   deleted and the case is checked again. A narrowed comparison leaves no
   record that the property was ever checked, so nothing prompts anyone to
   restore it
+- An exemption is a holding position, not an outcome. It stops the gate
+  reporting the instance and changes nothing about the instance, so the
+  gate is now green over the defect it was added to catch. An entry whose
+  remedy is known MUST be retired by applying it, not carried forward
+  because the list is honest and documented
 - When the failing case is a genuine defect and the fix is small, fix it. A
   check narrowed to accommodate one known defect is a permanent price paid
   for a temporary problem
@@ -9917,6 +9922,33 @@ echo "examples executed: $count, failed: $failed"
   glob matched nothing, so the leg ran no example and reported success --
   report what was inspected, not only what failed. The loop runs every
   example before it exits, so one broken example does not hide the next
+
+---
+
+## Exemptions
+[ID: base-examples-exemption]
+
+A project that also gates the examples inside its docstrings meets
+`quality-gates-retrofit-ratchet` immediately. An example that needs a peer
+— a socket, a database, a broker — fails wherever it runs, including in the
+hands of the reader it was written for, and exempting it one instance at a
+time is the correct first move.
+
+- An exemption from an example gate is a holding position, not an outcome.
+  The exempted example is still one the reader cannot run; all that changed
+  is that the suite stopped saying so
+- Where the reason is that the example needs a peer, the runnable
+  demonstration MUST move into the examples directory — which may start the
+  peer, and whose files CI already executes — and the exemption MUST be
+  retired in the same change
+- The docstring then names that example rather than carrying a shortened
+  copy of it. Putting peer lifecycle inside a docstring pays the startup on
+  every run and repeats it once per documented class
+- Retiring an exemption MUST remove it from both places it is recorded: the
+  runner's configuration and whatever states the reason for each entry
+- The machinery MAY stay behind an empty list. The next example that needs
+  a peer is a question of when, not whether
+
 
 
 <!-- templates/stack/python-lib.md -->
