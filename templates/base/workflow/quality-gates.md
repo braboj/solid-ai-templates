@@ -1225,6 +1225,14 @@ project fails there, where nobody wrote it and nobody can debug it.
   and the check never runs. Exit status is the same either way, so read
   which layer raised; corrupting a value rather than a structure gets
   past the earlier ones
+- A control MUST also force the path under test to run. Satisfying the
+  precondition is not the same as exercising it: a tool that writes only
+  when its output differs does nothing to a file already in its target
+  state, so the run reports clean having never executed, and that reads as
+  the tool being innocent of what it is suspected of. Put the subject in a
+  state the path must act on — stale the input the tool compares against,
+  clear the cache it would reuse, invalidate the credential it would still
+  accept — then confirm from the run's own output that it acted
 - The step that plants a break MUST itself be verified. Planting is an
   edit, and an edit that matched nothing exits zero and prints nothing, so
   a break that never landed and a check that never fired produce identical
@@ -1238,6 +1246,19 @@ project fails there, where nobody wrote it and nobody can debug it.
   from a build output or a cache. A deletion confirmed on disk leaves an
   index-reading check green, which reads as the check being blind: the
   comfortable conclusion, and nothing later contradicts it
+- The landing assertion MUST name the entity it mutated and compare that
+  entity's value on both sides. An assertion that merely finds the planted
+  value somewhere in the artifact passes when a sibling already carried it,
+  so it holds whether or not the edit landed — the weakest link in a
+  control is the step meant to prove it happened. Read the field, the row
+  or the key by name before and after; a search across the whole artifact
+  is not that read
+- Stage or commit before running a control that mutates the tree. The
+  revert step is usually a restore from the index, which discards unstaged
+  work without saying so, and an uncommitted edit to the file under test is
+  exactly what it destroys. Any revert reading a recorded state rather than
+  a copy taken at the start of the control has this property; take the copy
+  where the work is not yet recorded
 - A fix with no observable effect on the tree it lands in MUST ship a
   check against a synthetic subject reproducing the condition. A
   preventive fix changes nothing measurable where nothing currently

@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- A negative control MUST force the path under test to run, name the entity
+  its landing assertion compares on both sides, and stage the tree before
+  mutating it
+
 ### Changed
 
 - A decision record is owed when a decision changes what a user of the
