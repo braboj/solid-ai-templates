@@ -454,6 +454,15 @@ replace the placeholder line in `body` before calling `run_block`. The
 placeholder is not always what the issue or the prose calls it:
 `MILESTONE = None` rather than an empty string cost a first attempt here.
 
+Mutate the check's INPUT, never the string its disposition uses to find
+it. The two are the same text more often than it looks: the CRLF check is
+located by the extension list it filters on, so emptying its corpus by
+editing that list stops the registry from finding the block at all. The
+run then reports drift between the registry and the templates — a
+different defect, in a different file, that says nothing about the check.
+Empty the corpus from the other end instead, with a pathspec or a glob
+the `find` string does not overlap.
+
 Changing what a check **exempts** is a documentation edit as well as a
 code edit. Sweep the documents for the check's name before merging and
 re-read every hit against the new exemption set: the check's own tests
@@ -719,7 +728,12 @@ gate just named.
 
 Each gate below reads its parameter from the environment as well as from
 the constant, so `RELEASE=v2.83.0 py tests/run_conformance.py` runs the
-whole set in one pass without editing a template. The `Release gates`
+whole set in one pass without editing a template. The variable is not
+always spelled like the constant it fills: the milestone-coverage gate
+reads `RELEASE_MILESTONE`, and setting `MILESTONE` instead leaves it
+reporting that the release is not scoped to a milestone — the one answer
+that looks like a clean pass. Read the constant's own line before
+exporting. The `Release gates`
 workflow does exactly that on every tag push, resolving the milestone
 from the tag's `v<major>.<minor>` prefix, and can be dispatched with the
 version as an input to run them at the release commit.
@@ -733,8 +747,8 @@ below exist to prevent. Run them here anyway.
 2. Confirm the inverse — every issue closed since the previous tag
    carries the milestone being released. Step 1 reads the milestone
    and cannot see work merged without one. Run the milestone-coverage
-   check in `templates/base/core/git.md`, setting its `MILESTONE` to the
-   milestone being released. Left unset it reports that the check does
+   check in `templates/base/core/git.md`, exporting `RELEASE_MILESTONE`
+   as the milestone being released. Left unset it reports that the check does
    not apply — correct for a routine release on a project that scopes
    some cuts and not others, and a silent pass here, where every cut is
    milestoned
