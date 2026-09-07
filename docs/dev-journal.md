@@ -7131,3 +7131,78 @@ decisions argue past it)
   to the chain's audit and then appended a nine-item paraphrase of it —
   which `agents.md` forbids in terms. The delegation above read as current
   while the paraphrase below held every stale item
+
+---
+
+## 2026-09-07 — Rule parity between what the repository applies and what it ships
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:**
+- Shipped three negative-control rules from `CLAUDE.md` section 6.2 into
+  `base-quality-gates`: a control forces the path under test to run, its
+  landing assertion names the entity it mutated and compares that entity's
+  value on both sides, and the tree is staged before a control mutates it
+- Added `testing-detector-style-forms` — a detector whose corpus is prose
+  is controlled against the renderings the project's own style rules
+  produce, not only the one its author had in mind
+- Added `testing-suite-precondition-refusal` — a suite whose own
+  precondition is absent refuses the run and names the missing thing once,
+  rather than reporting a dependency gap as N findings about the tree
+- Stated the module-split rule's precondition: the untouched-suite oracle
+  certifies a move, a seam running through a class is a design change to
+  sequence before the split, and a suite reading module identity breaks by
+  examining an empty set
+- Added an eighth shape to issue verification — a cited version identifier
+  that still resolves and is no longer current
+- Extended the closing-keyword rule to cover quoting it, and added
+  `quality-gates-length-bound-exemptions`
+- Added SYS-17 (every registered check names a spec document that exists
+  and is indexed) and wrote the three specs it found missing
+- Reports are named for the tree they measured, not only the minute
+- Added SYS-18 and ADR-044: the quality-gate tier's membership is declared
+  by stack category, and `stack-express`, `stack-nestjs` and
+  `stack-nodejs-lib` now resolve it
+- Recorded both governed tiers in `docs/SPEC.md`, which documented the
+  composition model and had never carried either membership policy
+
+**PRs merged:** #1612 (controls), #1613 (prose detector), #1614 (suite
+precondition), #1615 (split oracle), #1616 (superseded citation), #1617
+(closing keyword), #1618 (length bound), #1619 (spec references), #1620
+(report names the tree), #1621 (tier membership), #1622 (SPEC)
+
+**Issues closed:** #1574, #1493, #1604, #1494, #986, #1602, #1215, #1601,
+#1578, #1565, #1417, #1588
+
+**Issues created:** #1623 (a single-commit pull request loses the issue
+number the convention puts in its subject)
+
+**Decisions:**
+- ADR-044. Declaring which stacks carry a rule family changes what a chain
+  resolves, which is what the observability threshold asks for. The other
+  ten pull requests added rules to files their chains already carried and
+  owed no record
+- The quality-gate tier admits the three stacks that fit and exempts the
+  two that do not, with the context tier as the recorded reason. Adding it
+  costs 81K characters: `stack-htmx` reaches 416K and `stack-c-embedded`
+  392K against the 385K a 128K window leaves, so admitting them would
+  change which models can run those stacks
+
+**Lessons:**
+- A filed issue's premise can be wrong rather than stale. #1574 tabulated
+  six of seven control rules as unshipped; four already shipped, and both
+  templates carrying three of them predate the v2.83.0 measurement the
+  issue states. Re-measuring first cut the work in half and moved one row
+  to the issue that argued it better
+- The gate shipped two hours earlier caught the change that followed it.
+  SYS-17 failed SYS-18 for having no spec document, which is the whole
+  claim of the check that a registry can name a document nobody wrote
+- A control on this repository's own suite is cheap and it moved. Every
+  control this session asserted its mutation landed by naming the entity
+  and reading its value on both sides — spec documents 58 to 57, index
+  rows 1 to 0, a `depends_on` count 1 to 0 — which is the rule shipped in
+  the session's first pull request, applied to the rest of it
+- The audit found what the work did not. Item 8 asked whether a
+  composition-model change is reflected in the specification; the answer
+  was no for the new tier and no for the security tier that has been
+  enforced since it shipped
