@@ -71,8 +71,8 @@ have landed before its result was read.
 
 1. **The defect that motivated the check.** Run against the tree as it
    stood, the check named three unresolved references — `SYS-14`,
-   `E2E-01` and its own `SYS-17` — while the suite reported 31 checks
-   and 0 failures. Observed 2026-09-07
+   `E2E-01` and its own `SYS-17` — while the rest of the suite reported
+   no failures at all. Observed 2026-09-07
 2. **A renamed document.** Moving `SAIT-SMK-SYS-16-001A.md` aside MUST
    fail. Observed 2026-09-07: the on-disk count moved 58 to 57 and the
    check named `SYS-16`, so the corpus is confirmed to have changed
