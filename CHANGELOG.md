@@ -38,6 +38,9 @@ alters no template carries no entry.
 - The closing-keyword rule covers quoting the trap, not only writing it: a
   post-mortem reproducing the offending sentence closes the issue again,
   so break the adjacency when quoting
+- A gate bounding a length discovers its exemptions slice by slice rather
+  than deriving them on adoption day, and each is expressed as the shape
+  that makes the count external, never as a path
 
 ### Changed
 
