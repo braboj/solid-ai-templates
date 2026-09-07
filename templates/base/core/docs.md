@@ -219,14 +219,16 @@ wrong before changing either.
 
 ## Decision logs
 
-- A consequential, durable architectural choice with meaningful alternatives
-  MUST have an Architecture Decision Record (ADR) in `docs/decisions/` when
-  future maintainers need its tradeoffs to safely reconsider it. Examples:
-  ownership boundaries, compatibility contracts, or a major dependency strategy.
-- Routine naming, formatting, directory creation, document moves, check-output
-  refinements, and compliance repairs belong in the issue/PR and current docs.
-  They need no ADR unless their consequences meet the threshold above; no
-  separate justification for not writing an ADR is required.
+- A decision MUST have an Architecture Decision Record (ADR) in
+  `docs/decisions/` when it changes something a user of the thing can observe
+  without reading the repository's internals — a library's public API and wire
+  behaviour, a service's compatibility contract, a template system's
+  composition model. Nothing else MUST have one.
+- Prose style, tool choice, release procedure, naming, file layout, directory
+  creation, document moves, check-output refinements and compliance repairs
+  end in the pull request and the current docs, however consequential or
+  durable they are. No separate justification for declining a record is
+  required.
 - Each ADR documents: context, decision, alternatives considered, consequences
 - Each ADR records one coherent architectural decision. Related ownership,
   layout, and compatibility choices MAY share it across several issues or PRs.

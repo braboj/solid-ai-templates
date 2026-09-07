@@ -21,6 +21,13 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Changed
+
+- A decision record is owed when a decision changes what a user of the
+  thing observes without reading the repository's internals. Prose style,
+  tool choice, release procedure, naming and file layout no longer qualify,
+  however consequential
+
 ## [2.85.0] - 2026-09-07
 
 ### Fixed
