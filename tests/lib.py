@@ -95,6 +95,39 @@ def read(rel_path):
         return f.read()
 
 
+def tree_id():
+    """Name the tree a run measured, or None where there is no naming it.
+
+    A report records when it ran, and a time is not a tree: two runs
+    minutes apart can straddle a merge and their names differ only by the
+    minute. The parent commit names the tree only while the tree IS that
+    commit, so a dirty working tree is marked rather than attributed --
+    the common case here, since a suite is run after an edit and before
+    the commit. Where there is no repository or no git at all, a run is
+    still a run: the caller falls back to the plain name.
+    """
+    def git(*args):
+        return subprocess.run(
+            ["git", "-C", ROOT] + list(args),
+            capture_output=True, text=True,
+        )
+
+    try:
+        head = git("rev-parse", "--short", "HEAD")
+        if head.returncode != 0:
+            return None
+        status = git("status", "--porcelain")
+        if status.returncode != 0:
+            return None
+    except (OSError, ValueError):
+        return None
+
+    short = head.stdout.strip()
+    if not short:
+        return None
+    return short + ("-dirty" if status.stdout.strip() else "")
+
+
 def write_report(run_results, started_at, runner_name, columns):
     """Write a timestamped Markdown report to tests/reports/.
 
@@ -108,7 +141,9 @@ def write_report(run_results, started_at, runner_name, columns):
     os.makedirs(reports_dir, exist_ok=True)
 
     ts = started_at.strftime("%Y-%m-%dT%H-%M-%S")
-    report_path = os.path.join(reports_dir, f"{ts}-{runner_name}.md")
+    tree = tree_id()
+    suffix = f"-{tree}" if tree else ""
+    report_path = os.path.join(reports_dir, f"{ts}-{runner_name}{suffix}.md")
 
     passed  = sum(1 for r in run_results if r["status"] == PASS)
     failed  = sum(1 for r in run_results if r["status"] == FAIL)
@@ -131,6 +166,7 @@ def write_report(run_results, started_at, runner_name, columns):
         f"# {runner_name.capitalize()} Test Report",
         "",
         f"**Date**: {started_at.strftime('%Y-%m-%d %H:%M:%S')}  ",
+        f"**Tree**: {tree or 'not a repository'}  ",
         f"**Runner**: run_{runner_name}.py  ",
         f"**Tests run**: {total}  ",
         f"**Elapsed**: {elapsed:.1f}s",
