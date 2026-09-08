@@ -63,8 +63,15 @@ CHECKS = [
      "title": "Community health files resolve to one location each",
      "do": RUN, "expect": ["nonzero"]},
 
-    {"file": "base/core/docs.md", "find": "decision records inspected",
+    {"file": "base/core/docs.md",
+     "find": "the naming convention drifted",
      "title": "ADR frontmatter schema", "do": RUN, "expect": ["nonzero"]},
+
+    {"file": "base/core/docs.md", "find": "over a bound and not frozen",
+     "title": "Decision-record prose stays within the declared bounds",
+     "do": RUN,
+     "expect": ["line", "line", "nonzero", "nonzero", "nonzero",
+                "nonzero", "zero", "zero"]},
 
     {"file": "base/core/docs.md", "find": "changelog entries measured",
      "title": "Changelog entries stay within the word bound",
