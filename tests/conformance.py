@@ -145,7 +145,7 @@ CHECKS = [
     {"file": "base/core/git.md",
      "find": "closing issues the subject does not name",
      "title": "A single-commit branch names its issue in the subject",
-     "do": RUN, "expect": ["nonzero", "nonzero", "zero"]},
+     "do": RUN, "expect": ["nonzero", "nonzero", "nonzero", "zero"]},
 
     {"file": "base/core/git.md", "find": "ready but unmerged",
      "title": "Release ordering against other ready pull requests",

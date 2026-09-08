@@ -27,6 +27,13 @@ alters no template carries no entry.
   environment it ships into, and that run MUST reach a verdict. One that
   declines on the change it was written for hides in a green pipeline
 
+### Fixed
+
+- The single-commit subject check reads the commit message rather than the
+  host's abbreviated headline. That field stops at 69 characters, so a
+  subject the convention allows to reach 79 arrived without the issue number
+  at its end
+
 ## [2.87.0] - 2026-09-07
 
 ### Added
