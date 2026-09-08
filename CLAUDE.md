@@ -422,7 +422,14 @@ Run `py tests/run_smoke.py` before every PR. It checks:
 
 ### 6.2 During the session
 
-- Run `py tests/run_smoke.py` after any template or manifest change
+- Run `py tests/run_smoke.py` after any template or manifest change, and
+  `py tests/run_conformance.py` after any edit to a template's prose. The
+  two runners read different things: smoke checks structure and
+  resolution, while every rule the templates state about their own text —
+  line width, a check stated outside a fence, a decision record's prose
+  bounds — is enforced from conformance. A prose edit smoke passes can
+  still be red in CI: one such edit put a 127-character line into every
+  generated chain, 36 findings, with smoke green over it
 - Adding a fenced `bash`/`python` block to a template MUST add its
   disposition in `tests/conformance.py` — run it here, or skip it with
   the reason it does not apply. `py tests/run_conformance.py` fails on a
