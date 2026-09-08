@@ -601,62 +601,29 @@ clean gate.
 
 ## Groom the backlog
 
-Run this before scoping a cut. Nothing surfaces the backlog on its own —
-an unmilestoned issue is triaged, not untriaged, so no view reports it and
-no gate asks about it.
+Run this before scoping a cut. The procedure and the reasons behind its
+order are in `templates/base/workflow/issues.md`, which this repository
+consumes; what follows is only what is particular here.
 
-1. Re-read the whole unmilestoned set. Milestoned means planned into that
-   cut; unmilestoned means backlog, and the only way to see it is to list
-   it:
-   ```bash
-   gh issue list --state open --limit 200 --json number,title,milestone --jq '.[] | select(.milestone == null) | [.number, .title] | @tsv'
-   ```
-2. **Verify each issue's claims against the tree before grooming, not
-   after.** An issue is written against the tree as it stood on its
-   filing date, and grooming a claim that has since moved plans work that
-   does not exist. Measure the claim, then annotate the issue with what
-   the measurement found and its date. Measure it with the extractor the
-   check itself uses, not one written for the measurement: a looser scan
-   counts occurrences the check never sees — a directive quoted inside a
-   fenced block, a name in prose — and the plan is then sized against a
-   corpus nothing acts on
-3. **Read the whole issue before judging whether it earns its change.** A
-   ticket's measurements, its reach analysis and the data it carries from a
-   consuming project sit below its opening paragraphs, so a verdict formed
-   from the first screen is formed from the part that argues least. Measured
-   2026-09-01: four tickets were dispositioned as low-value from their first
-   380 characters and all four verdicts were wrong — one carried 22 measured
-   breaches across 13 of 16 records in a consumer repository, another
-   reproduced a gate exiting zero over a deleted marker
-4. Cluster by target file. Issues touching one section are one pull
-   request rather than several, and the clustering is visible only once
-   the claims are verified — two issues can name the same file and want
-   changes that do not compose
-5. Scope the cut from the clusters, then create the milestone. A theme
-   falls out of what the groom found; choosing a theme first selects
-   issues to fit it. The title is `vA.B.C — <theme>` and the description
-   enumerates the issues; the release tag message quotes that theme, so
-   a milestone titled with a bare version leaves the tag with nothing to
-   quote
-6. Assign the issues to it, and read the milestone's open count back.
-   Creating a milestone and assigning its issues are two calls, and a
-   milestone whose description enumerates five issues while holding none
-   reads as scoped from every view that shows the title. Nothing else
-   catches it: the release gate reads the issues a milestone holds, so an
-   empty one passes
+List the backlog — an unmilestoned issue is triaged, not untriaged, so no
+view reports it:
 
-Grooming produces annotations, closures and a milestone, not scope edits.
-An issue whose measurement shows it is narrower, wider or wrong as filed is
-annotated with that finding and left open — restating the scope is the
-implementer's step, and `base-review` covers the shapes it takes.
+```bash
+gh issue list --state open --limit 200 --json number,title,milestone --jq '.[] | select(.milestone == null) | [.number, .title] | @tsv'
+```
 
-The one edit a groom is uniquely placed to make is a closure. An issue
-whose premise a merged change has already settled has nothing left to
-implement, and annotating it leaves the note waiting for an implementer who
-will never come. The two are told apart by what the measurement found: the
-claim moved and the work exists in changed form, so annotate; or the
-premise was answered, so close with the evidence. Seven such closures have
-happened across two grooms while this paragraph read as forbidding them.
+- Verify a claim with the tool the claim is about: `py tests/run_smoke.py`
+  for a structural claim, `py tools/resolve.py` for a reach or chain claim,
+  `py tools/audit_redundancy.py` for a duplication claim. Where the claim
+  counts fenced blocks, use `tests/conformance.py`'s own extractor rather
+  than a grep over `templates/` — a grep counts occurrences no runner reads
+- Measure reach in roots, with `py tools/resolve.py --roots`, before siting
+  a rule that could go in either of two templates
+- Title the milestone `vA.B.C — <theme>`. The annotated tag message quotes
+  the theme, so a bare version leaves the tag with nothing to quote
+- The merged-work sweep is step 9 of the release sequence in
+  `base/core/git.md`; `py tests/run_conformance.py` runs it here. Run it at
+  the groom too, where a hit is cheapest to act on
 
 Where a milestone already exists but its theme describes work that has not
 happened, renumber it rather than dissolving it. A scoped milestone carries
@@ -667,50 +634,7 @@ assign the closed issues to that. Met on 2026-09-03: `v2.73` was themed for
 six unstarted issues while five unrelated ones had already merged, and one
 issue had been put in it solely to satisfy the release gate.
 
-### Sweep merged commits for still-open issues
-
-An issue whose work merged while it stayed open is invisible to every
-other gate: the release gate inspects only issues closed **by** merged
-pull requests, so a manually-closed issue — or one nothing ever closed —
-never reaches it. Run this during the groom.
-
-```bash
-py - <<'EOF'
-import json, re, subprocess
-
-subjects = subprocess.run(
-    ["git", "log", "--format=%s"], capture_output=True, text=True).stdout.splitlines()
-print("commit subjects scanned: %d" % len(subjects))
-
-reffed = set()
-for s in subjects:
-    reffed.update(re.findall(r"[(]#([0-9]+)[)]", s))
-print("distinct issue numbers referenced: %d" % len(reffed))
-
-raw = subprocess.run(
-    ["gh", "issue", "list", "--state", "open", "--limit", "500", "--json", "number"],
-    capture_output=True, text=True).stdout
-open_now = {str(i["number"]) for i in json.loads(raw)}
-print("open issues: %d" % len(open_now))
-
-hits = sorted(reffed & open_now, key=int)
-print("referenced by a merged commit and still open: %d" % len(hits))
-for h in hits:
-    print("  #%s" % h)
-EOF
-```
-
-Pass condition: the check prints how many commit subjects it scanned, how
-many issue numbers it found in them, and how many open issues it compared
-against, before printing the hits. All three counts are load-bearing — a
-sweep that reaches nothing and a sweep that finds nothing print the same
-empty result otherwise. A scanned count of zero is a failure, not a clean
-run.
-
-Each hit is a decision, not a defect: the work may have merged under a
-different issue, or the issue may name more than the commit closed. Close
-it or record why it stays open. One instance stayed open across eleven
-releases before this sweep existed.
+---
 
 ## Release a new version
 
