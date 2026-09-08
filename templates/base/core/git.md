@@ -224,13 +224,14 @@ remaining commits are silently lost.
   case, so the merged subject still resolves to the work, and there is no
   issue number in existence to demand
 - Assert it before the merge, against the pull request rather than the
-  checkout, and against the commit message rather than any field the
-  host renders for display — an abbreviated headline drops the tail of
-  a long subject, which is where the convention puts the number. What the host squashes with is a property of the pull request,
-  and on a pull-request event the checkout is a merge commit whose local
-  range holds one commit more than the branch does — a check counting
-  there reports that a single-commit branch is a two-commit one, and says
-  it does not apply on exactly the branch it exists for:
+  checkout, and against the commit message rather than any field the host
+  renders for display — an abbreviated headline drops the tail of a long
+  subject, which is where the convention puts the number. What the host
+  squashes with is a property of the pull request, and on a pull-request
+  event the checkout is a merge commit whose local range holds one commit
+  more than the branch does — a check counting there reports that a
+  single-commit branch is a two-commit one, and says it does not apply on
+  exactly the branch it exists for:
 
 ```bash
 py - <<'EOF'
@@ -320,12 +321,13 @@ EOF
 
   Pass condition: the command prints the pull request's commit count, how
   many issues it closes, how many characters of subject it read, and a
-  count of zero closing issues the subject does not name, then exits
-  zero. The length is there because the failure it replaced was a field
-  arriving shortened, which a verdict alone cannot show. Any line after those counts is a
-  finding. It exits 3 where there is nothing to assert — a branch of any
-  other size, a pull request closing no issue, or no pull request yet —
-  and refuses with a finding where it cannot read the pull request at all
+  count of zero closing issues the subject does not name, then exits zero.
+  The length is there because the failure it replaced was a field arriving
+  shortened, which a verdict alone cannot show. Any line after those
+  counts is a finding. It exits 3 where there is nothing to assert — a
+  branch of any other size, a pull request closing no issue, or no pull
+  request yet — and refuses with a finding where it cannot read the pull
+  request at all
 - SHOULD enable "automatically delete head branches" in repository
   settings to prevent stale branches from accumulating. It fires on
   merge only — a PR closed without merging leaves its branch behind
