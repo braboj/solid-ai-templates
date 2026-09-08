@@ -132,6 +132,48 @@ issue is fully triaged whether or not it is scheduled.
 
 ---
 
+## Grooming the backlog
+[ID: base-issues-groom]
+
+Nothing surfaces the backlog on its own, so a groom is a deliberate pass
+rather than a view somebody opens. What it produces is annotations,
+closures and a milestone. Restating an issue's scope is the implementer's
+step, not the groom's.
+
+- Verify each issue's claims against the tree BEFORE grooming it, never
+  after. An issue argues from the tree as it stood on its filing date, so
+  grooming a claim that has since moved plans work that does not exist.
+  Measure first, then annotate the issue with what the measurement found
+  and the date it was taken. Two grooms run this way changed four issues
+  between them and caught a cited command that does not exist, which had
+  been reading as a gate already in place
+- Measure with the extractor the check itself uses, not one written for
+  the measurement. A looser scan counts occurrences the check never sees —
+  a directive quoted inside a fenced block, a name in running prose — and
+  the cut is then sized against a corpus nothing acts on
+- Read the whole issue before judging whether it earns its change. A
+  ticket's measurements, its reach analysis and the data it carries from a
+  consuming project sit below its opening paragraphs, so a verdict formed
+  from the first screen is formed from the part that argues least. On one
+  pass, four tickets were dispositioned as low-value from their first 380
+  characters and all four verdicts were wrong
+- Cluster by target file, and only once the claims are verified. Issues
+  touching one section are one pull request rather than several, and two
+  issues can name the same file while wanting changes that do not compose
+- Scope the cut from the clusters, then create the milestone. A theme
+  falls out of what the groom found; choosing the theme first selects the
+  issues that fit it
+- Assign the issues to it and read the milestone's open count back.
+  Creating a milestone and filling it are two calls, and a milestone whose
+  description enumerates five issues while holding none reads as scoped
+  from every view that shows its title
+- Sweep for issues whose work merged while they stayed open. Nothing else
+  detects one: a gate reading the issues that merged pull requests closed
+  cannot see an issue closed by hand, or never closed at all. The runnable
+  form lives in `base-git`, together with what its counts have to show
+
+---
+
 ## Closing a duplicate
 [ID: base-issues-duplicate]
 

@@ -1943,11 +1943,17 @@ When NOT to close-and-resubmit:
      verifies that it did: each pull request is individually fine,
      omitting an entry breaks no gate, and the reviewer is reading a
      diff that has no changelog hunk whose absence they could notice
+  9. Verify that no issue whose work already merged is still open — the
+     check is below. The milestone-coverage check reads the issues that
+     merged pull requests closed, so an issue closed by hand, or never
+     closed at all, sits outside what it can see: the work ships inside
+     the release and the ticket outlives the tag. Run it during a backlog
+     groom as well, where the finding is cheapest to act on
 
 Which of these steps are enforced, audited one step at a time.
 Enforcement is not transitive between neighbours: a step's gate covers
 that step and says nothing about the one below it, however the sequence
-reads. Three of the eight carry no pass condition:
+reads. Three of the nine carry no pass condition:
 
 | Step | Enforced by |
 | --- | --- |
@@ -1959,6 +1965,7 @@ reads. Three of the eight carry no pass condition:
 | 6 | **nothing**, and it is the step to gate first |
 | 7 | the release-ordering check below |
 | 8 | the changelog-completeness check below. Conditional on the project keeping a changelog |
+| 9 | the merged-work sweep below |
 
 Step 6 is unenforced and unrecoverable, which is the combination the rule
 says to address first: its own text records that a tag on a public
@@ -2150,6 +2157,75 @@ line is the record that a routine release was cut deliberately without
 one. Distinguish it from a
 finding before running anything — a milestone-scoped release left at
 `None` reports "does not apply" and proves nothing.
+
+**The merged-work sweep** — step 9 of the sequence above. Run it from the
+repository root. It answers the opposite question from the milestone-coverage
+check: that one asks whether the issues merged pull requests closed carry the
+milestone, and this one asks whether any issue a merged commit names is open
+still. Neither substitutes for the other, because the issue this finds was
+never closed by a pull request and so never enters the other's input.
+
+```bash
+py - <<'EOF'
+import json, re, subprocess
+
+RUN = dict(capture_output=True, text=True, encoding="utf-8")
+
+log = subprocess.run(["git", "log", "--format=%s"], **RUN)
+if log.returncode != 0:
+    print("the commit log could not be read, so nothing was swept")
+    raise SystemExit(1)
+
+subjects = log.stdout.splitlines()
+print("commit subjects scanned: %d" % len(subjects))
+
+# An empty log is drift, not health: a subject format the pattern below
+# no longer matches produces the same silence as a clean history.
+if not subjects:
+    print("no commit subjects were scanned, so an empty result says "
+          "nothing about the backlog")
+    raise SystemExit(1)
+
+reffed = set()
+for subject in subjects:
+    reffed.update(re.findall(r"[(]#([0-9]+)[)]", subject))
+print("distinct issue numbers referenced: %d" % len(reffed))
+
+listed = subprocess.run(
+    ["gh", "issue", "list", "--state", "open", "--limit", "500",
+     "--json", "number"], **RUN)
+
+# `gh` prints its error body to stdout, so output is not evidence the
+# call succeeded. Refuse rather than compare against an empty list, which
+# reports every issue as closed.
+if listed.returncode != 0:
+    print("the open issues could not be read, so none was compared")
+    raise SystemExit(1)
+
+open_now = {str(issue["number"]) for issue in json.loads(listed.stdout)}
+print("open issues compared against: %d" % len(open_now))
+
+hits = sorted(reffed & open_now, key=int)
+print("named by a merged commit and still open: %d" % len(hits))
+for hit in hits:
+    print("  #%s" % hit)
+raise SystemExit(1 if hits else 0)
+EOF
+```
+
+Pass condition: the command prints how many commit subjects it scanned, how
+many distinct issue numbers it found in them and how many open issues it
+compared against, then a count of zero still open, and exits zero. All three
+input counts are load-bearing. A sweep that reached nothing and a sweep that
+found nothing print the same final line, so a scanned count of zero is a
+failure rather than a clean run, and so is a read of the open issues that
+did not succeed.
+
+Each hit is a decision rather than a defect: the work may have merged under
+a different issue, or the issue may name more than the commit closed. Close
+it with the evidence, or record in the body why it stays open. The cost of
+not having this is measured in releases, not in days — one instance stayed
+open across eleven of them.
 
 **The pipeline-history check** — step 5 of the sequence above. Name the
 release workflow explicitly rather than reading whichever run finished
@@ -9279,6 +9355,48 @@ issue is fully triaged whether or not it is scheduled.
   fired makes the issue open work rather than deferred work, and the
   body MUST be corrected to say so, because the issue's own text is what
   the next reader triages from.
+
+---
+
+## Grooming the backlog
+[ID: base-issues-groom]
+
+Nothing surfaces the backlog on its own, so a groom is a deliberate pass
+rather than a view somebody opens. What it produces is annotations,
+closures and a milestone. Restating an issue's scope is the implementer's
+step, not the groom's.
+
+- Verify each issue's claims against the tree BEFORE grooming it, never
+  after. An issue argues from the tree as it stood on its filing date, so
+  grooming a claim that has since moved plans work that does not exist.
+  Measure first, then annotate the issue with what the measurement found
+  and the date it was taken. Two grooms run this way changed four issues
+  between them and caught a cited command that does not exist, which had
+  been reading as a gate already in place
+- Measure with the extractor the check itself uses, not one written for
+  the measurement. A looser scan counts occurrences the check never sees —
+  a directive quoted inside a fenced block, a name in running prose — and
+  the cut is then sized against a corpus nothing acts on
+- Read the whole issue before judging whether it earns its change. A
+  ticket's measurements, its reach analysis and the data it carries from a
+  consuming project sit below its opening paragraphs, so a verdict formed
+  from the first screen is formed from the part that argues least. On one
+  pass, four tickets were dispositioned as low-value from their first 380
+  characters and all four verdicts were wrong
+- Cluster by target file, and only once the claims are verified. Issues
+  touching one section are one pull request rather than several, and two
+  issues can name the same file while wanting changes that do not compose
+- Scope the cut from the clusters, then create the milestone. A theme
+  falls out of what the groom found; choosing the theme first selects the
+  issues that fit it
+- Assign the issues to it and read the milestone's open count back.
+  Creating a milestone and filling it are two calls, and a milestone whose
+  description enumerates five issues while holding none reads as scoped
+  from every view that shows its title
+- Sweep for issues whose work merged while they stayed open. Nothing else
+  detects one: a gate reading the issues that merged pull requests closed
+  cannot see an issue closed by hand, or never closed at all. The runnable
+  form lives in `base-git`, together with what its counts have to show
 
 ---
 

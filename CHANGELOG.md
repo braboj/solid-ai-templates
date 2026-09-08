@@ -23,6 +23,12 @@ alters no template carries no entry.
 
 ### Added
 
+- A backlog groom verifies each issue's claims against the tree before
+  grooming rather than after, then clusters by target file. A claim that has
+  moved since the filing date plans work that does not exist
+- The release sequence gains a merged-work sweep. An issue whose work merged
+  while it stayed open is invisible to a gate reading only the issues that
+  merged pull requests closed
 - A check whose subject is the change under review MUST be confirmed in the
   environment it ships into, and that run MUST reach a verdict. One that
   declines on the change it was written for hides in a green pipeline
