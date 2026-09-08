@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.88.0] - 2026-09-08
+
 ### Added
 
 - Renaming a document other repositories carry costs the consumers, and the
