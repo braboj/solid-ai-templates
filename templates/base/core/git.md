@@ -28,6 +28,17 @@
   second covers what the project ships on. A pipeline check at session
   start is a different moment — it catches one broken before you began,
   not one you broke and are about to report as clean
+- **A check reading the change under review is confirmed where it ships.**
+  The host builds that subject rather than finding it: a pull-request event
+  checks out a merge commit of the branch into the base, HEAD is detached,
+  the clone may be shallow, and the branch name survives only in an
+  environment variable. A check that counts commits, names the branch or
+  diffs against the base therefore reads a different tree there from the one
+  it was written against, and every control run on the author's machine
+  still passes. Read its first run in that environment and require a
+  verdict: a check reporting that it does not apply, on the very change it
+  was written for, is the failure this catches. It hides in a green pipeline
+  because a decline summons no reader
 - **Repeat the closing keyword before each issue number** when a PR
   closes more than one issue: `Closes #a, closes #b, closes #c` closes
   all three. `Closes #a, #b, #c` closes only `#a` — a bare `#b`/`#c` is
