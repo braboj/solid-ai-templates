@@ -1262,6 +1262,17 @@ so every hit is a real finding rather than a judgement call.
   second covers what the project ships on. A pipeline check at session
   start is a different moment — it catches one broken before you began,
   not one you broke and are about to report as clean
+- **A check reading the change under review is confirmed where it ships.**
+  The host builds that subject rather than finding it: a pull-request event
+  checks out a merge commit of the branch into the base, HEAD is detached,
+  the clone may be shallow, and the branch name survives only in an
+  environment variable. A check that counts commits, names the branch or
+  diffs against the base therefore reads a different tree there from the one
+  it was written against, and every control run on the author's machine
+  still passes. Read its first run in that environment and require a
+  verdict: a check reporting that it does not apply, on the very change it
+  was written for, is the failure this catches. It hides in a green pipeline
+  because a decline summons no reader
 - **Repeat the closing keyword before each issue number** when a PR
   closes more than one issue: `Closes #a, closes #b, closes #c` closes
   all three. `Closes #a, #b, #c` closes only `#a` — a bare `#b`/`#c` is
@@ -8567,6 +8578,10 @@ project fails there, where nobody wrote it and nobody can debug it.
 - A check MUST be run in the form it ships before the rule is merged.
   Extract it from the committed file and execute it — writing a check is
   not running it, and the file is a different medium from the editor
+- The form is not the whole of it: a check whose subject is the change
+  under review reads a tree the host constructs, and the run that proves
+  it works is the first one in that environment. `base-git` states what
+  that run has to show
 - A check MUST state what it inspected, not only what it found. A command
   that reached zero files and a command that found zero violations print
   the same thing. Report the count of inputs examined. The same rule for

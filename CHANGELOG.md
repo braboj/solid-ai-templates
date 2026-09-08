@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- A check whose subject is the change under review MUST be confirmed in the
+  environment it ships into, and that run MUST reach a verdict. One that
+  declines on the change it was written for hides in a green pipeline
+
 ## [2.87.0] - 2026-09-07
 
 ### Added

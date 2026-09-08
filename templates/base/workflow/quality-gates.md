@@ -1229,6 +1229,10 @@ project fails there, where nobody wrote it and nobody can debug it.
 - A check MUST be run in the form it ships before the rule is merged.
   Extract it from the committed file and execute it — writing a check is
   not running it, and the file is a different medium from the editor
+- The form is not the whole of it: a check whose subject is the change
+  under review reads a tree the host constructs, and the run that proves
+  it works is the first one in that environment. `base-git` states what
+  that run has to show
 - A check MUST state what it inspected, not only what it found. A command
   that reached zero files and a command that found zero violations print
   the same thing. Report the count of inputs examined. The same rule for
