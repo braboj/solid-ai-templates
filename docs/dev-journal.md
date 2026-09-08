@@ -7337,3 +7337,88 @@ closed 5/5.
   the four issues scoped, one named an instance that had never held; the
   measurement took a minute and would have cost a wrong fix to a correct
   check
+
+## 2026-09-08 — The rule this repository follows and does not require
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:**
+- A check reading the change under review is confirmed in the environment
+  it ships into, and that run has to reach a verdict. A pull-request event
+  hands the check a merge commit, a detached HEAD, possibly a shallow
+  clone, and a branch name that survives only in a variable; a check
+  declining on the very change it was written for hides in a green
+  pipeline because a decline summons no reader
+- The backlog groom and the merged-work sweep, carried only in this
+  repository's PLAYBOOK, ship upstream. The groom goes to `base-issues`
+  and the sweep to `base-git` as step 9 of the release sequence, where the
+  gate it complements already lives
+- A ticket, a pull request and a defect record are written for a reader
+  without the code in their head: symptom before mechanism, a code term
+  expanded on first use, the example shown rather than described
+- A decision record's prose stays within sentence and paragraph bounds the
+  project declares in configuration. Forty-two existing passages across 18
+  of 45 records are frozen and the check gates what is written after
+- A rename of a document other repositories carry is proposed against a
+  measured, dated downstream, with a control path that must be absent
+- Thirteen shipped checks printed what they found and exited zero. Each
+  now carries its verdict in its status
+- The single-commit subject check read `messageHeadline`, which the host
+  abbreviates at 69 characters while the convention allows 79
+
+**Released:** v2.88.0 — tag `c4933ef` on the changelog cut, milestone #94
+closed 7/7. The first cut to run the merged-work sweep, which found none.
+
+**Pull requests merged:** #1641 (#1638), #1642 (#1248), #1644 (#1643),
+#1645 (#1301), #1647 (#1646), #1649 (#1082), #1650 (#1295), #1651 (the
+PLAYBOOK gate-status correction), #1652 (the v2.88.0 changelog cut), #1653
+(the CLAUDE.md conformance rule).
+
+**Issues closed:** #1638, #1248, #1301, #1643, #1646, #1082, #1295.
+**Issues filed:** #1643, #1646, #1648, #1654.
+
+**Decisions:**
+- No ADR. Every decision applies an existing record — ADR-028 for siting by
+  reach, the retrofit ratchet for the prose freeze, `base-quality`'s
+  exit-status rule for the thirteen checks — or falls in the categories the
+  observability threshold excludes
+- The groom went to `base-issues` (3 roots of 37) and the sweep to
+  `base-git` (37 of 37), measured. `base-issues` is a platform-tier file, so
+  the tracker procedure reaches exactly the projects with a tracker to
+  groom; the sweep's finding is a release-gate blind spot and belongs where
+  every root carries it
+- The cold-reader prose rules went to `base-docs` rather than `base-issues`
+  as filed, for the same reason: a pull request body and a defect record
+  have the same reader as a ticket, and none of the five rules mentions a
+  tracker
+- The ADR prose bound is frozen rather than retrofitted. Forty-two prose
+  edits to merged records inside the change declaring the bound would have
+  been unreviewable, and each needs its own word-level diff as evidence
+- Two of the thirteen exit-status fixes are deliberately not uniform. The
+  continuation-safety check keeps exit 0 on its findings because its
+  disposition declares them a reading, and the SBOM check prints its
+  components as a reading and fails only on the empty set
+
+**Lessons:**
+- The rule shipped first earned itself twice within the hour. #1641 added
+  "confirm the check where it ships"; the next pull request went red on two
+  checks every local control had passed — a field the host truncates, and a
+  sweep reading the pull-request merge commit, whose log holds the branch's
+  own unmerged commit and so reported the branch's issue as merged work
+- A rule can ship with its corpus unswept and stay green over its own
+  violations for six releases. `base-quality` has required a check to carry
+  its verdict in its status since v2.82; that change fixed five checks in
+  one file and thirteen others were never read. Filed as #1654
+- Smoke and conformance read different things. Replacing a sentence that
+  ended mid-line left the rest of its paragraph appended rather than
+  re-wrapped, put a 127-character line into every generated chain and
+  produced 36 findings, with smoke green over all of it. The run before
+  pushing was smoke only. `CLAUDE.md` 6.2 now says which runner reads what
+- A check's locator is shared state. The prose-bound check prints
+  "decision records inspected", which was the string the ADR-schema entry
+  used to find its own block, and the registry reported two blocks for one
+  entry rather than silently running the wrong one
+- The freeze has to name instances. A frozen count lets one breach be
+  swapped for another and reads as compliance, and an entry whose passage
+  was since rewritten has to be reported too, or it licenses a breach that
+  nothing would notice coming back
