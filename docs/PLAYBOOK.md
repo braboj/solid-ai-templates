@@ -710,13 +710,17 @@ has a step below: the periodic-review-scope check, which reads the age of
 the newest record in `docs/audits/` and takes no release version, and the
 pipeline-history check.
 
-Read each gate's output, not its exit status. Most of these checks state
-their pass condition as "prints nothing after the counts" and then print
-findings without exiting non-zero, so a run that reports a real problem
-still exits `0`. Measured during the `v2.77.0` cut: milestone-coverage
-printed `a subject names closed issue 1456, which carries no milestone`
-and exited `0`. An operator reading the status alone ships the defect the
-gate just named.
+Read each gate's output as well as its exit status. Every gate below now
+carries its verdict in the status, so a finding fails the run rather than
+printing and exiting zero. That held for five of them only from v2.82, and
+for thirteen more only from v2.88, and this procedure was written against
+the older behaviour. What a status still cannot carry is a reading: three
+of the checks reach no automatic verdict and address their output to
+whoever the failure summons, so a run reporting `0 failed` has not been
+read until those are. Measured during the `v2.77.0` cut, when the status
+carried nothing: milestone-coverage printed `a subject names closed issue
+1456, which carries no milestone` and exited `0`. That gate exits 1 on the
+same finding now.
 
 Each gate below reads its parameter from the environment as well as from
 the constant, so `RELEASE=v2.83.0 py tests/run_conformance.py` runs the
