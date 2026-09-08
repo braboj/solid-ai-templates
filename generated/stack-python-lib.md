@@ -4155,6 +4155,58 @@ raise SystemExit(1 if findings else 0)
 EOF
   ```
 
+## Writing for a reader who lacks the context
+[ID: docs-cold-reader]
+
+A ticket is read by whoever is deciding to pick the work up, a pull request
+by whoever is deciding to approve it, and a defect record by whoever meets
+the defect again. None of them has the code in their head, and a ticket can
+sit for months before anyone does. The author is in the one state of
+knowledge the reader will never share: they have just finished the
+investigation. The per-type body formats fix what sections a ticket has;
+this fixes the writing inside them.
+
+- State the symptom before the mechanism. What a reader would observe comes
+  first, why it happens second. An opening that starts inside the mechanism
+  asks the reader to hold it before they know what it explains
+- Expand a term taken from the code the first time it appears, or avoid it.
+  A symbol name is exact and means nothing to somebody who has not opened
+  the file
+- Show the example rather than describing it. Real values a reader can
+  compare beat a sentence about what would happen to them
+- One idea per sentence. A reader who has to go back and re-read has found
+  a defect in the sentence, not in themselves
+- Separate how bad it is now from how bad it becomes. A latent defect and a
+  live one want different words, and a description merging them either
+  overstates today or conceals tomorrow
+- An agent needs this written down more than a person does. A person
+  re-reads a ticket once and notices the density; an agent does not, and
+  files a body that is correct, complete, conformant and opaque. A rule
+  governing what an agent says in a session stops at the session, and the
+  ticket is the artifact that outlives it
+
+The same fact, written both ways:
+
+```text
+Two packets that serialize to identical bytes are NOT reachable as unequal
+without an assignment -- the generic and concrete PDUs use different formats
+and so produce different bytes for the same values.
+```
+
+```text
+You have to change a value after creating the packet to run into this.
+Nothing in the library does that yet, so no current behaviour is wrong.
+```
+
+The first needs two passes and a double negative unpacked, opens with the
+mechanism, and names two types without saying what they are. Both are
+accurate, and only one of them answers the question its reader arrived with.
+
+This is judgement and stays declarative: a rule that is not mechanically
+checkable gets no check invented for it. A sentence-length gate passes prose
+nobody can follow and fails a long sentence that reads cleanly, so the
+enforcement is review rather than a gate.
+
 ## Diagrams and assets
 
 - Prefer text-based diagram formats: Mermaid for flowcharts, sequence diagrams,

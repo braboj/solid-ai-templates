@@ -23,6 +23,10 @@ alters no template carries no entry.
 
 ### Added
 
+- A ticket, a pull request and a defect record are written for a reader
+  without the code in their head: symptom before mechanism, a code term
+  expanded on first use, the example shown rather than described, one idea
+  per sentence
 - A backlog groom verifies each issue's claims against the tree before
   grooming rather than after, then clusters by target file. A claim that has
   moved since the filing date plans work that does not exist
