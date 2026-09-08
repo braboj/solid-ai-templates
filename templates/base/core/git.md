@@ -224,7 +224,9 @@ remaining commits are silently lost.
   case, so the merged subject still resolves to the work, and there is no
   issue number in existence to demand
 - Assert it before the merge, against the pull request rather than the
-  checkout. What the host squashes with is a property of the pull request,
+  checkout, and against the commit message rather than any field the
+  host renders for display — an abbreviated headline drops the tail of
+  a long subject, which is where the convention puts the number. What the host squashes with is a property of the pull request,
   and on a pull-request event the checkout is a merge commit whose local
   range holds one commit more than the branch does — a check counting
   there reports that a single-commit branch is a two-commit one, and says
@@ -264,15 +266,18 @@ if not prs:
     raise SystemExit(3)
 
 number = prs[0]["number"]
-detail = subprocess.run(
-    ["gh", "pr", "view", str(number), "--json",
-     "commits,closingIssuesReferences"], **RUN)
-if detail.returncode != 0:
-    print("pull request %d could not be read" % number)
+
+# Read the commits from the API rather than through `gh pr view`, whose
+# `messageHeadline` is abbreviated for display at 69 characters. The
+# convention allows a subject of 79 and puts the issue number at the end
+# of it, so the abbreviated field drops exactly what this check reads.
+listed_commits = subprocess.run(
+    ["gh", "api", "repos/{owner}/{repo}/pulls/%d/commits" % number], **RUN)
+if listed_commits.returncode != 0:
+    print("the commits on pull request %d could not be read" % number)
     raise SystemExit(1)
 
-body = json.loads(detail.stdout)
-commits = body["commits"]
+commits = json.loads(listed_commits.stdout)
 print("commits on pull request %d: %d" % (number, len(commits)))
 
 # A branch of any other size is squashed with the title, which carries
@@ -282,7 +287,15 @@ if len(commits) != 1:
           "title; this check does not apply" % len(commits))
     raise SystemExit(3)
 
-closes = [ref["number"] for ref in body["closingIssuesReferences"]]
+detail = subprocess.run(
+    ["gh", "pr", "view", str(number), "--json",
+     "closingIssuesReferences"], **RUN)
+if detail.returncode != 0:
+    print("pull request %d could not be read" % number)
+    raise SystemExit(1)
+
+closes = [ref["number"]
+          for ref in json.loads(detail.stdout)["closingIssuesReferences"]]
 print("issues pull request %d closes: %d" % (number, len(closes)))
 if not closes:
     print("the pull request closes no issue, so the appended pull "
@@ -290,8 +303,12 @@ if not closes:
           "apply")
     raise SystemExit(3)
 
-subject = commits[0]["messageHeadline"]
-named = {int(n) for n in re.findall(r"\(#(\d+)\)", subject)}
+subject = commits[0]["commit"]["message"].splitlines()[0]
+
+# Report the length, so a field that arrives shortened is visible in the
+# output rather than only in the verdict it produces.
+print("characters in the subject read: %d" % len(subject))
+named = {int(n) for n in re.findall(r"[(]#([0-9]+)[)]", subject)}
 missing = [n for n in closes if n not in named]
 print("closing issues the subject does not name: %d" % len(missing))
 for issue in missing:
@@ -302,8 +319,10 @@ EOF
 ```
 
   Pass condition: the command prints the pull request's commit count, how
-  many issues it closes and a count of zero closing issues the subject
-  does not name, then exits zero. Any line after those counts is a
+  many issues it closes, how many characters of subject it read, and a
+  count of zero closing issues the subject does not name, then exits
+  zero. The length is there because the failure it replaced was a field
+  arriving shortened, which a verdict alone cannot show. Any line after those counts is a
   finding. It exits 3 where there is nothing to assert — a branch of any
   other size, a pull request closing no issue, or no pull request yet —
   and refuses with a finding where it cannot read the pull request at all
