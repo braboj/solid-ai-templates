@@ -636,6 +636,64 @@ issue had been put in it solely to satisfy the release gate.
 
 ---
 
+## Survey the consuming repositories
+
+Run this before proposing a change to a document `base/core/docs.md` requires
+— `docs/PLAYBOOK.md`, `docs/ONBOARDING.md`, `README.md`, `CHANGELOG.md`,
+`SECURITY.md`, `CONTRIBUTING.md`. `tools/sync.py` reaches this repository and
+nothing else, so the cost of renaming or restructuring one of them sits
+downstream, in repositories no gate here can see.
+
+1. Enumerate every account that generates from these templates. Both are the
+   same owner, so no third party is affected, but each repository still needs
+   its own pull request under its own branch protection:
+   ```bash
+   { gh repo list braboj --limit 100 --json nameWithOwner --jq '.[].nameWithOwner'
+     gh repo list Imbra-Ltd --limit 100 --json nameWithOwner --jq '.[].nameWithOwner'; } | sort
+   ```
+2. Fetch each default branch's tree once and test exact paths against it.
+   Fetching the tree is one call per repository and answers every path
+   question; probing paths one at a time is both slower and wrong, for the
+   reason in step 3:
+   ```bash
+   br=$(gh api "repos/$full" --jq '.default_branch')
+   gh api "repos/$full/git/trees/$br?recursive=1" --jq '.tree[].path' \
+     | grep -c '^docs/PLAYBOOK\.md$'
+   ```
+3. Carry a control path through the same probe — one that MUST be absent
+   everywhere, such as `docs/THIS-MUST-NOT-EXIST.md`. A probe reporting a hit
+   for every repository has usually failed rather than succeeded. The earlier
+   form of this survey did exactly that:
+
+   ```bash
+   gh api "repos/$full/contents/docs/PLAYBOOK.md" --jq '.name' 2>/dev/null
+   ```
+
+   It prints the 404 body to stdout, where the redirect cannot suppress it,
+   and `--jq '.name'` reads that body as a non-empty string. Sixteen of
+   sixteen repositories reported a hit, including ones with no `docs/`
+   directory at all. Measured 2026-09-08 with the tree form: 31 repositories
+   probed, 14 carry `docs/PLAYBOOK.md`, 13 carry `docs/ONBOARDING.md`, 0 were
+   unreadable, and the control path is found in **0**
+4. Count mentions over tracked files, and count occurrences rather than
+   matching lines. Reconcile the per-area sum against the total, so an area
+   the enumeration missed shows up as a gap rather than as a smaller number
+   nobody questions:
+   ```bash
+   git ls-files -z | xargs -0 grep -io 'PLAYBOOK\.md' | wc -l
+   ```
+   Measured here on 2026-09-08, the four forms disagree: occurrences over
+   tracked files **137**, matching lines over tracked files 133, occurrences
+   over the working tree 491, matching lines over the working tree 215. The
+   working-tree walk reads `.git/` and inflates by three and a half times;
+   `grep -c` counts a line carrying two mentions once. Only the first figure
+   is the number of places a rename has to edit
+5. Record the result in the issue proposing the change, with the date it was
+   taken, before the decision is made. A survey quoted later without its date
+   asserts about today's tree what was true on the day it ran
+
+---
+
 ## Release a new version
 
 This repo has no version manifest (plain Markdown), so it follows the

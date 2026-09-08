@@ -194,6 +194,33 @@ Before every commit, update all relevant documentation:
   change
 - **`docs/ONBOARDING.md`** — update if the contributor workflow changes
 
+### Changing a document other repositories carry
+
+A project that defines documents for other repositories — a template
+system, a shared configuration, a house style — reaches only its own tree
+with its own generator. Renaming or restructuring one of those documents
+costs the consumers, and that cost is invisible from here.
+
+- A proposal to rename or restructure such a document MUST state how many
+  repositories carry it and what the change costs them, measured rather
+  than estimated, and MUST carry the date the measurement was taken. A
+  survey quoted later without its date asserts about today's trees what
+  was true on the day it ran
+- Measure by fetching each repository's default-branch tree once and
+  testing exact paths against it, not by asking the host for each path
+  separately. A per-path probe answers for a missing file by printing an
+  error body, which a field selector reads as a value, so every repository
+  reports a hit and the survey looks complete. Carry a control path that
+  MUST be absent everywhere through the same probe: a survey whose control
+  is found is measuring nothing
+- Count occurrences over tracked files. A walk of the working tree reads
+  the version-control directory and whatever the build left behind, and a
+  count of matching lines counts a line carrying two mentions once — the
+  two errors push in opposite directions, so agreement between them proves
+  nothing. Reconcile the per-area sum against the total, so an area the
+  enumeration missed shows as a gap rather than as a smaller number
+  nobody questions
+
 ### When a document disagrees with the system
 
 A project document that contradicts the live state of the system it

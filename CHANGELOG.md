@@ -23,6 +23,9 @@ alters no template carries no entry.
 
 ### Added
 
+- Renaming a document other repositories carry costs the consumers, and the
+  proposal states how many carry it and what it costs — measured on a stated
+  date, with a control path that must be absent from every one of them
 - A decision record's prose stays within sentence and paragraph bounds the
   project declares in configuration. A project adopting them after its
   records exist freezes the passages it has and gates on the ones written
