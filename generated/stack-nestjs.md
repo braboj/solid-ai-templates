@@ -2188,11 +2188,34 @@ never closed by a pull request and so never enters the other's input.
 
 ```bash
 py - <<'EOF'
-import json, re, subprocess
+import json, os, re, subprocess
 
 RUN = dict(capture_output=True, text=True, encoding="utf-8")
 
-log = subprocess.run(["git", "log", "--format=%s"], **RUN)
+# The question is about MERGED work, so the history read is the default
+# branch's rather than the checkout's. On a pull-request event the checkout
+# is a merge commit whose log already holds the branch's own commits, and
+# those name issues that are open precisely because the branch has not
+# landed yet.
+base = os.environ.get("GITHUB_BASE_REF")
+refs = ["origin/%s" % base] if base else []
+refs += ["origin/HEAD", "origin/main", "origin/master", "main", "master"]
+
+merged = None
+for ref in refs:
+    probe = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", ref], **RUN)
+    if probe.returncode == 0:
+        merged = ref
+        break
+
+if merged is None:
+    print("no default-branch ref was found, so no merged history was read")
+    raise SystemExit(1)
+
+print("merged history read from: %s" % merged)
+
+log = subprocess.run(["git", "log", merged, "--format=%s"], **RUN)
 if log.returncode != 0:
     print("the commit log could not be read, so nothing was swept")
     raise SystemExit(1)
@@ -2234,13 +2257,16 @@ raise SystemExit(1 if hits else 0)
 EOF
 ```
 
-Pass condition: the command prints how many commit subjects it scanned, how
-many distinct issue numbers it found in them and how many open issues it
-compared against, then a count of zero still open, and exits zero. All three
-input counts are load-bearing. A sweep that reached nothing and a sweep that
-found nothing print the same final line, so a scanned count of zero is a
-failure rather than a clean run, and so is a read of the open issues that
-did not succeed.
+Pass condition: the command prints the ref it read the merged history from,
+how many commit subjects it scanned, how many distinct issue numbers it
+found in them and how many open issues it compared against, then a count of
+zero still open, and exits zero. All three input counts are load-bearing. A
+sweep that reached nothing and a sweep that found nothing print the same
+final line, so a scanned count of zero is a failure rather than a clean run,
+and so is a read of the open issues that did not succeed. The ref is named
+because the answer depends on it: read from the checkout on a pull-request
+event, the sweep finds the branch's own issue and reports work as merged
+that has not been.
 
 Each hit is a decision rather than a defect: the work may have merged under
 a different issue, or the issue may name more than the commit closed. Close

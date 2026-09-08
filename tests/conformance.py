@@ -150,7 +150,8 @@ CHECKS = [
     {"file": "base/core/git.md",
      "find": "named by a merged commit and still open",
      "title": "No issue whose work already merged is still open",
-     "do": RUN, "expect": ["nonzero", "nonzero", "nonzero", "zero"]},
+     "do": RUN,
+     "expect": ["line", "nonzero", "nonzero", "nonzero", "zero"]},
 
     {"file": "base/core/git.md", "find": "ready but unmerged",
      "title": "Release ordering against other ready pull requests",
