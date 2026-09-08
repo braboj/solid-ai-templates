@@ -57,14 +57,22 @@ import pathlib, zipfile
 # The wheel is what a consumer installs, and nothing else in CI looks
 # inside it. Run after `python -m build`.
 wheels = sorted(pathlib.Path("dist").glob("*.whl"))
+
+findings = []
 if not wheels:
-    print("no wheel in dist/; run python -m build before this check")
+    findings.append("no wheel in dist/; run python -m build before this check")
+
 for wheel in wheels:
     parts = wheel.name.split("-")
     expected = {parts[0], parts[0] + "-" + parts[1] + ".dist-info"}
     tops = {name.split("/")[0] for name in zipfile.ZipFile(wheel).namelist()}
     for extra in sorted(tops - expected):
-        print("%s carries %s" % (wheel.name, extra))
+        findings.append("%s carries %s" % (wheel.name, extra))
+
+for finding in findings:
+    print(finding)
+
+raise SystemExit(1 if findings else 0)
   EOF
   ```
 

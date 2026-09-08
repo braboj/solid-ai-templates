@@ -550,6 +550,8 @@ print("suppressions found: %d" % total)
 print("bare (naming no rule): %d" % len(bare))
 for entry in bare:
     print("  %s" % entry)
+
+raise SystemExit(1 if bare else 0)
 EOF
 ```
 
@@ -1165,6 +1167,8 @@ print("prose paragraphs inspected: %d" % inspected)
 print("checks stated outside a fence: %d" % len(findings))
 for finding in findings:
     print("  " + finding)
+
+raise SystemExit(1 if findings else 0)
 EOF
 ```
 
@@ -1424,6 +1428,8 @@ for path, lineno, msg in broken:
           % (path, lineno, msg))
 if not found:
     print("no embedded checks found; the extraction pattern drifted")
+
+raise SystemExit(1 if broken or not found else 0)
 EOF
 ```
 
@@ -1485,6 +1491,12 @@ if not blocks:
     print("no fenced blocks found; the extraction pattern drifted")
 elif not inspected:
     print("no block is in a check language; the language filter drifted")
+
+# The continuation count is a reading, not a verdict: the check cannot
+# tell a deliberate continuation from an accidental one, and a person
+# reads the lines against what was written. An empty corpus is a verdict,
+# because it means the extraction drifted rather than the tree being clean.
+raise SystemExit(1 if not blocks or not inspected else 0)
 EOF
 ```
 

@@ -912,6 +912,10 @@ print("python files inspected: %d" % len(tracked))
 print("non-ASCII identifiers: %d" % len(findings))
 for finding in findings:
     print("  " + finding)
+
+# The status carries the verdict too. A check that names what it found and
+# exits zero is green wherever the caller reads the code, not the output.
+raise SystemExit(1 if findings else 0)
   EOF
   ```
 
@@ -1087,9 +1091,11 @@ paths = [pathlib.Path(name) for name in listed if name
 print("Python files checked: %d" % len(paths))
 
 # Zero files and a clean tree print the same thing otherwise.
+findings = []
 if not paths:
-    print("no Python file was listed; the enumeration is broken, "
-          "not the tree clean")
+    findings.append("no Python file was listed; the enumeration is broken, "
+                    "not the tree clean")
+
 for path in paths:
     src = path.read_text(encoding="utf-8").splitlines()
     with io.open(str(path), "rb") as fh:
@@ -1099,14 +1105,19 @@ for path in paths:
             row, col = tok.start
             if src[row - 1][:col].strip():
                 if not tok.string.lstrip("#").strip().startswith(DIRECTIVES):
-                    print("%s:%d: aside to the right of code"
-                          % (path.as_posix(), row))
+                    findings.append("%s:%d: aside to the right of code"
+                                    % (path.as_posix(), row))
             elif row > 1 and src[row - 2].strip():
                 above = src[row - 2].split("#")[0].rstrip()
                 if not src[row - 2].strip().startswith("#") and not (
                         above.endswith(OPENERS)):
-                    print("%s:%d: comment block with code directly above it"
-                          % (path.as_posix(), row))
+                    findings.append("%s:%d: comment block with code directly "
+                                    "above it" % (path.as_posix(), row))
+
+for finding in findings:
+    print(finding)
+
+raise SystemExit(1 if findings else 0)
   EOF
   ```
 

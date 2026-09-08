@@ -39,6 +39,9 @@ alters no template carries no entry.
 
 ### Fixed
 
+- Thirteen shipped checks printed what they found and exited zero, so a
+  project gating CI on the status got a pass over the finding. Each now
+  carries its verdict in its status, as `base-quality` already required
 - The single-commit subject check reads the commit message rather than the
   host's abbreviated headline. That field stops at 69 characters, so a
   subject the convention allows to reach 79 arrived without the issue number

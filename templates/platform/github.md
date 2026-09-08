@@ -537,18 +537,27 @@ raw = subprocess.run(["gh", "issue", "list", "--state", "open",
 issues = json.loads(raw) if raw.strip() else []
 
 print("issues inspected: %d" % len(issues))
+
+findings = []
 if not issues:
-    print("no issues found; the query or the repository context is wrong")
+    findings.append("no issues found; the query or the repository context "
+                    "is wrong")
 if len(issues) == LIMIT:
-    print("listing came back at the limit of %d; the set is truncated" % LIMIT)
+    findings.append("listing came back at the limit of %d; the set is "
+                    "truncated" % LIMIT)
 
 for issue in issues:
     names = [label["name"] for label in issue["labels"]]
     types = [n for n in names if TYPES.match(n)]
     priorities = [n for n in names if PRIORITIES.match(n)]
     if len(types) != 1 or len(priorities) != 1:
-        print("issue %d: %d type label(s), %d priority label(s)"
-              % (issue["number"], len(types), len(priorities)))
+        findings.append("issue %d: %d type label(s), %d priority label(s)"
+                        % (issue["number"], len(types), len(priorities)))
+
+for finding in findings:
+    print(finding)
+
+raise SystemExit(1 if findings else 0)
 EOF
 ```
 
