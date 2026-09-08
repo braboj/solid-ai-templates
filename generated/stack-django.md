@@ -3373,6 +3373,135 @@ wrong before changing either.
   Pass condition: every changed word is punctuation, whitespace or line
   wrapping. A changed word that carries meaning is a decision change, and
   it needs a new record rather than an edit to the old one
+- A record's prose SHOULD stay within the sentence and paragraph bounds the
+  project declares. Declare them in configuration, beside the Markdown width
+  and never in this rule — the number belongs to the project, and a second
+  copy of it drifts from the first with nothing to say which won. The passage
+  that breaches a bound is almost always a list written as a sentence, three
+  reasons carried on semicolons, and restructuring it is a format-only edit
+  under the rule above: a merged record is not frozen against the repair. It
+  is a SHOULD rather than a MUST because a long sentence can still read
+  cleanly, and the bound decides which sentences get looked at rather than
+  which get rewritten
+- A project declaring the bounds after its records exist freezes the passages
+  it already has and gates on the ones written afterwards. Freeze instances,
+  never a count: a count lets one breach be swapped for another and reads as
+  compliance. An entry whose passage has since been rewritten is reported as
+  well, because it licenses a breach that nothing would notice coming back
+
+  ```bash
+  py - <<'EOF'
+import json, pathlib, re
+
+# The bounds come from project configuration, never from this check. A
+# project that declares none fails here: an unstated bound is the defect,
+# not a default to fill in.
+sentence_words, paragraph_words = None, None
+cfg = pathlib.Path(".markdownlint.json")
+if cfg.exists():
+    prose = json.loads(cfg.read_text(encoding="utf-8")).get("prose")
+    if isinstance(prose, dict):
+        sentence_words = prose.get("sentence_words")
+        paragraph_words = prose.get("paragraph_words")
+
+if not sentence_words or not paragraph_words:
+    print("no decision-record prose bounds are configured; declare them")
+    raise SystemExit(1)
+
+print("sentence bound: %d words" % sentence_words)
+print("paragraph bound: %d words" % paragraph_words)
+
+records = sorted(pathlib.Path("docs/decisions").glob("[0-9][0-9][0-9]-*.md"))
+print("decision records inspected: %d" % len(records))
+
+# A list item is its own block. Joining a list into one paragraph reports
+# the list's length rather than any passage's, which is the measurement
+# the rule is not making.
+BULLET = re.compile(r"^\s*(?:[-*+]|\d+[.])\s+")
+SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z`*(\[])")
+
+
+def prose_blocks(text):
+    """Yield the prose blocks of a record: paragraphs and list items."""
+    text = re.sub(r"\A---\n.*?\n---\n", "", text, flags=re.S)
+    # Written rather than spelled literally: three backticks at the start
+    # of a line would close the block this check is quoted inside.
+    fence = "`" * 3
+    text = re.sub(fence + ".*?" + fence, "", text, flags=re.S)
+    current, blocks = [], []
+    for line in text.splitlines():
+        stripped = line.strip()
+        skip = (not stripped or stripped.startswith("#")
+                or stripped.startswith("|") or stripped.startswith(">"))
+        if skip or BULLET.match(line):
+            if current:
+                blocks.append(" ".join(current))
+                current = []
+        if skip:
+            continue
+        current.append(BULLET.sub("", line).strip() if BULLET.match(line)
+                       else stripped)
+    if current:
+        blocks.append(" ".join(current))
+    return blocks
+
+
+sentences, over = 0, []
+for record in records:
+    for block in prose_blocks(record.read_text(encoding="utf-8")):
+        words = block.split()
+        if len(words) > paragraph_words:
+            over.append("%s	paragraph	%s" % (record.name, " ".join(words[:8])))
+        for sentence in SPLIT.split(block):
+            said = sentence.split()
+            if not said:
+                continue
+            sentences += 1
+            if len(said) > sentence_words:
+                over.append("%s	sentence	%s" % (record.name, " ".join(said[:8])))
+
+print("sentences inspected: %d" % sentences)
+
+# A project adopting this after its records exist freezes the passages it
+# already has and gates on new ones. The freeze names instances, never a
+# count: a count lets one breach be swapped for another.
+freeze_file = pathlib.Path("docs/decisions/prose-freeze.txt")
+frozen = set()
+if freeze_file.exists():
+    for line in freeze_file.read_text(encoding="utf-8").splitlines():
+        if line.strip() and not line.startswith("#"):
+            frozen.add(line.rstrip())
+print("frozen passages: %d" % len(frozen))
+print("passages over a bound: %d" % len(over))
+
+new_over = sorted(set(over) - frozen)
+stale = sorted(frozen - set(over))
+print("over a bound and not frozen: %d" % len(new_over))
+print("frozen and no longer over: %d" % len(stale))
+
+for passage in new_over:
+    print("  breach: %s" % passage.replace("	", " "))
+
+# A freeze entry that no longer applies is a finding too. It is the line
+# somebody earned by rewriting the passage, and leaving it there keeps a
+# breach licensed that nothing would report if it came back.
+for passage in stale:
+    print("  retire: %s" % passage.replace("	", " "))
+
+raise SystemExit(
+    1 if not records or not sentences or new_over or stale else 0)
+EOF
+  ```
+
+  Pass condition: the command prints the two bounds it read, how many records
+  it inspected, how many sentences it read, how many passages are frozen and
+  how many are over a bound, then a count of zero over a bound and not
+  frozen, and a count of zero frozen and no longer over. A project declaring
+  no bounds fails, and so does a corpus of zero records or zero sentences —
+  both mean the check reached nothing rather than that the prose is short.
+  Measure a list item apart from the paragraph around it: a list joined into
+  one block reports the list's length, which is not a length the rule bounds
+
 - Current requirements live in the specification or project conventions, not
   in a chain of historical corrections. If a later change invalidates a minor
   premise or revisit trigger, state the correction in the current docs and PR.

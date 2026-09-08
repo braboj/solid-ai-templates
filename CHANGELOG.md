@@ -23,6 +23,10 @@ alters no template carries no entry.
 
 ### Added
 
+- A decision record's prose stays within sentence and paragraph bounds the
+  project declares in configuration. A project adopting them after its
+  records exist freezes the passages it has and gates on the ones written
+  after
 - A ticket, a pull request and a defect record are written for a reader
   without the code in their head: symptom before mechanism, a code term
   expanded on first use, the example shown rather than described, one idea
