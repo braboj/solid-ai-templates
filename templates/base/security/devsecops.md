@@ -83,6 +83,11 @@ names = sorted(c["name"] for c in doc.get("components", []))
 print("components: %d" % len(names))
 for name in names:
     print("  %s" % name)
+
+# The names are a reading for whoever compares them against the declared
+# closure. The empty set is not: it means the document carries no
+# `components` key, which the status has to say.
+raise SystemExit(0 if names else 1)
 EOF
 ```
 

@@ -918,6 +918,10 @@ print("python files inspected: %d" % len(tracked))
 print("non-ASCII identifiers: %d" % len(findings))
 for finding in findings:
     print("  " + finding)
+
+# The status carries the verdict too. A check that names what it found and
+# exits zero is green wherever the caller reads the code, not the output.
+raise SystemExit(1 if findings else 0)
   EOF
   ```
 
@@ -1093,9 +1097,11 @@ paths = [pathlib.Path(name) for name in listed if name
 print("Python files checked: %d" % len(paths))
 
 # Zero files and a clean tree print the same thing otherwise.
+findings = []
 if not paths:
-    print("no Python file was listed; the enumeration is broken, "
-          "not the tree clean")
+    findings.append("no Python file was listed; the enumeration is broken, "
+                    "not the tree clean")
+
 for path in paths:
     src = path.read_text(encoding="utf-8").splitlines()
     with io.open(str(path), "rb") as fh:
@@ -1105,14 +1111,19 @@ for path in paths:
             row, col = tok.start
             if src[row - 1][:col].strip():
                 if not tok.string.lstrip("#").strip().startswith(DIRECTIVES):
-                    print("%s:%d: aside to the right of code"
-                          % (path.as_posix(), row))
+                    findings.append("%s:%d: aside to the right of code"
+                                    % (path.as_posix(), row))
             elif row > 1 and src[row - 2].strip():
                 above = src[row - 2].split("#")[0].rstrip()
                 if not src[row - 2].strip().startswith("#") and not (
                         above.endswith(OPENERS)):
-                    print("%s:%d: comment block with code directly above it"
-                          % (path.as_posix(), row))
+                    findings.append("%s:%d: comment block with code directly "
+                                    "above it" % (path.as_posix(), row))
+
+for finding in findings:
+    print(finding)
+
+raise SystemExit(1 if findings else 0)
   EOF
   ```
 
@@ -3222,13 +3233,23 @@ DIRS = (".github", ".", "docs")
 REQUIRED = ("SECURITY.md", "CONTRIBUTING.md")
 NAMES = REQUIRED + ("CODE_OF_CONDUCT.md",)
 print("community health files checked: %d" % len(NAMES))
+
+findings = []
 for name in NAMES:
     homes = [d for d in DIRS if pathlib.Path(d, name).is_file()]
     if len(homes) > 1:
-        print("%s: in %s - the host serves %s and the rest rot"
-              % (name, ", ".join(homes), homes[0]))
+        findings.append("%s: in %s - the host serves %s and the rest rot"
+                        % (name, ", ".join(homes), homes[0]))
     elif not homes and name in REQUIRED:
-        print("%s: absent from .github/, the root and docs/" % name)
+        findings.append("%s: absent from .github/, the root and docs/" % name)
+
+for finding in findings:
+    print(finding)
+
+# The status carries the verdict, not only the lines above it. A check
+# that prints what it found and exits zero is a green gate wherever the
+# caller reads the code rather than the output.
+raise SystemExit(1 if findings else 0)
   EOF
   ```
 
@@ -3430,8 +3451,11 @@ KEYS = ("id", "status", "date", "category", "supersedes", "superseded_by")
 STATUS = ("Proposed", "Accepted", "Superseded")
 records = sorted(pathlib.Path("docs/decisions").glob("[0-9][0-9][0-9]-*.md"))
 print("decision records inspected: %d" % len(records))
+
+findings = []
 if not records:
-    print("no decision records found; the naming convention drifted")
+    findings.append("no decision records found; the naming convention drifted")
+
 for f in records:
     lines = f.read_text(encoding="utf-8").splitlines()
     fm = {}
@@ -3448,7 +3472,12 @@ for f in records:
             and fm.get("status") in STATUS
             and len(date) == 10 and date.replace("-", "").isdigit()
             and (fm.get("status") == "Superseded") == linked):
-        print(f)
+        findings.append(str(f))
+
+for finding in findings:
+    print(finding)
+
+raise SystemExit(1 if findings else 0)
   EOF
   ```
 
@@ -3843,12 +3872,21 @@ for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
     if found:
         entries.append((number, found.group(1)))
 print("session entries inspected: %d" % len(entries))
+
+findings = []
 if not entries:
-    print("%s: no session entries found; check the heading format" % path)
+    findings.append("%s: no session entries found; check the heading format"
+                    % path)
+
 for (before_n, before_d), (after_n, after_d) in zip(entries, entries[1:]):
     if after_d < before_d:
-        print("%s:%d %s follows %s at line %d; entries run oldest first"
-              % (path, after_n, after_d, before_d, before_n))
+        findings.append("%s:%d %s follows %s at line %d; entries run oldest "
+                        "first" % (path, after_n, after_d, before_d, before_n))
+
+for finding in findings:
+    print(finding)
+
+raise SystemExit(1 if findings else 0)
   EOF
   ```
 
@@ -3960,9 +3998,11 @@ if width is None:
             elif section and "md" in section and line.startswith("max_line_length"):
                 width = int(line.split("=")[1].strip())
                 source = str(ec)
+# An unstated width is the defect this reports, not a gap to fill with a
+# default, so it leaves on a failing status rather than a message.
 if width is None:
     print("no Markdown line width is configured; declare one")
-    raise SystemExit(0)
+    raise SystemExit(1)
 
 
 def is_directive(text):
@@ -3996,9 +4036,12 @@ tracked = subprocess.run(["git", "ls-files", "*.md"], capture_output=True,
 # git ls-files reads the index, so a document not yet staged is invisible
 # here and the assertion passes having never seen it.
 print("markdown files inspected: %d" % len(tracked))
+
+findings = []
 if not tracked:
-    print("no tracked Markdown found; the enumeration is broken, "
-          "not the tree clean")
+    findings.append("no tracked Markdown found; the enumeration is broken, "
+                    "not the tree clean")
+
 for name in tracked:
     fenced = False
     for number, line in enumerate(
@@ -4015,7 +4058,13 @@ for name in tracked:
         if is_directive(line):
             continue
         if len(line) > width and not is_unwrappable(line, width):
-            print("%s:%d %d > %d (%s)" % (name, number, len(line), width, source))
+            findings.append("%s:%d %d > %d (%s)"
+                            % (name, number, len(line), width, source))
+
+for finding in findings:
+    print(finding)
+
+raise SystemExit(1 if findings else 0)
   EOF
   ```
 
