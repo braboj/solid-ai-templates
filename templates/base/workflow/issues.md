@@ -194,6 +194,16 @@ When two issues describe the same work, exactly one MUST survive.
 
 ---
 
+## Issue body formats
+
+[ID: base-issues-formats]
+
+The formats below fix what sections a ticket carries. They say nothing
+about the writing inside them, which is the half that decays: the author
+has just finished the investigation and the reader has not started one, so
+a ticket can be accurate, complete and conformant while being legible only
+to whoever filed it. `base-docs` carries the rules for that reader.
+
 ## Epic
 
 A large initiative too big for one task. Tracks progress via child issue
