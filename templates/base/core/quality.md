@@ -375,6 +375,48 @@ Pass condition: the scanned count is non-zero — a zero means the search
 reached no documents rather than that none mentions the check — and every
 listed document is read against the new exemption set. A naming count of
 zero under a non-zero scan is a real answer, and is the common one.
+
+## A new constraint is swept against the corpus it already governs
+
+[ID: quality-constraint-corpus-sweep]
+
+A constraint is written for what gets authored next. What already exists is
+a separate question, and a change that does not ask it ships green over its
+own violations — the state that looks most like compliance. Nothing asks
+later either: the change reads as done, and a sweep that stopped at one file
+leaves no record of the files it never opened.
+
+- A change that adds a constraint — a rule, a check, a tightened bound, a
+  narrowed exemption — MUST run it against the corpus that already exists
+  before it merges, and MUST record in that change what the sweep covered
+  and what it found
+- Record the sweep as a measurement a later reader can re-run: where it
+  looked, how many items it inspected, how many violate, and what was done
+  with them. "Swept `templates/`, N runnable blocks, M violations, fixed"
+  names a tree someone can read again; "applied the rule" names nothing
+- A sweep that did not reach the whole corpus MUST say so and name what it
+  left out. Recorded without its gap, a partial sweep reads as a complete
+  one, and the part it skipped is the part nobody asks about again
+- Where the corpus does not comply, the change MUST state which outcome it
+  took: fix the instances now, or freeze them. A freeze names each instance
+  rather than counting them, gates whatever is written afterwards, and
+  reports a named instance that no longer violates, so the list only
+  shrinks
+- Where the corpus is immutable once merged — decision records, released
+  changelog sections, published tags — the sweep still runs and its result
+  is still recorded. The change states the boundary the constraint binds
+  forward from, so the members before it read as outside the rule rather
+  than as debt. Whether one of them may be repaired in place is for the
+  rules governing that record to say
+- A constraint that ships with no check of its own has nothing to sweep
+  with. The change records that, with the instances it already knows of,
+  rather than reporting a clean sweep it never ran
+
+This is the corpus half of the two sweeps above.
+`quality-rejected-mechanism-sweep` sweeps the source from a comment,
+`quality-exemption-doc-duty` sweeps the documents from a check, and this one
+sweeps what already exists from a constraint just added.
+
 ## Destructive operations
 
 [ID: quality-destructive-ownership]
