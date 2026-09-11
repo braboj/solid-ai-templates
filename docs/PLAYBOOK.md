@@ -303,7 +303,8 @@ figures with no generator behind it, and the copy is what ages.
    ```bash
    py tests/run_e2e.py STK-01   # example — replace with the relevant ID
    ```
-   Reports are written to `tests/reports/` after every run, named for
+   Reports are written to `tests/reports/` after every run that has a
+   result — an e2e dry run writes none — named for
    the time and the tree — `<timestamp>-<runner>-<short-hash>.md`, with
    `-dirty` where the working tree was not that commit, and no suffix
    where there is no repository to read.
@@ -353,12 +354,29 @@ py tests/run_conformance.py --list # dispositions only, run nothing
 py tests/run_e2e.py                # canary test (python-lib)
 py tests/run_e2e.py --all          # all agent tests
 py tests/run_e2e.py STK-01 FMT-01  # specific tests only
-py tests/run_e2e.py --dry-run      # build prompts, skip agent calls
+py tests/run_e2e.py --dry-run      # build prompts, call no model, write no report
 ```
 
 See `tests/CODIFICATION.md` for the ID scheme and `tests/INDEX.md` for the
 full list of specs. Requires `py -m pip install pyyaml` for the manifest
 check.
+
+`run_e2e.py` is the one runner that calls a model and costs money, so it
+runs on a cadence rather than on every change: the STK-15 canary runs live
+at every release cut, recorded in the cut's pull request, and the full
+suite runs live at each periodic review. It is also the only runner that
+reads what the templates generate — smoke and conformance read the
+templates themselves. Name the provider and the model in the shell, which
+takes precedence over `.env`:
+
+```bash
+E2E_PROVIDER=anthropic ANTHROPIC_MODEL=claude-opus-5 py tests/run_e2e.py
+```
+
+A live report names its mode, provider and model. A dry run calls no model
+and writes no report, so every e2e report in `tests/reports/` is a run. A
+case that fails is filed as a bug with the strings it missed, not fixed
+inside the cut that ran it.
 
 `run_smoke.py` prints what each check inspected under its verdict — the
 files scanned, the chains resolved, the directives compared. Those lines are
@@ -550,6 +568,8 @@ declining it, whatever version it moves.
   bottleneck, and per-dimension findings tables with a grade rationale.
 - File a labelled issue for every actionable finding (CLAUDE.md §2.2)
   and reference it from the report.
+- Run the e2e suite live with `py tests/run_e2e.py --all` and record its
+  summary, provider and model in the report — the review is its cadence.
 
 ---
 
@@ -780,6 +800,8 @@ below exist to prevent. Run them here anyway.
    pull request's body is this repository's release proposal: it names
    every step of `base/core/git.md`'s pre-release sequence and the result
    it produced, including the checks that carry no step number here.
+   It also records the STK-15 canary run live against the release commit:
+   the report's tree, provider, model and verdict lines.
    The check's two counts are not required to match: a commit touching
    no template carries no entry, so a journal or tooling change is
    expected to appear in the carried list with nothing answering it
@@ -822,7 +844,7 @@ Which of those steps are actually enforced, audited per step as
 | 1 | `py tests/run_smoke.py`, plus the milestone's own issue list |
 | 2 | the milestone-coverage check in `base/core/git.md` |
 | 3 | the release-ordering check in `base/core/git.md` |
-| 4 | the changelog-completeness check in `base/core/git.md`, and its release-documentation check, which fails a version whose bump disagrees with the section's headings |
+| 4 | the changelog-completeness check in `base/core/git.md`, and its release-documentation check, which fails a version whose bump disagrees with the section's headings. The canary record is enforced by nothing |
 | 5 | `tag-guard.yml`, which fails a pushed lightweight `v*` tag |
 | 6 | step 9, and nothing before it |
 | 7 | nothing — an open milestone after a published release is silent |
