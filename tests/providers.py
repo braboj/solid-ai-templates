@@ -14,26 +14,52 @@ TIMEOUT = 180
 MAX_RETRIES = 3
 INITIAL_DELAY = 10
 
+# The model each provider calls: the environment variable that overrides
+# it, and the default. A report names the model it graded, so the runner
+# reads the choice from here rather than each backend keeping its own.
+MODELS = {
+    "anthropic": ("ANTHROPIC_MODEL", "claude-opus-5"),
+    "gemini": ("GEMINI_MODEL", "gemini-2.5-flash"),
+    "deepseek": ("DEEPSEEK_MODEL", "deepseek-chat"),
+    "groq": ("GROQ_MODEL", "llama-3.3-70b-versatile"),
+}
+
+
+def model_for(name):
+    """Return the model a provider will call, as the run is configured."""
+    if name not in MODELS:
+        return "the CLI's configured model"
+    variable, default = MODELS[name]
+    return os.environ.get(variable, default)
+
 
 def _anthropic(prompt):
     """Call Anthropic Messages API. Requires ANTHROPIC_API_KEY."""
     import anthropic
-    model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
     client = anthropic.Anthropic()
-    response = client.messages.create(
-        model=model,
+
+    # Current models reject sampling parameters and think by default, so
+    # send none and join the text blocks rather than reading the first
+    # block. The output ceiling needs a stream: the SDK declines a
+    # non-streaming request this large as one that would outrun its timeout.
+    with client.messages.stream(
+        model=model_for("anthropic"),
         max_tokens=MAX_TOKENS,
-        temperature=0,
         messages=[{"role": "user", "content": prompt}],
-        timeout=TIMEOUT,
-    )
-    return response.content[0].text
+    ) as stream:
+        message = stream.get_final_message()
+
+    # A refusal or a truncated answer is not an output to grade, and
+    # asserting against it would report a template defect that is not there.
+    if message.stop_reason != "end_turn":
+        raise RuntimeError(f"stopped on {message.stop_reason}, not end_turn")
+    return "".join(b.text for b in message.content if b.type == "text")
 
 
 def _gemini(prompt):
     """Call Google Gemini API. Requires GEMINI_API_KEY."""
     from google import genai
-    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+    model = model_for("gemini")
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
     response = client.models.generate_content(
         model=model,
@@ -46,7 +72,7 @@ def _gemini(prompt):
 def _deepseek(prompt):
     """Call DeepSeek API. Requires DEEPSEEK_API_KEY."""
     from openai import OpenAI
-    model = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+    model = model_for("deepseek")
     client = OpenAI(
         api_key=os.environ["DEEPSEEK_API_KEY"],
         base_url="https://api.deepseek.com",
@@ -63,7 +89,7 @@ def _deepseek(prompt):
 def _groq(prompt):
     """Call Groq API. Requires GROQ_API_KEY."""
     from groq import Groq
-    model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+    model = model_for("groq")
     client = Groq(api_key=os.environ["GROQ_API_KEY"])
     response = client.chat.completions.create(
         model=model,
