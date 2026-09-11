@@ -1186,7 +1186,28 @@ if section is None:
           "what is being released" % (RECORD, RELEASE))
     raise SystemExit(1)
 
-entries = [l for l in section.group(1).splitlines() if l.startswith("- ")]
+# An entry is a bullet plus the lines it wraps onto, tagged with
+# whichever heading last preceded it. Reading only the first physical
+# line misses an identifier or a code span that wraps, and a second,
+# independent walk for heading membership would duplicate the join
+# this one already needs.
+entries, current, heading = [], None, None
+for line in section.group(1).splitlines():
+    if line.startswith("### "):
+        heading = line[4:].strip()
+        continue
+    if line.startswith("- "):
+        if current:
+            entries.append(current)
+        current = {"heading": heading, "text": line[2:].strip()}
+    elif current and line.strip() and not line.startswith(("#", "-")):
+        current["text"] += " " + line.strip()
+    elif not line.strip():
+        if current:
+            entries.append(current)
+        current = None
+if current:
+    entries.append(current)
 print("release record entries read: %d" % len(entries))
 
 # A cut is a patch when every entry in its section sits under a fix
@@ -1203,13 +1224,7 @@ def version(name):
     return tuple(int(n) for n in match.groups()) if match else None
 
 
-heading, under = None, []
-for line in section.group(1).splitlines():
-    if line.startswith("### "):
-        heading = line[4:].strip()
-    elif line.startswith("- "):
-        under.append(heading)
-unfixed = sum(1 for h in under if h not in FIXES)
+unfixed = sum(1 for e in entries if e["heading"] not in FIXES)
 
 target = version(RELEASE)
 tags = subprocess.run(["git", "tag", "--list"], capture_output=True,
@@ -1232,7 +1247,7 @@ else:
     if bump == "patch" and unfixed:
         mismatch = ("%s is a patch, and entries under a heading other "
                     "than a fix: %d" % (RELEASE, unfixed))
-    if bump == "minor" and under and not unfixed:
+    if bump == "minor" and entries and not unfixed:
         mismatch = ("every entry sits under a fix heading, so %s should be "
                     "a patch of v%d.%d.%d" % ((RELEASE,) + before))
 print("release this one follows: %s"
@@ -1244,7 +1259,7 @@ print("entries under a heading other than a fix: %d" % unfixed)
 # description for. Prose alone is not checkable and is not a finding.
 named, missing = set(), []
 for entry in entries:
-    named.update(re.findall(r"`([^`]+)`", entry))
+    named.update(re.findall(r"`([^`]+)`", entry["text"]))
 print("identifiers the record names: %d" % len(named))
 
 for name in sorted(named):

@@ -35,6 +35,9 @@ alters no template carries no entry.
 - The class-attribute and `sys.path`-in-tests checks now scope their
   scan to tracked files, so a gitignored test report quoting the
   pattern is no longer a false finding
+- The release-documentation check reads an entry's full wrapped text,
+  not only its first line, so a code span or identifier that wraps
+  across a line break is no longer invisible to the check
 
 ## [2.89.0] - 2026-09-11
 
