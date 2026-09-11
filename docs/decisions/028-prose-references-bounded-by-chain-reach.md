@@ -31,11 +31,13 @@ something their file does not have, with nothing anywhere reporting it.
 Measured across the tree on 2026-08-28: 15 cross-file prose references,
 of which 3 dangled in at least one chain. `core/git.md` resolves into all
 17 chains and `core/examples.md` into 11, so a reference between them is
-unreadable in six. One reference named a section declared in a template
-that resolves into no chain at all, making it unreadable in all 17 — and
-it had been introduced knowingly weeks after two others were removed for
-exactly this reason, which is the evidence that the constraint was
-understood and not written down.
+unreadable in six.
+
+One reference named a section declared in a template that resolves into
+no chain at all, making it unreadable in all 17. And it had been
+introduced knowingly weeks after two others were removed for exactly
+this reason, which is the evidence that the constraint was understood and
+not written down.
 
 ## Decision
 
