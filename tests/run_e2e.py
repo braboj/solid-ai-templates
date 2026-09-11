@@ -146,7 +146,7 @@ def run_test(test, dry_run=False):
     tid = test["id"]
 
     if "skip" in test:
-        return SKIP, test["skip"], None, None, None
+        return SKIP, test["skip"], None, None, None, None
 
     prompt = build_prompt(
         test["stack"], test["answers"],
@@ -158,15 +158,15 @@ def run_test(test, dry_run=False):
         print(f"\n{'='*60}")
         print(f"[{tid}] DRY RUN — prompt length: {len(prompt)} chars")
         print(prompt[:400], "...")
-        return SKIP, "dry-run", None, None, None
+        return SKIP, "dry-run", None, None, None, None
 
     provider_name, provider_fn = _get_provider()
 
     t0 = time.time()
     try:
-        output = provider_fn(prompt)
+        output, usage = provider_fn(prompt)
     except Exception as e:
-        return ERR, f"{provider_name} error: {e}", None, None, None
+        return ERR, f"{provider_name} error: {e}", None, None, None, None
     elapsed = time.time() - t0
 
     failures = check_assertions(
@@ -176,8 +176,8 @@ def run_test(test, dry_run=False):
     )
 
     if failures:
-        return FAIL, "\n".join(failures), elapsed, output, prompt
-    return PASS, f"{elapsed:.1f}s", elapsed, output, prompt
+        return FAIL, "\n".join(failures), elapsed, output, prompt, usage
+    return PASS, f"{elapsed:.1f}s", elapsed, output, prompt, usage
 
 
 def _render_prompt(r, lines):
@@ -192,11 +192,22 @@ def _render_prompt(r, lines):
         lines.append("")
 
 
+def _render_usage(r, lines):
+    usage = r.get("usage")
+    if not usage:
+        return
+    thinking = usage.get("thinking")
+    thinking_str = str(thinking) if thinking is not None else "n/a"
+    lines.append(f"**Tokens**: output {usage['output']}, thinking {thinking_str}")
+    lines.append("")
+
+
 def render_fail(r):
     lines = []
     elapsed_str = f"  ({r['elapsed']:.1f}s)" if r["elapsed"] else ""
     lines.append(f"### {r['status']}  {r['id']}{elapsed_str}")
     lines.append("")
+    _render_usage(r, lines)
     lines.append("**Expected**:")
     lines.append("")
     lines.append("```")
@@ -225,6 +236,7 @@ def render_skip(r):
 def render_pass(r):
     elapsed_str = f"  ({r['detail']})" if r["detail"] else ""
     lines = [f"### {r['status']}  {r['id']}{elapsed_str}", ""]
+    _render_usage(r, lines)
     if r.get("output"):
         lines.append("**Output**:")
         lines.append("")
@@ -286,12 +298,13 @@ def main():
         if not dry_run:
             print(f"  [{i}/{total}] {tid} running...", end="\r", flush=True)
 
-        status, detail, elapsed, output, prompt = run_test(test, dry_run=dry_run)
+        status, detail, elapsed, output, prompt, usage = run_test(
+            test, dry_run=dry_run)
         results[status] += 1
         run_results.append({
             "id": tid, "status": status,
             "detail": detail, "elapsed": elapsed,
-            "output": output, "prompt": prompt,
+            "output": output, "prompt": prompt, "usage": usage,
         })
 
         if status == PASS:
