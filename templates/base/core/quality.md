@@ -130,6 +130,57 @@ that has since lifted reads exactly like a live one.
   modules B, C, and D to understand the impact, the coupling is too high
 - Changes to one module's internals must not require changes in unrelated
   modules — if they do, the abstraction boundary is wrong
+- A project MAY declare that one part of its tree must not import
+  another — a directional ban, distinct from the acyclic rule above.
+  Two tiers that never cycle can still cross a boundary the project
+  declared closed, e.g. a domain layer reaching into an adapter it is
+  meant to be unaware of. Name the check: walk each module's import
+  nodes and match against the declared forbidden pairs, catching a
+  dotted submodule of a forbidden target as readily as the target
+  itself
+
+  ```bash
+  py - <<'EOF'
+import ast, pathlib
+
+# A project's own boundary: (forbidden importer prefix, forbidden
+# imported prefix). Empty until a project declares one.
+FORBIDDEN = ()
+ROOT = pathlib.Path(".")
+
+def imported(tree):
+    names = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            names.append(node.module)
+    return names
+
+files = sorted(ROOT.rglob("*.py"))
+print("modules inspected: %d" % len(files))
+
+findings = []
+for path in files:
+    module = ".".join(path.relative_to(ROOT).with_suffix("").parts)
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    for name in imported(tree):
+        for banned_from, banned_to in FORBIDDEN:
+            if module.startswith(banned_from) and (
+                name == banned_to or name.startswith(banned_to + ".")
+            ):
+                findings.append("%s imports %s" % (module, name))
+
+print("layering violations: %d" % len(findings))
+for finding in findings:
+    print("  %s" % finding)
+raise SystemExit(1 if findings else 0)
+  EOF
+  ```
+
+  Pass condition: the inspected count names how many modules were
+  read — zero is a real answer where `FORBIDDEN` is empty or the tree
+  carries no Python — followed by `layering violations: 0`
 - An abstract or overridable operation MUST NOT declare a variadic
   parameter — `**kwargs`, `*args`, or the equivalent in any language with
   variadics. A variadic in a base states no contract a subtype can honour
