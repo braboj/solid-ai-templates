@@ -70,9 +70,9 @@ unread number to a more prominent place. Adopted as a component of the
 decision above rather than as the whole of it.
 
 **Track the count as a single frozen number**, the way the chain ceiling
-tracks chain size. A number is the wrong instrument here: the set moves
+tracks chain size. A number is the wrong instrument here. The set moves
 with the release moment and with whether the tree is clean, so a single
-figure would fail runs in which nothing changed, and a figure that
+figure would fail runs in which nothing changed. And a figure that
 tolerated that movement would tolerate a substitution — one check reaching
 a verdict while another stops reaching one, at a constant total.
 

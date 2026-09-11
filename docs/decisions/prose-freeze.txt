@@ -6,14 +6,6 @@
 # that no longer applies rather than leaving it to license a breach that
 # comes back. Do not add to this file: a passage written after the bounds
 # were declared is a finding, not an instance.
-034-runner-rejects-a-pass-reporting-no-input.md	paragraph	The gap was not theoretical. One check passed
-034-runner-rejects-a-pass-reporting-no-input.md	sentence	**A twenty-seventh check that inspects the other twenty-six**
-035-orthogonal-templates-are-resolution-roots.md	sentence	**Its guaranteed context is that chain and nothing
-037-release-proposal-names-every-pre-release-step.md	sentence	**The proposal is an artifact the procedure already
-037-release-proposal-names-every-pre-release-step.md	sentence	This repository's `PLAYBOOK.md` release procedure defers to that
-038-redundancy-gate-tiers.md	paragraph	**Gate the near tier above a similarity threshold.**
-038-redundancy-gate-tiers.md	sentence	The ratio is a judgement rendered as a
-040-a-reading-is-budgeted-not-scored.md	sentence	A number is the wrong instrument here: the
 041-chain-size-is-reported-not-capped.md	paragraph	That is what a ratchet frozen at the
 041-chain-size-is-reported-not-capped.md	paragraph	The cost of keeping it was not the
 041-chain-size-is-reported-not-capped.md	sentence	Resolving those conflicts is wrong line by line

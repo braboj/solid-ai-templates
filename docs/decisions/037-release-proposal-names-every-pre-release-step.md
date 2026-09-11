@@ -14,7 +14,7 @@ superseded_by: []
 `base/core/git.md` carries an eight-step pre-release sequence and names the
 checks that enforce it. This repository's `PLAYBOOK.md` release procedure
 defers to that sequence in prose and then gives nine numbered steps of its
-own, deliberately giving the pre-release checks no number: a number here
+own, deliberately giving the pre-release checks no number. A number here
 would claim they belong to this sequence and would drift from the one that
 owns them.
 
@@ -44,7 +44,7 @@ out of eight.
    A step nobody ran is then a line the proposal does not carry, which is
    the only place its absence appears.
 
-2. **The proposal is an artifact the procedure already produces** — for
+2. **The proposal is an artifact the procedure already produces**. For
    this repository it is the body of the changelog-cut pull request, which
    the no-build release variant already requires as its own pull request
    and which is reviewed before the tag exists.

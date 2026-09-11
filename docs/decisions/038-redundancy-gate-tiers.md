@@ -41,13 +41,14 @@ including a passing one, so a green gate states what it did not gate.
 
 **Gate the near tier above a similarity threshold.** Rejected. The ratio is
 a judgement rendered as a number: 0.90 separates "the same rule twice" from
-"two rules that share vocabulary" only sometimes, and the four findings
+"two rules that share vocabulary" only sometimes. And the four findings
 between 0.90 and 0.96 in the current tree include pairs that are legitimate
-restatements addressed at different audiences. A gate on that number fails on
-correct content, and the repair for a false positive is a baseline entry --
-which is how a baseline that is meant to shrink starts growing instead. The
-project already has one number that has been raised 313 times and lowered
-none.
+restatements addressed at different audiences.
+
+A gate on that number fails on correct content, and the repair for a false
+positive is a baseline entry -- which is how a baseline that is meant to
+shrink starts growing instead. The project already has one number that has
+been raised 313 times and lowered none.
 
 **Leave `--check` silent about the near tier.** Rejected. It is what let the
 0.99 pair survive: the gate passed, printed nothing about what it had not
