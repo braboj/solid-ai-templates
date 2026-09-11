@@ -23,19 +23,21 @@ author of that addition, and none was refused.
 
 That is what a ratchet frozen at the measured size does when the measured
 size is the only input. The number tells the author what they already
-know — they wrote the rule and can see its length — and it tells a
+know — they wrote the rule and can see its length. And it tells a
 reviewer a figure with nothing to compare it against, because the ceiling
-was set to whatever the tree measured the last time anyone looked. A gate
-whose remedy is "write the new number in this file" refuses nothing. It
-records.
+was set to whatever the tree measured the last time anyone looked.
+
+A gate whose remedy is "write the new number in this file" refuses
+nothing. It records.
 
 The cost of keeping it was not the recording. It was that the file is
 generated, sorted, and touched by every branch that adds a rule, so a cut
-landing several such branches conflicts on it repeatedly. Resolving those
-conflicts is wrong line by line — a branch's raises were measured against
-a tree that no longer exists — so the procedure was to take the upstream
-file whole and re-measure, which was carried out four times in a single
-release and produced no information at any of them.
+landing several such branches conflicts on it repeatedly.
+
+Resolving those conflicts is wrong line by line — a branch's raises were
+measured against a tree that no longer exists. So the procedure was to
+take the upstream file whole and re-measure, which was carried out four
+times in a single release and produced no information at any of them.
 
 Meanwhile the figure that does say something to a consumer was already
 generated elsewhere. `tools/sync.py` writes chain size per stack category

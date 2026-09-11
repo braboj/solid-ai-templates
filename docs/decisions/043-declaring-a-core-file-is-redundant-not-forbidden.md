@@ -23,7 +23,7 @@ reached by the seeding alone; the rest are declared somewhere as well.
 
 Nothing decided whether those declarations were wanted. The
 specification denied they existed, so the question of what they mean was
-never put, and a reader consulting it to understand why a file appears in
+never put. And a reader consulting it to understand why a file appears in
 a chain they did not ask for was reading a sentence the tree contradicts.
 Two answers were available and incompatible: sweep them out and gate
 against their return, or keep them and say what they are.
