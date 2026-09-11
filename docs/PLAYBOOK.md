@@ -739,8 +739,9 @@ reporting that the release is not scoped to a milestone — the one answer
 that looks like a clean pass. Read the constant's own line before
 exporting. The `Release gates`
 workflow does exactly that on every tag push, resolving the milestone
-from the tag's `v<major>.<minor>` prefix, and can be dispatched with the
-version as an input to run them at the release commit.
+titled with the tag's full version, or failing that its `v<major>.<minor>`
+line, and can be dispatched with the version as an input to run them at
+the release commit.
 
 That automatic run is the backstop, not the mechanism. It happens after
 the tag, which cannot be taken back cleanly, so it reports what the steps
@@ -766,7 +767,12 @@ below exist to prevent. Run them here anyway.
    `templates/base/core/git.md`, setting its `RELEASE` to the version
    being cut. Left empty it reports that no release is in preparation and
    does not apply, which is correct on any ordinary day and a silent pass
-   here. Then rename that section to
+   here. Choose the version from the section before naming it: a patch
+   when every entry sits under `### Fixed` or `### Security`, a minor
+   otherwise, per `base/core/git.md` Versioning — the release-documentation
+   check fails a version that disagrees. A patch's milestone is retitled
+   `vA.B.C — <theme>` before the gates run, or milestone-coverage reads
+   the minor line's milestone instead. Then rename that section to
    `## [A.B.C] - YYYY-MM-DD` and open an empty `Unreleased` above it.
    This repo has no version manifest to carry the cut, so it is its own
    pull request, and it MUST merge before the tag below — a tag placed
@@ -784,7 +790,8 @@ below exist to prevent. Run them here anyway.
 6. Publish the release from that tag, per the same sequence. Locally
    `tag-guard.yml` is what fails a lightweight tag, so the guard the
    sequence prescribes is enforced here rather than merely advised
-7. Close the `vA.B.C` milestone once the release is published
+7. Close the release's milestone once the release is published — titled
+   `vA.B — <theme>` for a minor and `vA.B.C — <theme>` for a patch
 8. Record that the session owes a `docs/dev-journal.md` entry — do not
    write it here. The entry is written at the end-of-session audit item
    that owns it, which is the last item for a reason: it is the only one
@@ -815,7 +822,7 @@ Which of those steps are actually enforced, audited per step as
 | 1 | `py tests/run_smoke.py`, plus the milestone's own issue list |
 | 2 | the milestone-coverage check in `base/core/git.md` |
 | 3 | the release-ordering check in `base/core/git.md` |
-| 4 | the changelog-completeness check in `base/core/git.md` |
+| 4 | the changelog-completeness check in `base/core/git.md`, and its release-documentation check, which fails a version whose bump disagrees with the section's headings |
 | 5 | `tag-guard.yml`, which fails a pushed lightweight `v*` tag |
 | 6 | step 9, and nothing before it |
 | 7 | nothing — an open milestone after a published release is silent |

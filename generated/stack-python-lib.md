@@ -1964,6 +1964,13 @@ When NOT to close-and-resubmit:
   - **MAJOR** — incompatible API or breaking changes
   - **MINOR** — new functionality, backwards-compatible
   - **PATCH** — backwards-compatible bug fixes
+- Where the project keeps a changelog, decide the version from the release's
+  section rather than from the commits: a cut is a patch when every entry
+  sits under `### Fixed` or `### Security`, and a minor when any entry sits
+  under another heading. Two people reading one section reach the same
+  number, and a release of fixes alone is never tagged as though it added
+  something. A breaking change is a major whatever heading it sits under.
+  The release-documentation check below reads the bump against the section
 - Tags use the `v` prefix: `v1.0.0`, `v0.3.1`
 - Pre-release versions: `v1.0.0-alpha.1`, `v1.0.0-rc.1`
 
@@ -2469,6 +2476,57 @@ if section is None:
 entries = [l for l in section.group(1).splitlines() if l.startswith("- ")]
 print("release record entries read: %d" % len(entries))
 
+# A cut is a patch when every entry in its section sits under a fix
+# heading, and a minor otherwise, per Versioning above. Read the bump
+# against the highest release tag below this one, from the tag list rather
+# than from HEAD: on the tag itself, HEAD names the release being checked.
+SEMVER = re.compile(r"^v?(\d+)[.](\d+)[.](\d+)$")
+FIXES = ("Fixed", "Security")
+
+
+def version(name):
+    """A tag or release name as a comparable triple, or None."""
+    match = SEMVER.match(name)
+    return tuple(int(n) for n in match.groups()) if match else None
+
+
+heading, under = None, []
+for line in section.group(1).splitlines():
+    if line.startswith("### "):
+        heading = line[4:].strip()
+    elif line.startswith("- "):
+        under.append(heading)
+unfixed = sum(1 for h in under if h not in FIXES)
+
+target = version(RELEASE)
+tags = subprocess.run(["git", "tag", "--list"], capture_output=True,
+                      text=True, encoding="utf-8")
+earlier = sorted(v for v in map(version, tags.stdout.split())
+                 if v and target and v < target)
+bump, mismatch = "not read", None
+if target is None and "-" in RELEASE:
+    bump = "none, %s is a pre-release" % RELEASE
+elif target is None:
+    mismatch = "%s is not a MAJOR.MINOR.PATCH version" % RELEASE
+elif tags.returncode != 0 or not earlier:
+    # A clone fetched without its tags reads exactly like a project that
+    # has never released, so the absence is a finding, not a first bump.
+    mismatch = "no release tag sorts below %s to read a bump from" % RELEASE
+else:
+    before = earlier[-1]
+    bump = ("major" if target[0] != before[0] else
+            "minor" if target[1] != before[1] else "patch")
+    if bump == "patch" and unfixed:
+        mismatch = ("%s is a patch, and entries under a heading other "
+                    "than a fix: %d" % (RELEASE, unfixed))
+    if bump == "minor" and under and not unfixed:
+        mismatch = ("every entry sits under a fix heading, so %s should be "
+                    "a patch of v%d.%d.%d" % ((RELEASE,) + before))
+print("release this one follows: %s"
+      % ("v%d.%d.%d" % earlier[-1] if earlier else "none"))
+print("bump: %s" % bump)
+print("entries under a heading other than a fix: %d" % unfixed)
+
 # What the record names in code format is what a consumer will search the
 # description for. Prose alone is not checkable and is not a finding.
 named, missing = set(), []
@@ -2482,7 +2540,9 @@ for name in sorted(named):
 print("of those, documented nowhere in this tree: %d" % len(missing))
 for name in missing:
     print("  %s" % name)
-raise SystemExit(1 if missing or not entries else 0)
+if mismatch:
+    print(mismatch)
+raise SystemExit(1 if missing or not entries or mismatch else 0)
 EOF
 ```
 
@@ -2492,6 +2552,16 @@ many of those the documentation never mentions; the first two are non-zero
 and the last is zero. An identifier the record names and the shipped
 documentation does not is the defect this check exists for — the release
 carries the capability and the tree it is cut from says nothing about it.
+
+The same run reads the version against the record. It names the release tag
+this one follows, the bump between them, and how many entries sit under a
+heading other than Fixed or Security. A patch carrying any such entry fails,
+and so does a minor carrying none, because a section holding only fixes
+makes the cut a patch. A major is decided by what breaks rather than by
+headings, so it is named and not judged, and a pre-release has no bump to
+read. No release tag below the version is a finding rather than a first
+bump: a clone fetched without its tags reads exactly like a project that has
+never released.
 
 Read the documentation as the tag freezes it, which is the whole point: a
 description merged an hour after the tag is on the branch every other gate
@@ -2780,13 +2850,14 @@ A project that runs a periodic project-wide audit and gates the release on
 it has attached a review to the release event. That pacing is wrong in
 both directions, and each direction fails in its own way.
 
-Most releases are patches, and a patch fixes a defect and changes no
-interface, so a review whose subject is the shape of the project has
-nothing new to read on one. The operator writes a record saying so and the
-tag proceeds. A gate firing on an event class whose members mostly cannot
+A patch fixes a defect and changes no interface, so a review whose subject
+is the shape of the project has nothing new to read on one. The operator
+writes a record saying so and the tag proceeds. Each firing that cannot
 produce a finding trains the operator to produce the artifact that clears
-it, and here the artifact is a document declining the work — so the
-cheapest compliant path stops involving the work at all.
+the gate, and here the artifact is a document declining the work — so the
+cheapest compliant path stops involving the work at all. How many of a
+project's releases are patches sets how often that happens, not whether it
+does.
 
 Narrowing the event class to the releases that move an interface does not
 fix it, because release frequency is not a property of the project's
