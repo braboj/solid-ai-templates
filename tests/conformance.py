@@ -70,8 +70,8 @@ CHECKS = [
     {"file": "base/core/docs.md", "find": "over a bound and not frozen",
      "title": "Decision-record prose stays within the declared bounds",
      "do": RUN,
-     "expect": ["line", "line", "nonzero", "nonzero", "nonzero",
-                "nonzero", "zero", "zero"]},
+     "expect": ["line", "line", "nonzero", "nonzero", "zero", "zero",
+                "zero", "zero"]},
 
     {"file": "base/core/docs.md", "find": "changelog entries measured",
      "title": "Changelog entries stay within the word bound",
