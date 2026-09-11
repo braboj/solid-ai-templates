@@ -282,8 +282,12 @@ wrong before changing either.
   ```
 
   Pass condition: every changed word is punctuation, whitespace or line
-  wrapping. A changed word that carries meaning is a decision change, and
-  it needs a new record rather than an edit to the old one
+  wrapping, with two exceptions that move no claim — a word re-cased because
+  the edit made it open a sentence, and the "and" dropped where a series
+  written as one sentence became a list. A changed word that carries meaning
+  is a decision change, and it needs a new record rather than an edit to the
+  old one. A split that needs a word added or replaced to stand as a sentence
+  is not format-only
 - A record's prose SHOULD stay within the sentence and paragraph bounds the
   project declares. Declare them in configuration, beside the Markdown width
   and never in this rule — the number belongs to the project, and a second
@@ -635,11 +639,12 @@ is a correction and is made in place with no marker.
 - Record the boundary the rule starts at — a date, or the first record id it
   binds — and gate from there, so the untouched history is visibly in scope
   of nothing rather than reading as standing debt the next reader files
-- Do NOT migrate the corpus to satisfy such a rule. What the rule targets is
-  frequently load-bearing inside a Decision section, so the rewrite moves a
-  claim and the format-only exemption does not cover it. Superseding each
-  affected record is worse — it produces a supersession that changes no
-  decision
+- Do NOT migrate the corpus to satisfy such a rule where the repair moves a
+  claim. What the rule targets is frequently load-bearing inside a Decision
+  section, so the rewrite moves a claim and the format-only exemption does
+  not cover it. Superseding each affected record is worse — it produces a
+  supersession that changes no decision. A repair that passes the
+  format-only test moves no claim, and MAY be made in place
 
 ### Dated reports
 

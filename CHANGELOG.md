@@ -34,6 +34,9 @@ alters no template carries no entry.
 
 - The case for pacing a periodic review by the calendar no longer rests on
   most releases being patches, which is false in the project that ships it
+- A format-only edit to a merged decision record may re-case a word that now
+  opens a sentence, or drop the "and" of a series turned into a list, so an
+  over-long passage splits in place
 
 ## [2.88.0] - 2026-09-08
 
