@@ -1,5 +1,5 @@
 # Stack -- Embedded C
-[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/core/testing.md]
+[DEPENDS ON: templates/base/core/git.md, templates/base/core/docs.md, templates/base/core/quality.md, templates/base/core/testing.md, templates/base/language/c.md]
 
 Conventions for bare-metal embedded C projects. Covers toolchain, project
 structure, static analysis, unit testing with Unity, and distribution as
@@ -131,6 +131,28 @@ CLAUDE.md
 
 ---
 
+## Quality gates
+[ID: c-embedded-quality-gates]
+
+`base-c` names the tool per category; this section adds what the
+host/target split changes. Every gate runs on the host build. The
+cross-compiled firmware target is built and measured, not analysed,
+because nothing executes it where a gate could observe it.
+
+- Lint, format and complexity read the host build's
+  `compile_commands.json`; configure it with
+  `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
+- Tests and coverage run under the host `ctest` target. A coverage
+  figure for the firmware target does not exist
+- The SAST gate is the static-analysis run above, pointed at the same
+  `compile_commands.json` so it sees the target's defines and include
+  paths rather than the host's
+- The Build gate holds in both directions: the firmware target MUST
+  link and its `-fstack-usage` output MUST stay within the declared
+  budget, and the host target MUST build with the sanitizers on
+
+---
+
 ## Git conventions
 [ID: c-embedded-git]
 [EXTEND: base-git]
@@ -159,7 +181,13 @@ cmake --build build/firmware
 cmake --build build/tests && ctest --test-dir build/tests -V
 
 # Static analysis
-cppcheck --enable=all --error-exitcode=1 src/
+cppcheck --enable=all --error-exitcode=1 --project=build/tests/compile_commands.json
+
+# Lint and complexity (reads .clang-tidy)
+clang-tidy -p build/tests src/*.c
+
+# Format check
+clang-format --dry-run --Werror src/*.c include/*.h
 
 # Flash to target
 ./scripts/flash.sh build/firmware/firmware.hex

@@ -51,6 +51,10 @@ alters no template carries no entry.
 - `base-oop` joins the core tier, so every chain carries the SOLID, GoF
   and AOP guidance; the nine chains that lacked it — libraries, gRPC,
   hypermedia, static, embedded — grow by about 4K characters
+- C gains a language file, `base-c`, binding every gate category —
+  clang-tidy, clang-format, warnings as errors, cognitive complexity via
+  clang-tidy, cppcheck, ctest, gcovr — and `c-embedded` gains a Quality
+  gates section adding what its host/target split changes
 
 ### Fixed
 
