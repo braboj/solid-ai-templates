@@ -5906,13 +5906,16 @@ code reads as though there is one counter.
   reached as well as the hits:
 
   ```bash
-  grep -rcE '^[^#]*type[(]self[)][.][A-Za-z_]* *[+]=' tests/ | wc -l
-  grep -rnE '^[^#]*type[(]self[)][.][A-Za-z_]* *[+]=' tests/
+  tracked=$(git ls-files 'tests/*')
+  echo "tracked files scanned: $(echo "$tracked" | grep -c .)"
+  git grep -nE '^[^#]*type[(]self[)][.][A-Za-z_]* *[+]=' -- 'tests/*'
   ```
 
-  The first line counts the files inspected and MUST be non-zero; the
-  second MUST print nothing. A zero count means the path is wrong, not
-  that the suite is clean
+  The first line counts the tracked files inspected and MUST be
+  non-zero; the second MUST print nothing. A zero count means the path
+  is wrong, not that the suite is clean. Scoping to tracked files keeps
+  a generated report — gitignored, and free to quote this very pattern
+  in a logged prompt or output — from reading as a hit
 - The `^[^#]*` prefix keeps the scan on lines where the pattern is used
   rather than discussed, so a comment naming it is not a hit. A trailing
   comment on a real allocation still is one, because the `#` falls after

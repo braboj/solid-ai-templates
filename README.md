@@ -123,9 +123,9 @@ effective; declining a new rule needs no ADR or ticket. See the
 <!-- generated:readme-model-limits -->
 | Stack category | Stacks | Largest chain | Prompt | Min context |
 |----------------|--------|---------------|--------|-------------|
-| abstract | 2 | `stack-python-service` — 541K chars | ~155K tokens | 200K |
+| abstract | 2 | `stack-python-service` — 542K chars | ~155K tokens | 200K |
 | backend | 8 | `stack-django` — 556K chars | ~159K tokens | 200K |
-| embedded | 1 | `stack-c-embedded` — 343K chars | ~98K tokens | 128K |
+| embedded | 1 | `stack-c-embedded` — 344K chars | ~98K tokens | 128K |
 | hypermedia | 1 | `stack-htmx` — 367K chars | ~105K tokens | 128K |
 | library | 3 | `stack-python-lib` — 467K chars | ~133K tokens | 200K |
 | static | 2 | `stack-tutorial` — 505K chars | ~144K tokens | 200K |

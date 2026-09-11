@@ -30,6 +30,12 @@ alters no template carries no entry.
   its check: a contract test asserting member kind, first parameter,
   append-only widening and no variadics across the hierarchy
 
+### Fixed
+
+- The class-attribute and `sys.path`-in-tests checks now scope their
+  scan to tracked files, so a gitignored test report quoting the
+  pattern is no longer a false finding
+
 ## [2.89.0] - 2026-09-11
 
 ### Added
