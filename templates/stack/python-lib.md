@@ -291,11 +291,45 @@ def __getattr__(name: str) -> object:
   consumer may install without widening what is tested — CI resolves to
   the newest release satisfying each floor whatever the floors say.
   Move a floor only when a new version is genuinely required
-- Set `versioning-strategy: increase-if-necessary` on the pip ecosystem
-  in `.github/dependabot.yml` — the default `increase` lifts every floor
-  to the newest release regardless. Applications, which pin rather than
-  bound, keep the default. Leave the GitHub Actions ecosystem on its
-  default: SHA pins there MUST keep moving
+- Set `versioning-strategy: increase-if-necessary` on the Python
+  ecosystem in `.github/dependabot.yml` — the default `increase` lifts
+  every floor to the newest release regardless. Applications, which pin
+  rather than bound, keep the default. Leave the GitHub Actions ecosystem
+  on its default: SHA pins there MUST keep moving
+- Enrol the ecosystem that reads the lock the project commits: `uv.lock`
+  is `uv`; `poetry.lock`, `Pipfile.lock` and `pdm.lock` are `pip`. The
+  `pip` updater never reads `uv.lock`, so a uv-locked project enrolled as
+  `pip` runs green on schedule while the lock ages, and the answer to
+  what refreshes the lock is a job that opens nothing. Check that every
+  committed lock has a reader enrolled:
+
+  ```bash
+  py - <<'EOF'
+  import pathlib, re, sys
+
+  sys.stdout.reconfigure(encoding="utf-8")
+
+  READER = {"uv.lock": "uv", "poetry.lock": "pip", "Pipfile.lock": "pip",
+            "pdm.lock": "pip"}
+  cfg = pathlib.Path(".github/dependabot.yml")
+  if not cfg.exists():
+      print("no .github/dependabot.yml; nothing refreshes any lock")
+      raise SystemExit(1)
+  enrolled = set(re.findall(r"package-ecosystem:\s*\"?([\w-]+)",
+                            cfg.read_text(encoding="utf-8")))
+  locks = [n for n in READER if pathlib.Path(n).exists()]
+  print("locks committed: %d" % len(locks))
+  unread = [n for n in locks if READER[n] not in enrolled]
+  for n in unread:
+      print("  %s needs the %s ecosystem; enrolled: %s"
+            % (n, READER[n], ", ".join(sorted(enrolled)) or "none"))
+  raise SystemExit(1 if unread or not locks else 0)
+  EOF
+  ```
+
+  Pass condition: exit 0 with at least one lock committed. Zero locks is
+  a failure, because the lock rule below requires one, and a run over no
+  lock would otherwise pass having paired nothing
 - Dev/test dependencies in `[project.optional-dependencies]` or
   `[dependency-groups]`
 - Anchor every include pattern of a build target to the project root.

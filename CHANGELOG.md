@@ -64,6 +64,10 @@ alters no template carries no entry.
 - The release-documentation check reads an entry's full wrapped text,
   not only its first line, so a code span or identifier that wraps
   across a line break is no longer invisible to the check
+- `python-lib` enrols Dependabot on the ecosystem that reads the
+  committed lock — `uv` for `uv.lock`, `pip` for poetry, Pipfile and pdm
+  locks — instead of `pip` for every lock, which reads no `uv.lock` and
+  runs green while it ages
 
 ## [2.89.0] - 2026-09-11
 
