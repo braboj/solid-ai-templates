@@ -96,7 +96,7 @@ raise SystemExit(1 if findings else 0)
   test is the installation's job
 
   ```bash
-  grep -rn "sys.path" tests/
+  git grep -n "sys.path" -- 'tests/*'
   ```
 
   Pass condition: no output. A surviving `sys.path` line means the suite

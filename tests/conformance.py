@@ -453,7 +453,8 @@ CHECKS = [
 
     # -- stack/python-lib.md ----------------------------------------------
 
-    {"file": "stack/python-lib.md", "find": "grep -rn \"sys.path\" tests/",
+    {"file": "stack/python-lib.md",
+     "find": "git grep -n \"sys.path\" -- 'tests/*'",
      "title": "The suite imports the installation, not the working tree",
      "do": SKIP,
      "reason": "Scoped to a packaged library adopting `src/`. This "
