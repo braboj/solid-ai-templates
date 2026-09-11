@@ -124,11 +124,11 @@ effective; declining a new rule needs no ADR or ticket. See the
 | Stack category | Stacks | Largest chain | Prompt | Min context |
 |----------------|--------|---------------|--------|-------------|
 | abstract | 2 | `stack-python-service` — 543K chars | ~155K tokens | 200K |
-| backend | 8 | `stack-django` — 557K chars | ~159K tokens | 200K |
+| backend | 8 | `stack-django` — 558K chars | ~159K tokens | 200K |
 | embedded | 1 | `stack-c-embedded` — 345K chars | ~99K tokens | 128K |
-| hypermedia | 1 | `stack-htmx` — 368K chars | ~105K tokens | 128K |
-| library | 3 | `stack-python-lib` — 468K chars | ~134K tokens | 200K |
-| static | 2 | `stack-tutorial` — 506K chars | ~145K tokens | 200K |
+| hypermedia | 1 | `stack-htmx` — 369K chars | ~105K tokens | 128K |
+| library | 3 | `stack-python-lib` — 469K chars | ~134K tokens | 200K |
+| static | 2 | `stack-tutorial` — 507K chars | ~145K tokens | 200K |
 <!-- /generated:readme-model-limits -->
 
 Measured rather than estimated. Each row takes the largest resolved

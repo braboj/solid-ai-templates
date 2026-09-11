@@ -76,6 +76,11 @@ Every README MUST contain the following sections, in this order:
 ### 6. Development setup
 - MUST cover: cloning, installing dependencies, running tests, running the
   application locally
+- Where the project carries `docs/ONBOARDING.md`, this section MUST link
+  to it for those steps rather than restate them — the onboarding guide
+  owns them, and two copies of the same setup drift. Where there is no
+  onboarding guide, this section states the steps itself. Section 3 stays
+  self-contained either way: an evaluator never opens a second file
 - MUST list every external tool or service required (database, message
   broker, etc.) and how to start it
 - If a `.env.example` file exists, MUST reference it here
