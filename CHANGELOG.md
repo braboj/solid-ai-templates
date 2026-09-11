@@ -35,6 +35,9 @@ alters no template carries no entry.
 - A README's Development setup section links to `docs/ONBOARDING.md` for
   the clone, install and verify steps where the project carries one,
   rather than keeping a second copy that drifts
+- After a pin bump merges, `git pull` moves the pointer and not the
+  submodule working tree; a new Submodules section in `git.md` states the
+  update step and the status signals that show the drift
 
 ### Fixed
 

@@ -214,7 +214,9 @@ summarize — visible sequential execution prevents missed steps.
    the section. A missing doc is work to do here, not a gap to report.
 9. **Submodules** — review updates needed for the current task or a material
    security risk. A newer template tag alone creates no update obligation;
-   follow the project's adoption policy before changing a pin.
+   follow the project's adoption policy before changing a pin. Once a bump
+   merges, `git pull` moves the pointer and not the working tree; move it
+   as `base-git` Submodules states before reading the vendored content.
 10. **Template feedback** — propose upstream work for a demonstrated shared
     defect or recurring need. Check existing issues first. A reusable-looking
     preference alone requires no issue, ADR, or `Upstream:` bookkeeping;

@@ -3235,6 +3235,28 @@ public with weaker protection than the one it replaced.
 - Treat every repository as if it were public — no secrets,
   credentials, or sensitive information in source files or history
 
+## Submodules
+A merged pin bump moves the recorded pointer and nothing else. `git pull`
+fast-forwards the superproject and leaves the submodule working tree at
+the revision the bump replaced, so the clone reads the old content while
+the pin names the new one. It fails silently and at the worst moment:
+reconciling against the vendored content is the step after a bump, and
+reading it then returns the previous version with no error.
+
+- After pulling a merged pin bump, MUST run
+  `git submodule update --init --recursive` before reading anything
+  under the submodule path
+- The drift is visible before the read: `git status` lists the path as
+  modified in the work-tree column and `git submodule status` prefixes
+  its line with `+`. A clean status is evidence the tree was moved, not
+  that the pull moved it
+- A bump procedure MUST carry this step past the merge. One that ends at
+  "push, open PR, merge" stops one command short of the state it set out
+  to reach
+- A project MAY set `submodule.recurse` to `true` so `pull` and
+  `checkout` move the tree themselves; the check above still applies to
+  clones that have not set it
+
 ## Off-limits paths
 - Some paths carry consequences a diff does not show. The change reads
   as ordinary and its blast radius is not local, so the usual signals —
