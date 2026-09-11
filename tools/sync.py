@@ -201,8 +201,17 @@ def _spec_core_tier(core_ids, entries):
     import subprocess
 
     names = {os.path.basename(entries[c]["file"]): c for c in core_ids}
-    tracked = subprocess.check_output(
-        ["git", "ls-files", "templates/*.md"], text=True).split()
+
+    # git ls-files reads the index, so a template added to the manifest
+    # and to disk in the same change is invisible to it until staged --
+    # the first sync run after `Write` undercounts, and the next run
+    # (after `git add`) writes a different SPEC. Union with the entries
+    # the manifest already names, which come from the working-tree file
+    # this function is already passed and needs no staging.
+    tracked = set(subprocess.check_output(
+        ["git", "ls-files", "templates/*.md"], text=True).split())
+    tracked |= {e["file"] for e in entries.values()}
+    tracked = sorted(tracked)
     tokens, templates, declared = 0, set(), set()
     for path in tracked:
         body = io.open(ROOT / path, encoding="utf-8").read()
