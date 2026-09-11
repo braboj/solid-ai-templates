@@ -38,6 +38,9 @@ alters no template carries no entry.
 - After a pin bump merges, `git pull` moves the pointer and not the
   submodule working tree; a new Submodules section in `git.md` states the
   update step and the status signals that show the drift
+- The off-limits rule binds executable content — steps, commands, pins,
+  a directive spelled as a comment — and a diff confined to comments and
+  prose is ordinary work that still names the path in its summary
 
 ### Fixed
 

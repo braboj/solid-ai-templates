@@ -3279,9 +3279,23 @@ reading it then returns the previous version with no error.
   made, and the proposal MUST carry a rollback strategy and the test
   coverage that would catch a regression. The approval is for that
   plan, not for the area
+- The restriction binds executable content: steps, commands, flags,
+  permissions, triggers, pins, and a vendored pointer's revision. A diff
+  confined to comments and prose is ordinary work. Its rollback is
+  `git revert` and its regression coverage is that nothing executes, so
+  a proposal written for it is a form, and a form teaches the next
+  author that the proposal step is one
+- A directive spelled as a comment is executable. A tool that reads a
+  `#` line changes behaviour when the line changes, whatever the line
+  looks like — `# noqa`, `# nosec`, a linter's disable comment, a
+  coverage pragma
+- The diff is the classifier, not the file. A change is prose only when
+  removing every comment line from it leaves nothing; one touching a
+  comment and a step is executable entire
 - A diff touching an off-limits path MUST say so at the top of its
-  summary, naming the path. The reviewer's attention is the control,
-  and it is only allocated if the summary spends it
+  summary, naming the path, whether or not it owes a proposal. The
+  reviewer's attention is the control, and it is only allocated if the
+  summary spends it
 
 The check, run from the repository root after committing and before
 opening a pull request. Its subject is committed history, so a run
@@ -3362,8 +3376,11 @@ failure above, and said in those words rather than as a zero; a clean
 tree means no branch is open, so the check does not apply and exits 3.
 The zero it would otherwise print carries the weight of a finding on a
 tree where nothing is being proposed. Every
-`off-limits:` line is an escalation trigger rather than a failure: it
-says this change needs the proposal above before it merges.
+`off-limits:` line is an escalation trigger rather than a failure. The
+check reads path names, so it cannot see whether the change inside is
+executable or prose and reports both alike; an executable hit is
+discharged by the proposal above, a prose-only one by the summary naming
+the path.
 
 ## `.gitignore`
 - Every repository MUST have a `.gitignore` file
