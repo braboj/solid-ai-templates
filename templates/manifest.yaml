@@ -77,6 +77,10 @@ base:
     file: templates/base/language/typescript.md
     description: Type design, naming, strictness — applies to all TypeScript projects
     depends_on: [base-quality]
+  - id: base-c
+    file: templates/base/language/c.md
+    description: Per-language tool selection for C - clang-tidy, clang-format, cppcheck, ctest
+    depends_on: [base-quality]
   - id: base-data-quality
     file: templates/base/data/data-quality.md
     description: Data sourcing, completeness, freshness, research, scoring — data-heavy projects
@@ -456,4 +460,5 @@ stacks:
       - base-docs
       - base-quality
       - base-testing
+      - base-c
 

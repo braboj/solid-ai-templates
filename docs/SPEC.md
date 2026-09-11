@@ -81,7 +81,8 @@ base/
 ├── language/
 │   ├── go.md           # Per-language tool selection for Go - lint, vet, complexity, tests
 │   ├── python.md       # Per-language tool selection for Python - lint, types, complexity, tests
-│   └── typescript.md   # Type design, naming, strictness — applies to all TypeScript projects
+│   ├── typescript.md   # Type design, naming, strictness — applies to all TypeScript projects
+│   └── c.md            # Per-language tool selection for C - clang-tidy, clang-format, cppcheck, ctest
 └── data/
     ├── data-quality.md # Data sourcing, completeness, freshness, research, scoring — data-heavy projects
     ├── data-modeling.md # Schema design, naming, normalization, relationships, data types
@@ -230,7 +231,7 @@ resolution — stacks do not need to list them in `depends_on`:
 - `templates/base/core/oop.md`
 
 Measured: 44 `[DEPENDS ON]` tokens across 19 templates name one of these
-files, and 19 manifest entries name a core id in `depends_on`. Declaring one
+files, and 20 manifest entries name a core id in `depends_on`. Declaring one
 is redundant rather than forbidden — the seeding reaches the file either
 way, and the directive documents a dependency a reader would otherwise
 infer. Reached by the seeding alone: `base-readme`. A chain assembled by
