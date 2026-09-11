@@ -77,9 +77,14 @@ py tools/audit_redundancy.py --check          # CI gate — fail on new dups
 - A single-commit PR MUST carry the issue number in the commit subject
   too: GitHub squashes using the PR title only when the branch holds two
   or more commits, and the commit subject when it holds one. A PR that
-  closes no issue — a changelog cut, a journal entry — is outside this:
-  the squash appends the PR number either way, so the merged subject
-  still resolves to the work
+  closes no issue — a changelog cut, a journal entry, one part of an
+  issue split across several PRs — is outside this: the squash appends
+  the PR number either way, so the merged subject still resolves to the
+  work
+- A subject MUST NOT name an issue its PR does not close. The merged-work
+  sweep fails on every open issue a merged subject names, so the part
+  PRs of a split issue carry "Part of #N" in the body and only the PR
+  that closes it carries `(#N)`
 - Issue titles: sentence case, imperative verb — no type prefix
   (labels carry the type)
 - PRs are small and focused — one concern per PR, merged once its
