@@ -7422,3 +7422,89 @@ PLAYBOOK gate-status correction), #1652 (the v2.88.0 changelog cut), #1653
   swapped for another and reads as compliance, and an entry whose passage
   was since rewritten has to be reported too, or it licenses a breach that
   nothing would notice coming back
+
+## 2026-09-11 — The claim a rule rests on, re-measured against what it governs
+
+**Tool:** Claude Code (Opus 5, 1M context)
+
+**Key changes:**
+- A change adding a constraint sweeps the corpus it already governs and
+  records what the sweep covered, what it found and what it left out. A
+  corpus that does not comply is fixed or frozen by named instance, and an
+  immutable one names the boundary the rule binds forward from
+- A cut whose changelog section holds only Fixed or Security entries is a
+  patch. The release-documentation check reads the bump against the
+  highest release tag below the version, and the release-gates workflow
+  resolves a milestone naming the full version before the minor line. The
+  case for pacing a periodic review by the calendar no longer opens on
+  patches being common, which was false here at every one of 90 tags
+- A format-only split of a merged decision record may re-case the word
+  that opens the new sentence and drop the "and" of a series turned into a
+  list, and the prose check splits at a quotation mark and after closing
+  bold
+- The 42 frozen decision-record passages are cleared, one by the splitter
+  fix and 41 split in place across five pull requests, and
+  `docs/decisions/prose-freeze.txt` is deleted. Its conformance slots now
+  require zero frozen
+- The e2e runner writes no report on a dry run and names mode, provider and
+  model on a live one, and its Anthropic backend streams against a current
+  model. The PLAYBOOK and `CLAUDE.md` state the cadence: the STK-15 canary
+  live at every cut, the full suite at each periodic review
+- `CLAUDE.md` 2.1 says a subject names only the issue its pull request
+  closes, and ONBOARDING names the provider key a live e2e run needs
+
+**Released:** v2.89.0 — tag on the changelog cut `45054ac`, milestone #95
+closed 6/6. The first cut to run the patch-rule check, which read a minor
+with four entries outside a fix heading, and the first to record a live
+canary, which failed.
+
+**Pull requests merged:** #1657 (#1654), #1658 (#1469), #1662 (#1659),
+#1664 (#1660), #1666, #1671, #1672 and #1673 (parts of #1648), #1670 (the
+e2e runner, part of #1368), #1674 (#1368), #1675 (#1648), #1677 (the
+v2.89.0 changelog cut), #1678 (the `CLAUDE.md` subject rule), #1679 (the
+ONBOARDING e2e prerequisite).
+
+**Issues closed:** #1654, #1469, #1659, #1660, #1648, #1368.
+**Issues filed:** #1659, #1660, #1661, #1668, #1669, #1676.
+
+**Decisions:**
+- No ADR. The patch rule is release procedure, which the observability
+  threshold excludes, and ADR-006's "milestones map to minor bumps" stands
+  as history
+- Security counts as a fix heading beside Fixed. Keep a Changelog files a
+  vulnerability fix there, and a Fixed-only rule would fail every
+  adopter's security patch
+- The freeze was retired by format-only splits rather than by reasoned
+  exceptions. Four passages had no split at a stop that left both halves
+  as sentences, and each became a list under the permission #1659 added
+- The live e2e runs used Gemini, because the Anthropic account has no
+  credits. Refusal fallbacks stay off in the Anthropic backend: a fallback
+  model answering would make the report's Model line false
+- The part pull requests of a split issue carried no issue number in the
+  subject, because the merged-work sweep fails on every open issue a merged
+  subject names
+- Stashes were cleaned at the user's request: one live stash from
+  2026-09-05, thirty files that apply to main in neither direction, and 99
+  dropped stash commits, pruned with a one-hour window for the parallel
+  session
+
+**Lessons:**
+- A control's landing assertion caught a wrong plant. The first
+  patch-bump plant went under `## [Unreleased]` and absorbed the branch's
+  own entries, and printing the planted section's headings showed three
+  where one was planted
+- A sweep reporting no change can have read nothing. The
+  milestone-resolution sweep over 90 tags reported zero changes because
+  `jq` is absent from this shell and both sides came back empty. The control
+  that had to resolve came back empty too, which is what exposed it
+- A live report embeds the templates' own text, and a check grepping the
+  test root reads it. The class-attribute check failed locally after the
+  e2e run, then kept failing on the conformance report that recorded the
+  finding (#1669)
+- The canary's output now reaches the output ceiling: `MAX_TOKENS` at
+  62,937 output and 2,595 thinking tokens against 65,536. The Gemini
+  backend graded the truncated text, which read as two different template
+  failures on two runs of the same tree (#1676)
+- An issue's premise can be a dry run. #1368 dated the last live e2e run
+  2026-05-06; that report ran 27 cases in 0.1 seconds in the offline mode
+  removed eleven minutes later, and the last live full suite was 2026-03-22
