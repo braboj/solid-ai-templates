@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.89.0] - 2026-09-11
+
 ### Added
 
 - A change adding a constraint runs it against the corpus that already
