@@ -21,7 +21,7 @@ drives auto-triggering and whose body holds an on-demand procedure.
 The library's only prior encounter with skills was an experiment that
 authored two locally, judged them redundant with always-loaded context,
 and removed them. That outcome is a design lesson worth capturing, not a
-reason to leave the topic ungoverned: downstream projects have many
+reason to leave the topic ungoverned. Downstream projects have many
 skills and no shared guidance on when a skill earns its place, how to
 write the triggering description, or how to keep one from duplicating
 always-loaded rules.

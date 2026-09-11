@@ -6,14 +6,6 @@
 # that no longer applies rather than leaving it to license a breach that
 # comes back. Do not add to this file: a passage written after the bounds
 # were declared is a finding, not an instance.
-016-examples-generated.md	paragraph	The files in `examples/*/CLAUDE.md` were written by hand.
-016-examples-generated.md	sentence	They have drifted from the templates they claim
-017-stack-section-structure.md	sentence	An audit found the shape is mostly shared
-019-redundancy-detection.md	sentence	A section tagged `[OVERRIDE: id]` legitimately repeats the
-022-skill-authoring-in-scope.md	sentence	That outcome is a design lesson worth capturing,
-024-priority-severity-only.md	paragraph	Sole carrier is the right shape; this marker
-024-priority-severity-only.md	paragraph	The earlier reasoning kept the marker because dropping
-024-priority-severity-only.md	sentence	An issue can be marked deferred while sitting
 025-examples-get-their-own-template.md	paragraph	**Offline is bounded, and has one exception** —
 025-examples-get-their-own-template.md	paragraph	Two gaps sat in the seam between the
 025-examples-get-their-own-template.md	sentence	**Leave the offline rule as guidance rather than

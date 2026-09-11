@@ -12,11 +12,13 @@ superseded_by: []
 ## Context
 
 The files in `examples/*/CLAUDE.md` were written by hand. They have
-drifted from the templates they claim to demonstrate: seven of eight
+drifted from the templates they claim to demonstrate. Seven of eight
 use a pre-`agents.md` free-form heading set (`## Project identity`,
 `## Stack`, `## Commands`, ...) with no §5 Review process and no §6
 Session protocol, while only one uses the current six-section output
-shape. Two examples share a project name and demonstrate overlapping
+shape.
+
+Two examples share a project name and demonstrate overlapping
 stacks. Because examples are the reference outputs contributors
 compare against, hand maintenance has repeatedly let them model an
 outdated shape until someone audits them manually.
