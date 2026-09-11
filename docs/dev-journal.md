@@ -7508,3 +7508,71 @@ ONBOARDING e2e prerequisite).
 - An issue's premise can be a dry run. #1368 dated the last live e2e run
   2026-05-06; that report ran 27 cases in 0.1 seconds in the offline mode
   removed eleven minutes later, and the last live full suite was 2026-03-22
+
+## 2026-09-11 — A check's input scope, measured against what its rule examines
+
+**Tool:** Claude Code (Sonnet 5, launched via Fable 5.1)
+
+**Key changes:**
+- STK-22 now checks the numbered `Code conventions` heading the output
+  shape actually produces, plus a C-specific content marker, instead of
+  the stack template's own `C conventions` source heading — verified
+  against ADR-017 and a real generated example before changing anything
+- A project MAY declare a directional layering ban between tiers,
+  distinct from the acyclic-dependency rule, with a named AST-walk check
+- Where a type checker's override rule is frozen, the variadic ban names
+  a contract test as its check: member kind, first parameter,
+  append-only widening, no variadics, read via `inspect.getattr_static`
+- The class-attribute and `sys.path`-in-tests checks scope their scan to
+  tracked files (`git ls-files`/`git grep`), so a gitignored e2e report
+  quoting the pattern is no longer a false finding
+- The release-documentation check joins a wrapped changelog entry before
+  reading it, so an identifier or code span on a continuation line is no
+  longer invisible; 12 of 26 released sections would have read
+  differently
+- Every e2e provider backend now raises on a non-completion finish
+  reason before assertions run, and returns token usage. The STK-15
+  canary's live Gemini failure diagnosed as reasoning-token variance —
+  96% of the ceiling spent on thinking, 4% on the answer — not ceiling
+  size; disabling thinking for the verbatim-reproduction task dropped it
+  to 11% of the ceiling with a verified-genuine, complete answer
+
+**Released:** none. Milestone #96 "v2.90 — Check input scope and
+coverage" closed 6/6; no tag cut in this pass.
+
+**Pull requests merged:** #1681 (#1668), #1682 (#1667), #1683 (#1665),
+#1684 (#1669), #1685 (#1661), #1686 (#1676).
+
+**Issues closed:** #1668, #1667, #1665, #1669, #1661, #1676.
+**Issues filed:** none — all six were groomed from the existing
+unmilestoned backlog, not newly filed this session.
+
+**Decisions:**
+- No ADR. All six changes edit prose and check logic inside existing
+  sections; none touch the composition model
+- #1006 (a pre-commit hooks repo distributing this repo's own checks)
+  moved to v3.0 rather than joining this milestone: shipping runtime
+  code into a consumer's gate is a category change against the
+  plain-Markdown stack, and owes an ADR before code, not a 2.x fix
+- The live, costed Gemini call for #1676's canary measurement was
+  confirmed with the user before spending — both the call itself and
+  the all-6-merge-on-green execution mode were explicit choices, not
+  assumed defaults
+
+**Lessons:**
+- A ceiling failure can be a variance problem, not a size problem. The
+  same STK-15 prompt truncated at 96% thinking / 4% answer on one call
+  and completed at 11% of the ceiling with thinking disabled — raising
+  `MAX_TOKENS` would have papered over the variance rather than removed
+  it
+- Own error, caught before it reached `origin`: PR 6's first commit
+  landed directly on `main` — the `checkout -b` step was skipped after
+  five prior PRs' merge-checkout-pull-delete rhythm made branching feel
+  automatic. `git reset --hard` is blocked by this environment's
+  permission system even against `origin/main`; the recovery was
+  branch-at-HEAD, delete `main`, recreate it tracking `origin/main` (see
+  `lesson_branch_before_commit` in project memory)
+- A milestone title reading as a full sentence reads as a marketing
+  line even when every word is plain; the wanted register is a noun
+  phrase naming the component and the property, matching the project's
+  own older titles rather than its two most recent ones
