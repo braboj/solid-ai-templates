@@ -47,7 +47,7 @@ context file does not hold.
 
 2. **Its guaranteed context is that chain and nothing more** — the stack a
    project pairs an orthogonal template with is unknown when the template
-   is authored, so an `[EXTEND: ...]`, an `[OVERRIDE: ...]` or a prose
+   is authored. So an `[EXTEND: ...]`, an `[OVERRIDE: ...]` or a prose
    section reference it carries MUST resolve within its own root's chain.
    A target that resolves only because some stack happens to supply it
    does not satisfy this.

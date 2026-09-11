@@ -21,10 +21,11 @@ suite, where 25 of 26 checks reported only failures.
 The gap was not theoretical. One check passed with its directory list
 pointed at a renamed path and again with the list emptied, because a
 missing directory was skipped with a bare `continue`. Another passed by
-looping over an empty stack list. A third — the only one carrying a
-reached-nothing guard — had a matching pattern that could see 100 of the
-341 declared section IDs, and reported green while the rule it enforces
-was violated in three shipped artifacts.
+looping over an empty stack list.
+
+A third — the only one carrying a reached-nothing guard — had a matching
+pattern that could see 100 of the 341 declared section IDs, and reported
+green while the rule it enforces was violated in three shipped artifacts.
 
 Adding the counts to all 26 closes today's instance. It does not close the
 class: the twenty-seventh check is written by someone who has not read
@@ -60,7 +61,7 @@ that do not.
   nobody has to remember it
 
 - **A twenty-seventh check that inspects the other twenty-six** —
-  rejected; it runs every check a second time to ask a question the
+  rejected. It runs every check a second time to ask a question the
   runner can answer for free as each one returns, and it is itself a
   check that can be narrowed until it sees nothing
 
