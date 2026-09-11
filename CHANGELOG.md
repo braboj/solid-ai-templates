@@ -32,6 +32,9 @@ alters no template carries no entry.
 - A test double injecting a transient fault clears it as it fires; one
   left armed fails every retry, so the recovery path never runs and the
   passing test reads as covering it
+- A README's Development setup section links to `docs/ONBOARDING.md` for
+  the clone, install and verify steps where the project carries one,
+  rather than keeping a second copy that drifts
 
 ### Fixed
 

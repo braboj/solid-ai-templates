@@ -159,6 +159,10 @@ raise SystemExit(1 if findings else 0)
 5. **Project context** — brief domain overview and links to architecture docs
 6. **Daily workflow** — cross-reference PLAYBOOK sections, do not duplicate
 
+Sections 2 and 3 own the clone, install and verify steps: a README's
+Development setup section links here for them rather than restating
+them, so the two documents cannot drift apart.
+
 ## PLAYBOOK structure
 
 `docs/PLAYBOOK.md` MUST contain the following sections in order:
