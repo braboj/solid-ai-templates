@@ -5868,6 +5868,15 @@ later rereads it.
   with a double rather than wait for the platform to supply it. Raise
   the error the other platform raises, from a stub at the same seam the
   real call sits on
+- A double injecting a transient fault MUST clear it as it fires: hold
+  one failure, and hand it over and reset in the same step. A fault left
+  armed fails every call the same way, so the retry or recovery path in
+  the code under test never runs, and the test written to cover that
+  path passes having reached nothing — the double fired, the assertion
+  held, and the coverage report shows the retry line as covered because
+  it ran once and raised. A permanent fault is a different double, one
+  that stays armed by design for the path that gives up, and the two
+  MUST NOT share a shape
 - A component cleared by a test on one platform is cleared on that
   platform only. Where that clearing is written down — a commit message,
   an issue comment, a review — it MUST name the platform the evidence
