@@ -214,6 +214,76 @@ raise SystemExit(1 if findings else 0)
   freezes such findings rather than fixing them, the variadic ones are the
   entries to shrink first: they are not missing annotations, they are the
   abstraction not holding
+- Where the checker itself is frozen over a hierarchy, the check is a
+  contract test that walks every concrete class and compares each
+  overridden operation against its declaration on the base: the override
+  stays the same kind of member (a classmethod does not become an
+  instance method), keeps the base's first parameter, only appends
+  parameters after the base's own rather than dropping or reordering
+  one, and declares no variadic itself
+- Read the override through the class's own descriptor, not through an
+  instance lookup. A plain `getattr` resolves a `staticmethod` or
+  `classmethod` to its already-bound callable and hides the callable's
+  own signature behind that resolution — reading it with
+  `inspect.getattr_static` and unwrapping `staticmethod`/`classmethod`
+  by hand is what keeps the three member kinds distinguishable
+
+  ```bash
+  py - <<'EOF'
+import inspect
+
+# The hierarchy under contract. Empty until a project names its own.
+BASE = None
+HIERARCHY = ()
+
+def unwrap(cls, name):
+    found = inspect.getattr_static(cls, name)
+    if isinstance(found, (staticmethod, classmethod)):
+        found = found.__func__
+    return found
+
+if BASE is None or not HIERARCHY:
+    print("no hierarchy named -- nothing to check")
+    raise SystemExit(0)
+
+ops = [name for name, value in vars(BASE).items()
+      if inspect.isfunction(value)
+      or isinstance(value, (staticmethod, classmethod))]
+print("abstract operations inspected: %d" % len(ops))
+
+findings = []
+for name in ops:
+    base_kind = type(inspect.getattr_static(BASE, name))
+    base_params = list(
+        inspect.signature(unwrap(BASE, name)).parameters.values())
+
+    for cls in HIERARCHY:
+        sub_kind = type(inspect.getattr_static(cls, name))
+        params = list(
+            inspect.signature(unwrap(cls, name)).parameters.values())
+
+        if base_kind is not sub_kind:
+            findings.append("%s.%s changes member kind" % (cls.__name__, name))
+        if not params or params[0].name != base_params[0].name:
+            findings.append("%s.%s drops the first parameter" % (cls.__name__, name))
+        prefix = [p.name for p in params[:len(base_params)]]
+        if prefix != [p.name for p in base_params]:
+            findings.append("%s.%s narrows or reorders the base signature"
+                            % (cls.__name__, name))
+        if any(p.kind in (p.VAR_POSITIONAL, p.VAR_KEYWORD) for p in params):
+            findings.append("%s.%s declares a variadic" % (cls.__name__, name))
+
+print("overrides checked: %d" % (len(ops) * len(HIERARCHY)))
+print("findings: %d" % len(findings))
+for finding in findings:
+    print("  %s" % finding)
+raise SystemExit(1 if findings else 0)
+  EOF
+  ```
+
+  Pass condition: the command reports how many abstract operations it
+  inspected and how many overrides it checked, then `findings: 0`. An
+  empty `HIERARCHY` is a real answer, stated rather than passed silently
 - Before removing or renaming a public symbol, mark it deprecated with a
   comment referencing the replacement; remove it in a follow-up change
 - Where a rename spans parts of one call site — a method and its keyword

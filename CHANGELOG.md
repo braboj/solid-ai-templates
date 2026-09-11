@@ -26,6 +26,9 @@ alters no template carries no entry.
 - A project MAY declare a directional import ban between tiers, distinct
   from the acyclic-dependency rule — a named AST check walks imports
   against the declared forbidden pairs
+- Where a type checker's override rule is frozen, the variadic ban names
+  its check: a contract test asserting member kind, first parameter,
+  append-only widening and no variadics across the hierarchy
 
 ## [2.89.0] - 2026-09-11
 
