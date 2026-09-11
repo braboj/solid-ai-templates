@@ -71,8 +71,8 @@ tags: [tests, e2e, fixtures, references]
 
 1. **A moved template.** Renaming a file a case names MUST fail here,
    which is the whole point of running it without a model: the live
-   suite has not executed since 2026-05-06 (#1368), so this check is the
-   only thing reading those paths
+   suite runs only on the cadence the PLAYBOOK states (#1368), so between
+   live runs this check is the only thing reading those paths
 2. **An empty stack file.** Truncating a named stack to zero bytes MUST
    fail, since existence alone would pass while the case teaches nothing
 
