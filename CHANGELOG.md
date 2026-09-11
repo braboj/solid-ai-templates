@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- A project MAY declare a directional import ban between tiers, distinct
+  from the acyclic-dependency rule — a named AST check walks imports
+  against the declared forbidden pairs
+
 ## [2.89.0] - 2026-09-11
 
 ### Added

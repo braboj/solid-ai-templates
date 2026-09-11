@@ -201,6 +201,13 @@ CHECKS = [
 
     # -- base/core/quality.md ------------------------------------------
 
+    {"file": "base/core/quality.md", "find": "FORBIDDEN = ()",
+     "title": "A directional layering ban names its check", "do": SKIP,
+     "reason": "FORBIDDEN is empty by design -- this repository's own "
+               "Python (tools/, tests/) is a flat test/tooling layer "
+               "with no domain/adapter split to bound. Re-examine if "
+               "one is ever adopted."},
+
     {"file": "base/core/quality.md", "find": "documents naming ${module}",
      "title": "A document naming a check is re-read when its exemptions change",
      "do": SKIP,

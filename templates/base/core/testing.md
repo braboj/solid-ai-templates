@@ -947,7 +947,8 @@ only.
   sweep
 - The same AST/token pass cheaply enforces adjacent rules a linter has
   no rule for — a comment trailing code on the right, a ticket/PR/ADR
-  number embedded in a comment — reusing one traversal
+  number embedded in a comment, an import crossing a declared layering
+  boundary — reusing one traversal
 
 ---
 
