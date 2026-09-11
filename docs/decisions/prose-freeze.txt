@@ -19,7 +19,6 @@
 025-examples-get-their-own-template.md	sentence	**Leave the offline rule as guidance rather than
 025-examples-get-their-own-template.md	sentence	**The new template holds what neither owner did**
 025-examples-get-their-own-template.md	sentence	An example MAY depend on an outside host
-025-examples-get-their-own-template.md	sentence	Two gaps sat in the seam between the
 028-prose-references-bounded-by-chain-reach.md	paragraph	Measured across the tree on 2026-08-28: 15 cross-file
 028-prose-references-bounded-by-chain-reach.md	sentence	One reference named a section declared in a
 032-check-reports-inapplicability-with-status.md	sentence	**Leaving it as a judgement reading** — rejected;

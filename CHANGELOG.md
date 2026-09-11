@@ -38,6 +38,12 @@ alters no template carries no entry.
   opens a sentence, or drop the "and" of a series turned into a list, so an
   over-long passage splits in place
 
+### Fixed
+
+- The decision-record prose check no longer joins a sentence to the one
+  before it across a quotation mark or closing bold. A frozen entry spanning
+  such a boundary may now report as no longer over
+
 ## [2.88.0] - 2026-09-08
 
 ### Added

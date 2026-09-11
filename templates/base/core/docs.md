@@ -333,7 +333,12 @@ print("decision records inspected: %d" % len(records))
 # the list's length rather than any passage's, which is the measurement
 # the rule is not making.
 BULLET = re.compile(r"^\s*(?:[-*+]|\d+[.])\s+")
-SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z`*(\[])")
+
+# A sentence ends at its stop and at any closing bold, bracket or quote
+# after it, and the next may open on a capital, code, bold, a bracket or
+# a quote. Leave a quote out of either side and two sentences are
+# measured as one passage.
+SPLIT = re.compile(r"(?<=[.!?])[*)\"'\u201d\u2019]*\s+(?=[A-Z`*(\[\"'\u201c\u2018])")
 
 
 def prose_blocks(text):
