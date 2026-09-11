@@ -45,7 +45,7 @@ the budget that tier leaves.
    dependency graph produces.
 
 2. **The declaration is by category, not by identifier** — the exemption
-   names the categories the manifest already classifies stacks into, so a
+   names the categories the manifest already classifies stacks into. So a
    stack added later is governed or exempt by the class it declares
    rather than by a list that goes stale.
 

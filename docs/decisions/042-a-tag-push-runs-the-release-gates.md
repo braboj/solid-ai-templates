@@ -13,22 +13,25 @@ superseded_by: []
 
 Four of the checks the base tier ships are parameterised by the release
 being prepared: the milestone the release is scoped to, and the version
-itself. The parameterisation is deliberate and correct. Nothing in a
-repository's state distinguishes a release commit from an ordinary one —
-an untagged HEAD means only that a commit has landed since the last tag,
-which is the ordinary condition of a repository between releases. A
-detector reading it as the release moment reports the failure shape on
-almost every day, and a check whose ordinary output is its defect output
-trains its reader to skip it.
+itself. The parameterisation is deliberate and correct.
+
+Nothing in a repository's state distinguishes a release commit from an
+ordinary one — an untagged HEAD means only that a commit has landed since
+the last tag, which is the ordinary condition of a repository between
+releases. A detector reading it as the release moment reports the failure
+shape on almost every day, and a check whose ordinary output is its
+defect output trains its reader to skip it.
 
 The cost was that the constant is set by editing the check. Measured on
 the tree at the time of this record, 14 of 53 registered check blocks
-produced an automatic verdict in continuous integration; the release
+produced an automatic verdict in continuous integration. The release
 gates were the largest group that did not, reporting that they did not
-apply on every run. They are also the checks whose omission is least
-recoverable, and the ones that only ever ran when somebody remembered.
-Four consecutive minor releases shipped owing a periodic review, under a
-check that existed and was correct throughout.
+apply on every run.
+
+They are also the checks whose omission is least recoverable, and the
+ones that only ever ran when somebody remembered. Four consecutive minor
+releases shipped owing a periodic review, under a check that existed and
+was correct throughout.
 
 A tag push is the one repository event that does say a release is
 happening. Reading the version from it removes the guess without
