@@ -12,9 +12,9 @@ superseded_by: []
 ## Context
 
 The 30 stack templates grew independently and their section layout
-drifted. An audit found the shape is mostly shared but inconsistent:
+drifted. An audit found the shape is mostly shared but inconsistent.
 `Stack` (29/30), `Commands` (29/30), and `Project structure` (25/30)
-are near-universal, but `python-service` — a usable stack — omits
+are near-universal. But `python-service` — a usable stack — omits
 `Commands`, the static-site stacks omit a `Testing` section, and the
 language-conventions section is spelled five ways ("Code conventions",
 "Coding conventions", "Crate conventions", "TypeScript conventions",

@@ -21,7 +21,7 @@ migration rule already provided by their parent.
 
 The composition model complicates detection. A section tagged
 `[OVERRIDE: id]` legitimately repeats the section it replaces, so a naive
-scan of raw template files reports those repeats as duplicates — a
+scan of raw template files reports those repeats as duplicates. A
 throwaway probe did exactly this, flagging the Go Stack sections that the
 override model produces by design.
 

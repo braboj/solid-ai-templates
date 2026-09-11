@@ -19,21 +19,24 @@ when the milestone is closed while a label travels with the issue —
 which left the marker as the sole carrier of deferral.
 
 Sole carrier is the right shape; this marker is the wrong carrier. It
-overlaps the milestone field rather than complementing it. An issue can
-be marked deferred while sitting in a planned cut, or unmarked while
-sitting in no milestone at all, and both combinations exist in the
-tracker this was measured on: of four open issues carrying the marker,
-two also carry a milestone and two carry none. In neither pair does the
-marker say anything the milestone field does not already say.
+overlaps the milestone field rather than complementing it.
+
+An issue can be marked deferred while sitting in a planned cut, or
+unmarked while sitting in no milestone at all, and both combinations
+exist in the tracker this was measured on. Of four open issues carrying
+the marker, two also carry a milestone and two carry none. In neither
+pair does the marker say anything the milestone field does not already
+say.
 
 The earlier reasoning kept the marker because dropping it would push
-deferral into prose, where it stops being filterable. That assumed the
-alternative to a label was prose. It is not. The milestone field is
-itself a first-class, filterable axis, already mandatory reading when
-scoping a release, and already documented as optional — an empty
-milestone is a valid state meaning the work is not tied to a release.
-Deferral was being recorded twice, in a label and in a field that
-encodes the same fact.
+deferral into prose, where it stops being filterable.
+
+That assumed the alternative to a label was prose. It is not. The
+milestone field is itself a first-class, filterable axis, already
+mandatory reading when scoping a release, and already documented as
+optional — an empty milestone is a valid state meaning the work is not
+tied to a release. Deferral was being recorded twice, in a label and in
+a field that encodes the same fact.
 
 ## Decision
 
