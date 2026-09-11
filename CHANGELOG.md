@@ -44,6 +44,10 @@ alters no template carries no entry.
 - Every wait on another thread, process or connection is bounded and
   reports why it gave up; where the worker can die, liveness is checked
   beside the deadline, so a startup failure fails instead of hanging
+- The errors a package raises on purpose form one hierarchy under a
+  package base, each type also deriving from the built-in it replaces;
+  `python.md` names the test that walks every raise and fails on one
+  outside it
 
 ### Fixed
 
