@@ -7576,3 +7576,65 @@ unmilestoned backlog, not newly filed this session.
   line even when every word is plain; the wanted register is a noun
   phrase naming the component and the property, matching the project's
   own older titles rather than its two most recent ones
+
+## 2026-09-11 — A full backlog groom, cleared same session
+
+**Released:** none.
+
+**Pull requests merged:** #1689 (#1663), #1690 (#1656), #1691 (#976),
+#1692 (#1524), #1693 (#1012), #1694 (#1007), #1696 (#727), #1697
+(#1174), #1699 (#1695), #1700 (#1698).
+
+**Issues closed:** #1663, #1656, #976, #1524, #1012, #1007, #727,
+#1174, #1695, #1698 delivered; #711 and #179 closed duplicate; #308 and
+#349 closed `wontdo`. #1184's stale blocker corrected and the issue
+restored to v3.0 rather than closed — the external spike it named had
+already concluded on 2026-08-28.
+
+**Issues filed:** #1698, discovered while shipping #1174 — `sync.py`
+measured its core-tier statement over `git ls-files`, which reads the
+index, so a template added to the manifest and to disk in the same
+change was undercounted until staged. Fixed same session.
+
+**Decisions:**
+- Every open issue was read start to finish before grooming: two
+  resolved as duplicates of a better-evidenced issue (#711 → #1050,
+  #179 → #712/#1480) rather than closed outright; two cross-linked
+  instead of merged after a closer read showed they asked different
+  questions than their apparent duplicate (#414 keeps skills-as-UX
+  distinct from #712's skills-as-delivery; #562's templating-layer call
+  feeds #1504's directory move rather than duplicating it)
+- #727: `base-oop` promoted to the core tier (ADR-046) rather than wired
+  into the three library stacks alone, after measuring that the
+  narrower fix reached 13/17 and the two 128K-tier chains had headroom
+  (htmx 374,121 → 378,272 chars, c-embedded 350,465 → 354,616)
+- #1174: `c-embedded` given a stack-owned Quality gates section over
+  extending `base-quality-gates`, after measuring that the embedded
+  chain does not resolve that file and admitting it would cross the
+  128K tier ADR-044 ties to a stated reason
+- #305 held rather than shipped — the four doc items are ready, but the
+  call was to leave the epic in v3.0 rather than land part of it early
+- Every rule shipped carried a control: a throwaway package plant for
+  the error-hierarchy check (#1007), a live `.clang-tidy`/`lizard`
+  read before naming a complexity binding (#1174), a four-case run of
+  the extracted lock-reader check (#1695), and a two-run byte-identity
+  comparison for the sync fix (#1698)
+
+**Lessons:**
+- A blocker named in an issue body is a claim about the day it was
+  filed, not a live fact. #1184 was demilestoned twice — 2026-09-03 and
+  again by me — as blocked on an external spike that had already closed
+  completed three days before my second read. Neither pass ran `gh
+  issue view` on the external issue; both restated the body
+- A tool that reads `git ls-files` for a set the caller already has
+  from a working-tree file it parsed anyway is reading the wrong
+  source twice. `sync.py` had `entries` in hand — built from
+  `manifest.yaml` on disk — and walked the index for the same
+  information, so a file that existed in both places by different
+  means (one staged, one not) read as two different counts
+- Reading a candidate tool's own `--help` output caught a wrong
+  binding before it shipped: the issue offered `lizard` for cognitive
+  complexity, and its extension list names cyclomatic and Halstead
+  metrics but nothing cognitive — installing it and reading `--help`
+  took under a minute and changed the binding to clang-tidy's
+  `readability-function-cognitive-complexity`
