@@ -58,7 +58,8 @@ tags: [e2e, output, c, embedded]
 ### Assertions
 
 1. Assert `## Stack` lists C17, CMake, Unity, cppcheck
-2. Assert a `## C conventions` section is present
+2. Assert `## Code conventions` carries C-specific content (`stdint.h`
+   fixed-width types)
 3. Assert firmware/host build separation referenced (cross-compile vs host)
 4. Assert canonical sections present (Project structure, Commands)
 5. Assert base git conventions present (`feat:`)

@@ -382,8 +382,8 @@ STK_TESTS = [
         },
         "required": [
             "1. Project", "Project structure", "Commands",
-            "C conventions",
-            "C17", "CMake",
+            "Code conventions",
+            "C17", "CMake", "stdint.h",
             "Unity", "cppcheck",
             "feat:",
         ],
