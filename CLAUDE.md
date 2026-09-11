@@ -354,17 +354,20 @@ py tests/run_e2e.py --all          # all tests (live, needs API key)
 py tests/run_e2e.py --area=STK     # run all stack tests
 py tests/run_e2e.py STK-01 FMT-01  # run specific tests by ID
 py tests/run_e2e.py --fail-fast    # stop on first failure
-py tests/run_e2e.py --dry-run      # print prompts, skip execution
+py tests/run_e2e.py --dry-run      # build prompts, call no model, write no report
 ```
 
-- Both runners write a timestamped Markdown report to
-  `tests/reports/` after every run (gitignored)
+- Every runner writes a timestamped Markdown report to
+  `tests/reports/` (gitignored), except an e2e dry run, which calls no
+  model and writes none
 - Spec files live in `tests/specs/` — see `tests/CODIFICATION.md`
   for the ID scheme and `tests/INDEX.md` for the full list
 - CI runs smoke, conformance, `sync.py --check`, `resolve.py --check`,
   the redundancy audit and gitleaks on PRs and on push to main
-- Live e2e calls an LLM via the API — run manually on the
-  dev machine for functional validation
+- Live e2e calls a model and costs money, so it runs on a cadence
+  rather than per change: the STK-15 canary at every release cut,
+  recorded in the cut PR, and the full suite at each periodic review
+  (PLAYBOOK, "Run the test suite")
 - To validate a new template: run `py tests/run_smoke.py` and
   attach `templates/INTERVIEW.md` + the new stack to an agent to
   confirm coherent output

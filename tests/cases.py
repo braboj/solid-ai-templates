@@ -259,7 +259,7 @@ STK_TESTS = [
         "id": "STK-15",
         "spec": "SAIT-E2E-STK-15-001A",
 
-        # smallest chain (~12K tokens) — default live test
+        # the canary: the default live test, run at every release cut
         "canary": True,
         "stack": "templates/stack/python-lib.md",
         "answers": {
