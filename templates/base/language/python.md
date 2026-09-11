@@ -144,3 +144,74 @@ assert all(isinstance(h, logging.NullHandler) for h in handlers), handlers
   firing, so an assertion that nothing reached stderr passes whether or
   not the library attached anything — the local value is correct and
   hides the missing guarantee.
+
+---
+
+## Error contract
+[ID: base-python-errors]
+
+`base-quality` requires the errors a package raises on purpose to form
+one hierarchy under a package base, each type also deriving from the
+built-in its site raised before. No linter reads that contract, so a
+test walks every `raise` in the package and fails on one outside it:
+
+```python
+# tests/test_error_contract.py
+import ast
+import pathlib
+
+import pkg
+from pkg.errors import PkgError
+
+PACKAGE = pathlib.Path(pkg.__file__).parent
+
+# Raised to signal something other than a refusal to the caller: a stub,
+# an interpreter exit, an iterator's end. None is an error a caller of
+# the package handles as one.
+OUTSIDE_THE_CONTRACT = {"NotImplementedError", "SystemExit",
+                        "StopIteration", "KeyboardInterrupt"}
+
+
+def _contract(base):
+    names = {base.__name__}
+    for sub in base.__subclasses__():
+        names |= _contract(sub)
+    return names
+
+
+# A lowercase name is a bound exception being re-raised, not a class
+# being constructed; the construction was checked where it happened.
+def _constructed(tree):
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Raise) or node.exc is None:
+            continue
+        target = node.exc.func if isinstance(node.exc, ast.Call) else node.exc
+        if isinstance(target, ast.Attribute):
+            yield target.attr
+        elif isinstance(target, ast.Name) and target.id[:1].isupper():
+            yield target.id
+
+
+def test_the_package_raises_nothing_outside_the_contract():
+    contract = _contract(PkgError) | OUTSIDE_THE_CONTRACT
+    seen, escaping = 0, set()
+    for path in PACKAGE.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"), str(path))
+        for name in _constructed(tree):
+            seen += 1
+            if name not in contract:
+                escaping.add(name)
+    assert seen, "no raise statement was reached"
+    assert escaping == set(), sorted(escaping)
+```
+
+It MUST pass, and `seen` MUST be above zero: the assertion is an
+emptiness check, so an empty `escaping` over zero raises is a walk that
+reached nothing and reads as a clean package. Plant a bare
+`raise ValueError` in any module and the test MUST name it before the
+plant is removed.
+
+- A test asserts the type a call raises, and matches on the message only
+  where the wording is the subject of the test. A `match=` on every
+  refusal makes each assertion one about wording that reads as one about
+  behaviour, and a reword then breaks tests that are about neither

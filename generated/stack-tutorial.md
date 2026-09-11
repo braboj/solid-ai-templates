@@ -347,6 +347,20 @@ raise SystemExit(1 if findings else 0)
   handshake, subprocess readiness check, connection wait or lock
   acquisition, and the symptom (a hang) is unrelated to the cause, which
   is what makes it expensive to diagnose
+- **Errors a package raises on purpose form one hierarchy**: every
+  deliberate raise derives from a single package base, so a caller
+  catches refusals and nothing else, and a bug inside the package
+  surfaces as what it is rather than as a refusal. Each type also
+  derives from the built-in its site raised before, so adopting the
+  hierarchy breaks no existing caller or assertion. Depth is bounded by
+  whether a caller could act differently, not by what a test wants to
+  pin: a missing URL scheme invites prepending one while an unsupported
+  scheme is a refusal, so those separate; two encodings that both mean
+  "retry differently" share a type. A type per raise site re-encodes
+  the messages as class names and serves the tests, not the callers. The
+  contract erodes one commit at a time and no linter reads it — one
+  checks that exceptions are handled, never that they are declared — so
+  the language file names the test that walks every raise
 - **A caller-side input filter is not a precondition**: when a runner
   filters its inputs by a caller-side criterion (data availability,
   ground-truth presence, a feature flag) that is tighter than the inner

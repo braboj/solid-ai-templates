@@ -330,6 +330,16 @@ CHECKS = [
      "reason": "Imports a package named `pkg`. This repository ships no "
                "importable package."},
 
+    {"file": "base/language/python.md",
+     "find": "raises_nothing_outside_the_contract",
+     "title": "The package raises nothing outside its error contract",
+     "do": SKIP,
+     "reason": "Imports a package named `pkg` and walks its raises. This "
+               "repository ships no importable package; its own Python "
+               "(tools/, tests/) raises SystemExit to carry a verdict and "
+               "declares no error hierarchy, because nothing calls it as "
+               "a library."},
+
     # -- base/security/devsecops.md ---------------------------------------
 
     {"file": "base/security/devsecops.md", "find": "sbom.json",
