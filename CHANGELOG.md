@@ -26,6 +26,14 @@ alters no template carries no entry.
 - A change adding a constraint runs it against the corpus that already
   exists, and records what the sweep covered, what it found and what it left
   out. A corpus that does not comply is fixed, or frozen by named instance
+- A cut is a patch when every entry in its changelog section sits under Fixed
+  or Security, and a minor otherwise. The release-documentation check fails a
+  version whose bump disagrees with its section
+
+### Changed
+
+- The case for pacing a periodic review by the calendar no longer rests on
+  most releases being patches, which is false in the project that ships it
 
 ## [2.88.0] - 2026-09-08
 

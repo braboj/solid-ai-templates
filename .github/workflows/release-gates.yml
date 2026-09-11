@@ -44,13 +44,22 @@ jobs:
           release="${DISPATCH_RELEASE:-${GITHUB_REF_NAME}}"
           echo "RELEASE=${release}" >> "$GITHUB_ENV"
 
-          # A milestone is named for the minor line rather than the
-          # patch, so match on the v<major>.<minor> prefix. A release
-          # never scoped to one leaves this unset, and the check reports
-          # that it does not apply -- the correct reading, not a failure.
-          PREFIX="$(echo "${release}" | cut -d. -f1,2)"
-          export PREFIX
-          title="$(gh api "repos/${GITHUB_REPOSITORY}/milestones?state=all" --paginate --jq '[.[] | select(.title | startswith(env.PREFIX))] | .[0].title // empty')"
+          # A milestone names its release alone or before " — " and a
+          # theme: a minor's names the minor line, a patch's the full
+          # version. The full version wins and the minor line is the
+          # fallback. Matching the separator rather than a bare prefix
+          # stops v2.8 claiming every v2.8x title. A release never scoped
+          # to one leaves this unset, and the check reports that it does
+          # not apply -- the correct reading, not a failure.
+          titles="$(gh api "repos/${GITHUB_REPOSITORY}/milestones?state=all" --paginate --jq '.[].title')"
+          named() { printf '%s\n' "${titles}" | awk -v v="$1" '$0 == v || index($0, v " — ") == 1'; }
+          title="$(named "${release}")"
+          [ -n "${title}" ] || title="$(named "$(echo "${release}" | cut -d. -f1,2)")"
+          if [ "$(printf '%s' "${title}" | grep -c .)" -gt 1 ]; then
+            echo "more than one milestone names ${release}:"
+            printf '%s\n' "${title}"
+            exit 1
+          fi
           echo "RELEASE_MILESTONE=${title}" >> "$GITHUB_ENV"
 
           echo "release:   ${release}"

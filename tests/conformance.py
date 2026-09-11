@@ -169,7 +169,8 @@ CHECKS = [
 
     {"file": "base/core/git.md", "find": "documentation files in the tree",
      "title": "The tree being tagged documents what the release claims",
-     "do": RUN, "expect": ["nonzero", "nonzero", "any", "zero"]},
+     "do": RUN,
+     "expect": ["nonzero", "nonzero", "line", "line", "any", "any", "zero"]},
 
     {"file": "base/core/git.md",
      "find": "bullets ever under Unreleased in that range",
