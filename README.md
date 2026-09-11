@@ -123,11 +123,11 @@ effective; declining a new rule needs no ADR or ticket. See the
 <!-- generated:readme-model-limits -->
 | Stack category | Stacks | Largest chain | Prompt | Min context |
 |----------------|--------|---------------|--------|-------------|
-| abstract | 2 | `stack-python-service` — 550K chars | ~157K tokens | 200K |
-| backend | 8 | `stack-django` — 564K chars | ~161K tokens | 200K |
+| abstract | 2 | `stack-python-service` — 551K chars | ~157K tokens | 200K |
+| backend | 8 | `stack-django` — 565K chars | ~162K tokens | 200K |
 | embedded | 1 | `stack-c-embedded` — 358K chars | ~102K tokens | 128K |
 | hypermedia | 1 | `stack-htmx` — 377K chars | ~108K tokens | 128K |
-| library | 3 | `stack-python-lib` — 479K chars | ~137K tokens | 200K |
+| library | 3 | `stack-python-lib` — 481K chars | ~137K tokens | 200K |
 | static | 2 | `stack-tutorial` — 515K chars | ~147K tokens | 200K |
 <!-- /generated:readme-model-limits -->
 

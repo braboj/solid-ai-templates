@@ -499,4 +499,13 @@ CHECKS = [
      "title": "A renamed public symbol resolves through the deferred map",
      "do": SKIP,
      "reason": "This repository ships no importable package."},
+
+    {"file": "stack/python-lib.md", "find": "READER = {",
+     "title": "Every committed lock has a Dependabot ecosystem that reads it",
+     "do": SKIP,
+     "reason": "Pairs a committed Python lock with its Dependabot reader. "
+               "This repository ships Markdown, commits no Python lock, and "
+               "enrols no Python ecosystem, so the check would fail on the "
+               "zero-locks branch that is a finding for a library and a "
+               "fact here."},
 ]
