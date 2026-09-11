@@ -21,21 +21,24 @@ the step by writing a document declining the work.
 The repair moved the problem rather than removing it, because release
 frequency is not a property of the project's shape. A repository whose
 releases are mostly minors owes a fresh review on almost every cut. This
-repository is that case. Measured on 2026-09-07, `docs/audits/` held six
-dated records, four of them written within the preceding seven days —
-2026-09-01, 2026-09-03, 2026-09-06 and 2026-09-07 — one per minor cut. A
-review whose subject is the shape of the whole project has nothing new to
-read three days after the last one, so the gate was again collecting an
-artifact rather than a reading, and every signal available said it was
-working.
+repository is that case.
+
+Measured on 2026-09-07, `docs/audits/` held six dated records, four of
+them written within the preceding seven days — 2026-09-01, 2026-09-03,
+2026-09-06 and 2026-09-07 — one per minor cut. A review whose subject is
+the shape of the whole project has nothing new to read three days after
+the last one. So the gate was again collecting an artifact rather than a
+reading, and every signal available said it was working.
 
 The prior decision considered a calendar cadence and rejected it, on the
 grounds that it decouples the review from the changes it reads: a quiet
 quarter would owe one and a busy one might not. The first half of that
 holds. The second does not survive the on-demand events staying in
-force. A busy period reaches an audit through the events that make one
-worth reading — a milestone closing, a major feature landing, a launch —
-long before an interval expires, so the interval is never the thing that
+force.
+
+A busy period reaches an audit through the events that make one worth
+reading — a milestone closing, a major feature landing, a launch — long
+before an interval expires. So the interval is never the thing that
 schedules a review in a busy period. It only catches the project that
 hits none of those events, which is the quiet case, and the quiet case is
 the one a cadence is for.
@@ -44,11 +47,14 @@ the one a cadence is for.
 
 1. **Pace by the record's age** — where a project gates its release on a
    periodic project-wide audit, the obligation MUST be decided by the age
-   of the newest record against a review interval the project declares,
-   not by the release kind and not by the release count. A release whose
-   newest record falls inside the interval owes nothing, whatever version
-   it moves; a release whose newest record falls outside it owes a
-   review, whatever version it moves.
+   of the newest record against a review interval the project declares:
+
+   - not by the release kind
+   - not by the release count
+
+   A release whose newest record falls inside the interval owes nothing,
+   whatever version it moves; a release whose newest record falls outside
+   it owes a review, whatever version it moves.
 
 2. **The interval is a floor, not the schedule** — the events that make
    a review worth reading trigger one on demand and remain the primary
@@ -61,9 +67,12 @@ the one a cadence is for.
    to it rather than restating a number.
 
 4. **A project running no audit is exempt, an empty record set is not** —
-   the check MUST treat a missing audit directory as the project not
-   running a periodic review, and a directory holding no dated record as
-   a project that owes one and wrote none.
+   the check MUST treat:
+
+   - a missing audit directory as the project not running a periodic
+     review
+   - a directory holding no dated record as a project that owes one and
+     wrote none
 
 5. **An unreadable value is a finding** — a value the gate cannot read
    and a value that exempts the release both mean the comparison does not
@@ -86,7 +95,7 @@ the one a cadence is for.
   no watcher reads exactly like a live obligation. A date is polled by
   every release, which is what lets it carry the obligation.
 - **Scope by accumulated change rather than time** — rejected for the
-  reason the prior decision rejected diff-based scoping: deciding
+  reason the prior decision rejected diff-based scoping. Deciding
   whether a body of change can move a project-wide review is the
   judgement the review itself makes, so the gate would need the review's
   answer to decide whether to ask for it.
