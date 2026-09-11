@@ -15,8 +15,10 @@ A check whose question is tied to a moment — a release being prepared, a
 branch open for review, a migration under way — has empty inputs outside
 that moment. The rule requiring such a check to detect the moment and
 report that it does not apply, rather than emitting a count whose pass
-condition assumes the moment is in progress, was adopted in v2.67.0 and
-applied to the remaining checks in v2.68.0.
+condition assumes the moment is in progress, was:
+
+- adopted in v2.67.0
+- applied to the remaining checks in v2.68.0
 
 The runner had no result for that answer. A check reporting
 inapplicability ran, printed a sentence, and exited clean, which the
@@ -71,7 +73,7 @@ the check at run time.
 - **A static disposition where the check is registered** — rejected on
   measurement; membership of the inapplicable set changes with the moment,
   so a value recorded once is wrong on most runs.
-- **Leaving it as a judgement reading** — rejected; it is the state the
+- **Leaving it as a judgement reading** — rejected. It is the state the
   moment rule was adopted to remove, arriving one level further in, and a
   reader who meets the same answered line on every run stops reading the
   report it sits in.
