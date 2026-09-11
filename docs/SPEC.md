@@ -227,8 +227,9 @@ resolution — stacks do not need to list them in `depends_on`:
 - `templates/base/core/readme.md`
 - `templates/base/core/testing.md`
 - `templates/base/core/review.md`
+- `templates/base/core/oop.md`
 
-Measured: 43 `[DEPENDS ON]` tokens across 19 templates name one of these
+Measured: 44 `[DEPENDS ON]` tokens across 19 templates name one of these
 files, and 19 manifest entries name a core id in `depends_on`. Declaring one
 is redundant rather than forbidden — the seeding reaches the file either
 way, and the directive documents a dependency a reader would otherwise
@@ -615,6 +616,7 @@ templates/base/core/docs.md
 templates/base/core/readme.md
 templates/base/core/testing.md
 templates/base/core/review.md
+templates/base/core/oop.md
 templates/base/security/security.md
 templates/frontend/ux.md
 templates/frontend/quality.md
@@ -638,11 +640,11 @@ templates/base/core/docs.md
 templates/base/core/readme.md
 templates/base/core/testing.md
 templates/base/core/review.md
+templates/base/core/oop.md
 templates/base/core/config.md
 templates/backend/http.md
 templates/backend/database.md
 templates/backend/observability.md
-templates/base/core/oop.md
 templates/base/security/security.md
 templates/base/infra/containers.md
 templates/backend/quality.md

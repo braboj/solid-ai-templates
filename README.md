@@ -125,10 +125,10 @@ effective; declining a new rule needs no ADR or ticket. See the
 |----------------|--------|---------------|--------|-------------|
 | abstract | 2 | `stack-python-service` — 550K chars | ~157K tokens | 200K |
 | backend | 8 | `stack-django` — 564K chars | ~161K tokens | 200K |
-| embedded | 1 | `stack-c-embedded` — 349K chars | ~100K tokens | 128K |
-| hypermedia | 1 | `stack-htmx` — 372K chars | ~106K tokens | 128K |
-| library | 3 | `stack-python-lib` — 475K chars | ~136K tokens | 200K |
-| static | 2 | `stack-tutorial` — 511K chars | ~146K tokens | 200K |
+| embedded | 1 | `stack-c-embedded` — 353K chars | ~101K tokens | 128K |
+| hypermedia | 1 | `stack-htmx` — 377K chars | ~108K tokens | 128K |
+| library | 3 | `stack-python-lib` — 479K chars | ~137K tokens | 200K |
+| static | 2 | `stack-tutorial` — 515K chars | ~147K tokens | 200K |
 <!-- /generated:readme-model-limits -->
 
 Measured rather than estimated. Each row takes the largest resolved
@@ -169,7 +169,7 @@ stacks are below; the rest are the extras table that follows them.
 
 <!-- generated:readme-root-counts -->
 Measured: 17 stacks and 20 orthogonal templates, 37 roots in all. An extra
-resolves to the 6 core-tier files plus 1 to 5 of its own.
+resolves to the 7 core-tier files plus 1 to 5 of its own.
 <!-- /generated:readme-root-counts -->
 
 ## Supported stacks
