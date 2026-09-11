@@ -208,6 +208,15 @@ CHECKS = [
                "with no domain/adapter split to bound. Re-examine if "
                "one is ever adopted."},
 
+    {"file": "base/core/quality.md", "find": "def unwrap(cls, name)",
+     "title": "A frozen override checker is backed by a hierarchy "
+              "contract test", "do": SKIP,
+     "reason": "BASE and HIERARCHY are empty by design -- this "
+               "repository's own Python (tools/, tests/) declares one "
+               "plain class (run_smoke.py's Inspected) with no "
+               "subtype and no overridable operation. Applies to a "
+               "consuming project's own abstract hierarchy."},
+
     {"file": "base/core/quality.md", "find": "documents naming ${module}",
      "title": "A document naming a check is re-read when its exemptions change",
      "do": SKIP,
