@@ -40,12 +40,13 @@ Two gaps sat in the seam between the halves and were found downstream
 in `braboj/page-fetcher`. "Smoke-tested in CI" never says how the
 package is installed for that job, and the cheapest reading — reuse the
 test job — proves the examples run beside the test tooling rather than
-against the published surface (#988). And the index is the one document
-whose body is machine-generated program output, which the secret
-scanner reads like source; a printed cache key matched
-`generic-api-key` and failed the scan on a file containing no secret
-(#987). Both are template gaps, not project mistakes, and neither owner
-was the obvious place to fix them.
+against the published surface (#988).
+
+And the index is the one document whose body is machine-generated
+program output, which the secret scanner reads like source; a printed
+cache key matched `generic-api-key` and failed the scan on a file
+containing no secret (#987). Both are template gaps, not project
+mistakes, and neither owner was the obvious place to fix them.
 
 ## Decision
 
@@ -73,7 +74,7 @@ was the obvious place to fix them.
 
 5. **The new template holds what neither owner did** — the smoke job
    MUST install the project the way a consumer does and MUST glob the
-   directory rather than list files; the index MUST label a printed
+   directory rather than list files. The index MUST label a printed
    derived identifier with a word the secret scanner does not treat as
    a credential keyword, and MUST fix the label rather than the
    scanner.
@@ -84,8 +85,12 @@ was the obvious place to fix them.
    brings up, and a bundled fixture all qualify. An example MAY depend
    on an outside host where the capability cannot be sealed behind a
    seam and building one would cost more than the example is worth,
-   provided it names the service, states why no seam was built, dates
-   its pasted output, and runs in a CI leg that does not gate merges.
+   provided it:
+
+   - names the service
+   - states why no seam was built
+   - dates its pasted output
+   - runs in a CI leg that does not gate merges
 
 ## Alternatives considered
 
@@ -102,7 +107,7 @@ was the obvious place to fix them.
   rejected; an examples directory is a property of the stack, not a
   project-level choice made independently of it.
 - **Leave the offline rule as guidance rather than a named ban** —
-  rejected; "avoid the network" is satisfiable by an example that
+  rejected. "Avoid the network" is satisfiable by an example that
   constructs the real client against a host that obviously resolves,
   which is offline until the day it is not.
 - **An absolute offline rule with no exception** — rejected; it reads
