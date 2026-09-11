@@ -53,7 +53,11 @@ def _anthropic(prompt):
     # asserting against it would report a template defect that is not there.
     if message.stop_reason != "end_turn":
         raise RuntimeError(f"stopped on {message.stop_reason}, not end_turn")
-    return "".join(b.text for b in message.content if b.type == "text")
+    text = "".join(b.text for b in message.content if b.type == "text")
+
+    # This SDK version reports no separate thinking-token count; extended
+    # thinking is not broken out of output_tokens here.
+    return text, {"output": message.usage.output_tokens, "thinking": None}
 
 
 def _gemini(prompt):
@@ -61,12 +65,30 @@ def _gemini(prompt):
     from google import genai
     model = model_for("gemini")
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+
+    # A verbatim-reproduction task needs no extended thinking, and thinking
+    # tokens share MAX_TOKENS with output ones: a run measured at 96% of
+    # the ceiling spent on thinking, 4% on the answer, and truncated. The
+    # same prompt with thinking disabled completed at 11% of the ceiling,
+    # reproducing real template content rather than a shorter run summary.
     response = client.models.generate_content(
         model=model,
         contents=prompt,
-        config={"max_output_tokens": MAX_TOKENS, "temperature": 0},
+        config={
+            "max_output_tokens": MAX_TOKENS,
+            "temperature": 0,
+            "thinking_config": {"thinking_budget": 0},
+        },
     )
-    return response.text
+
+    finish = response.candidates[0].finish_reason
+    if finish != "STOP":
+        raise RuntimeError(f"stopped on {finish}, not STOP")
+    usage = response.usage_metadata
+    return response.text, {
+        "output": usage.candidates_token_count,
+        "thinking": usage.thoughts_token_count,
+    }
 
 
 def _deepseek(prompt):
@@ -83,7 +105,14 @@ def _deepseek(prompt):
         temperature=0,
         messages=[{"role": "user", "content": prompt}],
     )
-    return response.choices[0].message.content
+    choice = response.choices[0]
+    if choice.finish_reason != "stop":
+        raise RuntimeError(f"stopped on {choice.finish_reason}, not stop")
+    details = response.usage.completion_tokens_details
+    return choice.message.content, {
+        "output": response.usage.completion_tokens,
+        "thinking": details.reasoning_tokens if details else None,
+    }
 
 
 def _groq(prompt):
@@ -97,7 +126,14 @@ def _groq(prompt):
         temperature=0,
         messages=[{"role": "user", "content": prompt}],
     )
-    return response.choices[0].message.content
+    choice = response.choices[0]
+    if choice.finish_reason != "stop":
+        raise RuntimeError(f"stopped on {choice.finish_reason}, not stop")
+    details = response.usage.completion_tokens_details
+    return choice.message.content, {
+        "output": response.usage.completion_tokens,
+        "thinking": details.reasoning_tokens if details else None,
+    }
 
 
 def _claude_cli(prompt):
@@ -111,12 +147,19 @@ def _claude_cli(prompt):
         errors="replace",
         shell=True,
     )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"claude CLI exited {result.returncode}: "
+            f"{result.stderr.strip() or 'no stderr'}"
+        )
     if not result.stdout.strip():
         raise RuntimeError(
             "claude CLI returned empty output — "
             "check that Claude Code is installed and authenticated"
         )
-    return result.stdout
+
+    # The CLI reports no token usage.
+    return result.stdout, None
 
 
 PROVIDERS = {
