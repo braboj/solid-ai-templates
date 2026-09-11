@@ -128,7 +128,7 @@ def tree_id():
     return short + ("-dirty" if status.stdout.strip() else "")
 
 
-def write_report(run_results, started_at, runner_name, columns):
+def write_report(run_results, started_at, runner_name, columns, header=None):
     """Write a timestamped Markdown report to tests/reports/.
 
     Args:
@@ -136,6 +136,7 @@ def write_report(run_results, started_at, runner_name, columns):
         started_at: datetime when the run began
         runner_name: 'smoke' or 'e2e'
         columns: dict mapping status to how to render detail (callable or None)
+        header: optional ordered mapping of extra header fields
     """
     reports_dir = os.path.join(ROOT, "tests", "reports")
     os.makedirs(reports_dir, exist_ok=True)
@@ -168,6 +169,13 @@ def write_report(run_results, started_at, runner_name, columns):
         f"**Date**: {started_at.strftime('%Y-%m-%d %H:%M:%S')}  ",
         f"**Tree**: {tree or 'not a repository'}  ",
         f"**Runner**: run_{runner_name}.py  ",
+    ]
+
+    # A runner that calls something outside the tree names what it called,
+    # so a report says which model produced the output it grades.
+    for key, value in (header or {}).items():
+        lines.append(f"**{key}**: {value}  ")
+    lines += [
         f"**Tests run**: {total}  ",
         f"**Elapsed**: {elapsed:.1f}s",
         "",

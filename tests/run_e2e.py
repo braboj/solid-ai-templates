@@ -14,7 +14,7 @@ Usage:
   py tests/run_e2e.py STK-01             # run one test by short ID
   py tests/run_e2e.py STK-01 FMT-01      # run multiple
   py tests/run_e2e.py --area=STK          # run all stack tests
-  py tests/run_e2e.py --dry-run          # print prompt, skip LLM call
+  py tests/run_e2e.py --dry-run          # build prompts, call no model, write no report
   py tests/run_e2e.py --fail-fast        # stop on first failure
 
 Default (no args) runs only the canary test (STK-15, python-lib) to keep
@@ -236,14 +236,14 @@ def render_pass(r):
     return lines
 
 
-def write_report(run_results, started_at, dry_run):
+def write_report(run_results, started_at, header):
     from lib import write_report as _write_report
     _write_report(run_results, started_at, "e2e", {
         PASS: render_pass,
         FAIL: render_fail,
         SKIP: render_skip,
         ERR: render_err,
-    })
+    }, header=header)
 
 
 def main():
@@ -273,9 +273,12 @@ def main():
     run_results = []
 
     total = len(tests)
+    header = None
     if not dry_run:
+        from providers import model_for
         name, _ = _get_provider()
-        print(f"Provider: {name}")
+        header = {"Mode": "live", "Provider": name, "Model": model_for(name)}
+        print(f"Provider: {name}  Model: {header['Model']}")
     print(f"Running {total} test(s)...\n")
 
     for i, test in enumerate(tests, 1):
@@ -305,6 +308,16 @@ def main():
 
     elapsed = (datetime.datetime.now() - started_at).total_seconds()
     total_run = sum(results.values())
+
+    # A dry run calls no model, so it has no result to record and no
+    # verdict to state. A report written beside the live ones reads as a
+    # run to anyone scanning the directory for the last time the suite
+    # executed, and a PASS verdict over prompts nobody sent says the same.
+    if dry_run:
+        print(f"\nDRY RUN — {total_run} prompt(s) built, none sent; "
+              "no report written")
+        sys.exit(0)
+
     print(
         f"\n{total_run} tests — "
         f"{results[PASS]} passed  "
@@ -314,7 +327,7 @@ def main():
         f"  ({elapsed:.1f}s)"
     )
 
-    write_report(run_results, started_at, dry_run)
+    write_report(run_results, started_at, header)
 
     ok = results[FAIL] == 0 and results[ERR] == 0
     print_verdict(ok, "%d passed, %d failed, %d skipped, %d errors"
