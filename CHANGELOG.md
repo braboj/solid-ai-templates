@@ -21,6 +21,12 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+### Added
+
+- A change adding a constraint runs it against the corpus that already
+  exists, and records what the sweep covered, what it found and what it left
+  out. A corpus that does not comply is fixed, or frozen by named instance
+
 ## [2.88.0] - 2026-09-08
 
 ### Added

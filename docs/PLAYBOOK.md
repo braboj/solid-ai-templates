@@ -479,6 +479,14 @@ document's account of them decays with nothing reporting it.
 `quality-exemption-doc-duty` in `templates/base/core/quality.md` is the
 rule, and ships the sweep.
 
+Adding a constraint owes a sweep of its own. Run the new rule or check
+against the corpus that already exists before merging, and record in the
+pull request where it looked, what it found and what it left out. Where the
+corpus does not comply, say whether the instances were fixed or frozen, or,
+for a corpus that cannot be edited, the boundary the rule binds forward
+from. `quality-constraint-corpus-sweep` in `templates/base/core/quality.md`
+is the rule.
+
 ---
 
 ## Regenerate pre-resolved files
