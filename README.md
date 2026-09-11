@@ -125,10 +125,10 @@ effective; declining a new rule needs no ADR or ticket. See the
 |----------------|--------|---------------|--------|-------------|
 | abstract | 2 | `stack-python-service` — 546K chars | ~156K tokens | 200K |
 | backend | 8 | `stack-django` — 560K chars | ~160K tokens | 200K |
-| embedded | 1 | `stack-c-embedded` — 347K chars | ~99K tokens | 128K |
+| embedded | 1 | `stack-c-embedded` — 348K chars | ~99K tokens | 128K |
 | hypermedia | 1 | `stack-htmx` — 371K chars | ~106K tokens | 128K |
-| library | 3 | `stack-python-lib` — 471K chars | ~135K tokens | 200K |
-| static | 2 | `stack-tutorial` — 509K chars | ~145K tokens | 200K |
+| library | 3 | `stack-python-lib` — 472K chars | ~135K tokens | 200K |
+| static | 2 | `stack-tutorial` — 510K chars | ~146K tokens | 200K |
 <!-- /generated:readme-model-limits -->
 
 Measured rather than estimated. Each row takes the largest resolved

@@ -41,6 +41,9 @@ alters no template carries no entry.
 - The off-limits rule binds executable content — steps, commands, pins,
   a directive spelled as a comment — and a diff confined to comments and
   prose is ordinary work that still names the path in its summary
+- Every wait on another thread, process or connection is bounded and
+  reports why it gave up; where the worker can die, liveness is checked
+  beside the deadline, so a startup failure fails instead of hanging
 
 ### Fixed
 

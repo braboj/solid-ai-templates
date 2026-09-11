@@ -331,6 +331,16 @@ raise SystemExit(1 if findings else 0)
   wrong-but-plausible derived value (a 404 URL, a mismatched ID) emitted
   without warning is worse than a script that refuses to run until the
   data is correct
+- **Every wait on another thread, process or connection is bounded**,
+  and reports why it gave up. An unbounded wait for a signal a failing
+  worker will never send does not fail — it hangs, and the reason lands
+  where the caller cannot act on it: a bind error on the worker's stderr
+  under a caller spinning on a readiness flag forever. Where the worker
+  can die, check liveness as well as the deadline, so a dead worker fails
+  at once rather than waiting out the timeout. The shape is any thread
+  handshake, subprocess readiness check, connection wait or lock
+  acquisition, and the symptom (a hang) is unrelated to the cause, which
+  is what makes it expensive to diagnose
 - **A caller-side input filter is not a precondition**: when a runner
   filters its inputs by a caller-side criterion (data availability,
   ground-truth presence, a feature flag) that is tighter than the inner
