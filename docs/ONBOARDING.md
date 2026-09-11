@@ -32,7 +32,9 @@ Read `docs/SPEC.md` for the full composition model before contributing.
   that read milestones, labels and workflow runs. Without it those
   checks fail rather than skip, since a check that cannot reach its
   subject has not verified it
-- An AI agent for validation (Claude Code recommended) — for E2E tests
+- An AI agent for validation (Claude Code recommended), and an API key
+  for one of the model providers in `tests/providers.py` — for a live run
+  of the E2E runner
 
 ## First steps
 
@@ -117,10 +119,13 @@ Then run the system end-to-end with an agent:
    format"
 4. Review the output — this is what users get
 
-Or use the automated E2E runner:
+Or use the automated E2E runner. It calls a model and costs money, so name
+the provider in the shell; `docs/PLAYBOOK.md` "Run the test suite" lists the
+providers, the model variable and the cadence the suite runs on:
 
 ```bash
-py tests/run_e2e.py STK-11   # Flask stack
+E2E_PROVIDER=anthropic py tests/run_e2e.py STK-11   # Flask stack
+py tests/run_e2e.py --dry-run STK-11                 # build the prompt, call no model
 ```
 
 ## Making your first contribution
