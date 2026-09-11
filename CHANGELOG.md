@@ -29,6 +29,9 @@ alters no template carries no entry.
 - Where a type checker's override rule is frozen, the variadic ban names
   its check: a contract test asserting member kind, first parameter,
   append-only widening and no variadics across the hierarchy
+- A test double injecting a transient fault clears it as it fires; one
+  left armed fails every retry, so the recovery path never runs and the
+  passing test reads as covering it
 
 ### Fixed
 
