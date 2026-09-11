@@ -48,6 +48,9 @@ alters no template carries no entry.
   package base, each type also deriving from the built-in it replaces;
   `python.md` names the test that walks every raise and fails on one
   outside it
+- `base-oop` joins the core tier, so every chain carries the SOLID, GoF
+  and AOP guidance; the nine chains that lacked it — libraries, gRPC,
+  hypermedia, static, embedded — grow by about 4K characters
 
 ### Fixed
 
