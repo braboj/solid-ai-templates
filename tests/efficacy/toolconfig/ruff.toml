@@ -1,0 +1,39 @@
+# The one lint configuration every arm is measured under. The agents write
+# their own, and a trial scored under its own configuration would be graded
+# by a ruler it chose.
+
+target-version = "py312"
+
+# The specification's own width, so a trial is not penalised for following it.
+line-length = 88
+
+[lint]
+select = ["ALL"]
+
+# The only exclusions, and each one is a rule that would score a trial on
+# something other than its code.
+ignore = [
+    # Conflicts with the formatter, which is also scored here: one of the two
+    # always fires, so the pair measures nothing.
+    "COM812",
+    "ISC001",
+
+    # A copyright header nobody asked for. The prompt does not mention one,
+    # and counting its absence would penalise every arm identically.
+    "CPY001",
+
+    # The task is to build the application, not to annotate its own tests
+    # with issue links or author names.
+    "TD002",
+    "TD003",
+    "FIX002",
+]
+
+[lint.per-file-ignores]
+# A trial's tests are graded on coverage and on what they assert, not on
+# assert-free style rules that exist for library code.
+"**/test_*.py" = ["S101", "PLR2004", "ANN"]
+"**/tests/*.py" = ["S101", "PLR2004", "ANN"]
+
+[lint.pydocstyle]
+convention = "pep257"

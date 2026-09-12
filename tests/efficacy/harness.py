@@ -390,6 +390,20 @@ def main(argv):
         print("unknown arm(s): %s" % ", ".join(unknown))
         return 2
 
+    # One call before the first trial, because the CLI answers an
+    # unauthenticated run with a result object rather than a crash: without
+    # this, a whole run completes having never reached a model. A dry run
+    # calls nothing by definition and is exempt.
+    if not options.dry_run:
+        try:
+            ready = assert_authenticated(home, agent_environment,
+                                         agent_executable())
+        except (TrialError, subprocess.TimeoutExpired) as error:
+            print("refused: %s" % error)
+            lib.print_verdict(False, "0 trial(s), 0 done, 1 refused")
+            return 1
+        print("generator ready: %s" % ready)
+
     started_at = datetime.datetime.now()
     records = []
     for arm, trial in order(arms, options.k):
