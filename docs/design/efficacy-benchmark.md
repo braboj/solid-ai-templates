@@ -14,12 +14,74 @@ under `docs/audits/`.
 > `solid-ai-templates`-generated `CLAUDE.md` produce a better application
 > than the same agent with no context file — and at what cost?
 
-Verdict rule, fixed before any run: per metric, a paired delta with a
-bootstrap interval. **Better** if the interval excludes zero on the right
-side; **no improvement shown** if it crosses zero; **worse** if it excludes
-zero on the left. Task success must be non-inferior for any "better" claim
-on adherence to count. The whole vector is reported; no single headline
-number.
+### 1.1 The verdict rule, fixed before any run
+
+**Unit of analysis.** The paired difference at trial index *k*. Trials run
+interleaved as blocks — A₁ B₁ C₁, then A₂ B₂ C₂ — so the arms within a
+block meet the same model on the same day. That block is what makes the
+pairing real; without it these would be independent runs and the pairing
+would be a convenient fiction.
+
+**Statistic.** The mean of the K paired differences, per metric, per
+contrast.
+
+**Interval.** A bias-corrected and accelerated bootstrap over those K
+differences, 10,000 resamples, 95 %, seed recorded.
+
+**Direction.** Declared per metric in §6 before the run, because half of
+them improve downward. An interval is read against its metric's declared
+direction, never against "bigger is better".
+
+**Verdicts.** **Better** where the interval lies wholly on the improving
+side of zero; **worse** where it lies wholly on the other; **no
+improvement shown** where it contains zero. "No improvement shown" is not
+a claim that the arms are equal — for that, see the non-inferiority rule
+in §1.2.
+
+**What K = 3 can and cannot support.** Three paired differences give a
+bootstrap 27 distinct resamples and an exact sign test a minimum two-sided
+p of 0.25. No arrangement of three trials reaches conventional
+significance, so every interval in the primary run is **descriptive**: it
+reports where the effect sits and how unstable it is, and the report says
+so beside every row rather than in a footnote. A benchmark that presented
+an n = 3 interval as an inferential result would be doing the thing this
+document exists to stop.
+
+**Escalation, pre-set and bounded.** One escalation is permitted, once,
+and only where a *primary* dimension's interval contains zero while its
+observed effect exceeds that metric's practical threshold in §1.2: run one
+further block to K = 5 and report both the K = 3 and the K = 5 vectors.
+K never exceeds 5, no metric outside the primary dimensions triggers it,
+and a second inconclusive result is reported as inconclusive. Sampling
+until an interval clears zero is the failure this bound exists to prevent.
+
+**Failure handling.** A trial whose agent produced no installable workspace
+scores zero on task success, records its quality metrics as missing rather
+than imputed, and is **not** re-run: re-running the failures of one arm is
+how a control arm is quietly improved. A trial lost to harness or provider
+error, with no agent output to judge, is re-run once and the substitution
+recorded in the report.
+
+### 1.2 Non-inferiority, where the claim is that nothing got worse
+
+An interval containing zero is absence of evidence. To claim a metric was
+*preserved* — which §9 needs for every template trim — the whole
+degradation interval must sit inside a margin fixed here:
+
+| Metric | Margin | Practical threshold for §1.1 escalation |
+|---|---|---|
+| Task success, hidden suite pass rate | 2 percentage points | 5 pp |
+| Adherence checklist fraction | 5 percentage points | 10 pp |
+| Primary subjective dimensions, 1–5 | 0.3 points | 0.5 points |
+| Static-analysis counts per KLOC | 10 % relative | 25 % relative |
+| Change-task churn, files and lines | 15 % relative | 30 % relative |
+
+A "better" claim on adherence counts only where task success is
+non-inferior by this table, and a trim is a free win only where every
+quality metric is non-inferior by it — not merely where each interval
+happens to contain zero.
+
+The whole vector is reported; no single headline number.
 
 ## 2. The app — `tariff`
 
@@ -106,12 +168,27 @@ Run with the harness's own pinned tool versions and configuration
 configuration the agent wrote, so every arm is measured by the same ruler.
 Reported as absolute counts and per KLOC.
 
+**Source discovery is layout-independent, and it has to be.** The arms are
+free to choose their layout, and `src/` is one of the things a context
+file might introduce, so a tool pointed at a hard-coded `src` reads an
+empty directory for a valid flat-layout control and reports no findings.
+Zero findings and nothing scanned are the same number and opposite facts.
+The harness therefore resolves the roots by importing the installed
+package and taking its directory, plus every top-level package directory
+in the workspace, and passes those paths explicitly.
+
+**A tool that scanned nothing, errored, or timed out records the metric as
+missing and flags the trial.** It never records zero. Every table below
+also reports the file and line count each tool actually saw, so a
+suspiciously clean arm can be told from an unmeasured one by reading the
+report rather than by rerunning it.
+
 | Tool | Reports | Delta metric |
 |---|---|---|
 | `ruff check --select ALL` (fixed ignore list) | violations by category (E/W, F, B, S, D, N, C90, PL, RUF…) | total and per-category count |
 | `ruff format --check` | files needing reformat | count |
 | `mypy --strict` | errors | count |
-| `bandit -r src -f json` | findings by severity and confidence | high+medium count |
+| `bandit -r <discovered roots> -f json` | findings by severity and confidence | high+medium count |
 | `complexipy` | cognitive complexity per function | max, mean, functions > 15 |
 | `radon cc` / `radon mi` | cyclomatic complexity, maintainability index per module | mean CC, min MI |
 | `interrogate` | docstring coverage % (modules, classes, functions) | coverage |
@@ -137,16 +214,48 @@ same tool answers both; the counts here are the graded view.
 
 ### Design (change task) — the OCP measure
 
-After the build trial is frozen, a second short run in a copy of each
-workspace, same model and isolation, one fixed prompt: *"Add a
-buy-one-get-one discount rule and a jurisdiction with a reduced rate for
-one product category. Both must appear in the rules and jurisdictions
-pages and take effect in the invoice builder. Keep all tests passing."*
-Measured: files touched, lines changed, hidden suite still green, the new
-rule reachable through the same API and UI. A design that needs one
-strategy class and one registry entry per addition scores low churn; one
-that edits the pricing function, three routes and two templates scores
-high. Nine extra runs of ~15 minutes.
+The task must lie **outside** the semantics `SPEC.md` already fixes, or it
+measures data entry rather than design. The first draft asked for a
+buy-one-get-one rule and a jurisdiction with a reduced category rate, and
+both are already expressible: buy-one-get-one is the existing bulk rule
+with `buy` 2 and `pay` 1, and a reduced category rate is a key in a
+jurisdiction's existing `rates` table. Every arm would have scored zero
+churn by typing two rows into a form, and the measure would have reported
+that all three designs were equally extensible.
+
+The task, fixed here:
+
+> Add a **spend-threshold** discount: 5 % off the invoice once the
+> subtotal before any invoice-scoped discount reaches 200.00, applied
+> before coupons and never alongside another invoice percentage. And add a
+> **capped reduced rate**: in a new jurisdiction, one tax category is taxed
+> at the reduced rate on the first 50.00 of each line's taxable amount and
+> at the standard rate on the excess. Both must appear on the rules and
+> jurisdictions pages and take effect in the invoice builder. Keep the
+> existing behaviour and your tests passing.
+
+Neither is reachable by configuration. The threshold rule is the first
+invoice-scoped rule whose application depends on a *predicate over the
+invoice*, where every existing kind is either unconditional or gated only
+by a coupon code being present. The capped rate is the first tax that is
+not one rate times one taxable amount, so it changes the shape of §4.3
+step 12 rather than its inputs.
+
+Measured: files touched, lines changed, whether the build suite is still
+green, whether the change-task acceptance module passes, and whether the
+new rule and rate are reachable through the same API and UI. A design that
+adds one rule class plus one registry entry, and one rate strategy plus one
+entry, scores low churn; one that edits the pricing function, the tax step,
+three routes and two templates scores high.
+
+**Its acceptance module is owed before any change-task run.** Churn is only
+interpretable beside a pass: an arm that touched four lines and broke the
+extension has not scored well. The module lives with the hidden suite,
+tests the two new behaviours against worked figures fixed the same way §9
+fixes the build example, and is written before the first change-task run
+for the reason §10 item 8 gives.
+
+Nine extra runs of ~15 minutes.
 
 ### Pattern use (judge with evidence, per trial)
 
@@ -201,11 +310,34 @@ reported as unvalidated.
 
 ## 6. Aggregation and report
 
-Per metric: mean per arm, paired delta B−A and C−A, 1,000-sample bootstrap
-interval, verdict per §1. Report file: `docs/audits/YYYY-MM-DD-efficacy.md`
-with the model IDs, template revision, K, every trial's raw numbers, the
-judge agreement, and the verdict vector. A crossing interval is written as
-"no improvement shown".
+Per metric: mean per arm, and three paired contrasts with the bootstrap
+interval and verdict §1.1 fixes.
+
+| Contrast | The question it answers |
+|---|---|
+| B − A | do the templates beat no context file at all |
+| C − A | does *any* context file beat none, which is how much of B − A is not the templates |
+| **B − C** | do the generated templates beat forty hand-written lines |
+
+B − C is the one an adopter actually asks and the first draft omitted it,
+reporting only each arm against the control. A large B − A beside an
+equally large C − A is not a result for the templates, and only B − C
+separates them.
+
+**Metric direction, declared before the run.** Improving upward: task
+success, adherence, coverage, docstring coverage, mutation score,
+extension points present, every subjective rubric score. Improving
+downward: every static-analysis count, cognitive and cyclomatic
+complexity, tokens, turns, wall time, cost, files, lines, artifacts nobody
+asked for, change-task churn, axe violations, HTML invalidity. Neutral,
+reported without a verdict: maintainability index, instability.
+
+Report file: `docs/audits/YYYY-MM-DD-efficacy.md` with the model IDs, the
+CLI versions, the template revision, the arm B brief and its token scan,
+K, the bootstrap seed, every trial's raw numbers, every trial that failed
+or was re-run and why, the judge agreement, and the verdict vector. A
+crossing interval is written as "no improvement shown", and every interval
+carries the reminder from §1.1 that at K = 3 it is descriptive.
 
 ### In plain terms
 
@@ -213,21 +345,31 @@ The agent is run three times without templates and three times with.
 Every run is scored on each metric. For one metric, that gives three
 numbers per side.
 
-Compare the two sides the way you would compare two runners timed three
-times each: look at the averages, but also at how spread out each
-runner's three times are. If the slowest "with" run still beats the
-fastest "without" run, the difference is real. If the two sets of times
-overlap, the difference could be luck, and the report says so.
+The comparison is **run against its own partner**, not side against side.
+The first run of the bare arm is compared with the first run of the
+templated one, because the two went out the same day against the same
+model; then the second against the second, and the third against the
+third. What gets averaged is those differences.
 
-| | run 1 | run 2 | run 3 | verdict |
-|---|---|---|---|---|
-| without templates | 0.42 | 0.50 | 0.58 | |
-| with templates | 0.75 | 0.83 | 0.92 | **better** — no overlap |
-| with templates (a different metric) | 0.45 | 0.60 | 0.70 | **not shown** — overlaps 0.42–0.58 |
+| | run 1 | run 2 | run 3 | difference | verdict |
+|---|---|---|---|---|---|
+| without templates | 0.42 | 0.50 | 0.58 | | |
+| with templates | 0.75 | 0.83 | 0.92 | +0.33, +0.33, +0.34 | **better** — every pairing improved, and by nearly the same amount |
+| with templates, a metric that moved less | 0.45 | 0.60 | 0.70 | +0.03, +0.10, +0.12 | **better** — every pairing improved, but the size is unstable |
+| with templates, a metric that did not move | 0.55 | 0.44 | 0.62 | +0.13, −0.06, +0.04 | **not shown** — two runs improved and one got worse |
 
-The "interval" in the tables above is the mathematical form of "how much
-do the runs overlap"; the harness computes it and prints the verdict, so
-nobody decides by eye.
+An earlier draft of this table read the middle row as "not shown" because
+the two rows of raw numbers overlap. That is the wrong test, and it is
+worth naming: those three pairings improved by 0.03, 0.10 and 0.12, so
+every resampling of them averages to something positive and the interval
+cannot contain zero. Overlapping columns say nothing when each pairing
+moved the same way. Only the bottom row, where the differences change
+sign, is genuinely undecided.
+
+The "interval" is the mathematical form of "how consistent are the three
+differences"; the harness computes it and prints the verdict, so nobody
+decides by eye. With only three of them it is a coarse instrument, which
+is why §1.1 has the report call it descriptive.
 
 The report has one such row per metric. Some rows will say better, some
 not shown, some worse (tokens, files nobody asked for); all of them are
@@ -243,27 +385,39 @@ printed, the primary dimensions first.
 | Agent sees the acceptance tests | hidden suite lives outside the workspace; harness copies it in only for scoring |
 | Judge prefers its own family or the longer output | different vendor, blind, shuffled, length reported |
 | The judge reads the workspace and sees which arm it is | the judge runs against a copy with every context file removed — arm B's `CLAUDE.md` names the arm outright, and arm C's does too. The harness asserts the copy carries no `CLAUDE.md` before the judge is called, and the assertion is a refusal, not a warning |
-| Bar moved after seeing results | §1 verdict rule and this document are committed before the first trial |
+| Bar moved after seeing results | §1.1's verdict rule, §1.2's margins and this document are committed before the first trial, and the escalation to K = 5 is bounded there rather than decided on seeing a result |
 | One task measures one task | stated limitation; a second app is the follow-up, not this run |
 
 ## 8. Budget
 
 9 build trials at roughly 60–90 minutes each plus 9 change-task runs of
-~15 minutes; on the Max plan this is quota, not invoice. 9 judge calls
-and 3 human reviews. Hidden-suite and harness authoring: one session, plus
+~15 minutes, and 6 more of each if §1.1's single escalation to K = 5
+fires; on the Max plan this is quota, not invoice. 9 judge calls and 3
+human reviews. Hidden-suite and harness authoring: one session, plus
 a reference implementation of the specification, which is what proves the
 suite can grade anything at all — a grader that has never graded is a
-control that has never been exercised. Total: about three sessions plus
-wall time.
+control that has never been exercised. The change task's acceptance module
+is a further part-session, owed before the first change-task run.
+Total: about three sessions plus wall time.
 
 ## 9. Reuse as the template benchmark
 
 The same harness measures a template change: control = current templates,
 candidate = the trimmed or rewritten version, same paired design, same
 verdict rule. That is how "downgrade unjustified MUSTs" (design-notes §19)
-stops being an opinion — a trim that leaves every quality row at "not
-shown" and lowers tokens is a free win; one that turns a design row to
-"worse" is rejected by the run.
+stops being an opinion.
+
+A trim is a **free win** only where every quality metric is non-inferior
+by §1.2's margins and tokens fall. It is not enough that each quality row
+reads "no improvement shown": three trials are far too few to detect a
+real regression, so a crossing interval is the expected result of a trim
+that genuinely broke something, and accepting on that basis would let the
+benchmark launder damage as evidence of safety. The test is that the
+degradation interval sits inside the margin, which is a claim the data can
+fail to support — and where K = 3 cannot support it for a given metric,
+the honest reading is that the trim is unproven, not that it is safe.
+
+A trim that turns any design row to "worse" is rejected by the run.
 
 Two limits. Each iteration costs a full set of trials, so trims are
 batched per file, not per rule. And tuning against one app overfits to
@@ -280,9 +434,14 @@ section.
 2. Arm C runs. It is the only arm that separates the templates' effect
    from the effect of having any file, and the first question an adopter
    asks.
-3. K = 3. It is the smallest set §1's interval can be computed on. A
-   crossing interval on a primary dimension is answered by raising K for
-   that run and reporting both, never by lowering the bar.
+3. K = 3, escalating once to 5 under §1.1's bounded rule and never
+   further. Three is the smallest set an interval can be computed on at
+   all, and §1.1 states plainly what it cannot support: no arrangement of
+   three trials reaches conventional significance, so the primary run's
+   intervals are descriptive and the report says so on every row. The
+   alternative, sampling until an interval clears zero, is the failure the
+   bound exists to prevent; the honest cost of K = 3 is that a real effect
+   can go unshown, and that is reported rather than sampled away.
 4. Generator: `claude-sonnet-5` through the `claude` CLI at effort `high`.
    Judge: `gpt-6-astra` through `codex exec`, a different vendor and not
    merely a different family, which is the stronger form of §7's control.
@@ -312,7 +471,7 @@ section.
 8. The hidden suite is written before any trial runs, against `SPEC.md`
    alone, and committed to its repository before the first arm starts.
    Written afterwards it would be shaped, consciously or not, by what the
-   first outputs happened to do, and the bar §1 fixes would move with the
+   first outputs happened to do, and the bar §1.1 fixes would move with the
    results it grades. The cost is a session that produces no result.
 
    <!-- measured: 2026-09-12 -->
