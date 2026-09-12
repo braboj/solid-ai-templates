@@ -12,9 +12,15 @@ run.
 | `arms/C-reference/CLAUDE.md` | the hand-written reference context file, the arm that asks whether the effect is the templates or merely having a file |
 | `arms/B-candidate/CLAUDE.md` | the generated context file, produced once by `generate_arm_b.py` and never hand-edited |
 | `generate_arm_b.py` | produces that file: resolves the chain at the recorded release, builds the prompt from the interview and the pinned brief, scans for a specification leak |
+| `score.py` | takes one frozen trial to a JSON score: clean install, boot, source discovery, the hidden suite, the static battery, the adherence checklist, scope and cost |
+| `probes.py` | the measurements that must run inside the trial's own interpreter — the structural design probes, and the web-quality probes |
+| `scoring-requirements.txt`, `toolconfig/` | the one ruler: the tools, and the lint and type configuration every arm is measured under |
+| `judge.py` | builds a blind bundle per trial and runs the model judge over it, with the rubric as a JSON Schema |
+| `report.py` | the paired contrasts, the bootstrap intervals, the verdict vector, and the report under `docs/audits/` |
 
-Still to come: the rest of the scoring backbone beyond the acceptance
-suites, the judge runner, and the report writer.
+Still to come: nothing in this directory. The first attended trial is what
+tells us which of the battery's command lines need correcting, because a tool
+whose flags moved records a missing metric rather than a wrong one.
 
 ## Generating arm B
 
@@ -60,6 +66,45 @@ workspace.
 
 Arm B refuses until its context file exists. That file is generated once,
 through the interview at the recorded release, and is never hand-written.
+
+One preflight runs before the first trial: a trivial prompt through the
+isolated home. The CLI answers an unauthenticated run with a result object
+rather than a crash, so without it a whole run can complete having never
+reached a model.
+
+## Scoring, judging and reporting
+
+```bash
+py tests/efficacy/score.py --self-test
+py tests/efficacy/score.py --root <the run root>
+py tests/efficacy/judge.py --root <the run root> --dry-run
+py tests/efficacy/judge.py --root <the run root> --holdout
+py tests/efficacy/report.py --self-test
+py tests/efficacy/report.py --root <the run root>
+```
+
+Scoring reads the tarball the harness froze, never the directory the agent
+worked in. Each trial gets a clean virtual environment, the trial's package
+installed into it, the hidden suite run against that interpreter, and the
+static battery at one resolved set of tool versions — frozen to
+`tool-lock.txt` by the first trial scored and installed from there by every
+later one, so the ruler is identical across the arms.
+
+Both self tests are controls rather than smoke. `score.py --self-test` plants
+a real module in an environment with no tools and requires every metric to
+come back *missing*: a tool that scanned nothing must never record a zero,
+because zero findings and nothing scanned are the same number and opposite
+facts. `report.py --self-test` runs the design's own worked cases through the
+verdict rule, including the row an earlier draft of the design read wrongly.
+
+Judging builds a blind bundle per trial: the context file removed, condition
+markers masked, the order shuffled at a recorded seed, the unblinding map
+written where the judge cannot reach it. A bundle that still names its
+condition is not judged at all. The rubric is passed as a JSON Schema, so a
+score is machine-read rather than parsed out of prose, and every evidence line
+is checked against the bundle it was quoted from — a judge that never opened
+the code returns plausible numbers, and that check is what tells the two
+apart.
 
 ## What is not here
 
