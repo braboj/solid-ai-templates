@@ -357,6 +357,11 @@ py tests/run_e2e.py STK-01 FMT-01  # specific tests only
 py tests/run_e2e.py --dry-run      # build prompts, call no model, write no report
 ```
 
+The efficacy benchmark is a fourth runner and deliberately not in that
+list: it costs quota, takes hours, and answers a different question from
+whether this repository is sound. `tests/efficacy/README.md` owns its
+procedure, and `docs/design/efficacy-benchmark.md` owns the method.
+
 See `tests/CODIFICATION.md` for the ID scheme and `tests/INDEX.md` for the
 full list of specs. Requires `py -m pip install pyyaml` for the manifest
 check.
