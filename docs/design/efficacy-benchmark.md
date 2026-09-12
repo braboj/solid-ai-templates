@@ -88,7 +88,7 @@ does not land on one arm.
 
 | Metric | Measure | Source |
 |---|---|---|
-| Task success | hidden acceptance suite pass rate (≈80 tests): Python API — rule precedence, stacking, tier boundaries, rounding to the cent, jurisdiction tables, invalid rules refused; HTTP — every spec route via the Flask test client, HTMX fragments re-price correctly, JSON/CSV export byte-exact against the seed; browser — 3–5 Playwright flows; forms work with JavaScript disabled | the private hidden-suite repository (§10), cloned by the harness at scoring time and never into the workspace |
+| Task success | hidden acceptance suite pass rate, 377 checks across 16 modules: Python API — rule precedence, stacking, tier boundaries, rounding to the cent, jurisdiction tables, invalid rules refused; HTTP — every spec route via the Flask test client, HTMX fragments re-price correctly, JSON/CSV export byte-exact against the seed; browser — 4 Playwright flows; forms work with JavaScript disabled | the private hidden-suite repository (§10), cloned by the harness at scoring time and never into the workspace |
 | Install | `pip install .` in a clean venv, `python -c "import tariff"`, app boots and serves `/` | harness |
 | Web quality | axe-core WCAG 2.1 AA violations; HTML validity (`html5validator`); XSS probe — a payload in a product name renders inert on every page; CSRF — a form post without a token is refused; response size and request count of the invoice builder | harness, per arm |
 | Adherence | fraction of a fixed checklist: `ruff` clean, `mypy --strict` clean, coverage ≥ 80 %, cognitive complexity ≤ 15, `src/` layout, error-contract AST test, NullHandler check, no `print` in library code, citation ban, pyproject metadata complete, README with install+usage, tests discoverable | the python-lib chain's own fenced checks where one exists, else a standard tool |
@@ -250,8 +250,11 @@ printed, the primary dimensions first.
 
 9 build trials at roughly 60–90 minutes each plus 9 change-task runs of
 ~15 minutes; on the Max plan this is quota, not invoice. 9 judge calls
-and 3 human reviews. Hidden-suite and
-harness authoring: one session. Total: about three sessions plus wall time.
+and 3 human reviews. Hidden-suite and harness authoring: one session, plus
+a reference implementation of the specification, which is what proves the
+suite can grade anything at all — a grader that has never graded is a
+control that has never been exercised. Total: about three sessions plus
+wall time.
 
 ## 9. Reuse as the template benchmark
 
