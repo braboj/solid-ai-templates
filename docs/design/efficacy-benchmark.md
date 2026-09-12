@@ -4,8 +4,9 @@
 **Date:** 2026-09-12
 **Owning issue:** #1184, applying the generic method in
 `Imbra-Ltd/imbra-explore`, `cross-cutting/SPIKE-TESTING-AI-ASSETS.md`.
-**Artifacts to follow:** the spec, hidden suite and runner under
-`tests/efficacy/`; each report as a dated file under `docs/audits/`.
+**Artifacts to follow:** the spec and runner under `tests/efficacy/`; the
+hidden suite in a private repository (§10); each report as a dated file
+under `docs/audits/`.
 
 ## 1. Question, pre-registered
 
@@ -82,7 +83,7 @@ does not land on one arm.
 
 | Metric | Measure | Source |
 |---|---|---|
-| Task success | hidden acceptance suite pass rate (≈80 tests): Python API — rule precedence, stacking, tier boundaries, rounding to the cent, jurisdiction tables, invalid rules refused; HTTP — every spec route via the Flask test client, HTMX fragments re-price correctly, JSON/CSV export byte-exact against the seed; browser — 3–5 Playwright flows; forms work with JavaScript disabled | `tests/efficacy/hidden/`, never in the workspace |
+| Task success | hidden acceptance suite pass rate (≈80 tests): Python API — rule precedence, stacking, tier boundaries, rounding to the cent, jurisdiction tables, invalid rules refused; HTTP — every spec route via the Flask test client, HTMX fragments re-price correctly, JSON/CSV export byte-exact against the seed; browser — 3–5 Playwright flows; forms work with JavaScript disabled | the private hidden-suite repository (§10), cloned by the harness at scoring time and never into the workspace |
 | Install | `pip install .` in a clean venv, `python -c "import tariff"`, app boots and serves `/` | harness |
 | Web quality | axe-core WCAG 2.1 AA violations; HTML validity (`html5validator`); XSS probe — a payload in a product name renders inert on every page; CSRF — a form post without a token is refused; response size and request count of the invoice builder | harness, per arm |
 | Adherence | fraction of a fixed checklist: `ruff` clean, `mypy --strict` clean, coverage ≥ 80 %, cognitive complexity ≤ 15, `src/` layout, error-contract AST test, NullHandler check, no `print` in library code, citation ban, pyproject metadata complete, README with install+usage, tests discoverable | the python-lib chain's own fenced checks where one exists, else a standard tool |
@@ -242,12 +243,26 @@ batched per file, not per rule. And tuning against one app overfits to
 it: `tariff` is the dev set, and a second app (`ledger`, §2 runner-up)
 stays sealed for the final v3.0 claim, per the method's dev/test split.
 
-## 10. Decisions needed before the harness is written
+## 10. Decisions
 
-1. ~~The app~~ — decided: `tariff` with a Flask + HTMX UI.
-2. Arm C in or out?
-3. K = 3, or more?
-4. Generator model and judge family (e.g. generator Claude, judge Gemini).
-5. Where the hidden suite lives while it must stay out of the agent's
-   reach — `tests/efficacy/` here, or a private repository.
-6. Flask confirmed over FastAPI for the server-rendered shape?
+Every question the harness depended on is decided, 2026-09-12:
+
+1. The app: `tariff` with a Flask + HTMX UI (§2).
+2. Arm C runs. It is the only arm that separates the templates' effect
+   from the effect of having any file, and the first question an adopter
+   asks.
+3. K = 3. It is the smallest set §1's interval can be computed on. A
+   crossing interval on a primary dimension is answered by raising K for
+   that run and reporting both, never by lowering the bar.
+4. Generator: Claude, pinned by exact model ID. Judge: Gemini, a different
+   family per §7. Both IDs go in the report.
+5. The hidden suite lives in a private repository. This repository is
+   public, so a suite under `tests/efficacy/` is one search away from any
+   future trial with web access, and §7's web ban protects only this
+   run's arms. The harness clones it at scoring time; the spec, runner
+   and reports stay here.
+6. Flask stays. Server-rendered Jinja pages with HTMX partials are its
+   home ground, and `python-flask` is the chain arm B names.
+7. Timing: the baseline runs against `v2.90.0` before the v3.0 split
+   moves any template, so §9's comparison has a control that predates
+   the move. The v3.0 plan carries the ordering.
