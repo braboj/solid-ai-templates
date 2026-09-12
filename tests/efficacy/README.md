@@ -10,9 +10,35 @@ run.
 | `SPEC.md` | the application every arm is asked to build; the harness copies it into each workspace under this name |
 | `harness.py` | sets up a workspace, runs one trial under an isolated configuration, freezes the result |
 | `arms/C-reference/CLAUDE.md` | the hand-written reference context file, the arm that asks whether the effect is the templates or merely having a file |
+| `arms/B-candidate/CLAUDE.md` | the generated context file, produced once by `generate_arm_b.py` and never hand-edited |
+| `generate_arm_b.py` | produces that file: resolves the chain at the recorded release, builds the prompt from the interview and the pinned brief, scans for a specification leak |
 
-Still to come: arm B's generated context file, the rest of the scoring
-backbone beyond the acceptance suite, and the report writer.
+Still to come: the rest of the scoring backbone beyond the acceptance
+suites, the judge runner, and the report writer.
+
+## Generating arm B
+
+```bash
+py tests/efficacy/generate_arm_b.py --self-test
+py tests/efficacy/generate_arm_b.py --root <outside this repository> --dry-run
+py tests/efficacy/generate_arm_b.py --root <outside this repository>
+```
+
+One non-interactive invocation, per the design's section 11. Nobody answers
+questions: the brief is read out of the design and treated as the client's
+answers, so the arm is reproducible and re-running it would produce a
+different one. It refuses to overwrite an existing file without `--replace`.
+
+The self test proves the leak scan can fail before it is trusted. The dry
+run builds and scans the prompt without calling a model, which is the cheap
+way to check the wiring after any change to the brief or the roots.
+
+Two scans run, and they ask different questions. The prompt scan is broad,
+because arm B's generation is never handed `SPEC.md` and a hit means the
+plumbing is wrong. The output scan is narrow, and the prompt scan earns it:
+once the prompt is clean the model demonstrably never read the
+specification, so only data nobody could derive, a seed sku or a rule id or
+a figure from the worked example, is evidence of a leak.
 
 ## Running it
 
