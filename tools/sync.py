@@ -32,6 +32,35 @@ DOCS_TEMPLATE = ROOT / "templates" / "base" / "core" / "docs.md"
 
 # ---- generators ----
 
+SECTION_DIRS = {
+    "base": "base",
+    "platform": "platform",
+    "frontend": "frontend",
+    "backend": "backend",
+    "stacks": "stack",
+}
+
+
+def _check_sections(manifest):
+    """Refuse a manifest entry filed outside the directory its section names."""
+
+    # The listings below print a section heading and each entry's basename, so
+    # an entry registered under the wrong section renders at a path that does
+    # not exist and omits itself from the one that does. Neither listing can
+    # be told from a correct one by reading it, and regenerating reproduces
+    # the same wrong tree, so --check stays green over it.
+    misfiled = []
+    for section, dirname in SECTION_DIRS.items():
+        for e in manifest.get(section, []) or []:
+            if Path(e["file"]).parts[1:2] != (dirname,):
+                misfiled.append(f"{e['id']} ({e['file']}) under '{section}:'")
+    if misfiled:
+        raise SystemExit(
+            "manifest: entries filed outside their section's directory:\n  "
+            + "\n  ".join(misfiled)
+        )
+
+
 def _tree(entries, dirname):
     """Generate a directory tree listing."""
     lines = [f"{dirname}/"]
@@ -86,6 +115,7 @@ def _base_tree(entries):
 
 def _spec_sections(manifest):
     """Generate SPEC.md directory listings."""
+    _check_sections(manifest)
     parts = []
 
     # base gets special subfolder treatment
