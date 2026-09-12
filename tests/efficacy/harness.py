@@ -64,6 +64,22 @@ class TrialError(Exception):
     """A trial could not be set up or run as the protocol requires."""
 
 
+def agent_executable():
+    """The generator CLI's absolute path.
+
+    A bare "claude" in an argv list is not launchable on Windows, where the
+    command is a `.CMD` shim and `CreateProcess` resolves no extension: the
+    run dies with "the system cannot find the file specified" before a
+    single trial starts. Resolving it here fails with a sentence naming the
+    problem instead.
+    """
+    found = shutil.which("claude")
+    if found is None:
+        raise TrialError(
+            "the `claude` CLI is not on PATH, so no trial can run")
+    return found
+
+
 def repository_root():
     """This repository's absolute root."""
     return os.path.abspath(lib.ROOT)
@@ -164,18 +180,61 @@ def prepare_workspace(arm, trial, root):
     return workspace
 
 
+# The one thing the scratch home must inherit. Credentials live under the
+# real home, so a fully scratch home authenticates as nobody and every
+# trial dies on "Not logged in" — which the CLI reports as a successful
+# result with `is_error` set, so it reads like a model answer rather than
+# a failure to run.
+CREDENTIALS = os.path.join(".claude", ".credentials.json")
+
+
 def prepare_home(root):
     """Create the scratch home every trial runs under, and return it.
 
     One home for the whole run rather than one per trial: it holds no trial
     state, and a single directory is one thing to assert about.
+
+    Everything the design's isolation names is absent by construction —
+    no global `CLAUDE.md`, no hooks, no auto-memory, no MCP — because the
+    directory is new. The credential file is copied in, and nothing else
+    is: it carries no context, and without it there is no run at all.
     """
     home = os.path.join(root, "home")
     os.makedirs(os.path.join(home, ".claude"), exist_ok=True)
     settings = os.path.join(home, "settings.json")
     with io.open(settings, "w", encoding="utf-8") as handle:
         json.dump(ISOLATED_SETTINGS, handle)
+
+    real = os.path.expanduser("~")
+    source = os.path.join(real, CREDENTIALS)
+    if os.path.exists(source):
+        shutil.copyfile(source, os.path.join(home, CREDENTIALS))
     return home
+
+
+def assert_authenticated(home, env_builder, executable):
+    """Refuse a run the CLI would answer without reaching a model.
+
+    "Not logged in" comes back as a result object with `is_error` true and
+    a zero cost, not as a crash, so a whole run can complete with nine
+    trials that never called anything. One cheap call up front is the
+    difference between a failed run and a run of failures.
+    """
+    proc = subprocess.run(
+        [executable, "-p", "--output-format", "json",
+         "--setting-sources", "", "--settings",
+         os.path.join(home, "settings.json"), "--strict-mcp-config"],
+        input="Reply with the single word: ready", env=env_builder(home),
+        capture_output=True, text=True, encoding="utf-8", timeout=180)
+    try:
+        payload = json.loads(proc.stdout)
+    except ValueError:
+        raise TrialError("the CLI returned no JSON for a trivial prompt: %s"
+                         % (proc.stdout or proc.stderr)[:400])
+    if payload.get("is_error"):
+        raise TrialError("the CLI is not usable in the isolated home: %s"
+                         % payload.get("result", "")[:200])
+    return payload.get("result", "").strip()
 
 
 def agent_environment(home):
@@ -195,7 +254,7 @@ def agent_command(home, model, effort, budget):
     caller applies, and the record states which of them ended a trial.
     """
     argv = [
-        "claude", "-p", PROMPT,
+        agent_executable(), "-p", PROMPT,
         "--output-format", "json",
         "--model", model,
         "--effort", effort,
