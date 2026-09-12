@@ -341,6 +341,9 @@ Current design documents:
   keep the template library in shape so it doesn't dilute the
   agent's attention, with implications for code review, smoke
   tests, structure audit, and 360
+- `efficacy-benchmark.md` — the pre-registered experiment that
+  measures whether a generated context file improves an agent's
+  output, and the harness a template change is measured with
 
 ---
 

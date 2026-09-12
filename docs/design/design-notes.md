@@ -1210,6 +1210,11 @@ work outside accepted scope, not every possible improvement.
 
 ## 16. Outcome evaluation
 
+The concrete, pre-registered form of this section is
+`docs/design/efficacy-benchmark.md`: one application, three arms, paired
+trials, a layered judge and a verdict rule fixed before the first run. The
+sketch below is the direction it was derived from.
+
 Before further policy expansion, establish a stable benchmark:
 
 - three representative consumer projects;
