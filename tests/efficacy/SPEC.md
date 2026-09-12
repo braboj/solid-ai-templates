@@ -79,7 +79,9 @@ A rule is invalid, and constructing it raises, when:
 
 An invoice carries a currency, an ordered list of lines, and zero or more
 coupon codes. A line carries a product and an integer quantity of at least
-one.
+one. A line may check that on construction, but `price` refuses a bad
+quantity either way, per section 4.4 — a caller that assembles lines
+elsewhere must still be refused.
 
 ## 4. Pricing
 
@@ -93,12 +95,15 @@ algorithm is fixed.
    **tiered, then bulk, then percentage**.
 3. At most one rule of each kind applies to a line. Where several rules of
    one kind match the product, the one producing the lowest resulting
-   amount applies; a tie is broken by `rule_id` ascending.
+   amount applies; a tie is broken by `rule_id` ascending. "Applies" here
+   means selected: a selected rule is reported in `applied` whether or not
+   it changed the amount.
 4. Each applied rule reads the running amount and replaces it:
    - **tiered** — the applicable tier is the one with the greatest
      `min_quantity` less than or equal to the quantity; a quantity exactly
-     at a tier's `min_quantity` reaches that tier. Where no tier applies,
-     the rule changes nothing. The running amount becomes
+     at a tier's `min_quantity` reaches that tier. Where the quantity
+     reaches no tier, the rule changes nothing — it was still selected and
+     applied, so it is reported in `applied`. The running amount becomes
      `tier_unit_price * quantity`.
    - **bulk** — with `groups, remainder = divmod(quantity, buy)`, the
      chargeable units are `groups * pay + remainder`, and the running
@@ -112,9 +117,11 @@ algorithm is fixed.
 
 6. `subtotal` is the sum of the lines' `net`.
 7. Invoice-scoped rules apply in this kind order: **percentage, then
-   coupon**. A coupon applies only when the invoice carries its code. The
-   same one-per-kind, lowest-result, `rule_id`-ascending selection as
-   step 3 applies.
+   coupon**. A coupon applies only when the invoice carries its code, and
+   the match is exact after surrounding whitespace is stripped. The same
+   one-per-kind, lowest-result, `rule_id`-ascending selection as step 3
+   applies, and it compares the rounded result, which is the amount the
+   invoice would carry.
 8. Each applied rule reads the running amount and replaces it, rounding
    after each:
    - **percentage** — `running_amount * (1 - percent / 100)`.
@@ -174,7 +181,9 @@ TariffError                                   # base of every raised error
 A `PricedInvoice` exposes `currency`, `jurisdiction`, `lines`, `subtotal`,
 `discount_total`, `taxable_total`, `tax_total`, `total`, and `applied` —
 the `rule_id`s of the invoice-scoped rules that applied, in application
-order.
+order, as a list. `jurisdiction` is the one passed to `price`, not its
+code. `gross` on a line is the exact product of section 4.1 step 1; the
+exports round it.
 
 A priced line exposes `product`, `quantity`, `gross`, `line_discount`,
 `net`, `invoice_discount`, `taxable`, `tax`, `total`, and `applied` — the
@@ -247,8 +256,14 @@ Behaviour:
   total, and shows the invoice's subtotal, discount total, taxable total,
   tax total and total.
 - Every POST validates on the server and re-renders the form with a
-  message naming the field on bad input. Nothing is written on a failed
-  validation.
+  message naming the field on bad input, answering 200. Nothing is written
+  on a failed validation. The 400s are the ones named above, for the
+  builder's two routes and for a missing or wrong CSRF token.
+- On the builder's two routes, `currency` defaults to `EUR` when the body
+  omits it, a `sku`/`quantity` pair empty on both sides is dropped so the
+  page can offer a blank row, and a half-filled pair is a validation error
+  naming the empty field. Previewing an invoice with no lines renders the
+  fragment with a message and answers 200; saving one is a 400.
 - Every POST form carries a CSRF token, and a POST without a valid token is
   refused with 400 or 403.
 - Unknown sku, unknown invoice id, and unknown jurisdiction code return
@@ -259,7 +274,9 @@ Behaviour:
 Both exports are byte-stable for the same invoice.
 
 **JSON**, `Content-Type: application/json`. Monetary values are strings
-with exactly two decimals. Keys appear in this order:
+with exactly two decimals. The sample below fixes the key order and the
+value forms, not its own whitespace: any layout is acceptable as long as
+the same invoice always exports the same bytes. Keys appear in this order:
 
 ```json
 {
