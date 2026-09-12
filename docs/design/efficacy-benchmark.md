@@ -144,6 +144,26 @@ Per trial (arm × k, K = 3 → 9 trials):
 Trials run interleaved (A1, B1, C1, A2, …) so a model-side change mid-run
 does not land on one arm.
 
+### 4.1 Every step is automated, and that is a requirement
+
+The run is one command. Arm B's generation, the nine build trials, the
+nine change tasks, the acceptance suites, the static and structural tools,
+the judge and the aggregation are all scripted, and each records its
+inputs, its exact invocation and its outputs. No step waits for a person
+to answer, choose or paste.
+
+This is not convenience. A benchmark with a human in its loop cannot be
+re-run to check a surprising result, cannot be re-run against a later
+template revision to produce the comparison §9 exists for, and quietly
+admits the operator's judgement into whichever arm they touched. An
+unreproducible measurement of reproducibility would be a poor joke.
+
+One thing sits outside the loop by design: the human holdout of §5. It
+validates the judge rather than producing a metric, runs once against a
+frozen sample the harness selects, and no trial or verdict waits on it. A
+run whose holdout has not been scored reports its subjective row as
+unvalidated and completes.
+
 ## 5. Scoring — the layered judge
 
 ### Backbone (deterministic, per trial, run by the harness)
@@ -507,10 +527,37 @@ after the spec is fresh in mind drifts toward it:
 > and invoices assembled from them — Python 3.12 / Flask 3 / Jinja /
 > HTMX / SQLite — uv, ruff, mypy strict, pytest — runs locally, no
 > deployment target
+>
+> Boundaries and actors: two actors, a person working in a browser and
+> another program; the pricing engine is a library the program imports
+> without the web application present, and the web application is one
+> caller of it. The store is a local file. Nothing reaches the network.
+> The program's interfaces are the library's own API and the invoice
+> exports.
 
 The stack is named because the spec fixes it for every arm; an interview
 left to choose might pick FastAPI, and arm B would then build a different
 application from arms A and C.
+
+The boundary paragraph is there because the interview's job, per the
+owner, is to establish a system's boundaries and its interfaces to other
+systems and actors. It states the *shape* of those boundaries and no
+requirement across them: which actors exist, that the engine is importable
+without the web layer, that the store is local and nothing is remote. It
+names no route, no API name, no export format and no rule semantics, all
+of which arms A and C read in `SPEC.md` and arm B's interview does not.
+
+### The generation is scripted, not conducted
+
+Arm B's file is produced by one non-interactive invocation that supplies
+`INTERVIEW.md`, the resolved chain at `v2.90.0` and the brief above, and
+by nothing else. Nobody answers questions as they arrive.
+
+That is what keeps the arm reproducible: a conversation would put the
+answerer's judgement into arm B's file, and re-running it later would
+produce a different file and a different arm. The transcript, the exact
+prompt and the resulting file are committed with the report, and the
+token scan below runs against the result before any trial starts.
 
 ### What the disclosure costs, and where it does not reach
 
