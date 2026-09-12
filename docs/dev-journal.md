@@ -7638,3 +7638,76 @@ change was undercounted until staged. Fixed same session.
   metrics but nothing cognitive — installing it and reading `--help`
   took under a minute and changed the binding to clang-tidy's
   `readability-function-cognitive-complexity`
+
+## 2026-09-12 — A misfiled entry, the v3.0 fork model, a pre-registered benchmark
+
+**Tool:** Claude Code (Opus 5, then Fable 5.1)
+
+**Key changes:**
+- `base-config` was registered under the manifest's `backend:` key while
+  its file lives in `base/core/`; `sync.py` renders the SPEC tree from the
+  key and the basename, so SPEC listed a `backend/config.md` that does not
+  exist and omitted the real file. Re-keyed, and `sync.py` now refuses an
+  entry filed outside its section's directory (#1702)
+- `docs/design/efficacy-benchmark.md`: the pre-registered design for
+  #1184 — one application (`tariff`, a pricing engine with a Flask + HTMX
+  UI), three arms, paired trials under an isolated agent profile, a
+  layered judge, a verdict rule fixed before any run, and the same
+  harness as the benchmark a template trim is measured with (#1703)
+- v3.0 planned with the owner, one question at a time, into
+  `temp/docs/v3.0-plan.md` (untracked): the milestone is a contract
+  freeze delivered as a fork model — `solid-ai-templates` keeps the
+  engine and invariant policy, `imbra-ai-templates` forks it and adds
+  stacks, platforms and the process layer
+
+**Released:** none. `v2.90` stays closed and untagged (23 commits since
+`v2.89.0`); the tag is the fork point and opens Phase 0.
+
+**Pull requests merged:** #1702, #1703 (part of #1184).
+
+**Issues closed:** none. **Issues filed:** none — the plan's new issues
+(v2.90.0 cut, four ADRs, `resolve.py` diagnostics, manifest ownership
+check, fork-sync CI job, fixtures, idiom fold, migration guide, v3.0.0
+cut) and its groom are applied in the loop's first iteration, by the
+owner's choice.
+
+**Decisions:**
+- Stable means contract freeze only: paths, IDs, manifest schema,
+  declaration block, core membership and check exit codes are frozen from
+  `3.0.0` to v4; prose changes freely in 3.x
+- No compiler or CLI in v3.0; generation stays agent-driven and
+  `resolve.py` gains named errors for a missing dependency and a cycle
+- Forks and projects migrate on their own schedule against a migration
+  guide; the break is communicated in a `Breaking changes` section and a
+  compatibility-policy ADR
+- Boundary by directory, every row settled: `backend/` and `frontend/`
+  stay after a measured genericity check (0 MUST/SHOULD lines name a
+  vendor across 21 files); `templating.md` goes to the fork as a UI
+  concern; `language/` splits by content — idiom sections fold into core
+  beside the generic rule they instantiate, every `## Tooling` section
+  plus `go.md` and `c.md` go to the fork; a fixture stack and platform
+  stay upstream so per-stack checks keep an input
+- The single manifest is not a fork blocker: a fork appending under its
+  own keys merges cleanly against upstream edits to `base:`; the rule is
+  ownership by key, checked by smoke, with fragments as optional insurance
+- The efficacy app is `tariff` over `logsift`, `flowkit`, `ledger` and
+  `convert`: a domain model where OOP is the natural shape and two
+  orthogonal extension axes make a missed Strategy visible; a frontend was
+  added on request, server-rendered, because no Python web chain carries
+  the frontend rules and an SPA half would get none
+
+**Lessons:**
+- A generator that prints a fixed heading and each entry's basename
+  renders a misfiled entry at a path that does not exist, and `--check`
+  stays green because regeneration reproduces the same wrong tree. The
+  guard is to derive the directory from the path, or refuse when key and
+  path disagree
+- Pushback the owner asked for changed an outcome: `language/` was
+  headed to the fork whole until the idiom sections were read and found
+  tool-free; the split by content followed from the text, not the
+  directory name
+- The simulated fork merge was denied by the permission system, so the
+  "merges cleanly" claim is reasoning about three-way merge, not a
+  measurement — recorded as such, with the fork-sync CI job as the proof
+- Brevity tripped twice on design answers; a "how does X work" question
+  is not a document request and takes the six lines too
