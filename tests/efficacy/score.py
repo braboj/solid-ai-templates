@@ -645,6 +645,87 @@ def own_test_coverage(venv, workspace, roots, seen):
                     seen=seen, invocation=outcome["argv"])
 
 
+def pyproject_complete(workspace):
+    """Whether the packaging metadata carries what a published project owes."""
+    path = os.path.join(workspace, "pyproject.toml")
+    if not os.path.exists(path):
+        return None
+    try:
+        import tomllib
+        with io.open(path, "rb") as handle:
+            payload = tomllib.load(handle)
+    except Exception:
+        return None
+    project = payload.get("project") or {}
+    dynamic = set(project.get("dynamic") or [])
+    owed = ("name", "version", "description", "requires-python")
+    return all(key in project or key in dynamic for key in owed)
+
+
+def readme_usable(workspace):
+    """Whether a README says how to install it and how to use it."""
+    for name in sorted(os.listdir(workspace)):
+        if not name.upper().startswith("README"):
+            continue
+        with io.open(os.path.join(workspace, name), encoding="utf-8",
+                     errors="replace") as handle:
+            text = handle.read().lower()
+        return ("install" in text
+                and ("usage" in text or "example" in text
+                     or "getting started" in text))
+    return None
+
+
+def adherence(workspace, scores):
+    """The fixed checklist, scored on every arm.
+
+    It is a quality checklist rather than a template checklist, which is why
+    the control scores on it too. An item no tool could measure is recorded as
+    unmeasured and leaves the denominator, so the fraction never credits a
+    trial for a check that did not run.
+    """
+    structure = scores.get("structure") or {}
+    facts = structure.get("value") or {}
+    coverage = (scores.get("coverage") or {}).get("value") or {}
+    complexity_value = (scores.get("complexity") or {}).get("value") or {}
+    logging_facts = facts.get("logging") or {}
+    roots = (scores.get("discovery") or {}).get("roots") or []
+
+    def clean(key):
+        metric = scores.get(key) or {}
+        return None if metric.get("missing") else metric.get("value") == 0
+
+    items = {
+        "ruff_clean": clean("ruff"),
+        "mypy_clean": clean("mypy"),
+        "formatted": clean("ruff_format"),
+        "coverage_80": (None if coverage.get("line") is None
+                        else coverage["line"] >= 80),
+        "complexity_15": (None if not complexity_value
+                          else complexity_value.get("over_15") == 0),
+        "src_layout": (None if not roots
+                       else any(os.sep + "src" + os.sep in path
+                                for path in roots)),
+        "one_error_hierarchy": (None if not facts
+                                else len(facts.get("exception_bases") or []) <= 1),
+        "no_print_in_library": (None if not facts
+                                else not facts.get("print_calls")),
+        "citation_ban": None if not facts else not facts.get("citations"),
+        "null_handler": (None if not logging_facts.get("used")
+                         else bool(logging_facts.get("null_handler"))),
+        "pyproject_metadata": pyproject_complete(workspace),
+        "readme_install_and_usage": readme_usable(workspace),
+        "tests_discoverable": (None if (scores.get("coverage") or {}).get(
+            "missing") else True),
+    }
+    taken = {key: value for key, value in items.items() if value is not None}
+    if not taken:
+        return absent("no checklist item could be measured", items=items)
+    return measured(round(sum(1 for v in taken.values() if v) / len(taken), 3),
+                    items=items, measured_items=len(taken),
+                    total_items=len(items))
+
+
 def scope(workspace, roots):
     """Files, lines, and artifacts nobody asked for."""
     tracked = run(["git", "-C", workspace, "ls-files"], timeout=120)
@@ -733,6 +814,10 @@ def score_trial(record, options, suite, lock):
         scores["web"] = probes.web_quality(context, workspace)
     else:
         scores["web"] = absent("the web probes were not requested")
+
+    # After the battery and the structure probe, because every item it scores
+    # is read from one of them.
+    scores["adherence"] = adherence(workspace, scores)
 
     scores["scope"] = scope(workspace, roots)
     scores["cost"] = cost(record)

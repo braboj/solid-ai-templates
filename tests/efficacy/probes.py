@@ -287,6 +287,53 @@ try:
 except Exception as error:
     report["graph"] = {"error": repr(error)[:300]}
 
+# The four facts the adherence checklist needs and no tool reports: what the
+# library writes to the host's streams, whether a comment cites a ticket
+# number, and whether one error hierarchy covers every raised type.
+prints, citations, raises, bases = [], [], [], []
+for path, tree in TREES.items():
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and getattr(
+                node.func, "id", "") == "print":
+            prints.append([os.path.basename(path), node.lineno])
+        if isinstance(node, ast.ClassDef):
+            for base in node.bases:
+                label = getattr(base, "id", getattr(base, "attr", ""))
+                if label in ("Exception", "BaseException", "ValueError",
+                             "TypeError", "RuntimeError"):
+                    bases.append([os.path.basename(path), node.name, label])
+report["print_calls"] = prints
+report["exception_bases"] = bases
+
+CITATION = None
+try:
+    import re as _re
+    CITATION = _re.compile(r"#\s?\d{2,}|ADR-\d+|PR\s?#\d+")
+except Exception:
+    CITATION = None
+if CITATION is not None:
+    for path in FILES:
+        try:
+            with open(path, encoding="utf-8", errors="replace") as handle:
+                for number, line in enumerate(handle, 1):
+                    stripped = line.strip()
+                    if stripped.startswith("#") and CITATION.search(stripped):
+                        citations.append([os.path.basename(path), number])
+        except OSError:
+            continue
+report["citations"] = citations
+
+# A library writes nothing to the host's streams: where logging is used at
+# all, a NullHandler is what makes that true. Where it is not used the
+# question does not arise, which is a third answer and not a pass.
+uses_logging, null_handler = False, False
+for path, tree in TREES.items():
+    if "logging" in imported_names(tree):
+        uses_logging = True
+    if "NullHandler" in ast.dump(tree):
+        null_handler = True
+report["logging"] = {"used": uses_logging, "null_handler": null_handler}
+
 report["files_parsed"] = len(TREES)
 print(json.dumps(report))
 '''
