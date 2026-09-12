@@ -11,8 +11,8 @@ run.
 | `harness.py` | sets up a workspace, runs one trial under an isolated configuration, freezes the result |
 | `arms/C-reference/CLAUDE.md` | the hand-written reference context file, the arm that asks whether the effect is the templates or merely having a file |
 
-Still to come: arm B's generated context file, the scoring backbone, and
-the report writer.
+Still to come: arm B's generated context file, the rest of the scoring
+backbone beyond the acceptance suite, and the report writer.
 
 ## Running it
 
@@ -37,10 +37,41 @@ through the interview at the recorded release, and is never hand-written.
 
 ## What is not here
 
-The hidden acceptance suite lives in a private repository. This repository
-is public, so a suite kept here would be reachable by any trial with web
-access, and the design's web ban protects only the arms of one run. The
-harness clones it at scoring time and never into a workspace under test.
+The hidden acceptance suite lives in the private repository
+`braboj/tariff-hidden-suite`. This repository is public, so a suite kept
+here would be reachable by any trial with web access, and the design's web
+ban protects only the arms of one run. The harness clones it at scoring
+time and never into a workspace under test.
+
+It is written and validated, ahead of any trial as the design requires.
+
+<!-- measured: 2026-09-12 -->
+It holds 377 checks across 16 modules, covering the public API, every
+refusal, the pricing arithmetic, every route and form, both export formats
+byte by byte, the seed, the JavaScript-disabled path and four browser
+flows. No generator here can recount them, because the suite is in another
+repository; its own README carries the live figure.
+<!-- /measured -->
+
+Two things establish that it grades rather than merely runs, and both live
+beside it in that repository.
+
+- A reference implementation of `SPEC.md`, written from the specification
+  alone by an agent that never saw the tests. Every check passes against
+  it, so a correct implementation is not marked wrong. It stays out of
+  every workspace, being a worked answer to the task the arms are set.
+- A mutation control that plants one specification violation at a time and
+  expects a failure: half-up rounding, a tier boundary excluding its own
+  threshold, the line rules in the wrong kind order, bulk charging every
+  unit, and the allocation's spare cents going to the wrong lines. Five of
+  five caught, with a green baseline either side.
+
+Writing the two against the same specification, independently, is what
+found the specification's own gaps. It named no form field, so no POST
+could be issued at all; it left the fragment response and the
+JavaScript-disabled response contradicting each other; and it admitted two
+readings of whether a rule that changed nothing counts as applied. Those
+are fixed in `SPEC.md`, before any arm was asked to build against it.
 
 ## What the arms receive
 
