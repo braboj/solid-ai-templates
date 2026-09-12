@@ -167,10 +167,20 @@ CHECKS = [
                "which side of the tag the work lands on. The check states "
                "that is not a warning it can score."},
 
+    # DOCS is the project judgement the check names: the paths a consumer of
+    # the release reads. Here that is the templates themselves, so an
+    # identifier a template documents is documented in what ships. The
+    # v2.90.0 cut named `uv.lock`, which only `stack/python-lib.md` carries,
+    # and the default set read it as undocumented. `generated/` stays out as
+    # a derivation of `templates/`; `tools/` and `tests/` stay out because a
+    # set covering the whole tree passes whatever the code mentions, which
+    # the rule calls the defect itself.
     {"file": "base/core/git.md", "find": "documentation files in the tree",
      "title": "The tree being tagged documents what the release claims",
      "do": RUN,
-     "expect": ["nonzero", "nonzero", "line", "line", "any", "any", "zero"]},
+     "expect": ["nonzero", "nonzero", "line", "line", "any", "any", "zero"],
+     "substitute": {'DOCS = ("README.md", "docs/")':
+                    'DOCS = ("README.md", "docs/", "templates/")'}},
 
     {"file": "base/core/git.md",
      "find": "bullets ever under Unreleased in that range",
