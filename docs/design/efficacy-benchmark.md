@@ -269,8 +269,9 @@ stays sealed for the final v3.0 claim, per the method's dev/test split.
 
 ## 10. Decisions
 
-Decided 2026-09-12 unless a numbered item says otherwise. §11 holds what
-is still open; no trial runs while anything there is unanswered.
+Every question the harness depends on is decided, 2026-09-12. §11 pins
+arm B's project brief, which is the last of them and long enough to own a
+section.
 
 1. The app: `tariff` with a Flask + HTMX UI (§2).
 2. Arm C runs. It is the only arm that separates the templates' effect
@@ -318,26 +319,52 @@ is still open; no trial runs while anything there is unanswered.
    evidence cannot rest its headline on a judge nobody checked, and §9
    hands that same judge a say in which template trims ship.
 
-## 11. Open
+## 11. Arm B's project brief
 
-1. **Arm B's project brief.** What the interview is told before it
-   generates arm B's context file, and therefore what separates the
-   templates' contribution from a second reasoning pass over the
-   requirements.
+Decided by the owner, 2026-09-12. The brief names the domain's two
+extension axes. It is what an adopter would actually type: someone
+building this application tells the interview that there are discount
+rules and tax jurisdictions, because that is what the application is.
+A brief withholding them would measure a version of the product nobody
+uses.
 
-   The product answers most of this itself. `examples/flask-api` records
-   its generation input as a name, an owner, a one-line domain summary, a
-   stack, a toolchain and a deployment target — no endpoints, no field
-   definitions, no business rules. That is the documented pipeline under
-   ADR-016, so a brief of the same shape is the product as shipped rather
-   than a handicap invented for the trial.
+Pinned here rather than written on the day, because a brief composed
+after the spec is fresh in mind drifts toward it:
 
-   What is not settled is the line's exact position and how it is
-   enforced. A brief naming the two extension axes, discount rules and
-   tax jurisdictions, is arguably identity; one naming half-even rounding
-   or the coupon precedence order is the spec. Proposed control: the
-   brief is committed beside the report, and the generated file is
-   scanned for the spec's distinctive requirement tokens before any trial
-   runs, with a hit refusing the run rather than warning. The token list
-   is drawn when the brief is written, and drawing it after seeing the
-   generated file would be the same drift item 8 exists to prevent.
+> `tariff` — Imbra Ltd — a pricing and invoicing web application:
+> a product catalog, discount rules of several kinds, tax jurisdictions,
+> and invoices assembled from them — Python 3.12 / Flask 3 / Jinja /
+> HTMX / SQLite — uv, ruff, mypy strict, pytest — runs locally, no
+> deployment target
+
+The stack is named because the spec fixes it for every arm; an interview
+left to choose might pick FastAPI, and arm B would then build a different
+application from arms A and C.
+
+### What the disclosure costs, and where it does not reach
+
+Naming the axes tells arm B's interview the shape the open-closed measure
+scores. The report states this beside the affected rows rather than
+leaving a reader to find it:
+
+| Measure | Affected |
+|---|---|
+| Extension points for rule kinds and jurisdictions; the OCP rubric row for those two axes; the change task, whose fixed prompt adds one of each | Yes. Arm B was told these axes exist. Arms A and C read the same axes in `SPEC.md`, so no arm is ignorant of them, but only arm B had them in front of the interview |
+| Extension point for a new export format | **No.** Exports are named nowhere in the brief, so this is the one extension axis every arm meets only through the spec |
+| Task success, cost, scope, code quality counts, layering, cohesion, complexity, SRP, LSP, ISP, DIP, error design, naming, readability, maintainability, test quality | No. None of them turns on knowing the axes |
+
+The export axis is therefore the uncontaminated open-closed probe, and the
+report leads the OCP finding with it.
+
+### Still out of bounds
+
+The brief stops at the domain's shape. It states no rule semantics, no
+rounding mode, no precedence or stacking order, no route paths, no API
+names, no error hierarchy and no fixture. Control, run before the first
+trial: the generated context file is scanned for the spec's distinctive
+requirement tokens, and a hit refuses the run rather than warning. The
+token list is drawn when the brief is pinned, which is now, because
+drawing it after seeing the generated file is the drift §10 item 8 exists
+to prevent.
+
+The brief and the scan's result are committed beside the report.
