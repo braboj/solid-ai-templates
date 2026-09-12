@@ -131,9 +131,9 @@ same tool answers both; the counts here are the graded view.
 | Import cycles, fan-in/fan-out, instability and abstractness per module (Martin) | `grimp` | cycles; mean instability of domain modules |
 | Size and shape smells: too many arguments/branches/attributes, god class, boolean-flag parameters, inheritance depth | `pylint --disable=all --enable=R` plus a harness AST walk for `bool` parameters | count |
 | Class cohesion | `cohesion` | mean |
-| Extension points present: custom format and output renderer reachable without editing existing code (Protocol/ABC or registry) | harness AST probe | present / absent |
+| Extension points present: a new discount rule kind and a new jurisdiction reachable without editing existing code (Protocol/ABC or registry), and a new export format likewise | harness AST probe | present / absent, per axis |
 | Public surface: names exported vs names the spec requires | harness diff of `__all__` and module-level names | extra + missing |
-| IO isolation: parse/aggregate accept file objects or iterables, not only paths | harness signature probe | fraction |
+| IO isolation: pricing accepts catalog, rule and jurisdiction values, not database rows or a live connection; export accepts a `PricedInvoice`, not a request | harness signature probe | fraction |
 
 ### Design (change task) — the OCP measure
 
@@ -150,36 +150,54 @@ high. Nine extra runs of ~15 minutes.
 
 ### Pattern use (judge with evidence, per trial)
 
-For each GoF pattern found (Strategy for formats, registry/Factory for
-lookup, Template Method for parsing steps, Command for CLI subcommands,
-Builder for the pipeline, Adapter for output), the judge records: where,
-what it removes (a duplication, a conditional ladder) or opens (an
-extension point), and whether it has more than one implementor. A pattern
-with one implementor and nothing removed is scored as over-engineering,
-per `oop.md`'s own rule; a conditional ladder over formats where a
-Strategy was warranted is scored as a missed pattern. Reported as
-warranted / missed / over-engineered counts.
+For each GoF pattern found, the judge records: where, what it removes (a
+duplication, a conditional ladder) or opens (an extension point), and
+whether it has more than one implementor. The patterns the app's two
+extension axes invite are Strategy for the discount rule kinds,
+registry/Factory for resolving a rule or a jurisdiction by name,
+Composite or a precedence chain for stacking rules, Adapter for the JSON,
+CSV and printable exports, and Builder for assembling an invoice. The list
+is what the judge looks for, not what it must find: a design that reaches
+the same extension points another way is scored on the property, not the
+name.
+
+A pattern with one implementor and nothing removed is scored as
+over-engineering, per `oop.md`'s own rule; a conditional ladder over rule
+kinds where a Strategy was warranted is scored as a missed pattern.
+Reported as warranted / missed / over-engineered counts.
 
 ### Subjective (calibrated model judge)
 
 Rubric, 1–5 each with a quoted evidence line per score: SRP (one reason
-to change per module), OCP (formats and renderers are extension points),
-LSP (subtypes honour the parser/renderer contract), ISP (public API no
-larger than the spec), DIP (domain independent of CLI and IO), naming and
-abstraction level, error design, readability (function length, nesting,
-names that carry the intent), maintainability (how a reader finds where a
-change goes), test quality.
+to change per module), OCP (rule kinds, jurisdictions and export formats
+are extension points), LSP (every rule kind honours the rule contract, and
+every export the renderer contract), ISP (public API no larger than the
+spec), DIP (domain independent of Flask, SQLite and the request cycle),
+naming and abstraction level, error design, readability (function length,
+nesting, names that carry the intent), maintainability (how a reader finds
+where a change goes), test quality.
 
 **Primary dimensions, owner-declared:** design (SOLID and pattern use),
 readability, maintainability. The report leads with these; task success
-and cost follow. Judged by a different model family from the generator, blind to
+and cost follow. Judged by a different vendor from the generator, blind to
 arm, order shuffled, condition markers stripped. Judge model ID recorded.
 
 ### Human holdout
 
-You score three outputs blind (one per arm, chosen by the harness) on the
-same rubric. Judge agreement with the holdout is reported beside the
-headline; below 0.7 the subjective row is reported as unvalidated.
+The owner scores three outputs blind, one per arm, chosen by the harness.
+Scoring is on the three primary dimensions above rather than the full
+rubric: those are what the report leads with, and they are the only rows
+that rest on the model judge alone. Three outputs on three dimensions give
+nine paired scores where the full rubric would give the reader thirty
+readings and the statistic three.
+
+Agreement is reported as the share of scores where the judge lands on the
+human's number or within one point of it, not as a correlation. Nine
+non-independent points do not support a coefficient, and a threshold
+applied to one would be a statistic doing the work of a judgement. The
+share and the disagreements themselves are printed, and where the judge
+differs by two or more on any primary dimension the subjective row is
+reported as unvalidated.
 
 ## 6. Aggregation and report
 
@@ -251,7 +269,8 @@ stays sealed for the final v3.0 claim, per the method's dev/test split.
 
 ## 10. Decisions
 
-Every question the harness depended on is decided, 2026-09-12:
+Decided 2026-09-12 unless a numbered item says otherwise. §11 holds what
+is still open; no trial runs while anything there is unanswered.
 
 1. The app: `tariff` with a Flask + HTMX UI (§2).
 2. Arm C runs. It is the only arm that separates the templates' effect
@@ -286,3 +305,39 @@ Every question the harness depended on is decided, 2026-09-12:
 7. Timing: the baseline runs against `v2.90.0` before the v3.0 split
    moves any template, so §9's comparison has a control that predates
    the move. The v3.0 plan carries the ordering.
+8. The hidden suite is written before any trial runs, against `SPEC.md`
+   alone, and committed to its repository before the first arm starts.
+   Written afterwards it would be shaped, consciously or not, by what the
+   first outputs happened to do, and the bar §1 fixes would move with the
+   results it grades. The cost is a session that produces no result.
+9. The human holdout stays, reshaped: three outputs, three primary
+   dimensions, agreement reported as an exact-or-adjacent share rather
+   than a correlation (§5). It stays because the report leads with design,
+   readability and maintainability, and those rows come from the model
+   judge and nowhere else. A benchmark built to stop opinion passing as
+   evidence cannot rest its headline on a judge nobody checked, and §9
+   hands that same judge a say in which template trims ship.
+
+## 11. Open
+
+1. **Arm B's project brief.** What the interview is told before it
+   generates arm B's context file, and therefore what separates the
+   templates' contribution from a second reasoning pass over the
+   requirements.
+
+   The product answers most of this itself. `examples/flask-api` records
+   its generation input as a name, an owner, a one-line domain summary, a
+   stack, a toolchain and a deployment target — no endpoints, no field
+   definitions, no business rules. That is the documented pipeline under
+   ADR-016, so a brief of the same shape is the product as shipped rather
+   than a handicap invented for the trial.
+
+   What is not settled is the line's exact position and how it is
+   enforced. A brief naming the two extension axes, discount rules and
+   tax jurisdictions, is arguably identity; one naming half-even rounding
+   or the coupon precedence order is the spec. Proposed control: the
+   brief is committed beside the report, and the generated file is
+   scanned for the spec's distinctive requirement tokens before any trial
+   runs, with a hit refusing the run rather than warning. The token list
+   is drawn when the brief is written, and drawing it after seeing the
+   generated file would be the same drift item 8 exists to prevent.
