@@ -55,6 +55,9 @@ base:
   - id: base-readme
     file: templates/base/core/readme.md
     description: README structure, badges, quick start, contribution guide
+  - id: base-config
+    file: templates/base/core/config.md
+    description: Env vars, secrets, fail-fast validation
   - id: base-cli
     file: templates/base/core/cli.md
     description: Entry-point architecture - thin main(argv), shared plumbing, durable output
@@ -156,9 +159,6 @@ frontend:
       [base-git, base-docs, base-quality, base-security, frontend-ux, frontend-quality]
 
 backend:
-  - id: base-config
-    file: templates/base/core/config.md
-    description: Env vars, secrets, fail-fast validation
   - id: backend-http
     file: templates/backend/http.md
     description: URI design, methods, headers, HATEOAS, auth, errors
