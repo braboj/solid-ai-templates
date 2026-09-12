@@ -206,14 +206,42 @@ the method and path given.
 | GET | `/invoices/<invoice_id>/export.csv` | CSV export |
 | GET | `/invoices/<invoice_id>/print` | a printable invoice |
 
+### 6.1 Form fields
+
+Other software drives these forms, so the field names are fixed. Anything
+not named here is yours.
+
+| Route | Fields |
+|---|---|
+| POST `/products` | `sku`, `name`, `unit_price`, `tax_category` |
+| POST `/rules` | `rule_id`, `kind` (one of `percentage`, `bulk`, `tiered`, `coupon`), `sku` (empty means invoice scope), and the fields its kind needs: `percent`, `buy`, `pay`, `tiers`, `code`, `amount` |
+| POST `/jurisdictions` | `code`, `name`, `default_rate`, `rates` |
+| POST `/invoices/preview`, POST `/invoices` | `jurisdiction`, `currency`, `sku` and `quantity` repeated once per line and read pairwise in order, `coupon_codes` |
+
+Three fields carry more than one value in one control:
+
+- `tiers` — `min_quantity:unit_price` pairs separated by commas, as
+  `1:10.00,10:9.00,50:8.00`
+- `rates` — `category=rate` pairs separated by commas, as
+  `standard=0.19,reduced=0.07`
+- `coupon_codes` — codes separated by commas, and empty for none
+
 Behaviour:
 
 - The invoice builder lets a person pick a jurisdiction, add and remove
   lines by sku and quantity, and enter coupon codes. Every change re-prices
-  through `POST /invoices/preview`, which returns an HTML fragment — the
-  priced invoice table and totals, not a whole page. With JavaScript
-  disabled the same form posts and the whole page re-renders with the same
-  figures.
+  through `POST /invoices/preview`.
+- The builder is one form whose action is `/invoices/preview`. Its save
+  control carries `formaction="/invoices"`, so the one form serves both the
+  re-price and the save.
+- `POST /invoices/preview` returns an HTML fragment — the priced invoice
+  table and totals, not a whole page — when the request carries the
+  `HX-Request` header, which is what HTMX sends. Without that header it
+  renders the whole page, which is the JavaScript-disabled path, and both
+  show the same figures.
+- `POST /invoices/preview` refuses a body naming an unknown sku or an
+  unknown jurisdiction code, or carrying a quantity below one, with 400.
+  That is bad input rather than a missing page, so it is not a 404.
 - The priced fragment shows, per line, the sku, name, quantity, unit price,
   gross, line discount, net, allocated invoice discount, taxable, tax and
   total, and shows the invoice's subtotal, discount total, taxable total,
@@ -272,9 +300,12 @@ The header is exactly:
 sku,name,quantity,unit_price,gross,line_discount,net,invoice_discount,taxable,tax,total
 ```
 
-The total row's `gross` is the sum of the lines' gross; its `net` is the
-invoice subtotal; its `line_discount`, `invoice_discount`, `taxable`, `tax`
-and `total` are the invoice figures.
+The total row's `gross` is the sum of the lines' gross and its
+`line_discount` the sum of theirs, so the row's own arithmetic closes: for
+the worked example, 250.25 less 21.90 is the 228.35 the invoice calls its
+subtotal. Its `net` is that subtotal, and its `invoice_discount`, `taxable`,
+`tax` and `total` are the invoice's `discount_total`, `taxable_total`,
+`tax_total` and `total`.
 
 ## 8. Seed fixture
 
