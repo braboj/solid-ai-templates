@@ -8,9 +8,32 @@ run.
 | Path | What it is |
 |---|---|
 | `SPEC.md` | the application every arm is asked to build; the harness copies it into each workspace under this name |
+| `harness.py` | sets up a workspace, runs one trial under an isolated configuration, freezes the result |
+| `arms/C-reference/CLAUDE.md` | the hand-written reference context file, the arm that asks whether the effect is the templates or merely having a file |
 
-Still to come, in the order they are being built: the harness that sets up
-and runs an arm, the scoring backbone, and the report writer.
+Still to come: arm B's generated context file, the scoring backbone, and
+the report writer.
+
+## Running it
+
+```bash
+py tests/efficacy/harness.py --root <a directory outside this repository> \
+    --k 3 --model <exact id> --dry-run
+```
+
+A dry run prepares every workspace and records the command without calling
+a model. Drop `--dry-run` to run the trials. Trials are interleaved — A1,
+B1, C1, A2 and so on — so a model-side change part-way through lands
+across the arms rather than on one of them.
+
+The root must lie outside this repository, and the harness refuses one
+that does not: an arm working inside the templates repository can read the
+templates that arm A is defined not to have. It also refuses a run that a
+context file above the workspace would reach, and refuses to reuse a
+workspace.
+
+Arm B refuses until its context file exists. That file is generated once,
+through the interview at the recorded release, and is never hand-written.
 
 ## What is not here
 
