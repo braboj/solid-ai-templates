@@ -223,7 +223,8 @@ printed, the primary dimensions first.
 | Agent reads the templates or the web | no mount, web tools disallowed, transcript grepped for URLs |
 | Model changes between trials | exact ID pinned, trials interleaved |
 | Agent sees the acceptance tests | hidden suite lives outside the workspace; harness copies it in only for scoring |
-| Judge prefers its own family or the longer output | different family, blind, shuffled, length reported |
+| Judge prefers its own family or the longer output | different vendor, blind, shuffled, length reported |
+| The judge reads the workspace and sees which arm it is | the judge runs against a copy with every context file removed — arm B's `CLAUDE.md` names the arm outright, and arm C's does too. The harness asserts the copy carries no `CLAUDE.md` before the judge is called, and the assertion is a refusal, not a warning |
 | Bar moved after seeing results | §1 verdict rule and this document are committed before the first trial |
 | One task measures one task | stated limitation; a second app is the follow-up, not this run |
 
@@ -259,8 +260,22 @@ Every question the harness depended on is decided, 2026-09-12:
 3. K = 3. It is the smallest set §1's interval can be computed on. A
    crossing interval on a primary dimension is answered by raising K for
    that run and reporting both, never by lowering the bar.
-4. Generator: Claude, pinned by exact model ID. Judge: Gemini, a different
-   family per §7. Both IDs go in the report.
+4. Generator: `claude-sonnet-5` through the `claude` CLI at effort `high`.
+   Judge: `gpt-6-astra` through `codex exec`, a different vendor and not
+   merely a different family, which is the stronger form of §7's control.
+   Both strings are the ones their tools accept, taken from the CLI and
+   from the Codex model cache rather than from memory, and both go in the
+   report with the CLI versions.
+
+   Sonnet rather than the strongest available generator: 18 runs is a lot
+   of quota, it is what a typical adopter runs, and a ceiling effect on a
+   stronger model would hide the very contribution being measured.
+
+   Both tools bill against a subscription rather than an API account, so
+   §8's "quota, not invoice" covers the judging too. The judge does not
+   inherit this machine's Codex configuration: `model_reasoning_effort` is
+   set explicitly on the command and recorded, because the local default
+   is `low` and the rubric is a reasoning task over long code.
 5. The hidden suite lives in a private repository. This repository is
    public, so a suite under `tests/efficacy/` is one search away from any
    future trial with web access, and §7's web ban protects only this

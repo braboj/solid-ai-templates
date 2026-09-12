@@ -20,9 +20,11 @@ import sys
 import tarfile
 import time
 
+# This module sits a level below the other runners, so the shared library
+# is reached by path rather than as a sibling.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import lib
+import lib  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPEC = os.path.join(HERE, "SPEC.md")
@@ -295,7 +297,7 @@ def parse_args(argv):
                         help="which arms to run, as letters (default ABC)")
     parser.add_argument("--k", type=int, default=3,
                         help="trials per arm (default 3, the pre-registered K)")
-    parser.add_argument("--model", default="claude-opus-5",
+    parser.add_argument("--model", default="claude-sonnet-5",
                         help="exact generator model id, recorded in the report")
     parser.add_argument("--effort", default="high")
     parser.add_argument("--budget", type=float, default=None,
