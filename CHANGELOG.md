@@ -21,6 +21,8 @@ alters no template carries no entry.
 
 ## [Unreleased]
 
+## [2.90.0] - 2026-09-12
+
 ### Added
 
 - A project MAY declare a directional import ban between tiers, distinct
