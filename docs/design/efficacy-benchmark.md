@@ -70,8 +70,13 @@ Per trial (arm × k, K = 3 → 9 trials):
    > `pip install .` succeeds in a clean virtualenv, your own tests pass,
    > and every page and route in the spec works end to end against the
    > seed fixture. Commit when done.
-4. `claude -p … --output-format json --max-turns N` with `N` fixed;
-   transcript, token usage, turns and wall time captured.
+4. `claude -p … --output-format json`, bounded per trial by
+   `--max-budget-usd` and a wall-clock timeout, both fixed; transcript,
+   token usage, turns and wall time captured, and the record states which
+   bound ended a trial. This replaces the `--max-turns N` named when the
+   design was drafted: the installed CLI, 2.1.153, carries no such flag.
+   Corrected before the first trial, which is when §7's rule allows the
+   protocol to move at all.
 5. The workspace is frozen (tarball + commit hash) before scoring.
 
 Trials run interleaved (A1, B1, C1, A2, …) so a model-side change mid-run
