@@ -314,6 +314,15 @@ section.
    Written afterwards it would be shaped, consciously or not, by what the
    first outputs happened to do, and the bar §1 fixes would move with the
    results it grades. The cost is a session that produces no result.
+
+   <!-- measured: 2026-09-12 -->
+   Done: 377 checks in `braboj/tariff-hidden-suite`, validated
+   two ways before any arm exists.
+   <!-- /measured --> A reference implementation written from
+   the specification alone passes all of them, so a correct implementation
+   is not marked wrong; a mutation control plants five specification
+   violations one at a time and the suite catches five. Both live in that
+   repository and neither reaches a workspace.
 9. The human holdout stays, reshaped: three outputs, three primary
    dimensions, agreement reported as an exact-or-adjacent share rather
    than a correlation (§5). It stays because the report leads with design,
