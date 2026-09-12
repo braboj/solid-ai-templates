@@ -7711,3 +7711,78 @@ owner's choice.
   measurement — recorded as such, with the fork-sync CI job as the proof
 - Brevity tripped twice on design answers; a "how does X work" question
   is not a document request and takes the six lines too
+
+## 2026-09-12 — v2.90.0 cut, and a benchmark built before it is believed
+
+**Tool:** Claude Code (Fable 5.1, then Opus 5 1M)
+
+**Key changes:**
+- `v2.90.0` released: the last 2.x, the v3.0 fork point, and the revision
+  arm B of the efficacy benchmark is generated from. Milestone 96 closed,
+  16 of 16. Ten closed issues whose fixes ship in it carried no milestone
+  and were added during the cut, which is why the coverage gate reads 16
+  and not 6
+- The efficacy benchmark's every parameter fixed with the owner rather
+  than by me: `claude-sonnet-5` generating through the CLI at effort high,
+  `gpt-6-astra` judging through `codex exec`, arm C in, K = 3, the hidden
+  suite private, Flask confirmed. I had settled the models unilaterally in
+  an earlier pull request and the owner pulled it back (#1711)
+- The hidden acceptance suite written and validated: 377 checks over 16
+  modules for the build trial and 53 over two more for the change task,
+  in the private `braboj/tariff-hidden-suite`
+- Arm B's context file generated: 406 lines from one non-interactive
+  invocation against the chain at `v2.90.0`, by a generator that reads the
+  pinned brief out of the design so the arm matches its pre-registration
+  (#1719, #1720)
+- A review of the design found six live defects, fixed in #1717, and named
+  a seventh already fixed
+
+**Pull requests merged:** 16 — #1705, #1706, the cut #1708, #1709, #1710,
+#1711 through #1721.
+
+**Issues closed:** none. Every merged subject named a pull request; #1184
+stays open because no trial has run, and carries a progress comment.
+
+**Issues filed:** #1707 — the STK-15 canary is over the Gemini output
+ceiling again, and a truncated run's token usage is dropped.
+
+**ADRs:** none owed. The threshold is a decision a consuming project can
+observe without reading this repository, and everything here was
+measurement method, benchmark input, or this repository's own tooling.
+
+**Lessons:**
+- Building the grader and a reference implementation independently against
+  one specification is what found the specification's faults. It named
+  every route and method but no form field, so no POST could be issued and
+  the suite could not be written at all; the fragment requirement and the
+  works-without-JavaScript requirement contradicted each other, which
+  surfaced only because two of my own tests could not both pass
+- A suite that has only ever passed has not been shown to grade. Five
+  planted specification violations, five caught, baseline green either
+  side — and the suite carried one wrong assertion, found by its first run
+  against a correct implementation
+- The change task measured data entry. Buy-one-get-one is the existing
+  bulk rule with `buy` 2 and `pay` 1, and a reduced category rate is a key
+  in an existing rates table, so every arm would have scored perfect
+  extensibility by typing two form rows
+- The verdict rule contradicted its own worked example, reading
+  overlapping raw numbers as inconclusive when every paired difference was
+  positive. Fixing it honestly forced the admission that at K = 3 no
+  arrangement of trials reaches significance, so the primary run's
+  intervals are labelled descriptive
+- A static tool pointed at a hard-coded `src` reports zero findings when
+  it scanned nothing. This repository already ships the rule against that,
+  from #1005; I wrote the design without applying my own project's rule to
+  it
+- Two harness defects invisible without running it: a bare `claude` in an
+  argv list cannot launch on Windows, and the isolated home has no
+  credentials while the CLI reports "Not logged in" as a *successful*
+  result. Nine trials could have completed having never reached a model
+- A text read-then-write round trip rewrites every line ending on Windows.
+  It failed a mutation control's own restore assertion, and then I made the
+  same mistake on a docs file an hour later
+- The leak scan's two false positives were both instructive. `HX-Request`
+  is documented by the templates themselves; `TariffError` was *invented*
+  by the generator from the one-hierarchy rule and the package name, which
+  is why the specification chose it too — a piece of evidence for what the
+  benchmark is about to measure, arriving before any trial
