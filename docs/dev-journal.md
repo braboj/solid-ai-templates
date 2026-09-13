@@ -7833,3 +7833,71 @@ their tools, and the two new self tests are not in CI.
   used the word, so blinding would have changed what was judged
 - The project's own comment-layout rule caught a comment block in the new
   judge with code directly above it. Conformance, not smoke, reads that
+
+## 2026-09-13 — Five benchmark gaps, filed and closed before the first trial
+
+**Tool:** Claude Code (Opus 5 1M)
+
+**Key changes:**
+- Prepared this machine for the first attended trial: a Temurin 21 Java
+  runtime on the user `PATH` for the HTML validator, Playwright's Chromium
+  confirmed, the scorer and report self tests and a harness dry run green
+- Set the per-trial budget at $100, read against the CLI's own cost figure,
+  which prices `claude-sonnet-5` at $5 and $25 per million tokens. The
+  reference implementation's build, on a stronger model, came to about $13
+  in 26 minutes at that rate by its transcript's token counts
+- A trial inherits the machine, not the launching session. Started from
+  this shell, a trial would have joined the session, taken its effort, held
+  two service tokens and run `python` from this repository's `.venv` (#1725)
+- A trial the usage limit ends is voided, kept under `void/`, never scored
+  and re-run in its place; a stopped run resumes `--from` a trial; the run
+  record is rewritten after every trial (#1726)
+- Arm B's generation record is committed beside its file, where the report
+  reads it (#1729)
+- `judge.py --record-holdout` turns the owner's filled sheet into the scores
+  file the report reads (#1728)
+- `--task change` runs and scores the design's change task on a copy of
+  each build trial, with churn measured against a committed start and a
+  relative non-inferiority margin in the report (#1727)
+- The benchmark README names what a run needs outside Python (#1735)
+
+**Pull requests merged:** 6 — #1730, #1731, #1732, #1733, #1734, #1735.
+
+**Issues closed:** #1725, #1726, #1727, #1728, #1729. #1184 stays open
+because no trial has run.
+
+**Issues filed:** #1725, #1726, #1727, #1728, #1729.
+
+**ADRs:** none owed. Benchmark tooling is not observable by a consuming
+project.
+
+**Gaps flagged:**
+- `C:\efficacy\dry` still holds a copy of the credentials file. Deleting it
+  was denied here, so it is the owner's to remove
+- The report still lacks the 10 % relative margin section 1.2 declares for
+  static-analysis counts. Not filed
+- A trial agent that installs packages outside a virtual environment could
+  leave them for later trials. Unverified and not filed
+- `CLAUDE.md` §6.2 scopes the conformance run to template prose, but
+  conformance failed one of this session's PRs on files under `tests/`
+- The stale remote branch `feat/quality-variadic-contract-test` remains
+
+**Lessons:**
+- A control does not have to mutate the tree. Swapping a function in the
+  imported module for its previous version made each self test fail exactly
+  the checks it owned, with nothing to stash or restore
+- A stand-in `claude` on `PATH` drove the blocked, re-run and resume paths
+  end to end without a model call. It also caught what the self tests could
+  not: a refactor had left one line in the shared trial runner naming a
+  variable that no longer existed there
+- The budget ending was classified from a real one, not from a string in
+  the binary: a run capped at $0.001 ended with status 1 and subtype
+  `error_max_budget_usd` after spending $0.22, because the cap is checked
+  between turns
+- `cmd.exe` expands a `%NAME%` pair in an argument passed through a `.CMD`
+  shim, while a lone `%` survives. Prompts now travel on stdin
+- Change scoring first extracted into `scoring/`, where the judge collects
+  every tree as a build trial. Reading that directory's other consumer
+  before committing is what caught it
+- "Byte for byte" was true of the working copy, not of the commit: Git
+  normalised the record's line endings, and the PR had to be corrected
