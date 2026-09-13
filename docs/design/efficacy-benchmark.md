@@ -125,8 +125,12 @@ Per trial (arm × k, K = 3 → 9 trials):
 1. Fresh directory, `git init`, copy the arm's starting files.
 2. Isolated agent config: scratch `HOME`/`USERPROFILE` and `--settings`
    pointing at a minimal file — no global `CLAUDE.md`, no hooks, no
-   auto-memory, no MCP. Model pinned by exact ID and recorded. `--effort`
-   fixed. Web tools disallowed. The templates repository is not mounted.
+   auto-memory, no MCP. The environment is the machine's, not the
+   launching process's: the variables of a calling agent session, its
+   editor, an activated interpreter and any credential are removed, and
+   the names removed are recorded. Model pinned by exact ID and recorded.
+   `--effort` fixed. Web tools disallowed. The templates repository is not
+   mounted.
 3. One prompt, identical for every arm:
    > Implement the application described in SPEC.md. Done means:
    > `pip install .` succeeds in a clean virtualenv, your own tests pass,

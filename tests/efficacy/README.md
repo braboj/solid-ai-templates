@@ -72,6 +72,20 @@ isolated home. The CLI answers an unauthenticated run with a result object
 rather than a crash, so without it a whole run can complete having never
 reached a model.
 
+A trial inherits this machine's environment, not the launching process's.
+A shell inside an agent session or an editor carries that session's
+variables, an activated virtual environment on `PATH` and credentials, and
+a trial started there would join the session, share one interpreter with
+every other trial, and hold keys it has no use for. All of them are removed
+before the CLI starts, and each trial record lists the names removed.
+
+```bash
+py tests/efficacy/harness.py --self-test
+```
+
+The self test plants one variable of each kind in a copy of the environment
+and fails if any survives, or if `PATH` loses an entry it should keep.
+
 ## Scoring, judging and reporting
 
 ```bash

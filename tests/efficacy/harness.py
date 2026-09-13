@@ -237,9 +237,68 @@ def assert_authenticated(home, env_builder, executable):
     return payload.get("result", "").strip()
 
 
-def agent_environment(home):
-    """The environment a trial runs under, isolated from this machine."""
-    env = dict(os.environ)
+# A trial inherits this machine, not the process that launched it. Each group
+# reaches a child process through its environment, which the scratch home and
+# the isolated settings leave untouched.
+INHERITED_PREFIXES = (
+    # The calling agent session: a nested CLI that sees these joins that
+    # session, takes its effort, or answers on its socket.
+    "CLAUDE", "ANTHROPIC_", "MCP_", "AI_AGENT",
+
+    # The editor the caller runs in.
+    "VSCODE_", "ELECTRON_", "TERM_PROGRAM", "GIT_EDITOR", "COPILOT_",
+
+    # An activated interpreter, which every trial would otherwise share.
+    "VIRTUAL_ENV", "CONDA_", "PYTHONPATH", "PYTHONHOME",
+)
+
+# Credentials the caller holds. A trial runs with every permission bypassed,
+# and nothing in the task needs another service's key.
+CREDENTIAL_SUFFIXES = ("_API_KEY", "_TOKEN", "_SECRET", "_PASSWORD")
+
+# Kept despite its prefix: it locates a binary and carries no context.
+KEPT = ("CLAUDE_CODE_GIT_BASH_PATH",)
+
+# Where an activated interpreter lives. Its directories leave PATH as well,
+# or `python` in a trial still resolves into it.
+INTERPRETER_ROOTS = ("VIRTUAL_ENV", "CONDA_PREFIX")
+
+
+def inherited_names(environ):
+    """The variable names a trial must not inherit, sorted."""
+    return sorted(
+        name for name in environ
+        if name.upper() not in KEPT
+        and (name.upper().startswith(INHERITED_PREFIXES)
+             or name.upper().endswith(CREDENTIAL_SUFFIXES)))
+
+
+def interpreter_directories(environ):
+    """The PATH entries that lie inside an activated interpreter."""
+    roots = [os.path.normcase(os.path.abspath(environ[name]))
+             for name in INTERPRETER_ROOTS if environ.get(name)]
+    found = []
+    for entry in environ.get("PATH", "").split(os.pathsep):
+        if not entry:
+            continue
+        normal = os.path.normcase(os.path.abspath(entry))
+        if any(normal == root or normal.startswith(root + os.sep)
+               for root in roots):
+            found.append(entry)
+    return found
+
+
+def agent_environment(home, environ=None):
+    """The environment a trial runs under: this machine's, minus the caller's."""
+    source = dict(os.environ if environ is None else environ)
+    dropped = set(inherited_names(source))
+    stale = set(interpreter_directories(source))
+    env = {name: value for name, value in source.items()
+           if name not in dropped}
+    if "PATH" in source:
+        env["PATH"] = os.pathsep.join(
+            entry for entry in source["PATH"].split(os.pathsep)
+            if entry and entry not in stale)
     env["HOME"] = home
     env["USERPROFILE"] = home
     env["XDG_CONFIG_HOME"] = os.path.join(home, ".config")
@@ -307,6 +366,8 @@ def run_trial(arm, trial, root, home, options):
         "effort": options.effort,
         "budget_usd": options.budget,
         "timeout_s": options.timeout,
+        "environment_removed": {"names": inherited_names(os.environ),
+                                "path": interpreter_directories(os.environ)},
         "templates_tree": lib.tree_id(),
         "started_at": datetime.datetime.now().isoformat(timespec="seconds"),
     }
@@ -346,12 +407,78 @@ def order(arms, k):
     return [(arm, trial) for trial in range(1, k + 1) for arm in arms]
 
 
+# One variable of each kind the trial environment sheds, and two it must keep.
+# Planted in a copy rather than in this process, so the check exercises the
+# function and not whatever happened to launch the test.
+PLANTED_LEAKS = {
+    "CLAUDECODE": "1",
+    "CLAUDE_EFFORT": "low",
+    "CLAUDE_CODE_MESSAGING_SOCKET": "planted",
+    "ANTHROPIC_API_KEY": "planted",
+    "AI_AGENT": "planted",
+    "VSCODE_PID": "1",
+    "GIT_EDITOR": "code --wait",
+    "LINEAR_API_KEY": "planted",
+    "NOTION_TOKEN": "planted",
+}
+PLANTED_KEPT = {
+    "SYSTEMROOT": "planted",
+    "CLAUDE_CODE_GIT_BASH_PATH": "planted",
+}
+
+
+def self_test():
+    """Prove a trial's environment sheds what the launching process carries."""
+    interpreter = os.path.abspath(os.path.join(os.sep, "planted", "venv"))
+    stale = os.path.join(interpreter, "Scripts")
+    kept = os.path.abspath(os.path.join(os.sep, "planted", "tools"))
+    home = os.path.abspath(os.path.join(os.sep, "planted", "home"))
+
+    planted = dict(PLANTED_LEAKS)
+    planted.update(PLANTED_KEPT)
+    planted["VIRTUAL_ENV"] = interpreter
+    planted["PATH"] = os.pathsep.join([stale, kept])
+    env = agent_environment(home, planted)
+
+    checks = []
+
+    # The plant landed: every name is in the input, so an absent name in the
+    # output is the function's doing and not a missing plant.
+    checks.append(("every planted name is in the input",
+                   all(name in planted for name in PLANTED_LEAKS)
+                   and planted["VIRTUAL_ENV"] == interpreter))
+    for name in sorted(PLANTED_LEAKS) + ["VIRTUAL_ENV"]:
+        checks.append(("%s is removed" % name, name not in env))
+    for name, value in sorted(PLANTED_KEPT.items()):
+        checks.append(("%s is kept" % name, env.get(name) == value))
+    checks.append(("the interpreter leaves PATH", stale not in
+                   env.get("PATH", "").split(os.pathsep)))
+    checks.append(("every other PATH entry stays",
+                   env.get("PATH") == kept))
+    checks.append(("the scratch home is the home", env.get("HOME") == home
+                   and env.get("USERPROFILE") == home))
+    checks.append(("the record names what was removed",
+                   "VIRTUAL_ENV" in inherited_names(planted)
+                   and interpreter_directories(planted) == [stale]))
+
+    for label, ok in checks:
+        print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
+    passed = sum(1 for _, ok in checks if ok)
+    lib.print_verdict(passed == len(checks),
+                      "%d/%d self-test checks passed" % (passed, len(checks)))
+    return 0 if passed == len(checks) else 1
+
+
 def parse_args(argv):
     parser = argparse.ArgumentParser(
         description="Run efficacy-benchmark trials.")
-    parser.add_argument("--root", required=True,
+    parser.add_argument("--root",
                         help="where workspaces are created; MUST be outside "
-                             "this repository")
+                             "this repository. Required for everything but "
+                             "--self-test")
+    parser.add_argument("--self-test", action="store_true",
+                        help="prove the trial environment sheds the caller's "
+                             "variables; run no trial")
     parser.add_argument("--arms", default="ABC",
                         help="which arms to run, as letters (default ABC)")
     parser.add_argument("--k", type=int, default=3,
@@ -371,6 +498,11 @@ def parse_args(argv):
 
 def main(argv):
     options = parse_args(argv)
+    if options.self_test:
+        return self_test()
+    if not options.root:
+        print("--root is required unless --self-test is given")
+        return 2
 
     # A refused root is a finding about the run, so it is reported and
     # exits, rather than reaching the caller as a traceback.
