@@ -22,6 +22,21 @@ Still to come: nothing in this directory. The first attended trial is what
 tells us which of the battery's command lines need correcting, because a tool
 whose flags moved records a missing metric rather than a wrong one.
 
+## Before a run
+
+The harness, the scorer and the judge reach outside Python. Each missing
+piece shows up as a refusal or a metric recorded missing, not as a crash:
+
+| Needs | For | Without it |
+|---|---|---|
+| `claude` on `PATH`, logged in | every trial and arm B's generation | the preflight refuses the run |
+| `gh`, logged in with access to `braboj/tariff-hidden-suite` | scoring clones the hidden suite | scoring refuses |
+| a Java runtime on `PATH` | `html5validator`, the HTML validity metric | that metric is recorded missing |
+| a Playwright Chromium for the `playwright` version scoring resolves | the accessibility probe | that metric is recorded missing |
+| `codex` on `PATH`, logged in | the judge | each bundle's judging fails |
+
+`score.py --no-web` skips both browser-side probes.
+
 ## Generating arm B
 
 ```bash
