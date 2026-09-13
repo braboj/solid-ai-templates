@@ -123,6 +123,8 @@ py tests/efficacy/score.py --self-test
 py tests/efficacy/score.py --root <the run root>
 py tests/efficacy/judge.py --root <the run root> --dry-run
 py tests/efficacy/judge.py --root <the run root> --holdout
+py tests/efficacy/judge.py --root <the run root> --record-holdout
+py tests/efficacy/judge.py --self-test
 py tests/efficacy/report.py --self-test
 py tests/efficacy/report.py --root <the run root>
 ```
@@ -153,6 +155,12 @@ score is machine-read rather than parsed out of prose, and every evidence line
 is checked against the bundle it was quoted from — a judge that never opened
 the code returns plausible numbers, and that check is what tells the two
 apart.
+
+`--holdout` also writes `judge/holdout-sheet.md`, a table for the owner's
+blind scores. Once every cell holds one, `--record-holdout` writes the
+scores file the report reads. A blank cell, a score outside 1-5 or a bundle
+that was never judged refuses the whole sheet, and until it records the
+report calls the subjective row unvalidated.
 
 ## What is not here
 
