@@ -1,0 +1,147 @@
+{
+  "ref": "v2.90.0",
+  "commit": "4b1be7d8dec1186cc63d22f01969fc0c93ac822b",
+  "roots": [
+    "stack-flask",
+    "stack-htmx",
+    "frontend-ux",
+    "frontend-quality"
+  ],
+  "resolved_files": [
+    "templates/base/core/quality.md",
+    "templates/base/core/git.md",
+    "templates/base/core/docs.md",
+    "templates/base/core/readme.md",
+    "templates/base/core/testing.md",
+    "templates/base/core/review.md",
+    "templates/base/core/oop.md",
+    "templates/base/core/config.md",
+    "templates/backend/http.md",
+    "templates/backend/database.md",
+    "templates/backend/observability.md",
+    "templates/base/security/security.md",
+    "templates/base/infra/containers.md",
+    "templates/backend/quality.md",
+    "templates/backend/features.md",
+    "templates/backend/messaging.md",
+    "templates/base/infra/cicd.md",
+    "templates/base/security/devsecops.md",
+    "templates/base/data/data-modeling.md",
+    "templates/base/data/data-quality.md",
+    "templates/base/language/python.md",
+    "templates/base/core/cli.md",
+    "templates/base/workflow/quality-gates.md",
+    "templates/base/core/examples.md",
+    "templates/stack/python-lib.md",
+    "templates/stack/python-service.md",
+    "templates/stack/python-flask.md",
+    "templates/backend/templating.md",
+    "templates/stack/htmx.md",
+    "templates/frontend/ux.md",
+    "templates/frontend/quality.md"
+  ],
+  "prompt_chars": 585694,
+  "model": "claude-sonnet-5",
+  "effort": "high",
+  "started_at": "2026-09-12T15:01:23",
+  "prompt_leak": null,
+  "prompt_file": "C:/Users/braboj/AppData/Local/Temp/claude/c--Workspace-solid-ai-templates/4f8138bc-fbe6-46ac-b963-c30115c3e56a/scratchpad/armb\\arm-b-prompt.txt",
+  "auth_probe": "ready",
+  "command": [
+    "C:\\Users\\braboj\\AppData\\Roaming\\npm\\claude.CMD",
+    "-p",
+    "--output-format",
+    "json",
+    "--model",
+    "claude-sonnet-5",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "",
+    "--settings",
+    "C:/Users/braboj/AppData/Local/Temp/claude/c--Workspace-solid-ai-templates/4f8138bc-fbe6-46ac-b963-c30115c3e56a/scratchpad/armb\\home\\settings.json",
+    "--strict-mcp-config",
+    "--disallowed-tools",
+    "WebSearch",
+    "WebFetch"
+  ],
+  "elapsed_s": 186.9,
+  "exit_status": 0,
+  "result": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 185466,
+    "duration_api_ms": 189940,
+    "ttft_ms": 109203,
+    "num_turns": 1,
+    "result": "CLAUDE.md\n============\n\n# tariff\n\n**Owner:** Imbra Ltd\n**Agent context file for:** Claude Code (this file). See `README.md` for the\nhuman-facing overview once it exists \u2014 this file is agent guidance and\nproject rules, not a substitute for it.\n\n## 1. What this is\n\n`tariff` is a pricing and invoicing engine: a product catalog, discount\nrules of several kinds, tax jurisdictions, and invoices assembled from\nthem. It ships as a Python library with a small Flask web application\nlayered on top for interactive use.\n\nThe project runs locally only. There is no deployment target, no hosting\nenvironment, and no network dependency of any kind \u2014 everything reaches\nonly the local filesystem (a single SQLite file).\n\n## 2. Actors and boundaries\n\nThere are exactly two actors:\n\n- **A person working in a browser**, via the Flask + Jinja + HTMX web\n  application.\n- **Another program**, which imports the pricing engine directly as a\n  Python library, with no web application present.\n\nThe pricing engine (catalog, discount rules, tax jurisdictions, invoice\nassembly) is a **library**. The Flask web application is **one caller of\nthat library**, with no special access the other-program caller lacks. Any\ndesign that gives the web layer a shortcut into engine internals the\nlibrary API does not expose is a layering violation, not a convenience.\n\nThe two supported, stable **interfaces** of this project are:\n\n1. The library's own public Python API (`import tariff`).\n2. Invoice exports (the files/documents the engine produces).\n\nEverything else \u2014 the Flask routes, the templates, the HTMX partials, the\ndatabase schema \u2014 is implementation detail behind those two interfaces and\nmay change without the same stability guarantees. Treat a change to either\ninterface as **architecturally significant** per \u00a712 (Decision records):\nit needs an ADR, a deprecation window (see `base-quality`'s \"before\nremoving or renaming a public symbol, mark it deprecated\"), and the same\nscrutiny `backend-quality`'s API-stability rule gives a versioned HTTP API,\nadapted to a Python API and a file format instead of a wire contract.\n\nThere is no third actor and no network boundary to defend: nothing in this\nproject makes an outbound network call, and the web application is not\nexposed beyond the local machine. Rules elsewhere in this file that assume\na network-facing service (CORS, SSRF, TLS, security headers, DAST) are\ndeclined for that reason \u2014 see \u00a77.\n\n## 3. Stack\n\n| Concern | Choice |\n| --- | --- |\n| Language | Python 3.12 |\n| Web framework | Flask 3 |\n| Templates | Jinja (bundled with Flask) |\n| Interactivity | HTMX 2.x, server-rendered partials |\n| Storage | SQLite, single local file |\n| Package manager | `uv` |\n| Lint / format | `ruff` / `ruff format` |\n| Type checker | `mypy` (strict) |\n| Tests | `pytest` |\n| Distribution | none \u2014 local checkout only |\n\nNo container image, no CI/CD pipeline, no cloud target. If a deployment\ntarget is ever added, treat that as the revisit trigger for adopting\n`base-cicd`, `base-containers`, `base-security` transport/headers rules\nand `base-devsecops` \u2014 none of them are adopted now, and none of them are\ndeclined for lack of merit; they are declined because there is nothing\nhere for them to protect yet.\n\n## 4. Project structure\n\n`README.md`, once created, is the single source of truth for project\nstructure (`base-docs`). This section is a pointer plus agent-specific\nplacement rules, not a second directory tree to keep in sync \u2014 update\nREADME first, then bring this section's placement notes in line with it\nif they diverge.\n\nInitial layout (seed this into `README.md` \u00a7 Project structure when it is\ncreated):\n\n```\nsrc/\n  tariff/\n    __init__.py        # public library API \u2014 catalog, discounts, tax, invoices\n    catalog.py\n    discounts.py\n    tax.py\n    invoices.py\n    storage.py          # SQLite access; file path is an injected setting, never a global\n    web/                 # Flask application \u2014 imports tariff, never the reverse\n      __init__.py        # create_app() factory\n      blueprints/\n        catalog/\n        discounts/\n        invoices/\n      templates/\n      static/\ntests/\n  test_catalog.py\n  test_discounts.py\n  test_tax.py\n  test_invoices.py\n  component/            # Flask handler-level tests\n  integration/           # tests against a real SQLite file\nexamples/\n  README.md\n  price_and_invoice.py   # uses `tariff` directly, no Flask installed\ndata/                    # local SQLite file lives here at runtime (gitignored)\npyproject.toml\n.env.example\nREADME.md\nCLAUDE.md\n```\n\nPlacement rules:\n\n- `src/tariff/__init__.py` MUST NOT import anything from `src/tariff/web/`.\n  The dependency runs one way: web depends on the engine, never the\n  reverse (`base-quality`'s acyclic-dependency and directional-boundary\n  rules). This is the mechanical form of \"the web application is one\n  caller of it.\"\n- Flask, Jinja, and HTMX-related code and templates live only under\n  `tariff/web/`. The engine package (`tariff/catalog.py`,\n  `discounts.py`, `tax.py`, `invoices.py`, `storage.py`) MUST be\n  importable and usable with no web dependency installed \u2014 this is what\n  lets \"another program\" import the pricing engine without the web\n  application present.\n- Declare `web` as an optional dependency group in `pyproject.toml`\n  (Flask, Jinja, HTMX static assets), so the core install stays free of\n  it (`base-python-optional-deps`). `import tariff` MUST succeed in an\n  environment with only the core group installed.\n- `examples/` MUST contain at least one runnable example that imports\n  `tariff` directly with no Flask/web dependency present, to make the\n  \"library usable without the web application\" contract obvious and\n  keep it honest (`base-examples`).\n\n## 5. Adopted conventions and precedence\n\nThis file inlines the conventions this project has adopted from its\ntemplate chain (`stack-flask` + `stack-htmx`, over `python-service`,\n`python-lib`, and the base quality/git/testing/security/docs templates).\nThe full candidate set is much larger than what follows \u2014 declining a\ncandidate here required no ADR and needs none to decline later, per\n`base-docs`'s \"Adopting shared rules\": templates supply candidates, not\nobligations.\n\n- **This file is authoritative.** Where a rule below narrows, or\n  explicitly declines, something a template would otherwise imply, this\n  file governs. A future template update does not silently re-expand an\n  adopted rule set here.\n- Rules are adopted because they address a defect risk this project\n  actually has (money-adjacent arithmetic, a public library contract, a\n  local data file that must not corrupt) \u2014 not by default inheritance.\n- Declined wholesale, with the revisit trigger stated: CI/CD pipeline\n  rules (`base-cicd`), container rules (`base-containers`), DevSecOps\n  pipeline rules (`base-devsecops` SAST/DAST/SBOM automation),\n  network-facing security rules (CORS, SSRF, TLS/HSTS, security headers)\n  from `base-security`, messaging (`backend-messaging`), feature flags\n  (`backend-features`), Kubernetes/orchestration. **Revisit trigger:** the\n  day this project gains a deployment target, a network-facing listener\n  beyond localhost, or an external service dependency. Detection: a\n  person deciding to deploy it is the only thing that will notice \u2014\n  there is no automated check for \"this project just got a deployment\n  target.\"\n\n## 6. Code quality\n\nAdopted from `base-quality` and `base-oop`, scoped to what a small\nPython codebase with one library and one thin web layer needs:\n\n- DRY, KISS, YAGNI. A discount rule or tax jurisdiction that is not\n  needed yet is not built speculatively \u2014 new rule *kinds* are added\n  when a real jurisdiction or promotion needs them, not in anticipation.\n- Names are the primary documentation. No abbreviations, no single-letter\n  names outside loop counters. Functions are verbs (`apply_discount`,\n  `assemble_invoice`); classes are nouns (`TaxJurisdiction`,\n  `DiscountRule`).\n- Cognitive complexity kept low; maximum nesting depth of three levels;\n  early returns and guard clauses over nested conditionals.\n- No boolean flag parameters on public functions \u2014 where a call needs to\n  select *which* discount or tax rule applies, pass the rule object or an\n  enum member named for what it does, never a `bool`.\n- Errors this project raises on purpose form one hierarchy under a\n  package base (`base-python-errors`): a `TariffError` root, with\n  specific subtypes (`InvalidDiscountError`, `UnknownJurisdictionError`,\n  `InvoiceAssemblyError`) a caller can catch meaningfully. Both the\n  library caller and the Flask handlers catch from this hierarchy, never\n  bare `except Exception`.\n- Fail fast: invalid catalog entries, malformed discount configuration,\n  or an unrecognized tax jurisdiction raise immediately at the boundary\n  where they enter the system (data load, API call, form submission) \u2014\n  never propagate silently into an invoice.\n- Magic numbers (tax rates, currency minor-unit factors, rounding\n  precision) are named constants with the source of the figure recorded\n  beside them, not scattered literals.\n- No debug `print()`, no commented-out code, no hardcoded breakpoints in\n  committed code.\n- Comments explain *why*, never *what*; no comment cites an issue or PR\n  number \u2014 name the source or reasoning instead, since code outlives the\n  tracker.\n\nComposition over inheritance for discount rules and tax jurisdictions:\nmodel each as a small object implementing a shared protocol (Strategy\npattern from `base-oop`), not a growing inheritance hierarchy or a chain\nof `if isinstance(...)` checks in the invoice assembler.\n\n## 7. Security\n\nScoped down from `base-security` because nothing here is network-facing\n(\u00a72):\n\n- **Adopted:**\n  - Input validation at the boundary \u2014 every value entering from a form,\n    an HTTP request, or the library's public API is validated before use\n    (`security-input`). Reject with a clear error; do not silently coerce.\n  - Output encoding \u2014 Jinja's autoescaping stays on; no `| safe`, no\n    manual HTML construction with untrusted or computed values\n    (`security-output`).\n  - SQL access is parameterized (via the SQLite driver's parameter\n    binding or SQLAlchemy Core if adopted) \u2014 never string-interpolated\n    (`security-injection`).\n  - CSRF protection on state-changing HTTP requests (`security-csrf`),\n    because a browser attaches cookies to `POST`s automatically even to a\n    local origin; use Flask's / an extension's CSRF middleware rather than\n    hand-rolling it.\n  - Secrets handling: no secrets are expected (no external service, no\n    auth), but `.env.example` is still committed with placeholders and\n    `.env` is gitignored, in case a future setting needs to stay out of\n    source control (`security-secrets`).\n  - Agent secrets handling (`security-agent-secrets`): do not print or\n    log the contents of `.env` or any local config file.\n- **Declined, with trigger:** CORS, SSRF protections, TLS/HSTS, security\n  response headers, DAST, rate limiting, authentication/session\n  management. None of these defend anything that exists here \u2014 there is\n  no cross-origin caller, no outbound HTTP client, no non-localhost\n  listener, and no login. **Revisit trigger:** any of those change (a\n  network listener beyond `127.0.0.1`, an outbound HTTP call, a login\n  screen). Detection: same as \u00a75 \u2014 a design decision a person makes, not\n  an automated signal.\n\n## 8. Configuration\n\nAdopted from `base-config`, scaled to a local-only app:\n\n- Configuration (SQLite file path, Flask `SECRET_KEY` for CSRF/session\n  signing, debug flag) comes from environment variables, never hardcoded.\n- `.env.example` is committed with placeholder values; `.env` is\n  gitignored.\n- The SQLite file path is a constructor parameter of the storage layer,\n  never read from a global inside `tariff/catalog.py` etc. \u2014 this is what\n  keeps the library usable by \"another program\" with its own data file.\n- Fail fast: missing required configuration (e.g. no database path\n  resolvable) raises at startup, not on first use.\n\n## 9. Data and storage\n\nThe store is a single local SQLite file \u2014 not a client-server database.\nAdapted from `backend-database` and `base-data-modeling`:\n\n- Schema changes go through migrations (Alembic, or a minimal\n  hand-rolled versioned-migration script if Alembic is overkill for the\n  eventual schema size) \u2014 never hand-edit the SQLite file's schema.\n  Migrations are committed, one logical change per migration, and are\n  never modified once merged.\n- No connection pooling concerns apply (SQLite is a file, not a\n  server) \u2014 but a single `sqlite3`/SQLAlchemy engine instance per\n  process is still the right shape, injected into the storage layer\n  rather than opened ad hoc at each call site.\n- Table and column names: lowercase snake_case, plural table names,\n  `is_`/`has_` boolean prefixes, `<table_singular>_id` foreign keys\n  (`data-modeling-naming`).\n- Monetary values are stored as integers in the currency's minor unit\n  (cents), never as floating point (`data-modeling-types`). Tax rates\n  and discount percentages carry a documented, fixed decimal precision.\n- Invoice numbering is generated by the storage layer under a\n  uniqueness constraint the database itself enforces \u2014 never computed\n  in application code from a value that can race (e.g. `SELECT MAX(id)\n  + 1`).\n\n## 10. Testing\n\nAdopted from `base-testing`, `python-lib`, and `python-service`:\n\n- `pytest` for all tests; run `pytest && mypy src --strict` before every\n  commit.\n- Unit tests for the pricing engine (catalog, discount rules, tax\n  calculation, invoice assembly) cover all happy paths plus edge cases:\n  zero-quantity lines, stacked discounts, an unrecognized jurisdiction,\n  rounding at the smallest currency unit. New engine code MUST have unit\n  tests achieving at least 90% coverage before merging; the project\n  targets 80% overall coverage (`quality-gates-thresholds`).\n- Integration tests exercise the storage layer against a real (temporary)\n  SQLite file \u2014 never a mocked database (`backend-database` testing\n  rule). Each test gets its own temp file or an in-memory `:memory:`\n  connection, torn down after the test.\n- Component tests exercise Flask handlers end to end (request in,\n  rendered HTML or HTMX partial out), asserting on meaningful content\n  (headings, field labels, totals) rather than exact markup\n  (`backend-templating-testing`).\n- Test naming: `test_<unit_of_work>_<state>_<expected>`, e.g.\n  `test_apply_discount_expired_promotion_raises_invalid_discount_error`.\n- No mocks for pure functions in the engine \u2014 test with real inputs and\n  real (temporary) storage; mocks are reserved for the \"another program\"\n  integration boundary if that ever needs simulating.\n- Assert against an external definition where one exists: if invoice\n  totals or tax figures are checked against a published example (a\n  known tax table, a hand-computed reference invoice), include at least\n  one test comparing against that external reference, not only\n  round-tripping the engine's own encoder/decoder (`testing-external-\n  definition`).\n\n## 11. Quality gates\n\nLocal-only, no CI, so the gate layers are editor + pre-commit; there is\nno Layer 3 today (`quality-gates-layers`).\n\n| Category | Editor | Pre-commit | Tool |\n| --- | --- | --- | --- |\n| Lint | should | must | `ruff check` |\n| Format | should | must | `ruff format` |\n| Type check | should | must | `mypy --strict src` |\n| Secret detection | \u2014 | must | `gitleaks` (or equivalent pre-commit hook) |\n| Tests | \u2014 | should | `pytest` |\n| Coverage | \u2014 | should | `pytest-cov`, 80% overall / 90% new code |\n\nDeclined: SAST/DAST scanning, SBOM generation, container image scanning,\nlicense-compliance automation \u2014 no CI pipeline exists to run them in, and\nthere is no distributed artifact to scan. **Revisit trigger:** adding a\nCI workflow (even a local `pre-commit` runner is not \"CI\" in this sense \u2014\na hosted pipeline is). Detection: same as \u00a75.\n\n`mypy --strict` applies to `src/tariff/` including the `web/`\nsubpackage. All public functions in `tariff/__init__.py` and its\nsubmodules carry full type annotations and Google-style docstrings\n(`base-python-tooling`, `python-lib-conventions`).\n\n## 12. Decision records\n\nPer `base-docs`, an ADR in `docs/decisions/` is required when a change\nalters something a consumer of the two stable interfaces (\u00a72) can observe\nwithout reading the repository's internals:\n\n- Any change to the public library API's shape (function signatures,\n  new/removed public symbols in `tariff/__init__.py`, error hierarchy\n  changes a caller might catch on).\n- Any change to the invoice export format (fields, structure, or the\n  file format itself).\n- The choice of discount-rule and tax-jurisdiction extensibility\n  mechanism, if it changes materially (e.g. moving from a Strategy\n  protocol to a plugin-registry model).\n\nRoutine internal refactors, Flask route reshuffling, template changes,\nand HTMX interaction details do not need an ADR \u2014 they sit behind the\nstable interfaces, not in them.\n\n## 13. Git conventions\n\nAdopted from `base-git`, scaled down (no CI, no release automation, no\npublishing target):\n\n- Conventional commit prefixes (`feat:`, `fix:`, `chore:`, `docs:`,\n  `refactor:`, `test:`), imperative mood, subject under 80 characters.\n- Work on a branch, never commit directly to `main`; small, focused PRs.\n- `.gitignore` covers `.venv/`, `__pycache__/`, `*.egg-info/`,\n  `.mypy_cache/`, `.env`, and the runtime SQLite file under `data/`.\n- Semantic versioning and a `CHANGELOG.md` are **not adopted** while\n  this project has no external consumers or release cadence to serve.\n  **Revisit trigger:** the day \"another program\" (\u00a72) is a separate\n  team/repository that needs to track compatible versions of the library\n  API. Detection: someone asking \"which version of `tariff` am I on\" is\n  the signal \u2014 there is no automated check for it.\n- Full release-tagging, SBOM, and GitHub Release automation from\n  `base-git`'s release process are declined for the same reason as\n  versioning above, and revisit together with it.\n\n## 14. Off-limits\n\nCut down from `base-git`'s default five, because this project has no\nauth subsystem, no payment processing, and no CI/CD workflows to protect\nyet:\n\n- **Database schema and migrations** (`src/tariff/storage.py`'s schema\n  and any migration files) \u2014 a change here can silently corrupt or\n  orphan data in the one local SQLite file this project has. Propose the\n  change and its rollback (a down-migration or a documented manual\n  recovery step) before making it.\n- **`.env*` and any file handling configuration/secrets** \u2014 never\n  committed with real values; changes to what configuration is read\n  from the environment are proposed before being made, per\n  `base-git`'s off-limits rule.\n\nIf auth, a payment integration, or a CI/CD pipeline is added later, add\nit to this list at that time \u2014 per `base-quality`'s revisit-trigger\ndiscipline, that addition is the trigger firing, not a decision to defer\nfurther.\n\n<!-- Generated with solid-ai-templates (github.com/braboj/solid-ai-templates) -->",
+    "stop_reason": "end_turn",
+    "session_id": "73c72294-dc01-4fd3-b4f6-d9852e3cf1c7",
+    "total_cost_usd": 0.658196,
+    "usage": {
+      "input_tokens": 1,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 236778,
+      "output_tokens": 15658,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 15658,
+          "cache_read_input_tokens": 236778,
+          "cache_creation_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 148267,
+        "outputTokens": 17,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.148352,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-sonnet-5": {
+        "inputTokens": 1,
+        "outputTokens": 15658,
+        "cacheReadInputTokens": 236778,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.509844,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "27dcb92c-eb65-4542-bdef-a2bba66f74de"
+  },
+  "output_leak": null,
+  "outcome": "generated",
+  "output": "C:\\Workspace\\solid-ai-templates\\tests\\efficacy\\arms\\B-candidate\\CLAUDE.md",
+  "output_chars": 19070,
+  "output_lines": 406
+}

@@ -26,6 +26,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
+from generate_arm_b import RECORD as ARM_B_RECORD  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 AUDITS = os.path.join(lib.ROOT, "docs", "audits")
@@ -452,12 +453,11 @@ def judge_agreement(root, trials):
             "scores": total, "disagreements": disagreements}
 
 
-def generation_record(root):
-    """Arm B's generation record, which carries its brief and token scan."""
-    found = sorted(glob.glob(os.path.join(root, "arm-b-generation-*.json")))
-    if not found:
+def generation_record():
+    """Arm B's generation record, committed beside the file it produced."""
+    if not os.path.exists(ARM_B_RECORD):
         return None
-    with io.open(found[-1], encoding="utf-8") as handle:
+    with io.open(ARM_B_RECORD, encoding="utf-8") as handle:
         return json.load(handle)
 
 
@@ -500,7 +500,7 @@ def write_report(root, trials, table, results, seed, agreement,
     arms = sorted({arm_of(name) for name in names})
     k = max((index_of(name) for name in names), default=0)
     any_scores = trials[names[0]]["scores"] if names else {}
-    generation = generation_record(root)
+    generation = generation_record()
 
     lines = []
     lines.append("# Efficacy benchmark — %s"
@@ -546,8 +546,7 @@ def write_report(root, trials, table, results, seed, agreement,
                         "clean" if not (generation.get("output_leak") or {})
                         .get("hits") else "HITS"))
     else:
-        lines.append("| Arm B's file | generation record not in this run "
-                     "root |")
+        lines.append("| Arm B's file | no generation record beside it |")
     lines.append("")
 
     lines.append("## Primary dimensions")
