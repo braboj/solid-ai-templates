@@ -461,6 +461,32 @@ def generation_record(root):
         return json.load(handle)
 
 
+def lost_trials(root):
+    """Every trial the harness voided, with the outcome of what replaced it."""
+    # Every run record in time order, because a voided trial is re-run either
+    # in its place or by a later run started `--from` it.
+    sequence = []
+    for file in sorted(glob.glob(os.path.join(root, "run-*.json"))):
+        with io.open(file, encoding="utf-8") as handle:
+            sequence.extend(json.load(handle).get("trials", []))
+
+    def name_of(record):
+        return "%s%s" % (record.get("arm"), record.get("trial"))
+
+    lost = []
+    for index, record in enumerate(sequence):
+        if record.get("outcome") != "blocked":
+            continue
+        later = next((other for other in sequence[index + 1:]
+                      if name_of(other) == name_of(record)), None)
+        lost.append({"name": name_of(record),
+                     "started_at": record.get("started_at"),
+                     "reason": record.get("reason"),
+                     "kept": path(record, "void", "dir"),
+                     "rerun": later.get("outcome") if later else None})
+    return lost
+
+
 def write_report(root, trials, table, results, seed, agreement,
                  out_dir=AUDITS):
     """The report the design names, under `docs/audits/`.
@@ -573,6 +599,28 @@ def write_report(root, trials, table, results, seed, agreement,
                         if (scores.get("cost") or {}).get("value") else
                         "no cost record",
                         ", ".join(flagged) if flagged else "none"))
+    lines.append("")
+
+    lines.append("## Trials lost to the provider or the harness")
+    lines.append("")
+    lost = lost_trials(root)
+    if not lost:
+        lines.append("None: no trial was voided.")
+    else:
+        lines.append("Each was voided and re-run once in its own place, as "
+                     "the design's failure handling fixes. A voided "
+                     "workspace is kept and never scored.")
+        lines.append("")
+        lines.append("| Trial | Started | Why | Kept at | Re-run |")
+        lines.append("|---|---|---|---|---|")
+        for entry in lost:
+            reason = " ".join((entry["reason"] or "—").split())
+            lines.append("| %s | %s | %s | %s | %s |"
+                         % (entry["name"], entry["started_at"] or "—",
+                            reason.replace("|", "/")[:160],
+                            "`%s`" % entry["kept"] if entry["kept"]
+                            else "not moved",
+                            entry["rerun"] or "not re-run"))
     lines.append("")
 
     lines.append("## The judge, and whether anyone checked it")

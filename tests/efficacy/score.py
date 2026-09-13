@@ -828,12 +828,34 @@ def score_trial(record, options, suite, lock):
     return scores
 
 
-def newest_run(root):
-    """The most recent run record in a run root."""
-    candidates = sorted(glob.glob(os.path.join(root, "run-*.json")))
-    if not candidates:
+# The endings a trial is scored on. A blocked trial was voided by the harness
+# and its re-run carries the score; a refused one never started.
+SCORABLE = ("completed", "budget", "timeout")
+
+
+def scorable_trials(root, run=None):
+    """Every trial the run records offer for scoring, by name."""
+    files = ([run] if run else
+             sorted(glob.glob(os.path.join(root, "run-*.json"))))
+    if not files:
         raise ScoreError("no run record in %s; the harness writes one" % root)
-    return candidates[-1]
+    found, sources = {}, {}
+    for file in files:
+        with io.open(file, encoding="utf-8") as handle:
+            records = json.load(handle).get("trials", [])
+        for record in records:
+            if record.get("outcome") not in SCORABLE:
+                continue
+            name = "%s%s" % (record.get("arm"), record.get("trial"))
+
+            # Two records offering one trial means two workspaces for one
+            # slot. Picking either would be a choice made after the fact.
+            if name in found:
+                raise ScoreError("%s is offered for scoring by both %s and %s"
+                                 % (name, sources[name], file))
+            found[name] = record
+            sources[name] = file
+    return found
 
 
 PLANTED_MODULE = '''"""A plausible module, so the battery has something to read."""
@@ -874,6 +896,32 @@ def battery(venv, workspace, roots, seen):
             for key, probe in BATTERY]
 
 
+def run_record_checks(scratch):
+    """Blocked trials are never offered, and a trial offered twice refuses."""
+    def plant(name, trials):
+        with io.open(os.path.join(scratch, name), "w",
+                     encoding="utf-8") as handle:
+            json.dump({"trials": trials}, handle)
+
+    plant("run-1.json", [{"arm": "A", "trial": 1, "outcome": "blocked"},
+                         {"arm": "A", "trial": 1, "outcome": "completed"},
+                         {"arm": "B", "trial": 1, "outcome": "budget"},
+                         {"arm": "C", "trial": 1, "outcome": "refused"}])
+    offered = scorable_trials(scratch)
+    checks = [("only completed, budget and timeout endings are offered",
+               sorted(offered) == ["A1", "B1"]),
+              ("a blocked trial yields to its re-run",
+               offered["A1"]["outcome"] == "completed")]
+
+    plant("run-2.json", [{"arm": "A", "trial": 1, "outcome": "completed"}])
+    try:
+        scorable_trials(scratch)
+        checks.append(("a trial two records offer refuses", False))
+    except ScoreError:
+        checks.append(("a trial two records offer refuses", True))
+    return checks
+
+
 def self_test():
     """Prove the missing-vs-zero rule fires before any score is believed.
 
@@ -894,8 +942,8 @@ def self_test():
     if os.path.exists(scratch):
         shutil.rmtree(scratch)
     os.makedirs(scratch)
+    checks = run_record_checks(scratch)
     venv = create_venv(os.path.join(scratch, "venv"))
-    checks = []
 
     empty = os.path.join(scratch, "empty")
     os.makedirs(empty)
@@ -945,7 +993,9 @@ def parse_args(argv):
     parser = argparse.ArgumentParser(
         description="Score frozen efficacy-benchmark trials.")
     parser.add_argument("--root", help="the harness's run root")
-    parser.add_argument("--run", help="a run record; default is the newest")
+    parser.add_argument("--run",
+                        help="score only this run record; default is every "
+                             "run record in the root")
     parser.add_argument("--trial", action="append", default=[],
                         help="score only this trial, as A1; repeatable")
     parser.add_argument("--suite", choices=("build", "change"),
@@ -969,9 +1019,10 @@ def main(argv):
         return 2
 
     try:
-        run_file = options.run or newest_run(options.root)
-        with io.open(run_file, encoding="utf-8") as handle:
-            run_record = json.load(handle)
+        offered = scorable_trials(options.root, options.run)
+        if not offered:
+            raise ScoreError("no trial in the run records ended %s"
+                             % " or ".join(SCORABLE))
         suite = clone_suite(os.path.join(options.root, "hidden-suite"))
     except ScoreError as error:
         print("refused: %s" % error)
@@ -981,12 +1032,11 @@ def main(argv):
     lock = os.path.join(options.root, "tool-lock.txt")
     wanted = set(options.trial)
     scored, refused = [], 0
-    for record in run_record.get("trials", []):
-        name = "%s%s" % (record.get("arm"), record.get("trial"))
+    for name in sorted(wanted - set(offered)):
+        print("%s  refused: no run record offers it for scoring" % name)
+        refused += 1
+    for name, record in sorted(offered.items()):
         if wanted and name not in wanted:
-            continue
-        if record.get("outcome") not in ("completed", "failed", "timeout"):
-            print("%s  skipped: outcome %s" % (name, record.get("outcome")))
             continue
         print("%s  scoring" % name)
         try:
