@@ -125,7 +125,9 @@ py tests/efficacy/report.py --root <the run root>
 Scoring reads every run record in the root, so a run stopped and resumed
 `--from` a later trial scores whole; a trial two records both offer is
 refused rather than picked. It reads the tarball the harness froze, never
-the directory the agent worked in. Each trial gets a clean virtual environment, the trial's package
+the directory the agent worked in.
+
+Each trial gets a clean virtual environment, the trial's package
 installed into it, the hidden suite run against that interpreter, and the
 static battery at one resolved set of tool versions — frozen to
 `tool-lock.txt` by the first trial scored and installed from there by every

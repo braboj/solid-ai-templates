@@ -463,6 +463,7 @@ def generation_record(root):
 
 def lost_trials(root):
     """Every trial the harness voided, with the outcome of what replaced it."""
+
     # Every run record in time order, because a voided trial is re-run either
     # in its place or by a later run started `--from` it.
     sequence = []

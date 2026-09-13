@@ -356,6 +356,7 @@ BUDGET_SUBTYPE = "error_max_budget_usd"
 
 def classify(status, result):
     """A finished CLI run's outcome, and why where it was blocked."""
+
     # Fail closed. What a usage limit returns cannot be observed on demand,
     # so a check matching its wording would pass any limit worded otherwise
     # straight into scoring as the model's own failure.
@@ -476,6 +477,7 @@ def pending_trials(arms, k, start=None):
 
 def write_run(run_file, started_at, records):
     """Rewrite the run record with every trial so far."""
+
     # Written to a sibling and swapped in, so a run killed mid-write leaves
     # the previous record whole rather than half of a new one.
     partial = run_file + ".partial"
