@@ -375,6 +375,25 @@ def trees(root):
 
 def main(argv):
     options = parse_args(argv)
+    if options.self_test:
+        return self_test()
+    if not options.root:
+        print("--root is required unless --self-test is given")
+        return 2
+    if options.record_holdout:
+        try:
+            target, scores = record_holdout(os.path.join(options.root,
+                                                         "judge"))
+        except HoldoutError as error:
+            print("refused: %s" % error)
+            lib.print_verdict(False, "no holdout score recorded")
+            return 1
+        print("Holdout scores: %s" % target)
+        lib.print_verdict(True, "%d bundle(s), %d score(s) recorded"
+                          % (len(scores),
+                             sum(len(entry) for entry in scores.values())))
+        return 0
+
     available = trees(options.root)
     if not available:
         print("no extracted trial trees under %s; score.py writes them"
@@ -490,16 +509,153 @@ def write_holdout(judging, blind, results):
     for arm in sorted(by_arm):
         lines.append("| `bundles/%s` |  |  |  |" % by_arm[arm]["blind_id"])
     lines.extend(["", "Agreement is reported as the share of scores where the",
-                  "judge lands on this number or within one point of it."])
-    with io.open(os.path.join(judging, "holdout-sheet.md"), "w",
+                  "judge lands on this number or within one point of it.",
+                  "", "When every cell holds a score, record them for the "
+                  "report:", "", "```bash",
+                  "py tests/efficacy/judge.py --root %s --record-holdout"
+                  % os.path.dirname(judging), "```"])
+    with io.open(os.path.join(judging, SHEET), "w",
                  encoding="utf-8") as handle:
         handle.write("\n".join(lines) + "\n")
+
+
+# The owner's sheet, and the file the report reads the scores from.
+SHEET = "holdout-sheet.md"
+SCORES = "holdout-scores.json"
+
+
+class HoldoutError(Exception):
+    """The owner's sheet cannot be recorded as it stands."""
+
+
+def read_holdout_sheet(text, judged):
+    """The owner's scores by blind id, read from a filled sheet."""
+    rows = [line.strip() for line in text.splitlines()
+            if line.strip().startswith("|")]
+    if len(rows) < 3:
+        raise HoldoutError("the sheet scores no bundle")
+    header = [cell.strip() for cell in rows[0].strip("|").split("|")]
+    columns = header[1:]
+    if sorted(columns) != sorted(PRIMARY):
+        raise HoldoutError("the sheet's columns are %s, not the primary "
+                           "dimensions %s" % (columns, list(PRIMARY)))
+
+    scores = {}
+    for row in rows[2:]:
+        cells = [cell.strip() for cell in row.strip("|").split("|")]
+        match = re.fullmatch(r"`?bundles/(T\d+)`?", cells[0])
+        if not match:
+            raise HoldoutError("the row %r names no bundle" % row)
+        blind = match.group(1)
+        if blind not in judged:
+            raise HoldoutError("%s was never judged, so no score of it can "
+                               "be compared" % blind)
+        if blind in scores:
+            raise HoldoutError("%s is scored twice" % blind)
+        if len(cells) != len(header):
+            raise HoldoutError("the row for %s has %d cells, the header %d"
+                               % (blind, len(cells), len(header)))
+
+        # A partly scored sheet is not a holdout: a blank cell refuses the
+        # whole sheet rather than recording the scores around it.
+        entry = {}
+        for dimension, cell in zip(columns, cells[1:]):
+            if not re.fullmatch(r"[1-5]", cell):
+                raise HoldoutError("%s %s is %r, not a score from 1 to 5"
+                                   % (blind, dimension, cell))
+            entry[dimension] = int(cell)
+        scores[blind] = entry
+    return scores
+
+
+def record_holdout(judging):
+    """Write the scores file the report reads, from the owner's filled sheet."""
+    sheet = os.path.join(judging, SHEET)
+    mapping = os.path.join(judging, "map.json")
+    for required in (sheet, mapping):
+        if not os.path.exists(required):
+            raise HoldoutError("%s does not exist; judge.py --holdout writes "
+                               "it" % required)
+    with io.open(mapping, encoding="utf-8") as handle:
+        judged = set(json.load(handle).get("blind", {}).values())
+    with io.open(sheet, encoding="utf-8") as handle:
+        scores = read_holdout_sheet(handle.read(), judged)
+    target = os.path.join(judging, SCORES)
+    with io.open(target, "w", encoding="utf-8") as handle:
+        json.dump(scores, handle, indent=2, sort_keys=True)
+    return target, scores
+
+
+def self_test():
+    """Prove the sheet the judge writes records once filled, and not before."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-holdout-self-test")
+    shutil.rmtree(scratch, ignore_errors=True)
+    os.makedirs(scratch)
+    results = [{"trial": "A1", "blind_id": "T2"},
+               {"trial": "B1", "blind_id": "T5"},
+               {"trial": "C1", "blind_id": "T7"}]
+    judged = {record["blind_id"] for record in results}
+
+    # The sheet under test is the one `write_holdout` produces, so the reader
+    # cannot drift from the writer without this failing.
+    write_holdout(scratch, {}, results)
+    with io.open(os.path.join(scratch, SHEET), encoding="utf-8") as handle:
+        blank = handle.read()
+    filled = re.sub(r"\|  \|  \|  \|", "| 4 | 3 | 5 |", blank)
+
+    def refuses(text):
+        try:
+            read_holdout_sheet(text, judged)
+        except HoldoutError:
+            return True
+        return False
+
+    checks = [("the written sheet is blank", blank.count("|  |  |  |") == 3),
+              ("a blank sheet refuses", refuses(blank))]
+    try:
+        scores = read_holdout_sheet(filled, judged)
+    except HoldoutError:
+        scores = None
+    checks.append(("a filled sheet records every score", scores == {
+        blind: {"design": 4, "readability": 3, "maintainability": 5}
+        for blind in judged}))
+
+    first = "| `bundles/T2` | 4 | 3 | 5 |"
+    flaws = (
+        ("one blank cell refuses", first, "| `bundles/T2` | 4 |  | 5 |"),
+        ("a score outside 1-5 refuses", first, "| `bundles/T2` | 4 | 6 | 5 |"),
+        ("a bundle never judged refuses", first,
+         "| `bundles/T9` | 4 | 3 | 5 |"),
+    )
+    for label, old, new in flaws:
+        flawed = filled.replace(old, new)
+
+        # The flaw landed: the row it names changed, and nothing else did.
+        landed = old in filled and new in flawed and old not in flawed
+        checks.append((label, landed and refuses(flawed)))
+
+    for label, ok in checks:
+        print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
+    shutil.rmtree(scratch, ignore_errors=True)
+    passed = sum(1 for _, ok in checks if ok)
+    lib.print_verdict(passed == len(checks),
+                      "%d/%d self-test checks passed" % (passed, len(checks)))
+    return 0 if passed == len(checks) else 1
 
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(
         description="Judge frozen efficacy trials, blind.")
-    parser.add_argument("--root", required=True, help="the harness's run root")
+    parser.add_argument("--root",
+                        help="the harness's run root; required for "
+                             "everything but --self-test")
+    parser.add_argument("--record-holdout", action="store_true",
+                        help="record the owner's filled sheet for the report; "
+                             "judge nothing")
+    parser.add_argument("--self-test", action="store_true",
+                        help="prove the holdout sheet records once filled; "
+                             "judge nothing")
     parser.add_argument("--trial", action="append", default=[],
                         help="judge only this trial, as A1; repeatable")
     parser.add_argument("--model", default=JUDGE_MODEL,
