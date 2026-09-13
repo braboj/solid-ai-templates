@@ -1,0 +1,36 @@
+# The rulers. Every trial is measured by these tools at one resolved set of
+# versions, never by the configuration or the versions the agent wrote.
+#
+# Nothing here is pinned by hand. The first trial scored in a run resolves
+# this file and freezes the result to `tool-lock.txt` beside the scoring
+# directory; every later trial installs from that lock, so the ruler is
+# identical across the arms by construction and the report can state it.
+# A hand-written pin would have to be guessed, and a guess that no longer
+# resolves stops a run rather than a trial.
+
+# Static analysis.
+ruff
+mypy
+bandit
+complexipy
+radon
+interrogate
+vulture
+pylint
+cohesion
+
+# Structure and layering.
+grimp
+import-linter
+
+# Tests and coverage, for the trial's own suite.
+pytest
+pytest-cov
+pytest-json-report
+
+# Web quality. The HTML validator needs a Java runtime, and the accessibility
+# probe needs a browser binary; both record a missing metric rather than a
+# zero where the machine has neither.
+html5validator
+playwright
+axe-playwright-python
