@@ -35,6 +35,10 @@ from harness import (TrialError, agent_environment,  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUTPUT = os.path.join(HERE, "arms", "B-candidate", "CLAUDE.md")
+
+# The record of the generation that produced OUTPUT, committed beside it. The
+# report cites it, and a scratch directory would not outlive the run.
+RECORD = os.path.join(HERE, "arms", "B-candidate", "generation.json")
 DESIGN = os.path.join(lib.ROOT, "docs", "design", "efficacy-benchmark.md")
 
 # The release arm B is generated from. The design fixes it: the last 2.x,
@@ -428,7 +432,15 @@ def main(argv):
     print("wrote %s: %d lines, %d chars"
           % (OUTPUT, record["output_lines"], record["output_chars"]))
     print("no specification-only token in the generated file")
+    keep_record(record, RECORD)
+    print("Record kept beside it: %s" % RECORD)
     return write_record(options.root, record, started_at)
+
+
+def keep_record(record, path):
+    """Write the record of the generation behind the committed file."""
+    with io.open(path, "w", encoding="utf-8") as handle:
+        json.dump(record, handle, indent=2)
 
 
 def write_record(root, record, started_at):

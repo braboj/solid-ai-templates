@@ -35,6 +35,11 @@ questions: the brief is read out of the design and treated as the client's
 answers, so the arm is reproducible and re-running it would produce a
 different one. It refuses to overwrite an existing file without `--replace`.
 
+The record of the generation behind the committed file sits beside it as
+`arms/B-candidate/generation.json`: the release and the chain it resolved,
+the model, the CLI's result and both leak scans. The generator writes it
+there whenever it writes the file, and the report reads it from there.
+
 The self test proves the leak scan can fail before it is trusted. The dry
 run builds and scans the prompt without calling a model, which is the cheap
 way to check the wiring after any change to the brief or the roots.
