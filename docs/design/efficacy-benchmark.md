@@ -59,8 +59,16 @@ until an interval clears zero is the failure this bound exists to prevent.
 scores zero on task success, records its quality metrics as missing rather
 than imputed, and is **not** re-run: re-running the failures of one arm is
 how a control arm is quietly improved. A trial lost to harness or provider
-error, with no agent output to judge, is re-run once and the substitution
+error is re-run once, in its own place in the order, and the substitution
 recorded in the report.
+
+A trial is lost when the CLI ends it with any error other than the budget
+cap: a usage limit, a rate limit, a crash, or no result at all. That holds
+even where the agent left partial work, because the cut was the provider's
+and not the agent's. The partial workspace is kept under the run's `void/`
+directory and never scored, and a second loss of the same trial stops the
+run. A trial ended by the budget cap or the timeout is not lost: both are
+bounds §4 sets, and the trial is scored as it stands.
 
 ### 1.2 Non-inferiority, where the claim is that nothing got worse
 
@@ -137,13 +145,25 @@ Per trial (arm × k, K = 3 → 9 trials):
    > and every page and route in the spec works end to end against the
    > seed fixture. Commit when done.
 4. `claude -p … --output-format json`, bounded per trial by
-   `--max-budget-usd` and a wall-clock timeout, both fixed; transcript,
-   token usage, turns and wall time captured, and the record states which
-   bound ended a trial. This replaces the `--max-turns N` named when the
-   design was drafted: the installed CLI, 2.1.153, carries no such flag.
-   Corrected before the first trial, which is when §7's rule allows the
-   protocol to move at all.
-5. The workspace is frozen (tarball + commit hash) before scoring.
+   `--max-budget-usd` and a wall-clock timeout, both fixed: $100 and two
+   hours. Transcript, token usage, turns and wall time captured, and the
+   record states which bound ended a trial. This replaces the
+   `--max-turns N` named when the design was drafted: the installed CLI,
+   2.1.153, carries no such flag. Corrected before the first trial, which
+   is when §7's rule allows the protocol to move at all.
+
+   The budget is read against the CLI's own cost figure, which prices
+   `claude-sonnet-5` at $5 per million input tokens and $25 per million
+   output (arm B's generation record reproduces to the cent at those
+   rates). The CLI checks it between turns, so a trial can pass it by one
+   turn's cost. The agent that built the hidden suite's reference
+   implementation, on a stronger model, spent about $13 at that rate in 26
+   minutes by its transcript's token counts. At that pace a two-hour trial
+   stays under the cap, so the timeout is the bound that shapes a trial
+   and the budget stops a runaway.
+5. The workspace is frozen (tarball + commit hash) before scoring. The run
+   record is rewritten after every trial, so a run stopped part-way keeps
+   the record of every trial it finished.
 
 Trials run interleaved (A1, B1, C1, A2, …) so a model-side change mid-run
 does not land on one arm.

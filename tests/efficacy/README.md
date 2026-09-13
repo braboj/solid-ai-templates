@@ -86,6 +86,31 @@ py tests/efficacy/harness.py --self-test
 The self test plants one variable of each kind in a copy of the environment
 and fails if any survives, or if `PATH` loses an entry it should keep.
 
+### How a trial ends
+
+| Outcome | What ended it | Scored |
+|---|---|---|
+| `completed` | the agent finished | yes |
+| `budget` | `--budget`, $100 by default, read against the CLI's own cost figure | yes |
+| `timeout` | `--timeout`, two hours by default | yes |
+| `blocked` | any other error: a usage limit, a rate limit, a crash, a run that returned no result | no |
+| `refused` | the harness would not start it, such as a workspace that already exists | no |
+
+A blocked trial is the provider's cut, not the agent's work. Its workspace
+and tarball move under `void/`, and the run stops unless it was started with
+`--resume-after-block`. That flag probes the generator every `--probe-every`
+minutes and re-runs the trial in its own place once it answers. A second
+block of the same trial stops the run, and so do `--give-up-after` hours
+without an answer.
+
+The run record is rewritten after every trial, so a run stopped part-way
+keeps the record of everything it finished. `--from` starts a new run at a
+given trial in the interleaved order:
+
+```bash
+py tests/efficacy/harness.py --root <the run root> --from B2 --resume-after-block
+```
+
 ## Scoring, judging and reporting
 
 ```bash
@@ -97,8 +122,12 @@ py tests/efficacy/report.py --self-test
 py tests/efficacy/report.py --root <the run root>
 ```
 
-Scoring reads the tarball the harness froze, never the directory the agent
-worked in. Each trial gets a clean virtual environment, the trial's package
+Scoring reads every run record in the root, so a run stopped and resumed
+`--from` a later trial scores whole; a trial two records both offer is
+refused rather than picked. It reads the tarball the harness froze, never
+the directory the agent worked in.
+
+Each trial gets a clean virtual environment, the trial's package
 installed into it, the hidden suite run against that interpreter, and the
 static battery at one resolved set of tool versions — frozen to
 `tool-lock.txt` by the first trial scored and installed from there by every

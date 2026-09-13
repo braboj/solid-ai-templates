@@ -39,6 +39,11 @@ PROMPT = (
     "seed fixture. Commit when done."
 )
 
+# The two bounds on a trial, fixed in the design's section 4. The budget is
+# read against the CLI's own cost figure and checked between turns.
+BUDGET_USD = 100.0
+TIMEOUT_S = 7200
+
 # The context file each arm starts with, relative to `arms/`. Arm A carries
 # none: it is the bare agent.
 ARMS = {
@@ -344,6 +349,48 @@ def freeze(workspace, record_dir, name):
     return {"head": head, "uncommitted": status.splitlines(), "tarball": tarball}
 
 
+# The one error ending the protocol sets itself. A trial the budget stopped
+# stands and is scored, as a timed-out one does.
+BUDGET_SUBTYPE = "error_max_budget_usd"
+
+
+def classify(status, result):
+    """A finished CLI run's outcome, and why where it was blocked."""
+
+    # Fail closed. What a usage limit returns cannot be observed on demand,
+    # so a check matching its wording would pass any limit worded otherwise
+    # straight into scoring as the model's own failure.
+    if not isinstance(result, dict):
+        return "blocked", "the CLI returned no JSON result (status %s)" % status
+    if result.get("subtype") == BUDGET_SUBTYPE:
+        return "budget", None
+    if status == 0 and not result.get("is_error"):
+        return "completed", None
+    return "blocked", ("the CLI ended with an error (status %s, subtype %s, "
+                       "API status %s): %s"
+                       % (status, result.get("subtype"),
+                          result.get("api_error_status"),
+                          str(result.get("result") or "")[:300]))
+
+
+def void(root, workspace, frozen, name):
+    """Move a blocked trial's workspace and tarball under `void/`."""
+    stamp = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    target = os.path.join(root, "void", "%s-%s" % (name, stamp))
+    moved = {"dir": target, "workspace": os.path.join(target, name),
+             "tarball": os.path.join(target, "%s.tar" % name)}
+
+    # A process the agent left running can hold a file open. A workspace that
+    # cannot move would block the re-run, so the caller stops the run.
+    try:
+        os.makedirs(target)
+        shutil.move(workspace, moved["workspace"])
+        shutil.move(frozen["tarball"], moved["tarball"])
+    except OSError as error:
+        raise TrialError("could not void %s: %s" % (name, error))
+    return moved
+
+
 def run_trial(arm, trial, root, home, options):
     """Run one trial and return its record.
 
@@ -381,7 +428,6 @@ def run_trial(arm, trial, root, home, options):
                               env=agent_environment(home),
                               capture_output=True, text=True,
                               encoding="utf-8", timeout=options.timeout)
-        record["outcome"] = "completed" if proc.returncode == 0 else "failed"
         record["exit_status"] = proc.returncode
         record["stdout"] = proc.stdout
         record["stderr"] = proc.stderr[-4000:]
@@ -389,12 +435,22 @@ def run_trial(arm, trial, root, home, options):
             record["result"] = json.loads(proc.stdout)
         except ValueError:
             record["result"] = None
+        record["outcome"], record["reason"] = classify(proc.returncode,
+                                                       record["result"])
     except subprocess.TimeoutExpired:
-        record["outcome"] = "timeout"
+        record["outcome"], record["reason"] = "timeout", None
         record["exit_status"] = None
 
     record["elapsed_s"] = round(time.monotonic() - started, 1)
-    record["frozen"] = freeze(workspace, root, "%s%d" % (arm, trial))
+    name = "%s%d" % (arm, trial)
+    record["frozen"] = freeze(workspace, root, name)
+    if record["outcome"] == "blocked":
+        try:
+            record["void"] = void(root, workspace, record["frozen"], name)
+            record["frozen"]["tarball"] = record["void"]["tarball"]
+        except TrialError as error:
+            record["void"] = None
+            record["void_error"] = str(error)
     return record
 
 
@@ -405,6 +461,83 @@ def order(arms, k):
     rather than on one of them, which is the confound the design names.
     """
     return [(arm, trial) for trial in range(1, k + 1) for arm in arms]
+
+
+def pending_trials(arms, k, start=None):
+    """The interleaved order, from `start` onwards where one is given."""
+    trials = order(arms, k)
+    if start is None:
+        return trials
+    names = ["%s%d" % pair for pair in trials]
+    if start not in names:
+        raise TrialError("--from %s is not in this run's order: %s"
+                         % (start, ", ".join(names)))
+    return trials[names.index(start):]
+
+
+def write_run(run_file, started_at, records):
+    """Rewrite the run record with every trial so far."""
+
+    # Written to a sibling and swapped in, so a run killed mid-write leaves
+    # the previous record whole rather than half of a new one.
+    partial = run_file + ".partial"
+    with io.open(partial, "w", encoding="utf-8") as handle:
+        json.dump({"started_at": started_at.isoformat(timespec="seconds"),
+                   "prompt": PROMPT, "trials": records}, handle, indent=2)
+    os.replace(partial, run_file)
+
+
+def wait_for_generator(probe, every_s, limit_s, sleep=time.sleep,
+                       clock=time.monotonic):
+    """Probe on an interval until the generator answers; False on giving up."""
+    deadline = clock() + limit_s
+    while clock() < deadline:
+        sleep(every_s)
+        try:
+            probe()
+            return True
+        except (TrialError, subprocess.TimeoutExpired) as error:
+            print("  still blocked: %s" % str(error)[:160])
+    return False
+
+
+def run_in_place(arm, trial, runner, wait, records, write):
+    """Run one trial, re-running it once in its place if it was blocked.
+
+    Returns False when the run has to stop.
+    """
+    name = "%s%d" % (arm, trial)
+    lost = None
+    while True:
+        print("%s  %s%s" % (name, ARMS[arm]["label"],
+                            "  (re-run)" if lost else ""))
+        try:
+            record = runner(arm, trial)
+        except TrialError as error:
+            print("  refused: %s" % error)
+            records.append({"arm": arm, "trial": trial, "outcome": "refused",
+                            "error": str(error)})
+            write()
+            return True
+        if lost:
+            record["substitutes"] = lost["void"]["dir"]
+        records.append(record)
+        write()
+        print("  %s in %ss" % (record["outcome"], record.get("elapsed_s", 0)))
+        if record["outcome"] != "blocked":
+            return True
+
+        print("  blocked: %s" % (record.get("reason") or "")[:200])
+        if not record.get("void"):
+            print("  stopping: %s" % record.get("void_error"))
+            return False
+        if lost:
+            print("  stopping: %s was blocked twice" % name)
+            return False
+        lost = record
+        if not wait():
+            print("  stopping the run")
+            return False
 
 
 # One variable of each kind the trial environment sheds, and two it must keep.
@@ -427,8 +560,8 @@ PLANTED_KEPT = {
 }
 
 
-def self_test():
-    """Prove a trial's environment sheds what the launching process carries."""
+def environment_checks():
+    """A trial's environment sheds what the launching process carries."""
     interpreter = os.path.abspath(os.path.join(os.sep, "planted", "venv"))
     stale = os.path.join(interpreter, "Scripts")
     kept = os.path.abspath(os.path.join(os.sep, "planted", "tools"))
@@ -460,7 +593,168 @@ def self_test():
     checks.append(("the record names what was removed",
                    "VIRTUAL_ENV" in inherited_names(planted)
                    and interpreter_directories(planted) == [stale]))
+    return checks
 
+
+# Fabricated CLI endings, one per branch of `classify`. The budget ending has
+# the shape the installed CLI returned when a real run reached its cap.
+ENDINGS = (
+    ("a clean finish", 0, {"subtype": "success", "is_error": False},
+     "completed"),
+    ("the budget cap", 1,
+     {"subtype": BUDGET_SUBTYPE, "is_error": True,
+      "errors": ["Reached maximum budget ($0.001)"]}, "budget"),
+    ("a usage limit, by its wording", 1,
+     {"subtype": "success", "is_error": True,
+      "result": "Claude AI usage limit reached"}, "blocked"),
+    ("a rate limit, by its status", 1,
+     {"subtype": "success", "is_error": True, "api_error_status": 429},
+     "blocked"),
+    ("an error subtype nobody listed", 1,
+     {"subtype": "error_during_execution", "is_error": True}, "blocked"),
+    ("an error behind a zero status", 0,
+     {"subtype": "success", "is_error": True, "result": "Not logged in"},
+     "blocked"),
+    ("no JSON at all", 1, None, "blocked"),
+)
+
+
+def outcome_checks():
+    """Every ending classifies as the protocol says, and a blocked one moves."""
+    checks = [("%s is %s" % (label, expected),
+               classify(status, result)[0] == expected)
+              for label, status, result, expected in ENDINGS]
+
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-void-self-test")
+    shutil.rmtree(scratch, ignore_errors=True)
+    workspace = os.path.join(scratch, "A1")
+    os.makedirs(workspace)
+    with io.open(os.path.join(workspace, "partial.py"), "w",
+                 encoding="utf-8") as handle:
+        handle.write("# partial work\n")
+    tarball = os.path.join(scratch, "A1.tar")
+    with io.open(tarball, "wb") as handle:
+        handle.write(b"frozen")
+
+    # The plant is read before the move, so an empty void is the function's
+    # failure and not a workspace that was never there.
+    checks.append(("the workspace to void exists",
+                   os.path.isfile(os.path.join(workspace, "partial.py"))
+                   and os.path.isfile(tarball)))
+    try:
+        moved = void(scratch, workspace, {"tarball": tarball}, "A1")
+    except TrialError:
+        moved = None
+    checks.append(("a voided workspace leaves its slot", moved is not None
+                   and not os.path.exists(workspace)
+                   and not os.path.exists(tarball)))
+    checks.append(("a voided workspace is kept under void/", moved is not None
+                   and os.path.isfile(os.path.join(moved["workspace"],
+                                                   "partial.py"))
+                   and os.path.isfile(moved["tarball"])
+                   and os.path.dirname(moved["dir"])
+                   == os.path.join(scratch, "void")))
+    shutil.rmtree(scratch, ignore_errors=True)
+    return checks
+
+
+def replay(outcomes, answers):
+    """Drive `run_in_place` through planted outcomes and report what it did."""
+    queue, replies = list(outcomes), list(answers)
+    records, writes, waits = [], [], []
+
+    def runner(arm, trial):
+        return dict(queue.pop(0))
+
+    def wait():
+        waits.append(True)
+        return replies.pop(0)
+
+    saved, sys.stdout = sys.stdout, io.StringIO()
+    try:
+        carried_on = run_in_place("A", 1, runner, wait, records,
+                                  lambda: writes.append(len(records)))
+    finally:
+        sys.stdout = saved
+    return {"carried_on": carried_on, "records": records, "writes": writes,
+            "waits": len(waits),
+            "outcomes": [record["outcome"] for record in records]}
+
+
+def resume_checks():
+    """A blocked trial re-runs once in its place; the run stops when it must."""
+    checks = []
+    names = ["%s%d" % pair for pair in pending_trials("ABC", 3, "B2")]
+    checks.append(("--from B2 starts there and keeps the order",
+                   names == ["B2", "C2", "A3", "B3", "C3"]))
+    try:
+        pending_trials("ABC", 3, "D1")
+        checks.append(("--from an unknown trial refuses", False))
+    except TrialError:
+        checks.append(("--from an unknown trial refuses", True))
+
+    blocked = {"outcome": "blocked", "reason": "planted",
+               "void": {"dir": os.path.join("void", "A1-planted")}}
+    completed = {"outcome": "completed"}
+
+    rerun = replay([blocked, completed], [True])
+    checks.append(("a blocked trial re-runs in its place",
+                   rerun["carried_on"]
+                   and rerun["outcomes"] == ["blocked", "completed"]))
+    checks.append(("the re-run names the trial it substitutes",
+                   rerun["records"][-1].get("substitutes")
+                   == blocked["void"]["dir"]))
+    checks.append(("the record is written after every trial",
+                   rerun["writes"] == [1, 2]))
+
+    twice = replay([blocked, blocked], [True])
+    checks.append(("a second block stops the run", not twice["carried_on"]
+                   and twice["outcomes"] == ["blocked", "blocked"]))
+
+    unanswered = replay([blocked], [False])
+    checks.append(("no answer stops the run", not unanswered["carried_on"]
+                   and unanswered["waits"] == 1))
+
+    unmoved = replay([dict(blocked, void=None, void_error="planted")], [])
+    checks.append(("a workspace that could not move stops the run",
+                   not unmoved["carried_on"] and unmoved["waits"] == 0))
+
+    clock = [0.0]
+
+    def sleep(seconds):
+        clock[0] += seconds
+
+    replies = [TrialError("planted"), TrialError("planted"), None]
+
+    def probe():
+        reply = replies.pop(0)
+        if reply is not None:
+            raise reply
+
+    def refuse():
+        raise TrialError("planted")
+
+    saved, sys.stdout = sys.stdout, io.StringIO()
+    try:
+        answered = wait_for_generator(probe, 60, 600, sleep=sleep,
+                                      clock=lambda: clock[0])
+        answered_at = clock[0]
+        clock[0] = 0.0
+        gave_up = wait_for_generator(refuse, 60, 180, sleep=sleep,
+                                     clock=lambda: clock[0])
+    finally:
+        sys.stdout = saved
+    checks.append(("probing stops when the generator answers",
+                   answered and answered_at == 180))
+    checks.append(("probing gives up at its limit",
+                   not gave_up and clock[0] == 180))
+    return checks
+
+
+def self_test():
+    """Prove the environment, outcome and resume rules before any trial."""
+    checks = environment_checks() + outcome_checks() + resume_checks()
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     passed = sum(1 for _, ok in checks if ok)
@@ -477,8 +771,8 @@ def parse_args(argv):
                              "this repository. Required for everything but "
                              "--self-test")
     parser.add_argument("--self-test", action="store_true",
-                        help="prove the trial environment sheds the caller's "
-                             "variables; run no trial")
+                        help="prove the environment, outcome and resume "
+                             "rules; run no trial")
     parser.add_argument("--arms", default="ABC",
                         help="which arms to run, as letters (default ABC)")
     parser.add_argument("--k", type=int, default=3,
@@ -486,10 +780,23 @@ def parse_args(argv):
     parser.add_argument("--model", default="claude-sonnet-5",
                         help="exact generator model id, recorded in the report")
     parser.add_argument("--effort", default="high")
-    parser.add_argument("--budget", type=float, default=None,
-                        help="dollar ceiling per trial")
-    parser.add_argument("--timeout", type=int, default=7200,
-                        help="wall-clock ceiling per trial, in seconds")
+    parser.add_argument("--budget", type=float, default=BUDGET_USD,
+                        help="dollar ceiling per trial, read against the "
+                             "CLI's own cost figure (default %s, the design's)"
+                        % BUDGET_USD)
+    parser.add_argument("--timeout", type=int, default=TIMEOUT_S,
+                        help="wall-clock ceiling per trial, in seconds "
+                             "(default %s, the design's)" % TIMEOUT_S)
+    parser.add_argument("--from", dest="start",
+                        help="start at this trial in the interleaved order, "
+                             "as B2")
+    parser.add_argument("--resume-after-block", action="store_true",
+                        help="after a blocked trial, probe until the "
+                             "generator answers and re-run it in its place")
+    parser.add_argument("--probe-every", type=float, default=30,
+                        help="minutes between probes while blocked")
+    parser.add_argument("--give-up-after", type=float, default=12,
+                        help="hours of probing before the run stops")
     parser.add_argument("--dry-run", action="store_true",
                         help="prepare the workspaces and print the command; "
                              "call no model")
@@ -521,6 +828,11 @@ def main(argv):
     if unknown:
         print("unknown arm(s): %s" % ", ".join(unknown))
         return 2
+    try:
+        pending = pending_trials(arms, options.k, options.start)
+    except TrialError as error:
+        print("refused: %s" % error)
+        return 2
 
     # One call before the first trial, because the CLI answers an
     # unauthenticated run with a result object rather than a crash: without
@@ -537,33 +849,41 @@ def main(argv):
         print("generator ready: %s" % ready)
 
     started_at = datetime.datetime.now()
-    records = []
-    for arm, trial in order(arms, options.k):
-        print("%s%d  %s" % (arm, trial, ARMS[arm]["label"]))
-        try:
-            record = run_trial(arm, trial, options.root, home, options)
-        except TrialError as error:
-            print("  refused: %s" % error)
-            records.append({"arm": arm, "trial": trial, "outcome": "refused",
-                            "error": str(error)})
-            continue
-        print("  %s in %ss" % (record["outcome"],
-                               record.get("elapsed_s", 0)))
-        records.append(record)
-
     run_file = os.path.join(
         options.root, "run-%s.json" % started_at.strftime("%Y-%m-%dT%H-%M-%S"))
-    with io.open(run_file, "w", encoding="utf-8") as handle:
-        json.dump({"started_at": started_at.isoformat(timespec="seconds"),
-                   "prompt": PROMPT, "trials": records}, handle, indent=2)
+    records = []
+
+    def runner(arm, trial):
+        return run_trial(arm, trial, options.root, home, options)
+
+    def write():
+        write_run(run_file, started_at, records)
+
+    def probe():
+        return assert_authenticated(home, agent_environment,
+                                    agent_executable())
+
+    def wait():
+        if not options.resume_after_block:
+            print("  --resume-after-block was not given")
+            return False
+        return wait_for_generator(probe, options.probe_every * 60,
+                                  options.give_up_after * 3600)
+
+    finished = all(run_in_place(arm, trial, runner, wait, records, write)
+                   for arm, trial in pending)
+    write()
     print("\nRun record: %s" % run_file)
 
     refused = sum(1 for r in records if r["outcome"] == "refused")
-    done = sum(1 for r in records if r["outcome"] in ("completed", "dry-run"))
-    lib.print_verdict(refused == 0,
-                      "%d trial(s), %d done, %d refused"
-                      % (len(records), done, refused))
-    return 1 if refused else 0
+    blocked = sum(1 for r in records if r["outcome"] == "blocked")
+    done = sum(1 for r in records if r["outcome"]
+               in ("completed", "budget", "timeout", "dry-run"))
+    lib.print_verdict(refused == 0 and finished,
+                      "%d trial(s), %d done, %d blocked, %d refused%s"
+                      % (len(records), done, blocked, refused,
+                         "" if finished else ", run stopped"))
+    return 0 if refused == 0 and finished else 1
 
 
 if __name__ == "__main__":
