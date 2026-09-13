@@ -17,7 +17,6 @@ import datetime
 import io
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -31,7 +30,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import lib  # noqa: E402
 from harness import (TrialError, agent_environment,  # noqa: E402
                      agent_executable, assert_authenticated,
-                     assert_outside_repository, prepare_home)
+                     assert_outside_repository, prepare_home,
+                     quoted_passage)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUTPUT = os.path.join(HERE, "arms", "B-candidate", "CLAUDE.md")
@@ -132,28 +132,7 @@ def read_brief(path=DESIGN):
     brief duplicated in code drifts from the one the design pre-registered,
     and the arm would then be generated from something nobody agreed.
     """
-    with io.open(path, encoding="utf-8") as handle:
-        text = handle.read()
-    start = text.find(BRIEF_HEADING)
-    if start < 0:
-        raise TrialError("no %r section in %s" % (BRIEF_HEADING, path))
-    section = text[start:]
-    quoted = re.findall(r"^> ?(.*)$", section, re.M)
-    if not quoted:
-        raise TrialError("section 11 of %s carries no quoted brief" % path)
-
-    # The brief is the section's first block quote; a later one would be a
-    # different passage.
-    lines, seen = [], False
-    for raw in section.splitlines():
-        if raw.startswith(">"):
-            seen = True
-            lines.append(raw[1:].lstrip() if raw[1:2] == " " else raw[1:])
-        elif seen and not raw.strip():
-            lines.append("")
-        elif seen:
-            break
-    brief = "\n".join(lines).strip()
+    brief = quoted_passage(path, BRIEF_HEADING)
     if len(brief) < 100:
         raise TrialError("the brief read from %s is implausibly short: %r"
                          % (path, brief))

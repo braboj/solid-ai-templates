@@ -299,7 +299,13 @@ tests the two new behaviours against worked figures fixed the same way §9
 fixes the build example, and is written before the first change-task run
 for the reason §10 item 8 gives.
 
-Nine extra runs of ~15 minutes.
+Nine extra runs of ~15 minutes. Each starts from a copy of its own build
+trial's frozen workspace, so arm B's change task still carries arm B's
+context file, and runs under the same isolation, bounds and outcome rules,
+interleaved in the same order. The copy's state is committed before the
+agent starts and churn is measured against that commit, so work the build
+trial left uncommitted is not counted as the change. A build trial with no
+scorable outcome has no change task.
 
 ### Pattern use (judge with evidence, per trial)
 

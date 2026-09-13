@@ -29,6 +29,11 @@ import lib  # noqa: E402
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPEC = os.path.join(HERE, "SPEC.md")
 ARMS_DIR = os.path.join(HERE, "arms")
+DESIGN = os.path.join(lib.ROOT, "docs", "design", "efficacy-benchmark.md")
+
+# The change task's prompt is pinned in the design under this heading and
+# read from there, because a copy here could drift from the one registered.
+CHANGE_HEADING = "### Design (change task) — the OCP measure"
 
 # Identical for every arm, per the design's section 4. Changing it changes
 # what the benchmark measures, so it is a constant and not an option.
@@ -311,14 +316,14 @@ def agent_environment(home, environ=None):
 
 
 def agent_command(home, model, effort, budget):
-    """The argv for one trial.
+    """The argv for one trial; the prompt goes on standard input.
 
     `--max-turns`, which the design's protocol names, is not a flag this
     CLI carries. The bound is a dollar budget and the wall-clock timeout the
     caller applies, and the record states which of them ended a trial.
     """
     argv = [
-        agent_executable(), "-p", PROMPT,
+        agent_executable(), "-p",
         "--output-format", "json",
         "--model", model,
         "--effort", effort,
@@ -391,23 +396,145 @@ def void(root, workspace, frozen, name):
     return moved
 
 
+def quoted_passage(path, heading):
+    """The first block quote under `heading` in a Markdown file."""
+    with io.open(path, encoding="utf-8") as handle:
+        text = handle.read()
+    start = text.find(heading)
+    if start < 0:
+        raise TrialError("no %r section in %s" % (heading, path))
+
+    # Up to the first line that is neither quoted nor blank; a later quote
+    # is a different passage.
+    lines, seen = [], False
+    for raw in text[start:].splitlines():
+        if raw.startswith(">"):
+            seen = True
+            lines.append(raw[1:].lstrip() if raw[1:2] == " " else raw[1:])
+        elif seen and not raw.strip():
+            lines.append("")
+        elif seen:
+            break
+    passage = "\n".join(lines).strip()
+    if not passage:
+        raise TrialError("the %r section of %s carries no block quote"
+                         % (heading, path))
+    return passage
+
+
+def read_change_prompt(path=DESIGN):
+    """The change task's prompt, as the design pins it."""
+    return quoted_passage(path, CHANGE_HEADING)
+
+
+def prepare_change_workspace(arm, trial, root, build):
+    """Unpack a build trial's frozen workspace for its change task.
+
+    Returns the workspace and the commit its starting state is recorded in.
+    """
+    name = "change-%s%d" % (arm, trial)
+    workspace = os.path.join(root, name)
+    if os.path.exists(workspace):
+        raise TrialError("workspace %s already exists; a trial never reuses "
+                         "one" % workspace)
+    tarball = (build.get("frozen") or {}).get("tarball")
+    if not tarball or not os.path.isfile(tarball):
+        raise TrialError("build trial %s%d left no frozen tarball at %s"
+                         % (arm, trial, tarball))
+
+    # Unpacked beside the workspace and renamed, because the tarball's top
+    # directory carries the build trial's name, not the change task's.
+    unpacking = os.path.join(root, ".unpacking-%s" % name)
+    shutil.rmtree(unpacking, ignore_errors=True)
+    try:
+        with tarfile.open(tarball) as archive:
+            archive.extractall(unpacking, filter="data")
+        shutil.move(os.path.join(unpacking, "%s%d" % (arm, trial)), workspace)
+    except (OSError, tarfile.TarError) as error:
+        raise TrialError("could not unpack %s: %s" % (tarball, error))
+    finally:
+        shutil.rmtree(unpacking, ignore_errors=True)
+
+    # What the build trial left uncommitted is part of the starting state, so
+    # it is committed here and churn counts only what the change adds.
+    git(workspace, "add", "-A")
+    git(workspace, "-c", "user.name=efficacy",
+        "-c", "user.email=efficacy@example.invalid",
+        "commit", "-q", "--allow-empty", "-m",
+        "start: change task, %s arm %s" % (ARMS[arm]["label"], arm))
+    return workspace, git(workspace, "rev-parse", "HEAD")
+
+
 def run_trial(arm, trial, root, home, options):
-    """Run one trial and return its record.
+    """Run one build trial and return its record."""
+    workspace = prepare_workspace(arm, trial, root)
+    record = {"arm": arm, "label": ARMS[arm]["label"], "trial": trial,
+              "task": "build"}
+    return run_agent(workspace, "%s%d" % (arm, trial), PROMPT, record, root,
+                     home, options)
+
+
+def run_change_trial(arm, trial, root, home, options, build):
+    """Run one change task on a copy of its build trial; return its record."""
+    workspace, base = prepare_change_workspace(arm, trial, root, build)
+    record = {"arm": arm, "label": ARMS[arm]["label"], "trial": trial,
+              "task": "change", "base": base,
+              "build_frozen": build.get("frozen")}
+    return run_agent(workspace, "change-%s%d" % (arm, trial),
+                     read_change_prompt(), record, root, home, options)
+
+
+# The endings a trial is scored on. A blocked trial was voided and its re-run
+# carries the score; a refused one never started.
+SCORABLE = ("completed", "budget", "timeout")
+
+
+def scorable_trials(root, run=None, task="build"):
+    """Every trial of `task` the run records offer for scoring, by name."""
+    if run:
+        files = [run]
+    else:
+        files = sorted(os.path.join(root, entry)
+                       for entry in (os.listdir(root)
+                                     if os.path.isdir(root) else [])
+                       if entry.startswith("run-") and entry.endswith(".json"))
+    if not files:
+        raise TrialError("no run record in %s; the harness writes one" % root)
+    found, sources = {}, {}
+    for file in files:
+        with io.open(file, encoding="utf-8") as handle:
+            records = json.load(handle).get("trials", [])
+        for record in records:
+            name = "%s%s" % (record.get("arm"), record.get("trial"))
+
+            # A record written before the change task existed is a build one.
+            if record.get("task", "build") != task:
+                continue
+            if record.get("outcome") not in SCORABLE:
+                continue
+
+            # Two records offering one trial means two workspaces for one
+            # slot. Picking either would be a choice made after the fact.
+            if name in found:
+                raise TrialError("%s is offered for scoring by both %s and %s"
+                                 % (name, sources[name], file))
+            found[name] = record
+            sources[name] = file
+    return found
+
+
+def run_agent(workspace, name, prompt, record, root, home, options):
+    """Run the agent in a prepared workspace and complete its record.
 
     The record carries everything the protocol says a trial must report:
     what ran, under which model and configuration, what it cost, how long
     it took, and the frozen state it left.
     """
-    workspace = prepare_workspace(arm, trial, root)
     assert_no_ambient_context(workspace, home)
     argv = agent_command(home, options.model, options.effort, options.budget)
-
-    record = {
-        "arm": arm,
-        "label": ARMS[arm]["label"],
-        "trial": trial,
+    record.update({
         "workspace": workspace,
-        "prompt": PROMPT,
+        "prompt": prompt,
         "command": argv,
         "model": options.model,
         "effort": options.effort,
@@ -417,14 +544,17 @@ def run_trial(arm, trial, root, home, options):
                                 "path": interpreter_directories(os.environ)},
         "templates_tree": lib.tree_id(),
         "started_at": datetime.datetime.now().isoformat(timespec="seconds"),
-    }
+    })
     if options.dry_run:
         record["outcome"] = "dry-run"
         return record
 
     started = time.monotonic()
+
+    # On standard input, not as an argument: on Windows the CLI is a `.CMD`
+    # shim, and `cmd.exe` expands a `%NAME%` pair inside an argument.
     try:
-        proc = subprocess.run(argv, cwd=workspace,
+        proc = subprocess.run(argv, input=prompt, cwd=workspace,
                               env=agent_environment(home),
                               capture_output=True, text=True,
                               encoding="utf-8", timeout=options.timeout)
@@ -442,7 +572,6 @@ def run_trial(arm, trial, root, home, options):
         record["exit_status"] = None
 
     record["elapsed_s"] = round(time.monotonic() - started, 1)
-    name = "%s%d" % (arm, trial)
     record["frozen"] = freeze(workspace, root, name)
     if record["outcome"] == "blocked":
         try:
@@ -475,7 +604,7 @@ def pending_trials(arms, k, start=None):
     return trials[names.index(start):]
 
 
-def write_run(run_file, started_at, records):
+def write_run(run_file, started_at, records, task="build", prompt=PROMPT):
     """Rewrite the run record with every trial so far."""
 
     # Written to a sibling and swapped in, so a run killed mid-write leaves
@@ -483,7 +612,8 @@ def write_run(run_file, started_at, records):
     partial = run_file + ".partial"
     with io.open(partial, "w", encoding="utf-8") as handle:
         json.dump({"started_at": started_at.isoformat(timespec="seconds"),
-                   "prompt": PROMPT, "trials": records}, handle, indent=2)
+                   "task": task, "prompt": prompt, "trials": records},
+                  handle, indent=2)
     os.replace(partial, run_file)
 
 
@@ -752,9 +882,70 @@ def resume_checks():
     return checks
 
 
+def remove_tree(path):
+    """Delete a directory, including the read-only files git writes."""
+    def writable(function, target, _):
+        os.chmod(target, 0o700)
+        function(target)
+
+    if os.path.exists(path):
+        shutil.rmtree(path, onexc=writable)
+
+
+def change_checks():
+    """The change prompt is the design's, and its workspace starts committed."""
+    prompt = read_change_prompt()
+    checks = [("the change prompt is read from the design",
+               prompt.startswith("Add a **spend-threshold** discount")
+               and prompt.endswith("your tests passing."))]
+
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-change-self-test")
+    remove_tree(scratch)
+    build = os.path.join(scratch, "A1")
+    os.makedirs(build)
+    git(build, "init", "-q")
+    with io.open(os.path.join(build, "app.py"), "w",
+                 encoding="utf-8") as handle:
+        handle.write("committed = True\n")
+    git(build, "add", "-A")
+    git(build, "-c", "user.name=efficacy",
+        "-c", "user.email=efficacy@example.invalid",
+        "commit", "-q", "-m", "build")
+    with io.open(os.path.join(build, "draft.py"), "w",
+                 encoding="utf-8") as handle:
+        handle.write("left_uncommitted = True\n")
+    frozen = freeze(build, scratch, "A1")
+
+    # The plant landed: the build trial ended with work it never committed,
+    # which is the state a change task has to take into its starting commit.
+    checks.append(("the build trial left uncommitted work",
+                   frozen["uncommitted"] == ["?? draft.py"]))
+    try:
+        workspace, base = prepare_change_workspace("A", 1, scratch,
+                                                   {"frozen": frozen})
+    except TrialError:
+        workspace, base = None, None
+    checks.append(("the change workspace unpacks under its own name",
+                   workspace == os.path.join(scratch, "change-A1")
+                   and os.path.isfile(os.path.join(workspace, "draft.py"))))
+    checks.append(("its starting state is committed", workspace is not None
+                   and git(workspace, "status", "--porcelain") == ""
+                   and git(workspace, "rev-parse", "HEAD") == base
+                   and base != frozen["head"]))
+    try:
+        prepare_change_workspace("A", 1, scratch, {"frozen": frozen})
+        checks.append(("a change workspace is never reused", False))
+    except TrialError:
+        checks.append(("a change workspace is never reused", True))
+    remove_tree(scratch)
+    return checks
+
+
 def self_test():
-    """Prove the environment, outcome and resume rules before any trial."""
-    checks = environment_checks() + outcome_checks() + resume_checks()
+    """Prove the environment, outcome, resume and change rules before a trial."""
+    checks = (environment_checks() + outcome_checks() + resume_checks()
+              + change_checks())
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     passed = sum(1 for _, ok in checks if ok)
@@ -773,6 +964,10 @@ def parse_args(argv):
     parser.add_argument("--self-test", action="store_true",
                         help="prove the environment, outcome and resume "
                              "rules; run no trial")
+    parser.add_argument("--task", choices=("build", "change"),
+                        default="build",
+                        help="run the build trials, or the change task on "
+                             "each scorable build trial")
     parser.add_argument("--arms", default="ABC",
                         help="which arms to run, as letters (default ABC)")
     parser.add_argument("--k", type=int, default=3,
@@ -834,6 +1029,17 @@ def main(argv):
         print("refused: %s" % error)
         return 2
 
+    # The change task needs its prompt and its build trials before anything
+    # runs, so a design or a run root that cannot supply them refuses here.
+    builds, prompt = {}, PROMPT
+    if options.task == "change":
+        try:
+            prompt = read_change_prompt()
+            builds = scorable_trials(options.root, task="build")
+        except TrialError as error:
+            print("refused: %s" % error)
+            return 2
+
     # One call before the first trial, because the CLI answers an
     # unauthenticated run with a result object rather than a crash: without
     # this, a whole run completes having never reached a model. A dry run
@@ -854,10 +1060,17 @@ def main(argv):
     records = []
 
     def runner(arm, trial):
-        return run_trial(arm, trial, options.root, home, options)
+        if options.task == "build":
+            return run_trial(arm, trial, options.root, home, options)
+        name = "%s%d" % (arm, trial)
+        if name not in builds:
+            raise TrialError("build trial %s has no scorable outcome, so it "
+                             "has no change task" % name)
+        return run_change_trial(arm, trial, options.root, home, options,
+                                builds[name])
 
     def write():
-        write_run(run_file, started_at, records)
+        write_run(run_file, started_at, records, options.task, prompt)
 
     def probe():
         return assert_authenticated(home, agent_environment,

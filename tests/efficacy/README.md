@@ -116,6 +116,29 @@ given trial in the interleaved order:
 py tests/efficacy/harness.py --root <the run root> --from B2 --resume-after-block
 ```
 
+## The change task
+
+```bash
+py tests/efficacy/harness.py --root <the run root> --task change --dry-run
+py tests/efficacy/harness.py --root <the run root> --task change --resume-after-block
+py tests/efficacy/score.py --root <the run root> --task change
+```
+
+The change task measures how far each design has to be disturbed to take a
+change it was not built for. Its prompt is read from the design, never
+restated here. Each change task starts from a copy of its build trial's
+frozen workspace and runs under the same isolation, bounds and outcome
+rules, in the same order. The copy's state is committed first, so churn
+counts only what the agent changed. Scoring re-runs the build suite, runs
+the change suite and counts the files and lines changed against that commit,
+and writes to `scores-change/`, apart from the build scores.
+
+Both tasks hand the CLI its prompt on standard input rather than as an
+argument. On Windows the CLI is a `.CMD` shim, and `cmd.exe` expands a
+`%NAME%` pair inside an argument: sent through one, `%PATH%` arrives as the
+value of `PATH`. A prompt passed as an argument is safe only while it
+happens to hold no such pair.
+
 ## Scoring, judging and reporting
 
 ```bash
