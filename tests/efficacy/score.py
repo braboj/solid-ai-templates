@@ -34,6 +34,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
 import probes  # noqa: E402
+from harness import (SCORABLE, TrialError, remove_tree,  # noqa: E402
+                     scorable_trials)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REQUIREMENTS = os.path.join(HERE, "scoring-requirements.txt")
@@ -795,8 +797,7 @@ def score_trial(record, options, suite, lock):
     # could move a version out from under it.
     suite_requirements = os.path.join(suite["path"], "requirements.txt")
     pip(venv, "install", "-r", suite_requirements)
-    scores["hidden_suite"] = run_hidden_suite(venv, suite, workspace,
-                                             options.suite)
+    scores["hidden_suite"] = run_hidden_suite(venv, suite, workspace, "build")
 
     scores["battery"] = install_battery(venv, lock)
     if scores["battery"]["missing"]:
@@ -828,34 +829,82 @@ def score_trial(record, options, suite, lock):
     return scores
 
 
-# The endings a trial is scored on. A blocked trial was voided by the harness
-# and its re-run carries the score; a refused one never started.
-SCORABLE = ("completed", "budget", "timeout")
+# What churn does not count: environments, caches, build output and the
+# application's database. Each changes when the agent runs the code rather
+# than when it changes the design.
+CHURN_EXCLUDED = ("venv", ".venv", "__pycache__", "node_modules",
+                  ".pytest_cache", ".ruff_cache", ".mypy_cache", "build",
+                  "dist", "*.egg-info", "*.sqlite", "*.sqlite3", "*.db")
 
 
-def scorable_trials(root, run=None):
-    """Every trial the run records offer for scoring, by name."""
-    files = ([run] if run else
-             sorted(glob.glob(os.path.join(root, "run-*.json"))))
-    if not files:
-        raise ScoreError("no run record in %s; the harness writes one" % root)
-    found, sources = {}, {}
-    for file in files:
-        with io.open(file, encoding="utf-8") as handle:
-            records = json.load(handle).get("trials", [])
-        for record in records:
-            if record.get("outcome") not in SCORABLE:
-                continue
-            name = "%s%s" % (record.get("arm"), record.get("trial"))
+def churn(workspace, base):
+    """Files and lines the change task touched, against its starting commit."""
 
-            # Two records offering one trial means two workspaces for one
-            # slot. Picking either would be a choice made after the fact.
-            if name in found:
-                raise ScoreError("%s is offered for scoring by both %s and %s"
-                                 % (name, sources[name], file))
-            found[name] = record
-            sources[name] = file
-    return found
+    # Intent-to-add first, so a file the agent created and never staged is
+    # counted: a diff against the base commit sees only what git tracks.
+    staged = run(["git", "-C", workspace, "add", "--all", "--intent-to-add"],
+                 timeout=120)
+    excluded = [":(exclude,glob)**/%s" % pattern for pattern in CHURN_EXCLUDED]
+    excluded += [":(exclude,glob)**/%s/**" % pattern
+                 for pattern in CHURN_EXCLUDED if "*" not in pattern]
+    outcome = run(["git", "-C", workspace, "diff", "--numstat", base, "--",
+                   "."] + excluded, timeout=120)
+    for step in (staged, outcome):
+        if step["failed"] or step["status"] != 0:
+            return absent("git could not diff the change against %s: %s"
+                          % (base, (step["failed"] or step["stderr"])[:300]),
+                          invocation=step["argv"])
+
+    files, added, removed, binary = 0, 0, 0, 0
+    for line in outcome["stdout"].splitlines():
+        parts = line.split("\t")
+        if len(parts) < 3:
+            continue
+        files += 1
+        if parts[0] == "-":
+            binary += 1
+            continue
+        added += int(parts[0])
+        removed += int(parts[1])
+    return measured({"files": files, "added": added, "removed": removed,
+                     "lines": added + removed, "binary_files": binary},
+                    invocation=outcome["argv"])
+
+
+def score_change_trial(record, options, suite):
+    """Score one frozen change task: install, both suites, churn and cost."""
+    name = "%s%d" % (record["arm"], record["trial"])
+    frozen = "change-%s" % name
+
+    # Apart from `scoring/`, whose extracted trees the judge takes for build
+    # trials; a change tree there would be judged as one.
+    scoring = os.path.join(options.root, "scoring-change", name)
+    os.makedirs(scoring, exist_ok=True)
+    workspace = extract((record.get("frozen") or {}).get("tarball"),
+                        os.path.join(scoring, "tree"), frozen)
+    venv = create_venv(os.path.join(scoring, "venv"))
+
+    scores = {"arm": record["arm"], "trial": record["trial"], "name": name,
+              "task": "change", "workspace": workspace,
+              "base": record.get("base"), "model": record.get("model"),
+              "suite_revision": suite["revision"],
+              "scored_at": datetime.datetime.now().isoformat(
+                  timespec="seconds")}
+    scores["install"] = install_trial(venv, workspace)
+
+    # The build suite re-runs unchanged beside the change suite: a change that
+    # passes its own checks by breaking the application has not scored well.
+    pip(venv, "install", "-r", os.path.join(suite["path"], "requirements.txt"))
+    scores["build_suite"] = run_hidden_suite(venv, suite, workspace, "build")
+    scores["change_suite"] = run_hidden_suite(venv, suite, workspace,
+                                              "change")
+    scores["churn"] = (churn(workspace, record["base"]) if record.get("base")
+                       else absent("the change record names no starting "
+                                   "commit"))
+    scores["cost"] = cost(record)
+    scores["flagged"] = [key for key, value in scores.items()
+                         if isinstance(value, dict) and value.get("missing")]
+    return scores
 
 
 PLANTED_MODULE = '''"""A plausible module, so the battery has something to read."""
@@ -913,13 +962,57 @@ def run_record_checks(scratch):
               ("a blocked trial yields to its re-run",
                offered["A1"]["outcome"] == "completed")]
 
-    plant("run-2.json", [{"arm": "A", "trial": 1, "outcome": "completed"}])
+    plant("run-2.json", [{"arm": "A", "trial": 1, "outcome": "completed",
+                          "task": "change"}])
+    checks.append(("a change task is offered only as a change task",
+                   sorted(scorable_trials(scratch, task="change")) == ["A1"]
+                   and sorted(scorable_trials(scratch)) == ["A1", "B1"]))
+
+    plant("run-3.json", [{"arm": "A", "trial": 1, "outcome": "completed"}])
     try:
         scorable_trials(scratch)
         checks.append(("a trial two records offer refuses", False))
-    except ScoreError:
+    except TrialError:
         checks.append(("a trial two records offer refuses", True))
     return checks
+
+
+def churn_checks(scratch):
+    """Churn counts an edit and a new file, and never an environment."""
+    repo = os.path.join(scratch, "churn")
+    os.makedirs(repo)
+
+    def git_in(*args):
+        return run(["git", "-C", repo] + list(args), timeout=120)
+
+    def plant(name, text):
+        path = os.path.join(repo, name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with io.open(path, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(text)
+
+    git_in("init", "-q")
+    plant("rules.py", "one\ntwo\n")
+    git_in("add", "-A")
+    git_in("-c", "user.name=efficacy", "-c",
+           "user.email=efficacy@example.invalid", "commit", "-q", "-m",
+           "base")
+    base = git_in("rev-parse", "HEAD")["stdout"].strip()
+    plant("rules.py", "one\nthree\n")
+    plant("threshold.py", "new\nrule\n")
+    plant(os.path.join(".venv", "lib", "site.py"), "installed\n")
+    plant("tariff.sqlite", "rows\n")
+
+    # The plant landed: an edit, a new file and two paths churn must not
+    # count are all on disk before the count is read.
+    landed = bool(base) and all(
+        os.path.isfile(os.path.join(repo, name))
+        for name in ("threshold.py", os.path.join(".venv", "lib", "site.py"),
+                     "tariff.sqlite"))
+    counted = churn(repo, base).get("value") or {}
+    return [("the churn plant landed", landed),
+            ("churn counts an edit and a new file, not an environment",
+             counted.get("files") == 2 and counted.get("lines") == 4)]
 
 
 def self_test():
@@ -939,10 +1032,9 @@ def self_test():
     clean trial it never read.
     """
     scratch = os.path.join(os.environ.get("TEMP", "."), "efficacy-self-test")
-    if os.path.exists(scratch):
-        shutil.rmtree(scratch)
+    remove_tree(scratch)
     os.makedirs(scratch)
-    checks = run_record_checks(scratch)
+    checks = run_record_checks(scratch) + churn_checks(scratch)
     venv = create_venv(os.path.join(scratch, "venv"))
 
     empty = os.path.join(scratch, "empty")
@@ -982,7 +1074,7 @@ def self_test():
 
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
-    shutil.rmtree(scratch, ignore_errors=True)
+    remove_tree(scratch)
     passed = sum(1 for _, ok in checks if ok)
     lib.print_verdict(passed == len(checks),
                       "%d/%d self-test checks passed" % (passed, len(checks)))
@@ -998,9 +1090,10 @@ def parse_args(argv):
                              "run record in the root")
     parser.add_argument("--trial", action="append", default=[],
                         help="score only this trial, as A1; repeatable")
-    parser.add_argument("--suite", choices=("build", "change"),
+    parser.add_argument("--task", choices=("build", "change"),
                         default="build",
-                        help="which acceptance suite the grader runs")
+                        help="score the build trials, or the change tasks "
+                             "run on them")
     parser.add_argument("--no-web", dest="web", action="store_false",
                         help="skip the web-quality probes, which need a "
                              "browser and a Java runtime")
@@ -1008,6 +1101,23 @@ def parse_args(argv):
                         help="prove the missing-vs-zero rule fires; score "
                              "nothing")
     return parser.parse_args(argv)
+
+
+def summary(scores):
+    """One line on what a scored trial came to."""
+    def rate(key):
+        value = (scores.get(key) or {}).get("value")
+        return "not measured" if value is None else "%.1f%%" % (100 * value)
+
+    flagged = len(scores.get("flagged") or [])
+    if scores.get("task") == "change":
+        changed = (scores.get("churn") or {}).get("value") or {}
+        return ("change suite %s, build suite %s, %s file(s) and %s line(s) "
+                "changed, %d metric(s) flagged"
+                % (rate("change_suite"), rate("build_suite"),
+                   changed.get("files", "?"), changed.get("lines", "?"),
+                   flagged))
+    return "suite %s, %d metric(s) flagged" % (rate("hidden_suite"), flagged)
 
 
 def main(argv):
@@ -1019,17 +1129,21 @@ def main(argv):
         return 2
 
     try:
-        offered = scorable_trials(options.root, options.run)
+        offered = scorable_trials(options.root, options.run, options.task)
         if not offered:
-            raise ScoreError("no trial in the run records ended %s"
-                             % " or ".join(SCORABLE))
+            raise ScoreError("no %s trial in the run records ended %s"
+                             % (options.task, " or ".join(SCORABLE)))
         suite = clone_suite(os.path.join(options.root, "hidden-suite"))
-    except ScoreError as error:
+    except (ScoreError, TrialError) as error:
         print("refused: %s" % error)
         lib.print_verdict(False, "0 scored, 1 refused")
         return 1
 
+    # Change scores go apart from the build scores: both are keyed by the
+    # trial, and one must never overwrite the other.
     lock = os.path.join(options.root, "tool-lock.txt")
+    target = os.path.join(options.root, "scores" if options.task == "build"
+                          else "scores-change")
     wanted = set(options.trial)
     scored, refused = [], 0
     for name in sorted(wanted - set(offered)):
@@ -1038,22 +1152,21 @@ def main(argv):
     for name, record in sorted(offered.items()):
         if wanted and name not in wanted:
             continue
-        print("%s  scoring" % name)
+        print("%s  scoring the %s task" % (name, options.task))
         try:
-            scores = score_trial(record, options, suite, lock)
+            if options.task == "change":
+                scores = score_change_trial(record, options, suite)
+            else:
+                scores = score_trial(record, options, suite, lock)
         except ScoreError as error:
             print("  refused: %s" % error)
             refused += 1
             continue
-        target = os.path.join(options.root, "scores")
         os.makedirs(target, exist_ok=True)
         path = os.path.join(target, "%s.json" % name)
         with io.open(path, "w", encoding="utf-8") as handle:
             json.dump(scores, handle, indent=2, sort_keys=True)
-        hidden = scores["hidden_suite"]
-        print("  suite %s, %d metric(s) flagged"
-              % ("%.1f%%" % (100 * hidden["value"]) if hidden["value"]
-                 is not None else "not measured", len(scores["flagged"])))
+        print("  %s" % summary(scores))
         scored.append(name)
 
     lib.print_verdict(refused == 0 and bool(scored),

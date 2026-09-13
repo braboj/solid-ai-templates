@@ -46,14 +46,20 @@ UP, DOWN, NEUTRAL = "up", "down", "neutral"
 # The primary dimensions the report leads with, owner-declared.
 PRIMARY = ("judge_design", "judge_readability", "judge_maintainability")
 
+# How a margin is measured: in the metric's own units, or as a share of the
+# baseline arm's mean, so that it scales with the metric.
+ABSOLUTE, RELATIVE = "absolute", "relative"
+
 # The non-inferiority margins, for the claim that a metric was preserved
 # rather than merely not shown to differ.
 MARGINS = {
-    "task_success": ("2 pp", 0.02),
-    "adherence": ("5 pp", 0.05),
-    "judge_design": ("0.3 points", 0.3),
-    "judge_readability": ("0.3 points", 0.3),
-    "judge_maintainability": ("0.3 points", 0.3),
+    "task_success": ("2 pp", 0.02, ABSOLUTE),
+    "adherence": ("5 pp", 0.05, ABSOLUTE),
+    "judge_design": ("0.3 points", 0.3, ABSOLUTE),
+    "judge_readability": ("0.3 points", 0.3, ABSOLUTE),
+    "judge_maintainability": ("0.3 points", 0.3, ABSOLUTE),
+    "churn_files": ("15 % relative", 0.15, RELATIVE),
+    "churn_lines": ("15 % relative", 0.15, RELATIVE),
 }
 
 
@@ -235,7 +241,37 @@ METRICS = (
      lambda t: metric_value(t, "scope", "tracked_files")),
     ("unasked_artifacts", "Artifacts nobody asked for", DOWN,
      lambda t: metric_value(t, "scope", "unasked_artifacts")),
+
+    ("change_success", "Change task, acceptance pass rate", UP,
+     lambda t: change_success(t)),
+    ("change_regression", "Change task, build suite pass rate after it", UP,
+     lambda t: change_value(t, "build_suite")),
+    ("churn_files", "Change task, files touched", DOWN,
+     lambda t: change_value(t, "churn", "files")),
+    ("churn_lines", "Change task, lines changed", DOWN,
+     lambda t: change_value(t, "churn", "lines")),
+    ("change_cost_usd", "Change task, cost, USD", DOWN,
+     lambda t: change_value(t, "cost", "cost_usd")),
 )
+
+# The change task's rows, in the order the report prints them.
+CHANGE = ("change_success", "change_regression", "churn_files", "churn_lines",
+          "change_cost_usd")
+
+
+def change_value(trial, *keys):
+    """A change-task metric's value, or None where it was not measured."""
+    return metric_value({"scores": trial.get("change") or {}}, *keys)
+
+
+def change_success(trial):
+    """The change suite's pass rate, and zero where the changed tree broke."""
+    rate = change_value(trial, "change_suite")
+    if rate is not None:
+        return rate
+    if change_value(trial, "install") is False:
+        return 0.0
+    return None
 
 
 def bca_interval(differences, seed):
@@ -312,7 +348,7 @@ def verdict(interval, direction):
     return "better" if improving else "worse"
 
 
-def non_inferior(key, interval, direction):
+def non_inferior(key, interval, direction, baseline_mean=None):
     """Whether a metric can be claimed preserved, not merely not-shown-worse.
 
     An interval containing zero is absence of evidence. The claim that nothing
@@ -321,10 +357,17 @@ def non_inferior(key, interval, direction):
     """
     if key not in MARGINS:
         return None
-    label, margin = MARGINS[key]
+    label, margin, kind = MARGINS[key]
     low, high = interval.get("low"), interval.get("high")
     if low is None or high is None:
         return None
+
+    # A relative margin is a share of the baseline arm's mean. Without a
+    # baseline, or against a zero one, there is nothing to take a share of.
+    if kind == RELATIVE:
+        if not baseline_mean:
+            return None
+        margin = margin * abs(baseline_mean)
     degradation = -low if direction == UP else high
     return {"margin": label, "within": degradation <= margin}
 
@@ -335,7 +378,8 @@ def load(root):
     for file in sorted(glob.glob(os.path.join(root, "scores", "*.json"))):
         with io.open(file, encoding="utf-8") as handle:
             scores = json.load(handle)
-        trials[scores["name"]] = {"scores": scores, "judge": None}
+        trials[scores["name"]] = {"scores": scores, "judge": None,
+                                  "change": None}
 
     for file in sorted(glob.glob(os.path.join(root, "judge", "T*.json"))):
         with io.open(file, encoding="utf-8") as handle:
@@ -343,6 +387,15 @@ def load(root):
         name = judging.get("trial")
         if name in trials:
             trials[name]["judge"] = judging
+
+    # A change task sits beside its own build trial, so one whose build trial
+    # was never scored has nothing to pair with and is left out.
+    for file in sorted(glob.glob(os.path.join(root, "scores-change",
+                                              "*.json"))):
+        with io.open(file, encoding="utf-8") as handle:
+            change = json.load(handle)
+        if change.get("name") in trials:
+            trials[change["name"]]["change"] = change
     return trials
 
 
@@ -391,12 +444,15 @@ def contrasts(table, seed):
                     "verdict": "not computed", "non_inferior": None}
                 continue
             interval = bca_interval(pairs, seed)
+            observed = [value for value in right.values() if value is not None]
             per_contrast[label] = {
                 "pairs": pairs,
                 "mean": round(statistics.fmean(pairs), 4),
                 "interval": interval,
                 "verdict": verdict(interval, entry["direction"]),
-                "non_inferior": non_inferior(key, interval, entry["direction"]),
+                "non_inferior": non_inferior(
+                    key, interval, entry["direction"],
+                    statistics.fmean(observed) if observed else None),
             }
         results[key] = per_contrast
     return results
@@ -471,8 +527,13 @@ def lost_trials(root):
         with io.open(file, encoding="utf-8") as handle:
             sequence.extend(json.load(handle).get("trials", []))
 
+    # A change task shares its build trial's name, so the task tells them
+    # apart; a record written before tasks existed is a build trial.
     def name_of(record):
-        return "%s%s" % (record.get("arm"), record.get("trial"))
+        name = "%s%s" % (record.get("arm"), record.get("trial"))
+        if record.get("task", "build") == "change":
+            name += " (change task)"
+        return name
 
     lost = []
     for index, record in enumerate(sequence):
@@ -565,10 +626,19 @@ def write_report(root, trials, table, results, seed, agreement,
                                  "cost_usd")))
     lines.append("")
 
+    lines.append("## The change task")
+    lines.append("")
+    lines.append("How far each design had to be disturbed to take a change it "
+                 "was not built for, read beside whether the change works and "
+                 "whether the build still passes after it.")
+    lines.append("")
+    lines.extend(contrast_table(table, results, CHANGE))
+    lines.append("")
+
     lines.append("## Every other metric")
     lines.append("")
     rest = [key for key, _, _, _ in METRICS
-            if key not in PRIMARY and key not in
+            if key not in PRIMARY and key not in CHANGE and key not in
             ("task_success", "install", "adherence", "output_tokens", "turns",
              "wall_seconds", "cost_usd")]
     lines.extend(contrast_table(table, results, rest))
@@ -758,12 +828,27 @@ WORKED = (
 
 
 def self_test(seed):
-    """Check the verdict rule against the design's worked cases."""
+    """Check the verdict rule and the relative margin against worked cases."""
     checks = []
     for label, differences, direction, expected in WORKED:
         interval = bca_interval(list(differences), seed)
         got = verdict(interval, direction)
         checks.append(("%s -> %s" % (label, expected), got == expected, got))
+
+    # A relative margin is a share of the baseline arm's mean: 15 % of a
+    # baseline of 100 lines admits 10 lines more churn and refuses 20.
+    margins = (
+        ("10 more lines on 100 is preserved", {"low": -5.0, "high": 10.0},
+         100.0, True),
+        ("20 more lines on 100 is not", {"low": 5.0, "high": 20.0}, 100.0,
+         False),
+        ("no baseline makes no relative claim", {"low": -5.0, "high": 10.0},
+         None, None),
+    )
+    for label, interval, baseline, expected in margins:
+        answer = non_inferior("churn_lines", interval, DOWN, baseline)
+        got = None if answer is None else answer["within"]
+        checks.append((label, got == expected, got))
     for label, ok, got in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED, got %r" % got))
     passed = sum(1 for _, ok, _ in checks if ok)
