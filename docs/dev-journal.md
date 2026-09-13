@@ -7786,3 +7786,50 @@ measurement method, benchmark input, or this repository's own tooling.
   by the generator from the one-hierarchy rule and the package name, which
   is why the specification chose it too — a piece of evidence for what the
   benchmark is about to measure, arriving before any trial
+
+## 2026-09-13 — The benchmark's scorer, judge and report, and what their controls found
+
+**Tool:** Claude Code (Opus 5 1M)
+
+**Key changes:**
+- The efficacy benchmark can now score, judge and aggregate the trials the
+  harness runs. `score.py` takes a frozen trial to a JSON score, `probes.py`
+  holds the structural and web-quality probes that must run inside the
+  trial's interpreter, `judge.py` builds a blind bundle and runs the judge
+  through `codex exec` with the rubric as a JSON Schema, and `report.py`
+  computes the paired contrasts, BCa intervals and verdict vector (#1723)
+- The harness runs its authentication preflight before the first trial.
+  The guard existed for exactly that and was called only by the arm B
+  generator
+- Decided with the owner: run the baseline now, before v3.0 moves any
+  template, and run one trial attended before the other seventeen
+
+**Pull requests merged:** 1 — #1723.
+
+**Issues closed:** none. #1184 stays open because no trial has run, and
+carries a progress comment naming the next step.
+
+**Issues filed:** none.
+
+**ADRs:** none owed. Benchmark tooling is not observable by a consuming
+project.
+
+**Gaps flagged:** four battery command lines were written without running
+their tools, and the two new self tests are not in CI.
+
+**Lessons:**
+- The scorer's self-test passed on its first stage and proved almost
+  nothing: against an empty tree every probe returned on its guard clause.
+  Planting a real module in an environment with no tools found three probes
+  scoring a clean zero for a tree nothing scanned, because an empty stdout
+  parsed as JSON is an empty finding list. Reverting the fix turned exactly
+  those three red, which is what made the stage a control
+- A leak scan built over the masker's own file filter shares its blind spot
+  exactly. Both skipped unrecognised suffixes, so a marker in a `.rst` file
+  survived and the scan called the bundle blind. The scan has to be broader
+  than the thing it checks
+- A blinding marker has to be implausible as an identifier. `candidate` was
+  on the list; masking it would have rewritten real code in whichever arm
+  used the word, so blinding would have changed what was judged
+- The project's own comment-layout rule caught a comment block in the new
+  judge with code directly above it. Conformance, not smoke, reads that
