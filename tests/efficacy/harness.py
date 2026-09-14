@@ -11,13 +11,17 @@ hidden suite and the graders read them afterwards.
 
 import argparse
 import datetime
+import glob
 import io
 import json
 import os
+import re
 import shutil
+import signal
 import subprocess
 import sys
 import tarfile
+import tempfile
 import time
 
 # This module sits a level below the other runners, so the shared library
@@ -58,8 +62,15 @@ ARMS = {
 }
 
 # Web access is the confound the design names: an arm that reads the
-# templates online is not the arm being measured.
+# templates online is not the arm being measured. The two web tools are
+# disallowed; the shell keeps its network, because every trial installs
+# packages, so a fetch through it shows only in the transcript.
 DISALLOWED_TOOLS = ["WebSearch", "WebFetch"]
+
+# What a tool call names when a trial reaches for what no arm may read: this
+# repository, which arm B's generated file names in its footer, and the
+# private hidden suite.
+REACH_TERMS = ("solid-ai-templates", "tariff-hidden-suite")
 
 # No user, project or local settings, and no MCP server the harness did not
 # pass -- which is none. Both flags are isolation, not preference.
@@ -298,8 +309,27 @@ def interpreter_directories(environ):
     return found
 
 
-def agent_environment(home, environ=None):
-    """The environment a trial runs under: this machine's, minus the caller's."""
+# A credential helper the machine configures answers any Git that asks, and
+# the private hidden suite is one authenticated clone away. An empty helper,
+# set the way `git -c` sets one, clears every helper configured before it;
+# a Git that cannot prompt then fails rather than waits.
+GIT_WITHOUT_CREDENTIALS = {
+    "GIT_CONFIG_COUNT": "1",
+    "GIT_CONFIG_KEY_0": "credential.helper",
+    "GIT_CONFIG_VALUE_0": "",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+}
+
+# The names a temporary directory is read from, on Windows and elsewhere.
+TEMP_NAMES = ("TEMP", "TMP", "TMPDIR")
+
+
+def agent_environment(home, environ=None, temp=None):
+    """The environment a trial runs under: this machine's, minus the caller's.
+
+    `temp`, where given, is the trial's own temporary directory.
+    """
     source = dict(os.environ if environ is None else environ)
     dropped = set(inherited_names(source))
     stale = set(interpreter_directories(source))
@@ -312,6 +342,9 @@ def agent_environment(home, environ=None):
     env["HOME"] = home
     env["USERPROFILE"] = home
     env["XDG_CONFIG_HOME"] = os.path.join(home, ".config")
+    env.update(GIT_WITHOUT_CREDENTIALS)
+    if temp:
+        env.update((name, temp) for name in TEMP_NAMES)
     return env
 
 
@@ -394,6 +427,198 @@ def void(root, workspace, frozen, name):
     except OSError as error:
         raise TrialError("could not void %s: %s" % (name, error))
     return moved
+
+
+def transcript_files(home, workspace):
+    """The transcripts the CLI wrote for a session run in `workspace`.
+
+    The CLI files a session under its working directory with every character
+    other than a letter or digit replaced by a hyphen. A workspace is never
+    reused, so every file there is this trial's.
+    """
+    folder = re.sub(r"[^A-Za-z0-9]", "-", os.path.abspath(workspace))
+    return sorted(glob.glob(os.path.join(home, ".claude", "projects", folder,
+                                         "*.jsonl")))
+
+
+def tool_calls(files):
+    """Every tool call in the transcripts, as (tool, input as JSON text)."""
+    calls = []
+    for file in files:
+        with io.open(file, encoding="utf-8", errors="replace") as handle:
+            for line in handle:
+                try:
+                    entry = json.loads(line)
+                except ValueError:
+                    continue
+                if not isinstance(entry, dict):
+                    continue
+                content = (entry.get("message") or {}).get("content")
+                if not isinstance(content, list):
+                    continue
+                calls.extend(
+                    (block.get("name"),
+                     json.dumps(block.get("input"), ensure_ascii=False))
+                    for block in content
+                    if isinstance(block, dict)
+                    and block.get("type") == "tool_use")
+    return calls
+
+
+def read_transcripts(home, workspace):
+    """A trial's transcript files and every tool call in them."""
+    files = transcript_files(home, workspace)
+    return files, tool_calls(files)
+
+
+def reach(files, calls):
+    """The tool calls naming this repository or the hidden suite.
+
+    Only what the agent sent is read, never what came back: arm B's own file
+    names this repository, and reading it is not reaching for it. With no
+    transcript the hits are None rather than empty, because nothing scanned
+    and nothing found are opposite facts.
+    """
+    if not files:
+        return {"transcripts": [], "hits": None}
+    return {"transcripts": files,
+            "hits": [{"tool": tool, "term": term, "call": text[:300]}
+                     for tool, text in calls
+                     for term in REACH_TERMS if term in text.lower()]}
+
+
+def path_pattern(paths):
+    """A pattern matching any of `paths` the way a command line spells it.
+
+    Lowercased with forward slashes, in its Windows form and its Git Bash
+    `/c/` form, and ending where the path does, so `A1` matches neither `A10`
+    nor `A1.tar`.
+    """
+    forms = set()
+    for path in paths:
+        full = os.path.abspath(path).replace("\\", "/").lower().rstrip("/")
+        forms.add(full)
+        if len(full) > 1 and full[1] == ":":
+            forms.add("/%s%s" % (full[0], full[2:]))
+    return re.compile("(?:%s)(?=$|[/\\s\"';,])"
+                      % "|".join(re.escape(form) for form in sorted(forms)))
+
+
+def process_table():
+    """Every running process, as (pid, executable, command line)."""
+    if os.name == "nt":
+        script = ("[Console]::OutputEncoding = [Text.Encoding]::UTF8; "
+                  "Get-CimInstance Win32_Process | Select-Object ProcessId, "
+                  "ExecutablePath, CommandLine | ConvertTo-Json -Compress")
+        proc = subprocess.run(["powershell", "-NoProfile", "-Command", script],
+                              capture_output=True, text=True, encoding="utf-8",
+                              errors="replace", timeout=120)
+        rows = json.loads(proc.stdout or "[]")
+        if isinstance(rows, dict):
+            rows = [rows]
+        return [(row["ProcessId"], row.get("ExecutablePath") or "",
+                 row.get("CommandLine") or "") for row in rows]
+    proc = subprocess.run(["ps", "-eo", "pid=,args="], capture_output=True,
+                          text=True, encoding="utf-8", errors="replace",
+                          timeout=120)
+    table = []
+    for line in proc.stdout.splitlines():
+        pid, _, command = line.strip().partition(" ")
+        if pid.isdigit():
+            table.append((int(pid), "", command))
+    return table
+
+
+def stop_processes(paths, table=None):
+    """Stop every process running from one of `paths`; return what stopped.
+
+    A server the agent started in the background outlives the CLI, holds its
+    files open, and answers on a port the next trial may choose.
+    """
+    pattern = path_pattern(paths)
+    spared = {os.getpid(), os.getppid()}
+    stopped = []
+    for pid, executable, command in (process_table() if table is None
+                                     else table):
+        text = ("%s %s" % (executable, command)).replace("\\", "/").lower()
+        if pid in spared or not pattern.search(text):
+            continue
+
+        # A process the tree kill already took is not an error.
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
+                           capture_output=True, timeout=60)
+        else:
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except OSError:
+                pass
+        stopped.append({"pid": pid, "command": (command or executable)[:300]})
+    return stopped
+
+
+def created_at(path):
+    """When a file or directory was created, or last changed where the
+    platform records no creation time."""
+    stat = os.stat(path)
+    return getattr(stat, "st_birthtime", stat.st_ctime)
+
+
+def shared_leftovers(shared, since, calls):
+    """What a trial left in the machine's temporary directory, by name.
+
+    Git Bash maps `/tmp` to that directory whatever `TEMP` says, so a trial
+    writing to `/tmp` by name bypasses its own. An entry counts only when it
+    appeared after the trial started and a tool call names it, because other
+    programs write there too.
+    """
+    named = "\n".join(text.lower() for _, text in calls)
+    found = []
+    for entry in sorted(os.listdir(shared)) if os.path.isdir(shared) else []:
+        try:
+            if created_at(os.path.join(shared, entry)) < since:
+                continue
+        except OSError:
+            continue
+        if re.search(r"(?<![\w.-])%s(?![\w.-])" % re.escape(entry.lower()),
+                     named):
+            found.append(entry)
+    return found
+
+
+def gather_leftovers(shared, entries, target):
+    """Move the entries from `shared` under `target`; return where each went."""
+    moved = []
+    for entry in entries:
+        source = os.path.join(shared, entry)
+        destination = os.path.join(target, entry)
+        try:
+            os.makedirs(target, exist_ok=True)
+            shutil.move(source, destination)
+            moved.append({"from": source, "to": destination})
+        except OSError as error:
+            moved.append({"from": source, "to": None, "error": str(error)})
+    return moved
+
+
+def contain(workspace, temp, home, shared, since):
+    """Close a finished trial off from the next one; say what it left.
+
+    Processes are stopped before anything moves, because a running process
+    holds its files open.
+    """
+    files, calls = read_transcripts(home, workspace)
+    leftovers = shared_leftovers(shared, since, calls)
+    owned = [workspace, temp, home] + [os.path.join(shared, entry)
+                                       for entry in leftovers]
+    result = {"reach": reach(files, calls), "shared_temp_dir": shared}
+    try:
+        result["stopped"] = stop_processes(owned)
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        result["stopped"], result["stop_error"] = None, str(error)
+    result["shared_temp"] = gather_leftovers(shared, leftovers,
+                                             os.path.join(temp, "shared"))
+    return result
 
 
 def quoted_passage(path, heading):
@@ -549,13 +774,22 @@ def run_agent(workspace, name, prompt, record, root, home, options):
         record["outcome"] = "dry-run"
         return record
 
+    # The trial's own temporary directory, apart from the machine's, which
+    # every trial shares. Stamped, because a voided trial re-runs under its
+    # own name.
+    temp = os.path.join(root, "tmp", "%s-%s" % (
+        name, datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")))
+    os.makedirs(temp)
+    record["temp"] = temp
+    shared = tempfile.gettempdir()
+    since = time.time()
     started = time.monotonic()
 
     # On standard input, not as an argument: on Windows the CLI is a `.CMD`
     # shim, and `cmd.exe` expands a `%NAME%` pair inside an argument.
     try:
         proc = subprocess.run(argv, input=prompt, cwd=workspace,
-                              env=agent_environment(home),
+                              env=agent_environment(home, temp=temp),
                               capture_output=True, text=True,
                               encoding="utf-8", timeout=options.timeout)
         record["exit_status"] = proc.returncode
@@ -572,6 +806,7 @@ def run_agent(workspace, name, prompt, record, root, home, options):
         record["exit_status"] = None
 
     record["elapsed_s"] = round(time.monotonic() - started, 1)
+    record.update(contain(workspace, temp, home, shared, since))
     record["frozen"] = freeze(workspace, root, name)
     if record["outcome"] == "blocked":
         try:
@@ -654,6 +889,13 @@ def run_in_place(arm, trial, runner, wait, records, write):
         records.append(record)
         write()
         print("  %s in %ss" % (record["outcome"], record.get("elapsed_s", 0)))
+        hits = (record.get("reach") or {}).get("hits")
+        if hits:
+            print("  REACHED for %s" % ", ".join(sorted({hit["term"]
+                                                         for hit in hits})))
+        if record.get("stopped"):
+            print("  stopped %d process(es) the trial left running"
+                  % len(record["stopped"]))
         if record["outcome"] != "blocked":
             return True
 
@@ -942,10 +1184,169 @@ def change_checks():
     return checks
 
 
+def credential_checks():
+    """A trial's Git cannot borrow a credential the machine stores."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-credential-self-test")
+    remove_tree(scratch)
+    os.makedirs(scratch)
+    config = os.path.join(scratch, "gitconfig")
+    with io.open(config, "w", encoding="utf-8") as handle:
+        handle.write('[credential]\n\thelper = "!f() { echo username=planted; '
+                     'echo password=planted-secret; }; f"\n')
+
+    # Only the planted helper is configured, so the check neither depends on
+    # nor prompts through whatever helper this machine carries.
+    planted = dict(os.environ, GIT_CONFIG_GLOBAL=config,
+                   GIT_CONFIG_NOSYSTEM="1", GIT_TERMINAL_PROMPT="0")
+
+    def answers(env):
+        proc = subprocess.run(["git", "credential", "fill"],
+                              input="protocol=https\nhost=example.invalid\n\n",
+                              env=env, capture_output=True, text=True,
+                              encoding="utf-8", timeout=60)
+        return "planted-secret" in proc.stdout
+
+    temp = os.path.join(scratch, "tmp")
+    env = agent_environment(os.path.join(scratch, "home"), planted, temp)
+    checks = [("a planted Git helper answers outside a trial",
+               answers(planted)),
+              ("it does not answer inside one", not answers(env)),
+              ("the trial's temp directory is its own",
+               all(env.get(name) == temp for name in TEMP_NAMES))]
+    remove_tree(scratch)
+    return checks
+
+
+def process_checks():
+    """A process running from a trial's directory is stopped, and no other."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-process-self-test")
+    owned = os.path.join(scratch, "A1")
+    neighbour = os.path.join(scratch, "A10")
+    sleeper = [sys.executable, "-c", "import time; time.sleep(120)"]
+    procs = [subprocess.Popen(sleeper + [os.path.join(where, "server.db")])
+             for where in (owned, neighbour)]
+    try:
+
+        # Both run and are listed before the stop, so one that ends was
+        # stopped rather than never started.
+        listed = {pid for pid, _, _ in process_table()}
+        started = all(proc.poll() is None and proc.pid in listed
+                      for proc in procs)
+        stopped = stop_processes([owned])
+        try:
+            procs[0].wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            pass
+        checks = [("two planted processes run and are listed", started),
+                  ("the one running from the trial is stopped",
+                   procs[0].poll() is not None),
+                  ("one whose path only extends it is not",
+                   procs[1].poll() is None),
+                  ("the record lists what was stopped",
+                   any(entry["pid"] == procs[0].pid for entry in stopped))]
+    finally:
+        stop_processes([neighbour])
+        for proc in procs:
+            try:
+                proc.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+    return checks
+
+
+def leftover_checks():
+    """A temp entry a trial made and named moves to its own; nothing else."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-leftover-self-test")
+    remove_tree(scratch)
+    shared = os.path.join(scratch, "shared")
+    before = os.path.join(shared, "old_named")
+    os.makedirs(before)
+
+    # Apart in time on either side of the start, so no plant can share a tick
+    # of the file system's clock with it.
+    time.sleep(0.1)
+    since = time.time()
+    time.sleep(0.1)
+    made = os.path.join(shared, "planted_venv")
+    unnamed = os.path.join(shared, "unnamed.tmp")
+    os.makedirs(made)
+    os.makedirs(unnamed)
+    landed = (created_at(before) < since
+              <= min(created_at(made), created_at(unnamed)))
+
+    calls = [("Bash", json.dumps({"command": "py -m venv /tmp/planted_venv "
+                                             "&& ls /tmp/old_named"}))]
+    found = shared_leftovers(shared, since, calls)
+    target = os.path.join(scratch, "trial", "shared")
+    gather_leftovers(shared, found, target)
+    checks = [("the plants straddle the trial's start", landed),
+              ("an entry the trial made and named is found",
+               found == ["planted_venv"]),
+              ("it moves under the trial's own directory",
+               os.path.isdir(os.path.join(target, "planted_venv"))
+               and not os.path.exists(made)),
+              ("an older or unnamed entry stays",
+               os.path.isdir(before) and os.path.isdir(unnamed))]
+    remove_tree(scratch)
+    return checks
+
+
+# On Windows, the folder name the CLI itself wrote for a real trial, so the
+# check holds the harness to the CLI rather than to the harness's own rule.
+PLANTED_TRANSCRIPT = ((r"C:\efficacy\run-v290\A1", "C--efficacy-run-v290-A1")
+                      if os.name == "nt" else
+                      ("/efficacy/run-v290/A1", "-efficacy-run-v290-A1"))
+
+
+def reach_checks():
+    """A tool call fetching the templates is flagged; reading them is not."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-reach-self-test")
+    remove_tree(scratch)
+    home = os.path.join(scratch, "home")
+    workspace, folder = PLANTED_TRANSCRIPT
+    os.makedirs(os.path.join(home, ".claude", "projects", folder))
+    transcript = os.path.join(home, ".claude", "projects", folder,
+                              "planted.jsonl")
+    fetch = ("curl -sL https://github.com/braboj/solid-ai-templates/archive/"
+             "main.zip -o t.zip")
+    entries = [
+        {"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "name": "Bash",
+             "input": {"command": fetch}}]}},
+        {"type": "user", "message": {"content": [
+            {"type": "tool_result",
+             "content": "<!-- Generated with solid-ai-templates -->"}]}},
+        {"type": "assistant", "message": {"content": [
+            {"type": "text", "text": "The footer names solid-ai-templates."}]}},
+        {"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "name": "Read",
+             "input": {"file_path": "CLAUDE.md"}}]}},
+    ]
+    with io.open(transcript, "w", encoding="utf-8") as handle:
+        handle.writelines(json.dumps(entry) + "\n" for entry in entries)
+
+    files, calls = read_transcripts(home, workspace)
+    hits = reach(files, calls)["hits"] or []
+    unscanned = reach(*read_transcripts(home, workspace + "0"))
+    checks = [("the planted transcript is found", files == [transcript]),
+              ("a fetch of the templates is flagged, and only that",
+               [(hit["tool"], hit["term"]) for hit in hits]
+               == [("Bash", "solid-ai-templates")]),
+              ("no transcript reads as not scanned",
+               unscanned["hits"] is None)]
+    remove_tree(scratch)
+    return checks
+
+
 def self_test():
-    """Prove the environment, outcome, resume and change rules before a trial."""
-    checks = (environment_checks() + outcome_checks() + resume_checks()
-              + change_checks())
+    """Prove the isolation, outcome, resume and change rules before a trial."""
+    checks = (environment_checks() + credential_checks() + outcome_checks()
+              + resume_checks() + change_checks() + process_checks()
+              + leftover_checks() + reach_checks())
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     passed = sum(1 for _, ok in checks if ok)

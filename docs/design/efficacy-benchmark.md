@@ -137,8 +137,12 @@ Per trial (arm × k, K = 3 → 9 trials):
    launching process's: the variables of a calling agent session, its
    editor, an activated interpreter and any credential are removed, and
    the names removed are recorded. Model pinned by exact ID and recorded.
-   `--effort` fixed. Web tools disallowed. The templates repository is not
-   mounted.
+   `--effort` fixed. Web tools disallowed; the shell keeps its network,
+   because every trial installs packages. The templates repository is not
+   mounted, Git's stored credentials are cleared, and each trial has its
+   own temporary directory. When a trial ends, whatever it left running is
+   stopped, and whatever it left in the machine's temporary directory is
+   moved into its own.
 3. One prompt, identical for every arm:
    > Implement the application described in SPEC.md. Done means:
    > `pip install .` succeeds in a clean virtualenv, your own tests pass,
@@ -430,7 +434,7 @@ printed, the primary dimensions first.
 | Confound | Control |
 |---|---|
 | Your global `CLAUDE.md` and hooks reach the "bare" arm | scratch profile (§4.2); asserted by a dry run that prints the loaded context |
-| Agent reads the templates or the web | no mount, web tools disallowed, transcript grepped for URLs |
+| Agent reads the templates, the hidden suite or the web | no mount; web tools disallowed; Git's stored credentials cleared; every transcript scanned for a tool call naming the templates repository or the hidden suite, and the report names each trial with one. The shell's network stays open, because every trial installs packages, so the scan is the control |
 | Model changes between trials | exact ID pinned, trials interleaved |
 | Agent sees the acceptance tests | hidden suite lives outside the workspace; harness copies it in only for scoring |
 | Judge prefers its own family or the longer output | different vendor, blind, shuffled, length reported |
