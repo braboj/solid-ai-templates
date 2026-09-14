@@ -716,8 +716,11 @@ def own_test_coverage(venv, workspace, roots, seen):
     with io.open(coverage, encoding="utf-8") as handle:
         payload = json.load(handle)
     totals = payload.get("totals", {})
-    return measured({"line": totals.get("percent_covered"),
-                     "branch": totals.get("percent_covered_branches"),
+
+    # With branch measurement on, `percent_covered` blends statements and
+    # branches, so each is read from its own key.
+    return measured({"line": totals.get("percent_statements_covered"),
+                     "branch": totals.get("percent_branches_covered"),
                      "tests_passed": outcome["status"] == 0},
                     seen=seen, invocation=outcome["argv"])
 
