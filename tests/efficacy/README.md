@@ -99,12 +99,39 @@ a trial started there would join the session, share one interpreter with
 every other trial, and hold keys it has no use for. All of them are removed
 before the CLI starts, and each trial record lists the names removed.
 
+Three more routes reach past the environment, and each is closed or
+caught:
+
+- **Git's stored credentials.** A helper the machine configures answers
+  any Git that asks, and the hidden suite is one authenticated clone away.
+  A trial's Git runs with every helper cleared.
+- **The temporary directory.** Each trial gets its own under `tmp/` in the
+  run root. Git Bash maps `/tmp` to the machine's temporary directory
+  whatever `TEMP` says, so an entry that appeared there during the trial,
+  and that one of its tool calls names, is moved into the trial's own when
+  it ends.
+- **Processes.** A server started in the background outlives the CLI. When
+  a trial ends, every process running from its workspace, its temporary
+  directory, a moved entry or the scratch home is stopped before the
+  workspace is frozen, and the record lists them.
+
+The shell keeps its network, because every trial installs packages; only
+the two web tools are disallowed. Arm B's file names this repository in its
+footer, so each transcript is scanned for a tool call naming this
+repository or the hidden suite. The trial record carries the hits, and the
+report names every trial with one. A trial with no transcript is recorded
+as not scanned, never as clean.
+
 ```bash
 py tests/efficacy/harness.py --self-test
 ```
 
 The self test plants one variable of each kind in a copy of the environment
-and fails if any survives, or if `PATH` loses an entry it should keep.
+and fails if any survives, or if `PATH` loses an entry it should keep. It
+also plants a Git credential helper, a process running from a trial's
+directory beside one whose name only extends it, temporary entries made
+before, during and without being named, and a transcript that fetches this
+repository, and fails if any of them is handled otherwise.
 
 ### How a trial ends
 

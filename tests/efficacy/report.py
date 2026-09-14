@@ -20,6 +20,7 @@ import io
 import json
 import os
 import random
+import shutil
 import statistics
 import sys
 
@@ -27,6 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
 from generate_arm_b import RECORD as ARM_B_RECORD  # noqa: E402
+from harness import SCORABLE, reach, read_transcripts  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 AUDITS = os.path.join(lib.ROOT, "docs", "audits")
@@ -517,23 +519,81 @@ def generation_record():
         return json.load(handle)
 
 
+def run_records(root):
+    """Every trial record in the root's run records, in time order."""
+    sequence = []
+    for file in sorted(glob.glob(os.path.join(root, "run-*.json"))):
+        with io.open(file, encoding="utf-8") as handle:
+            sequence.extend(json.load(handle).get("trials", []))
+    return sequence
+
+
+def name_of(record):
+    """A trial record's name, marking a change task apart from its build."""
+
+    # A change task shares its build trial's name, so the task tells them
+    # apart; a record written before tasks existed is a build trial.
+    name = "%s%s" % (record.get("arm"), record.get("trial"))
+    if record.get("task", "build") == "change":
+        name += " (change task)"
+    return name
+
+
+def reaches(root):
+    """Every scorable trial's transcript scan, as name and hits.
+
+    A record written before the harness scanned is scanned here, from the
+    transcripts the run root still holds.
+    """
+    home = os.path.join(root, "home")
+    scans = []
+    for record in run_records(root):
+        if record.get("outcome") not in SCORABLE:
+            continue
+        scan = record.get("reach")
+        if scan is None:
+            scan = reach(*read_transcripts(home, record.get("workspace")
+                                           or ""))
+        scans.append({"name": name_of(record), "hits": scan["hits"]})
+    return scans
+
+
+def reach_section(root):
+    """The report's lines naming every trial that reached for the templates
+    or the hidden suite."""
+    lines = ["## Trials that reached for the templates or the hidden suite",
+             "",
+             "The shell keeps its network, so a trial could fetch either one. "
+             "Every transcript is scanned for a tool call naming this "
+             "repository or the hidden suite.",
+             ""]
+    scans = reaches(root)
+    flagged = [scan for scan in scans if scan["hits"]]
+    if flagged:
+        lines.append("| Trial | Tool | Names | Call |")
+        lines.append("|---|---|---|---|")
+        for scan in flagged:
+            for hit in scan["hits"]:
+                call = " ".join(hit["call"].split()).replace("|", "/")
+                lines.append("| %s | %s | `%s` | %s |"
+                             % (scan["name"], hit["tool"], hit["term"],
+                                call[:160]))
+    else:
+        lines.append("None: no scanned transcript names either.")
+    unscanned = [scan["name"] for scan in scans if scan["hits"] is None]
+    if unscanned:
+        lines.append("")
+        lines.append("Not scanned, having no transcript: %s."
+                     % ", ".join(unscanned))
+    return lines
+
+
 def lost_trials(root):
     """Every trial the harness voided, with the outcome of what replaced it."""
 
     # Every run record in time order, because a voided trial is re-run either
     # in its place or by a later run started `--from` it.
-    sequence = []
-    for file in sorted(glob.glob(os.path.join(root, "run-*.json"))):
-        with io.open(file, encoding="utf-8") as handle:
-            sequence.extend(json.load(handle).get("trials", []))
-
-    # A change task shares its build trial's name, so the task tells them
-    # apart; a record written before tasks existed is a build trial.
-    def name_of(record):
-        name = "%s%s" % (record.get("arm"), record.get("trial"))
-        if record.get("task", "build") == "change":
-            name += " (change task)"
-        return name
+    sequence = run_records(root)
 
     lost = []
     for index, record in enumerate(sequence):
@@ -693,6 +753,9 @@ def write_report(root, trials, table, results, seed, agreement,
                             entry["rerun"] or "not re-run"))
     lines.append("")
 
+    lines.extend(reach_section(root))
+    lines.append("")
+
     lines.append("## The judge, and whether anyone checked it")
     lines.append("")
     lines.append("| Trial | Blind id | Evidence lines found in the tree |")
@@ -827,8 +890,43 @@ WORKED = (
 )
 
 
+def reach_checks():
+    """The report names a trial whose scan hit, and no other."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-report-reach-self-test")
+    shutil.rmtree(scratch, ignore_errors=True)
+    os.makedirs(scratch)
+    hit = {"tool": "Bash", "term": "solid-ai-templates",
+           "call": "curl https://github.com/braboj/solid-ai-templates"}
+    planted = [
+        {"arm": "B", "trial": 1, "outcome": "completed",
+         "reach": {"transcripts": ["planted"], "hits": [hit]}},
+        {"arm": "A", "trial": 1, "outcome": "completed",
+         "reach": {"transcripts": ["planted"], "hits": []}},
+        {"arm": "C", "trial": 1, "outcome": "completed",
+         "workspace": os.path.join(scratch, "C1")},
+        {"arm": "A", "trial": 2, "outcome": "blocked",
+         "reach": {"transcripts": ["planted"], "hits": [hit]}},
+    ]
+    with io.open(os.path.join(scratch, "run-planted.json"), "w",
+                 encoding="utf-8") as handle:
+        json.dump({"trials": planted}, handle)
+
+    lines = reach_section(scratch)
+    rows = [line for line in lines
+            if line.startswith("| ") and not line.startswith("| Trial")]
+    checks = [("the planted run record is read",
+               len(run_records(scratch)) == len(planted)),
+              ("a trial whose scan hit is named",
+               [row.split(" | ")[0] for row in rows] == ["| B1"]),
+              ("a trial with no transcript is not scanned",
+               "Not scanned, having no transcript: C1." in lines)]
+    shutil.rmtree(scratch, ignore_errors=True)
+    return checks
+
+
 def self_test(seed):
-    """Check the verdict rule and the relative margin against worked cases."""
+    """Check the verdict rule, the relative margin and the reach section."""
     checks = []
     for label, differences, direction, expected in WORKED:
         interval = bca_interval(list(differences), seed)
@@ -849,11 +947,12 @@ def self_test(seed):
         answer = non_inferior("churn_lines", interval, DOWN, baseline)
         got = None if answer is None else answer["within"]
         checks.append((label, got == expected, got))
+    checks.extend((label, ok, ok) for label, ok in reach_checks())
     for label, ok, got in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED, got %r" % got))
     passed = sum(1 for _, ok, _ in checks if ok)
     lib.print_verdict(passed == len(checks),
-                      "%d/%d verdict-rule checks passed"
+                      "%d/%d self-test checks passed"
                       % (passed, len(checks)))
     return 0 if passed == len(checks) else 1
 
