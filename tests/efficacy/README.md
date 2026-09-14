@@ -265,6 +265,13 @@ JavaScript-disabled response contradicting each other; and it admitted two
 readings of whether a rule that changed nothing counts as applied. Those
 are fixed in `SPEC.md`, before any arm was asked to build against it.
 
+A fourth gap was not found that way, because the suite and the reference
+implementation read it alike. Section 6 put the application factory "in
+the package": both agents in the first two trials read that as anywhere
+inside it, while the suite reads the package root, so every check that
+needs the application errored in both. Section 6 now names
+`tariff.create_app`.
+
 ## What the arms receive
 
 Each arm starts from an empty git repository holding `SPEC.md` and, for
