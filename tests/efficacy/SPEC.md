@@ -191,9 +191,11 @@ A priced line exposes `product`, `quantity`, `gross`, `line_discount`,
 
 ## 6. Web application
 
-A Flask application factory named `create_app` in the package, taking the
-database path and returning the application. Every route below exists with
-the method and path given.
+A Flask application factory, reached from the package root as
+`tariff.create_app`, taking the database path and returning the
+application. Reaching it may load Flask; `import tariff` still may not, as
+section 1 requires. Every route below exists with the method and path
+given.
 
 | Method | Path | Purpose |
 |---|---|---|
