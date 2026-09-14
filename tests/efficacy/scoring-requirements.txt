@@ -6,7 +6,8 @@
 # directory; every later trial installs from that lock, so the ruler is
 # identical across the arms by construction and the report can state it.
 # A hand-written pin would have to be guessed, and a guess that no longer
-# resolves stops a run rather than a trial.
+# resolves stops a run rather than a trial. The lock never carries the
+# scored trial's own package, which the freeze lists beside the tools.
 
 # Static analysis.
 ruff

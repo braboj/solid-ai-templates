@@ -396,6 +396,26 @@ def run_hidden_suite(venv, suite, workspace, which):
                     report=payload)
 
 
+def lock_lines(text):
+    """The lines of a `pip freeze` that belong in the tool lock.
+
+    A freeze lists everything installed, the trial's own package included.
+    Carried into the lock, that line installs the first trial's package into
+    every later trial's environment, over the package being scored. Anything
+    installed from a local path or in editable mode is a trial's, and so is
+    anything under the package's own name; none of it is a ruler.
+    """
+    kept = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        name = stripped.split("==")[0].split(" @ ")[0].strip().lower()
+        if (" @ file:" in stripped or stripped.startswith(("-e ", "--editable"))
+                or name == PACKAGE):
+            continue
+        kept.append(line)
+    return kept
+
+
 def install_battery(venv, lock):
     """Install the rulers, from the run's lock where one exists.
 
@@ -404,7 +424,15 @@ def install_battery(venv, lock):
     arms is what makes the counts comparable at all.
     """
     if os.path.exists(lock):
-        outcome = pip(venv, "install", "-r", lock)
+
+        # A lock frozen before trial packages were left out can still carry
+        # one, so it is filtered on the way in as well as on the way out.
+        with io.open(lock, encoding="utf-8") as handle:
+            rulers = lock_lines(handle.read())
+        filtered = os.path.join(venv, "tool-lock.txt")
+        with io.open(filtered, "w", encoding="utf-8") as handle:
+            handle.write("\n".join(rulers) + "\n")
+        outcome = pip(venv, "install", "-r", filtered)
         source = "the run's frozen lock"
     else:
         outcome = pip(venv, "install", "-r", REQUIREMENTS)
@@ -416,8 +444,40 @@ def install_battery(venv, lock):
     frozen = pip(venv, "freeze")
     if not os.path.exists(lock) and frozen["status"] == 0:
         with io.open(lock, "w", encoding="utf-8") as handle:
-            handle.write(frozen["stdout"])
+            handle.write("\n".join(lock_lines(frozen["stdout"])) + "\n")
     return measured(source, frozen=frozen["stdout"].splitlines())
+
+
+# Where the installed package came from, by the installer's own record of the
+# directory it was built from. Printed as JSON; null where nothing is
+# installed under the package's name.
+PACKAGE_SOURCE = (
+    "import json, importlib.metadata as metadata\n"
+    "names = metadata.packages_distributions().get(%r) or []\n"
+    "url = None\n"
+    "if names:\n"
+    "    text = metadata.distribution(names[0]).read_text('direct_url.json')\n"
+    "    url = json.loads(text).get('url') if text else None\n"
+    "print(json.dumps(url))\n" % PACKAGE)
+
+
+def package_source(venv):
+    """The URL the package under score was installed from, or None."""
+    outcome = run([python_in(venv), "-c", PACKAGE_SOURCE], timeout=120)
+    if outcome["failed"] or outcome["status"] != 0:
+        return None
+    try:
+        return json.loads(outcome["stdout"].strip() or "null")
+    except ValueError:
+        return None
+
+
+def package_moved(before, after):
+    """Why the package under score is no longer the trial's, or None."""
+    if after == before:
+        return None
+    return ("the battery install replaced the package under score: it was "
+            "installed from %s and is now installed from %s" % (before, after))
 
 
 def ruff_findings(venv, workspace, roots, seen):
@@ -519,7 +579,11 @@ def complexity(venv, workspace, roots, seen):
         return absent("complexipy is not installed in the trial environment",
                       seen=seen)
     report = os.path.join(workspace, "complexipy.json")
-    outcome = run([binary, "--output-json", "--quiet"] + roots, cwd=workspace)
+
+    # The exit status is not read: complexipy exits non-zero whenever a
+    # function passes its own threshold, which is a finding, not a failure.
+    outcome = run([binary, "--output-format", "json", "--output", report,
+                   "--quiet"] + roots, cwd=workspace)
     if outcome["failed"] or not os.path.exists(report):
         return absent("complexipy wrote no report: %s"
                       % (outcome["failed"] or outcome["stderr"]
@@ -527,9 +591,9 @@ def complexity(venv, workspace, roots, seen):
                       seen=seen, invocation=outcome["argv"])
     with io.open(report, encoding="utf-8") as handle:
         payload = json.load(handle)
-    scores = [entry.get("complexity", 0)
-              for entry in payload.get("functions", payload if
-                                       isinstance(payload, list) else [])]
+    entries = (payload if isinstance(payload, list)
+               else payload.get("functions", []))
+    scores = [entry.get("complexity", 0) for entry in entries]
     if not scores:
         return absent("complexipy found no functions to measure", seen=seen,
                       invocation=outcome["argv"])
@@ -570,31 +634,42 @@ def radon_metrics(venv, workspace, roots, seen):
                     seen=seen, invocation=cc["argv"])
 
 
+# interrogate writes no machine-readable report, and its table is for
+# people. Its own API answers the count the table prints, with the
+# defaults the command line uses.
+DOCSTRING_COUNT = (
+    "import json, sys\n"
+    "from interrogate import config, coverage\n"
+    "results = coverage.InterrogateCoverage(\n"
+    "    paths=sys.argv[1:], conf=config.InterrogateConfig()).get_coverage()\n"
+    "print(json.dumps({'total': results.total, 'covered': results.covered,\n"
+    "                  'percent': results.perc_covered}))\n")
+
+
 def docstring_coverage(venv, workspace, roots, seen):
     """Docstring coverage, as a percentage of the things that can carry one."""
     if not roots:
         return absent("no source roots were discovered", seen=seen)
-    binary = script_in(venv, "interrogate")
-    if binary is None:
-        return absent("interrogate is not installed in the trial environment",
-                      seen=seen)
-    outcome = run([binary, "--quiet", "--fail-under", "0",
-                   "--output-format", "json"] + roots, cwd=workspace)
+    outcome = run([python_in(venv), "-c", DOCSTRING_COUNT] + roots,
+                  cwd=workspace)
     if outcome["failed"]:
         return absent("interrogate %s" % outcome["failed"], seen=seen,
                       invocation=outcome["argv"])
-    try:
-        payload = json.loads(outcome["stdout"] or "{}")
-    except ValueError:
-        return absent("interrogate produced no JSON: %s"
-                      % (outcome["stdout"] or outcome["stderr"])[:300],
+    if "No module named" in (outcome["stderr"] or ""):
+        return absent("interrogate is not installed in the trial environment",
                       seen=seen, invocation=outcome["argv"])
-    total = payload.get("total", {})
-    if not total.get("total"):
+    try:
+        payload = json.loads(outcome["stdout"].strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        return absent("interrogate produced no count: %s"
+                      % (outcome["stderr"] or outcome["stdout"])[:300],
+                      seen=seen, invocation=outcome["argv"])
+    if not payload.get("total"):
         return absent("interrogate found nothing that can carry a docstring",
                       seen=seen, invocation=outcome["argv"])
-    return measured(round(total.get("covered_percentage", 0.0), 2),
-                    seen=seen, invocation=outcome["argv"])
+    return measured(round(payload["percent"], 2), total=payload["total"],
+                    covered=payload["covered"], seen=seen,
+                    invocation=outcome["argv"])
 
 
 def unused_code(venv, workspace, roots, seen):
@@ -783,6 +858,7 @@ def score_trial(record, options, suite, lock):
                   timespec="seconds")}
 
     scores["install"] = install_trial(venv, workspace)
+    source = package_source(venv)
     scores["boot"] = boot_check(venv, workspace)
 
     discovery = discover_roots(venv, workspace)
@@ -800,6 +876,14 @@ def score_trial(record, options, suite, lock):
     scores["hidden_suite"] = run_hidden_suite(venv, suite, workspace, "build")
 
     scores["battery"] = install_battery(venv, lock)
+
+    # What runs from here runs in the trial's interpreter, and much of it
+    # imports the package. A package the battery replaced would be measured
+    # as another trial's code without any error, so every such metric is
+    # recorded missing instead.
+    moved = package_moved(source, package_source(venv))
+    if moved:
+        scores["battery"] = absent(moved)
     if scores["battery"]["missing"]:
         for key, _ in BATTERY:
             scores[key] = absent(scores["battery"]["missing"], seen=seen)
@@ -810,11 +894,16 @@ def score_trial(record, options, suite, lock):
     context = probes.Context(run=run, measured=measured, absent=absent,
                              python=python_in(venv),
                              script=lambda name: script_in(venv, name))
-    scores["structure"] = probes.structure(context, workspace, roots, seen)
-    if options.web:
-        scores["web"] = probes.web_quality(context, workspace)
+    if moved:
+        scores["structure"] = absent(moved, seen=seen)
+        scores["web"] = absent(moved)
     else:
-        scores["web"] = absent("the web probes were not requested")
+        scores["structure"] = probes.structure(context, workspace, roots,
+                                               seen)
+        if options.web:
+            scores["web"] = probes.web_quality(context, workspace)
+        else:
+            scores["web"] = absent("the web probes were not requested")
 
     # After the battery and the structure probe, because every item it scores
     # is read from one of them.
@@ -1015,6 +1104,26 @@ def churn_checks(scratch):
              counted.get("files") == 2 and counted.get("lines") == 4)]
 
 
+def lock_checks():
+    """A trial's own package never reaches the lock, and a replaced one shows."""
+    freeze = ("ruff==0.16.0\n"
+              "tariff @ file:///C:/efficacy/run/scoring/A1/tree/A1\n"
+              "-e git+https://example.invalid/other.git#egg=other\n"
+              "Tariff==0.1.0\n"
+              "pytest==9.1.1\n")
+
+    # The plant landed: each kind of trial package is in the input, so a line
+    # missing from the output is the filter's doing.
+    landed = all(marker in freeze for marker in (" @ file:", "-e ", "Tariff=="))
+    return [("the planted freeze carries each kind of trial package", landed),
+            ("only the tools reach the lock",
+             lock_lines(freeze) == ["ruff==0.16.0", "pytest==9.1.1"]),
+            ("a package that stays put is not flagged",
+             package_moved("file:///run/B1", "file:///run/B1") is None),
+            ("a package the battery replaced is flagged",
+             package_moved("file:///run/B1", "file:///run/A1") is not None)]
+
+
 def self_test():
     """Prove the missing-vs-zero rule fires before any score is believed.
 
@@ -1034,7 +1143,8 @@ def self_test():
     scratch = os.path.join(os.environ.get("TEMP", "."), "efficacy-self-test")
     remove_tree(scratch)
     os.makedirs(scratch)
-    checks = run_record_checks(scratch) + churn_checks(scratch)
+    checks = (run_record_checks(scratch) + churn_checks(scratch)
+              + lock_checks())
     venv = create_venv(os.path.join(scratch, "venv"))
 
     empty = os.path.join(scratch, "empty")

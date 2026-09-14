@@ -205,11 +205,22 @@ static battery at one resolved set of tool versions — frozen to
 `tool-lock.txt` by the first trial scored and installed from there by every
 later one, so the ruler is identical across the arms.
 
+The lock leaves out anything installed from a local path, in editable mode
+or under the package's own name. A freeze lists the scored trial's package
+too, and a lock carrying it installs the first trial's code over every later
+trial's. After the battery installs, scoring also checks that the package
+under score still comes from the trial's own tree. If it does not, every
+metric that imports the package is recorded missing with that reason, never
+measured on another trial's code.
+
 Both self tests are controls rather than smoke. `score.py --self-test` plants
 a real module in an environment with no tools and requires every metric to
 come back *missing*: a tool that scanned nothing must never record a zero,
 because zero findings and nothing scanned are the same number and opposite
-facts. `report.py --self-test` runs the design's own worked cases through the
+facts. It also plants a freeze carrying a package installed from a local
+path, one in editable mode and one under the package's own name, and fails
+if any of them reaches the lock or if a replaced package goes unnoticed.
+`report.py --self-test` runs the design's own worked cases through the
 verdict rule, including the row an earlier draft of the design read wrongly.
 
 Judging builds a blind bundle per trial: the context file removed, condition
