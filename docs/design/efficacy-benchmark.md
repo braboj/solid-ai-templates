@@ -55,6 +55,14 @@ K never exceeds 5, no metric outside the primary dimensions triggers it,
 and a second inconclusive result is reported as inconclusive. Sampling
 until an interval clears zero is the failure this bound exists to prevent.
 
+Any of the three contrasts in §6 can trigger it, and the observed effect —
+the mean paired difference — is read by its size in either direction. An
+escalation owed only to a favourable effect would be a stopping rule
+leaning toward "better". A row whose interval was not computed triggers
+nothing. Both readings were settled by the owner on 2026-09-15, before the
+first counted trial. The report computes the rule and states whether the
+escalation is owed, so nobody reads it off the K = 3 table by eye.
+
 **Failure handling.** A trial whose agent produced no installable workspace
 scores zero on task success, records its quality metrics as missing rather
 than imputed, and is **not** re-run: re-running the failures of one arm is
