@@ -13,6 +13,7 @@ returns a missing metric naming what was absent; it never returns zero.
 import io
 import json
 import os
+import re
 
 # The package and the factory the specification fixes. Everything in here
 # reaches the trial only through those two names and the routes, never through
@@ -473,6 +474,34 @@ def structure(ctx, workspace, roots, seen):
     return ctx.measured(payload, seen=seen, invocation=outcome["argv"])
 
 
+# HTMX's attributes are not in the HTML standard, so the validator rejects
+# every one, and `SPEC.md` requires HTMX of every arm. Counted, they would
+# measure how much HTMX a trial uses rather than how much of its HTML is
+# invalid. The quotes are left open because the validator prints ASCII or
+# typographic ones depending on its flags.
+IGNORED_HTML_ERRORS = r"Attribute .hx-[\w:.-]+. not allowed on element "
+
+
+def html_errors(report):
+    """A validator JSON report's error count, less the ignored errors.
+
+    Returns None where the text is not the validator's report, which is one
+    object carrying a `messages` list.
+    """
+    try:
+        payload = json.loads(report)
+    except ValueError:
+        return None
+    messages = payload.get("messages") if isinstance(payload, dict) else None
+    if not isinstance(messages, list):
+        return None
+    errors = [message.get("message") or "" for message in messages
+              if isinstance(message, dict) and message.get("type") == "error"]
+    ignored = [text for text in errors if re.search(IGNORED_HTML_ERRORS, text)]
+    return {"errors": len(errors) - len(ignored), "ignored": len(ignored),
+            "messages": len(messages)}
+
+
 def html_validity(ctx, pages):
     """HTML validity over the pages the web probe saved.
 
@@ -483,7 +512,9 @@ def html_validity(ctx, pages):
     binary = ctx.script("html5validator")
     if binary is None:
         return ctx.absent("html5validator is not installed")
-    if not os.path.isdir(pages):
+    saved = (sorted(name for name in os.listdir(pages) if name.endswith(".html"))
+             if os.path.isdir(pages) else [])
+    if not saved:
         return ctx.absent("the web probe saved no pages to validate")
     outcome = ctx.run([binary, "--root", pages, "--format", "json"],
                       cwd=pages)
@@ -493,18 +524,30 @@ def html_validity(ctx, pages):
     if "java" in text.lower() and "not" in text.lower() and not \
             outcome["stdout"].strip():
         return ctx.absent("no Java runtime, so validity was not checked")
-    try:
-        findings = json.loads(outcome["stdout"] or "[]")
-    except ValueError:
-        # The validator prints one message per line when it is not given a
-        # parseable format; counting those lines is still a measurement, and
-        # an empty output with a zero status is a clean run.
-        lines = [line for line in text.splitlines() if ".html" in line]
-        if not lines and outcome["status"] == 0:
-            return ctx.measured(0)
-        return ctx.measured(len(lines), raw=lines[:20])
-    errors = [f for f in findings if f.get("type") == "error"]
-    return ctx.measured(len(errors), total=len(findings))
+    extra = {"pages": len(saved), "ignore_pattern": IGNORED_HTML_ERRORS}
+
+    # A clean run prints nothing and exits zero. Only that pair is a zero: a
+    # validator that stopped before reading a page prints nothing too.
+    if not outcome["stdout"].strip():
+        if outcome["status"] == 0:
+            return ctx.measured(0, ignored=0, **extra)
+        return ctx.absent("html5validator exited %s with no report: %s"
+                          % (outcome["status"], outcome["stderr"][:300]))
+    counted = html_errors(outcome["stdout"])
+    if counted is not None:
+        return ctx.measured(counted["errors"], ignored=counted["ignored"],
+                            total=counted["messages"], **extra)
+
+    # The validator prints one message per line when it is not given a
+    # parseable format; counting those lines is still a measurement. Output
+    # naming no page is not a report at all.
+    lines = [line for line in text.splitlines() if ".html" in line]
+    if not lines:
+        return ctx.absent("html5validator printed no report the probe can "
+                          "read: %s" % outcome["stdout"][:300])
+    kept = [line for line in lines if not re.search(IGNORED_HTML_ERRORS, line)]
+    return ctx.measured(len(kept), ignored=len(lines) - len(kept),
+                        raw=kept[:20], **extra)
 
 
 def accessibility(ctx, workspace, pages):
