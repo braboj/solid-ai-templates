@@ -52,6 +52,12 @@ PRIMARY = ("judge_design", "judge_readability", "judge_maintainability")
 # baseline arm's mean, so that it scales with the metric.
 ABSOLUTE, RELATIVE = "absolute", "relative"
 
+# The static-analysis counts reported per KLOC, which the design's section
+# 1.2 holds to one relative margin between them.
+STATIC_PER_KLOC = ("ruff_per_kloc", "unformatted_per_kloc", "mypy_per_kloc",
+                   "bandit_per_kloc", "complexity_over_15_per_kloc",
+                   "unused_per_kloc")
+
 # The non-inferiority margins, for the claim that a metric was preserved
 # rather than merely not shown to differ.
 MARGINS = {
@@ -63,6 +69,8 @@ MARGINS = {
     "churn_files": ("15 % relative", 0.15, RELATIVE),
     "churn_lines": ("15 % relative", 0.15, RELATIVE),
 }
+MARGINS.update((key, ("10 % relative", 0.10, RELATIVE))
+               for key in STATIC_PER_KLOC)
 
 
 def path(payload, *keys):
@@ -84,10 +92,10 @@ def metric_value(trial, *keys):
         record.get("value")
 
 
-def per_kloc(trial, key):
+def per_kloc(trial, *keys):
     """A finding count per thousand source lines the tool actually saw."""
-    count = metric_value(trial, key)
-    lines = path(trial, "scores", key, "seen", "lines")
+    count = metric_value(trial, *keys)
+    lines = path(trial, "scores", keys[0], "seen", "lines")
     if count is None or not lines:
         return None
     return round(count / (lines / 1000.0), 2)
@@ -182,19 +190,29 @@ METRICS = (
     ("ruff_total", "Lint findings", DOWN, lambda t: metric_value(t, "ruff")),
     ("unformatted", "Files the formatter would change", DOWN,
      lambda t: metric_value(t, "ruff_format")),
+    ("unformatted_per_kloc", "Files the formatter would change, per KLOC",
+     DOWN, lambda t: per_kloc(t, "ruff_format")),
     ("mypy_errors", "Type errors under --strict", DOWN,
      lambda t: metric_value(t, "mypy")),
+    ("mypy_per_kloc", "Type errors under --strict, per KLOC", DOWN,
+     lambda t: per_kloc(t, "mypy")),
     ("bandit_serious", "Security findings, high and medium", DOWN,
      lambda t: metric_value(t, "bandit")),
+    ("bandit_per_kloc", "Security findings, high and medium, per KLOC", DOWN,
+     lambda t: per_kloc(t, "bandit")),
     ("complexity_max", "Highest cognitive complexity", DOWN,
      lambda t: metric_value(t, "complexity", "max")),
     ("complexity_over_15", "Functions over complexity 15", DOWN,
      lambda t: metric_value(t, "complexity", "over_15")),
+    ("complexity_over_15_per_kloc", "Functions over complexity 15, per KLOC",
+     DOWN, lambda t: per_kloc(t, "complexity", "over_15")),
     ("mean_cc", "Mean cyclomatic complexity", DOWN,
      lambda t: metric_value(t, "radon", "mean_cc")),
     ("min_mi", "Lowest maintainability index", NEUTRAL,
      lambda t: metric_value(t, "radon", "min_mi")),
     ("unused", "Unused names", DOWN, lambda t: metric_value(t, "unused")),
+    ("unused_per_kloc", "Unused names per KLOC", DOWN,
+     lambda t: per_kloc(t, "unused")),
 
     ("extension_points", "Extension axes present, of three", UP,
      extension_points),
@@ -934,19 +952,41 @@ def self_test(seed):
         checks.append(("%s -> %s" % (label, expected), got == expected, got))
 
     # A relative margin is a share of the baseline arm's mean: 15 % of a
-    # baseline of 100 lines admits 10 lines more churn and refuses 20.
+    # baseline of 100 lines admits 10 lines more churn and refuses 20, and
+    # 10 % of 20 type errors per KLOC admits 1.5 more and refuses 3.
     margins = (
-        ("10 more lines on 100 is preserved", {"low": -5.0, "high": 10.0},
-         100.0, True),
-        ("20 more lines on 100 is not", {"low": 5.0, "high": 20.0}, 100.0,
-         False),
-        ("no baseline makes no relative claim", {"low": -5.0, "high": 10.0},
-         None, None),
+        ("10 more lines on 100 is preserved", "churn_lines",
+         {"low": -5.0, "high": 10.0}, 100.0, True),
+        ("20 more lines on 100 is not", "churn_lines",
+         {"low": 5.0, "high": 20.0}, 100.0, False),
+        ("no baseline makes no relative claim", "churn_lines",
+         {"low": -5.0, "high": 10.0}, None, None),
+        ("1.5 more per KLOC on 20 is preserved", "mypy_per_kloc",
+         {"low": -1.0, "high": 1.5}, 20.0, True),
+        ("3 more per KLOC on 20 is not", "mypy_per_kloc",
+         {"low": 0.5, "high": 3.0}, 20.0, False),
     )
-    for label, interval, baseline, expected in margins:
-        answer = non_inferior("churn_lines", interval, DOWN, baseline)
+    for label, key, interval, baseline, expected in margins:
+        answer = non_inferior(key, interval, DOWN, baseline)
         got = None if answer is None else answer["within"]
         checks.append((label, got == expected, got))
+
+    # Every per-KLOC row is a static-analysis count, so each carries the one
+    # margin section 1.2 gives them; a row added without it fails here.
+    per_kloc_rows = {key for key, _, _, _ in METRICS
+                     if key.endswith("_per_kloc")}
+    covered = all(MARGINS.get(key, (None,))[0] == "10 % relative"
+                  for key in per_kloc_rows)
+    checks.append(("every per-KLOC row carries the static margin",
+                   covered and per_kloc_rows == set(STATIC_PER_KLOC),
+                   sorted(per_kloc_rows)))
+
+    # A nested count divides by the lines its own tool saw.
+    planted = {"scores": {"complexity": {"value": {"over_15": 3},
+                                         "missing": None,
+                                         "seen": {"lines": 1500}}}}
+    got = per_kloc(planted, "complexity", "over_15")
+    checks.append(("a nested count is taken per KLOC", got == 2.0, got))
     checks.extend((label, ok, ok) for label, ok in reach_checks())
     for label, ok, got in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED, got %r" % got))
