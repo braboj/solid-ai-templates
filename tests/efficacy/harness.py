@@ -75,8 +75,8 @@ DISALLOWED_TOOLS = ["WebSearch", "WebFetch"]
 
 # What a tool call names when a trial reaches for what no arm may read: this
 # repository, which arm B's generated file names in its footer, and the
-# private hidden suite.
-REACH_TERMS = ("solid-ai-templates", "tariff-hidden-suite")
+# private hidden suite under any clone's name, the scorer's own included.
+REACH_TERMS = ("solid-ai-templates", "hidden-suite")
 
 # No user, project or local settings, and no MCP server the harness did not
 # pass -- which is none. Both flags are isolation, not preference.
@@ -126,6 +126,14 @@ def assert_outside_repository(root):
         raise TrialError(
             "workspace root %s is inside the templates repository at %s; "
             "an arm there can read the templates" % (root, repo))
+
+
+# A trial's workspace is created inside the run root, so whatever scoring wrote
+# there, the hidden suite's clone and every scored trial's extracted code among
+# it, would sit one `..` away from the next trial.
+def scoring_area(root):
+    """The directory beside a run root that scoring and judging write to."""
+    return os.path.abspath(root).rstrip("\\/") + "-scoring"
 
 
 def assert_no_ambient_context(workspace, home):
@@ -477,8 +485,10 @@ def read_transcripts(home, workspace):
     return files, tool_calls(files)
 
 
-def reach(files, calls):
-    """The tool calls naming this repository or the hidden suite.
+def reach(files, calls, workspace=None, temp=None):
+    """The tool calls naming this repository or the hidden suite and, given
+    the trial's workspace, the scoring area or any part of the run root other
+    than the trial's own workspace and temporary directory.
 
     Only what the agent sent is read, never what came back: arm B's own file
     names this repository, and reading it is not reaching for it. With no
@@ -487,27 +497,80 @@ def reach(files, calls):
     """
     if not files:
         return {"transcripts": [], "hits": None}
-    return {"transcripts": files,
-            "hits": [{"tool": tool, "term": term, "call": text[:300]}
-                     for tool, text in calls
-                     for term in REACH_TERMS if term in text.lower()]}
+    terms, outside = list(REACH_TERMS), None
+    if workspace:
+        root = os.path.dirname(os.path.abspath(workspace))
+        terms.append(os.path.basename(scoring_area(root)).lower())
+        outside = outside_pattern(workspace, temp)
+    hits = []
+    for tool, text in calls:
+        lowered = text.lower()
+        hits.extend({"tool": tool, "term": term, "call": text[:300]}
+                    for term in terms if term in lowered)
+        if outside is None:
+            continue
+
+        # A call's input arrives as JSON, which doubles a Windows path's
+        # backslashes; both spellings become forward slashes.
+        normal = lowered.replace("\\\\", "/").replace("\\", "/")
+        hits.extend({"tool": tool, "term": match.group(0),
+                     "call": text[:300]}
+                    for match in outside.finditer(normal))
+    return {"transcripts": files, "hits": hits}
 
 
-def path_pattern(paths):
-    """A pattern matching any of `paths` the way a command line spells it.
+# Where a path ends on a command line: the end of the text, a separator, a
+# space, a quote or a list delimiter.
+PATH_END = "(?=$|[/\\s\"';,])"
 
-    Lowercased with forward slashes, in its Windows form and its Git Bash
-    `/c/` form, and ending where the path does, so `A1` matches neither `A10`
-    nor `A1.tar`.
-    """
+
+def path_forms(paths):
+    """Each path lowercased with forward slashes, in its Windows form and its
+    Git Bash `/c/` form."""
     forms = set()
     for path in paths:
         full = os.path.abspath(path).replace("\\", "/").lower().rstrip("/")
         forms.add(full)
         if len(full) > 1 and full[1] == ":":
             forms.add("/%s%s" % (full[0], full[2:]))
-    return re.compile("(?:%s)(?=$|[/\\s\"';,])"
-                      % "|".join(re.escape(form) for form in sorted(forms)))
+    return sorted(forms)
+
+
+def path_pattern(paths):
+    """A pattern matching any of `paths` the way a command line spells it.
+
+    It ends where the path does, so `A1` matches neither `A10` nor `A1.tar`.
+    """
+    return re.compile("(?:%s)%s" % (
+        "|".join(re.escape(form) for form in path_forms(paths)), PATH_END))
+
+
+def outside_pattern(workspace, temp):
+    """A pattern matching a path into the run root other than the trial's own
+    workspace or temporary directory, as normalised by `reach`."""
+    workspace = os.path.abspath(workspace)
+    root = os.path.dirname(workspace)
+    own = [re.escape(os.path.basename(workspace).lower())]
+    if temp:
+        name = os.path.basename(os.path.abspath(temp)).lower()
+        own.append("tmp/" + re.escape(name))
+    not_own = "(?!(?:%s)%s)" % ("|".join(own), PATH_END)
+    forms = "|".join(re.escape(form) for form in path_forms([root]))
+
+    # The root itself, whose listing names every other trial, and any entry
+    # of it named from the root. The entries hold earlier trials' workspaces,
+    # their tarballs, and the shared home with every transcript.
+    alternatives = ["(?:%s)/?(?=$|[\\s\"';,])" % forms,
+                    "(?:%s)/%s[^/\\s\"';,]+" % (forms, not_own)]
+
+    # An entry of the root climbed to from inside the workspace.
+    entries = (sorted(entry.lower() for entry in os.listdir(root))
+               if os.path.isdir(root) else [])
+    if entries:
+        alternatives.append("\\.\\./%s(?:%s)%s" % (
+            not_own, "|".join(re.escape(entry) for entry in entries),
+            PATH_END))
+    return re.compile("|".join(alternatives))
 
 
 def process_table():
@@ -617,7 +680,8 @@ def contain(workspace, temp, home, shared, since):
     leftovers = shared_leftovers(shared, since, calls)
     owned = [workspace, temp, home] + [os.path.join(shared, entry)
                                        for entry in leftovers]
-    result = {"reach": reach(files, calls), "shared_temp_dir": shared}
+    result = {"reach": reach(files, calls, workspace, temp),
+              "shared_temp_dir": shared}
     try:
         result["stopped"] = stop_processes(owned)
     except (OSError, ValueError, subprocess.SubprocessError) as error:
@@ -1362,11 +1426,60 @@ def reach_checks():
     return checks
 
 
+def outside_checks():
+    """A call into another part of the run is flagged; the trial's own
+    workspace and temporary directory are not."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-outside-self-test")
+    remove_tree(scratch)
+    root = os.path.abspath(os.path.join(scratch, "run"))
+    workspace = os.path.join(root, "A1")
+    temp = os.path.join(root, "tmp", "A1-planted")
+    for directory in (workspace, temp, os.path.join(root, "B1"),
+                      os.path.join(root, "tmp", "B1-planted"),
+                      os.path.join(root, "home", ".claude")):
+        os.makedirs(directory)
+    io.open(os.path.join(root, "B1.tar"), "wb").close()
+    bash_root = root.replace("\\", "/")
+    if bash_root[1:2] == ":":
+        bash_root = "/%s%s" % (bash_root[0].lower(), bash_root[2:])
+
+    # The first three stay inside the trial; each of the last four reaches out.
+    calls = [
+        ("Write", {"file_path": os.path.join(workspace, "tariff", "rules.py")}),
+        ("Bash", {"command": 'cd "%s" && ls' % workspace}),
+        ("Bash", {"command": "pip install . --cache-dir %s"
+                             % os.path.join(temp, "pip")}),
+        ("Bash", {"command": "cat ../B1/src/tariff/pricing.py"}),
+        ("PowerShell", {"command": "Get-Item %s"
+                                   % os.path.join(root, "B1.tar")}),
+        ("Bash", {"command": "ls %s/home/.claude/projects" % bash_root}),
+        ("Read", {"file_path": os.path.join(scoring_area(root),
+                                            "hidden-suite", "conftest.py")}),
+    ]
+    texts = [(tool, json.dumps(payload)) for tool, payload in calls]
+
+    # The plant landed: the root holds another trial beside this one, so a
+    # call left unflagged is the scan's doing and not an empty run.
+    landed = sorted(os.listdir(root)) == ["A1", "B1", "B1.tar", "home", "tmp"]
+    hits = reach(["planted.jsonl"], texts, workspace, temp)["hits"] or []
+    flagged = sorted({index for index, (_, text) in enumerate(texts)
+                      for hit in hits if hit["call"] == text[:300]})
+    remove_tree(scratch)
+    return [("the planted run holds another trial", landed),
+            ("the scoring area lies outside the run root",
+             not scoring_area(root).startswith(root + os.sep)),
+            ("the trial's own paths are not flagged",
+             not [index for index in flagged if index < 3]),
+            ("every call reaching past the trial is flagged",
+             flagged == [3, 4, 5, 6])]
+
+
 def self_test():
     """Prove the isolation, outcome, resume and change rules before a trial."""
     checks = (environment_checks() + credential_checks() + outcome_checks()
               + resume_checks() + change_checks() + process_checks()
-              + leftover_checks() + reach_checks())
+              + leftover_checks() + reach_checks() + outside_checks())
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     passed = sum(1 for _, ok in checks if ok)

@@ -117,10 +117,14 @@ caught:
 
 The shell keeps its network, because every trial installs packages; only
 the two web tools are disallowed. Arm B's file names this repository in its
-footer, so each transcript is scanned for a tool call naming this
-repository or the hidden suite. The trial record carries the hits, and the
-report names every trial with one. A trial with no transcript is recorded
-as not scanned, never as clean.
+footer, and a trial's workspace sits in the run root beside earlier trials,
+so each transcript is scanned for a tool call naming this repository, the
+hidden suite, the scoring area, the run root, or any entry of the root other
+than the trial's own workspace and temporary directory, whether spelled from
+the root or climbed to with `..`. The trial record carries the hits. The
+report scans again under the current rule wherever the transcripts remain,
+and names every trial with a hit. A trial with no transcript is recorded as
+not scanned, never as clean.
 
 ```bash
 py tests/efficacy/harness.py --self-test
@@ -173,7 +177,8 @@ frozen workspace and runs under the same isolation, bounds and outcome
 rules, in the same order. The copy's state is committed first, so churn
 counts only what the agent changed. Scoring re-runs the build suite, runs
 the change suite and counts the files and lines changed against that commit,
-and writes to `scores-change/`, apart from the build scores.
+and writes to `scores-change/` in the scoring area, apart from the build
+scores.
 
 Both tasks hand the CLI its prompt on standard input rather than as an
 argument. On Windows the CLI is a `.CMD` shim, and `cmd.exe` expands a
@@ -198,6 +203,12 @@ Scoring reads every run record in the root, so a run stopped and resumed
 `--from` a later trial scores whole; a trial two records both offer is
 refused rather than picked. It reads the tarball the harness froze, never
 the directory the agent worked in.
+
+Scoring, judging and the aggregate write nothing into the run root. They
+write to a scoring area beside it, `<run root>-scoring`: the hidden suite's
+clone, each trial's extracted tree and environment, the tool environment and
+its lock, the scores and the judge's bundles. Inside the root they would sit
+one `..` away from the next trial's workspace.
 
 Each trial gets a clean virtual environment, the trial's package
 installed into it, the hidden suite run against that interpreter, and the
@@ -248,8 +259,9 @@ is checked against the bundle it was quoted from — a judge that never opened
 the code returns plausible numbers, and that check is what tells the two
 apart.
 
-`--holdout` also writes `judge/holdout-sheet.md`, a table for the owner's
-blind scores. Once every cell holds one, `--record-holdout` writes the
+`--holdout` also writes `judge/holdout-sheet.md` in the scoring area, a table
+for the owner's blind scores. Once every cell holds one, `--record-holdout`
+writes the
 scores file the report reads. A blank cell, a score outside 1-5 or a bundle
 that was never judged refuses the whole sheet, and until it records the
 report calls the subjective row unvalidated.

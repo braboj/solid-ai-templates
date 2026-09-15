@@ -34,7 +34,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import lib  # noqa: E402
 import probes  # noqa: E402
 from harness import (SCORABLE, TrialError, remove_tree,  # noqa: E402
-                     scorable_trials)
+                     scorable_trials, scoring_area)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REQUIREMENTS = os.path.join(HERE, "scoring-requirements.txt")
@@ -868,7 +868,7 @@ def score_trial(record, options, suite, lock):
     its own directory.
     """
     name = "%s%d" % (record["arm"], record["trial"])
-    scoring = os.path.join(options.root, "scoring", name)
+    scoring = os.path.join(scoring_area(options.root), "scoring", name)
     os.makedirs(scoring, exist_ok=True)
 
     frozen = (record.get("frozen") or {}).get("tarball")
@@ -992,7 +992,7 @@ def score_change_trial(record, options, suite):
 
     # Apart from `scoring/`, whose extracted trees the judge takes for build
     # trials; a change tree there would be judged as one.
-    scoring = os.path.join(options.root, "scoring-change", name)
+    scoring = os.path.join(scoring_area(options.root), "scoring-change", name)
     os.makedirs(scoring, exist_ok=True)
     workspace = extract((record.get("frozen") or {}).get("tarball"),
                         os.path.join(scoring, "tree"), frozen)
@@ -1369,7 +1369,8 @@ def main(argv):
         if not offered:
             raise ScoreError("no %s trial in the run records ended %s"
                              % (options.task, " or ".join(SCORABLE)))
-        suite = clone_suite(os.path.join(options.root, "hidden-suite"))
+        suite = clone_suite(os.path.join(scoring_area(options.root),
+                                         "hidden-suite"))
     except (ScoreError, TrialError) as error:
         print("refused: %s" % error)
         lib.print_verdict(False, "0 scored, 1 refused")
@@ -1377,8 +1378,9 @@ def main(argv):
 
     # Change scores go apart from the build scores: both are keyed by the
     # trial, and one must never overwrite the other.
-    lock = os.path.join(options.root, "tool-lock.txt")
-    target = os.path.join(options.root, "scores" if options.task == "build"
+    area = scoring_area(options.root)
+    lock = os.path.join(area, "tool-lock.txt")
+    target = os.path.join(area, "scores" if options.task == "build"
                           else "scores-change")
     wanted = set(options.trial)
     scored, refused = [], 0
