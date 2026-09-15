@@ -415,35 +415,58 @@ def lock_lines(text):
     return kept
 
 
-def install_battery(venv, lock):
-    """Install the rulers, from the run's lock where one exists.
+def resolve_lock(lock, where, requirements=REQUIREMENTS):
+    """Resolve the tools alone and freeze them to the lock; None, or why not.
 
-    The first trial of a run resolves `scoring-requirements.txt` and freezes
-    what it got; every later trial installs that. One resolved set across the
-    arms is what makes the counts comparable at all.
+    The environment at `where` holds nothing but the tools, so the lock
+    carries what they need and never a trial's own dependencies.
     """
-    if os.path.exists(lock):
+    venv = create_venv(where)
+    outcome = pip(venv, "install", "-r", requirements)
+    if outcome["failed"] or outcome["status"] != 0:
+        return ("the battery would not resolve: %s"
+                % (outcome["stderr"] or outcome["stdout"])[-600:])
+    frozen = pip(venv, "freeze")
+    if frozen["failed"] or frozen["status"] != 0:
+        return ("the resolved battery could not be frozen: %s"
+                % (frozen["stderr"] or frozen["stdout"])[-600:])
+    with io.open(lock, "w", encoding="utf-8") as handle:
+        handle.write("\n".join(lock_lines(frozen["stdout"])) + "\n")
+    return None
 
-        # A lock frozen before trial packages were left out can still carry
-        # one, so it is filtered on the way in as well as on the way out.
-        with io.open(lock, encoding="utf-8") as handle:
-            rulers = lock_lines(handle.read())
-        filtered = os.path.join(venv, "tool-lock.txt")
-        with io.open(filtered, "w", encoding="utf-8") as handle:
-            handle.write("\n".join(rulers) + "\n")
-        outcome = pip(venv, "install", "-r", filtered)
-        source = "the run's frozen lock"
-    else:
-        outcome = pip(venv, "install", "-r", REQUIREMENTS)
-        source = "scoring-requirements.txt, resolved for the first time"
+
+def install_battery(venv, lock, requirements=REQUIREMENTS):
+    """Install the rulers from the run's lock, resolving it where none exists.
+
+    One resolved set across the arms is what makes the counts comparable at
+    all, and every trial installs it, the first included.
+    """
+    source = "the run's frozen lock"
+
+    # Resolved apart from every trial. Frozen from the first trial's own
+    # environment, the lock carried that trial's dependencies and installed
+    # them into every later trial, under the metrics measured after it.
+    if not os.path.exists(lock):
+        reason = resolve_lock(
+            lock, os.path.join(os.path.dirname(lock), "scoring", "tools"),
+            requirements)
+        if reason:
+            return absent(reason)
+        source = ("scoring-requirements.txt, resolved for the first time in an "
+                  "environment holding only the tools")
+
+    # A lock frozen before trial packages were left out can still carry
+    # one, so it is filtered on the way in as well as on the way out.
+    with io.open(lock, encoding="utf-8") as handle:
+        rulers = lock_lines(handle.read())
+    filtered = os.path.join(venv, "tool-lock.txt")
+    with io.open(filtered, "w", encoding="utf-8") as handle:
+        handle.write("\n".join(rulers) + "\n")
+    outcome = pip(venv, "install", "-r", filtered)
     if outcome["failed"] or outcome["status"] != 0:
         return absent("the battery would not install: %s"
                       % (outcome["stderr"] or outcome["stdout"])[-600:])
-
     frozen = pip(venv, "freeze")
-    if not os.path.exists(lock) and frozen["status"] == 0:
-        with io.open(lock, "w", encoding="utf-8") as handle:
-            handle.write("\n".join(lock_lines(frozen["stdout"])) + "\n")
     return measured(source, frozen=frozen["stdout"].splitlines())
 
 
@@ -1190,6 +1213,42 @@ def readonly_checks(scratch):
              and os.path.isfile(os.path.join(target, "app.py")))]
 
 
+def lock_source_checks(scratch):
+    """The lock is resolved apart from the trial, so its dependencies stay out."""
+    where = os.path.join(scratch, "lock-source")
+    trial = create_venv(os.path.join(where, "trial"))
+    site = run([python_in(trial), "-c",
+                "import sysconfig; print(sysconfig.get_path('purelib'))"],
+               timeout=120)["stdout"].strip()
+
+    # An installer's record is all a freeze reads, so a planted one stands for
+    # a dependency the trial installed, with no network and no build.
+    record = os.path.join(site, "Flask_WTF-1.3.0.dist-info")
+    os.makedirs(record)
+    with io.open(os.path.join(record, "METADATA"), "w",
+                 encoding="utf-8") as handle:
+        handle.write("Metadata-Version: 2.1\nName: Flask-WTF\nVersion: 1.3.0\n")
+    io.open(os.path.join(record, "RECORD"), "w", encoding="utf-8").close()
+    requirements = os.path.join(where, "requirements.txt")
+    with io.open(requirements, "w", encoding="utf-8") as handle:
+        handle.write("# no tools, so the check needs no network\n")
+    lock = os.path.join(where, "tool-lock.txt")
+
+    # The plant landed: the trial's own environment lists the dependency, so
+    # a lock without it was not frozen from there.
+    landed = "Flask-WTF==1.3.0" in pip(trial, "freeze")["stdout"]
+    installed = install_battery(trial, lock, requirements)
+    written = None
+    if os.path.exists(lock):
+        with io.open(lock, encoding="utf-8") as handle:
+            written = handle.read()
+    return [("the trial's environment lists a planted dependency", landed),
+            ("the battery installs from a lock it resolved",
+             installed["missing"] is None and written is not None),
+            ("the lock carries none of the trial's dependencies",
+             written is not None and "Flask-WTF" not in written)]
+
+
 def self_test():
     """Prove the missing-vs-zero rule fires before any score is believed.
 
@@ -1210,7 +1269,8 @@ def self_test():
     remove_tree(scratch)
     os.makedirs(scratch)
     checks = (run_record_checks(scratch) + churn_checks(scratch)
-              + lock_checks() + html_checks() + readonly_checks(scratch))
+              + lock_checks() + html_checks() + readonly_checks(scratch)
+              + lock_source_checks(scratch))
     venv = create_venv(os.path.join(scratch, "venv"))
 
     empty = os.path.join(scratch, "empty")

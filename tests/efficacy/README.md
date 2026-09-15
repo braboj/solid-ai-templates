@@ -201,9 +201,11 @@ the directory the agent worked in.
 
 Each trial gets a clean virtual environment, the trial's package
 installed into it, the hidden suite run against that interpreter, and the
-static battery at one resolved set of tool versions — frozen to
-`tool-lock.txt` by the first trial scored and installed from there by every
-later one, so the ruler is identical across the arms.
+static battery at one resolved set of tool versions. The first trial scored
+resolves `scoring-requirements.txt` in an environment of its own that holds
+nothing else and freezes it to `tool-lock.txt`; every trial installs from
+there, so the ruler is identical across the arms and carries no trial's
+dependencies.
 
 HTML validity counts the validator's errors less those on HTMX's `hx-*`
 attributes. The specification requires HTMX and the HTML standard has no such

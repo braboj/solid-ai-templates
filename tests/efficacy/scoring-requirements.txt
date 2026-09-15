@@ -2,12 +2,13 @@
 # versions, never by the configuration or the versions the agent wrote.
 #
 # Nothing here is pinned by hand. The first trial scored in a run resolves
-# this file and freezes the result to `tool-lock.txt` beside the scoring
-# directory; every later trial installs from that lock, so the ruler is
-# identical across the arms by construction and the report can state it.
-# A hand-written pin would have to be guessed, and a guess that no longer
-# resolves stops a run rather than a trial. The lock never carries the
-# scored trial's own package, which the freeze lists beside the tools.
+# this file in an environment holding nothing else and freezes the result to
+# `tool-lock.txt` beside the scoring directory; every trial installs from that
+# lock, so the ruler is identical across the arms by construction and the
+# report can state it. A hand-written pin would have to be guessed, and a
+# guess that no longer resolves stops a run rather than a trial. Resolved
+# apart from every trial, the lock carries neither a trial's package nor its
+# dependencies.
 
 # Static analysis.
 ruff
