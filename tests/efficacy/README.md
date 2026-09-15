@@ -32,10 +32,11 @@ piece shows up as a refusal or a metric recorded missing, not as a crash:
 | `claude` on `PATH`, logged in | every trial and arm B's generation | the preflight refuses the run |
 | `gh`, logged in with access to `braboj/tariff-hidden-suite` | scoring clones the hidden suite | scoring refuses |
 | a Java runtime on `PATH` | `html5validator`, the HTML validity metric | that metric is recorded missing |
-| a Playwright Chromium for the `playwright` version scoring resolves | the accessibility probe | that metric is recorded missing |
+| a Playwright browser | the suite's browser flows and the accessibility probe | scoring installs one for the Playwright it resolves, and refuses the trial where it cannot |
 | `codex` on `PATH`, logged in | the judge | each bundle's judging fails |
 
-`score.py --no-web` skips both browser-side probes.
+`score.py --no-web` skips both browser-side probes and installs no browser.
+The suite then skips its browser flows, and the trial is flagged as partial.
 
 ## Generating arm B
 
@@ -209,6 +210,13 @@ write to a scoring area beside it, `<run root>-scoring`: the hidden suite's
 clone, each trial's extracted tree and environment, the tool environment and
 its lock, the scores and the judge's bundles. Inside the root they would sit
 one `..` away from the next trial's workspace.
+
+A check the grader skipped is not one the trial passed. The pass rate is
+taken over the checks that ran, so the skipped count is recorded beside it
+and the trial is flagged. Scoring installs the browser for the Playwright it
+resolves — once before the grader and again after the battery installs the
+lock's own version — and refuses the trial rather than score it on the
+checks a missing browser leaves behind.
 
 Each trial gets a clean virtual environment, the trial's package
 installed into it, the hidden suite run against that interpreter, and the

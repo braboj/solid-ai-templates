@@ -391,8 +391,23 @@ def run_hidden_suite(venv, suite, workspace, which):
         return absent("the grader graded no checks: %s"
                       % payload.get("reason", "no reason given"),
                       invocation=outcome["argv"], report=payload)
-    return measured(payload["pass_rate"], invocation=outcome["argv"],
-                    report=payload)
+    return suite_result(payload, outcome["argv"])
+
+
+# A check the grader skipped is a check nobody ran: the browser flows skip
+# where the browser is absent, and the modules that build the application skip
+# where it cannot be built. The rate is taken over what ran, so a skip left
+# unsaid pays a trial for the checks it never faced.
+def suite_result(payload, argv):
+    """The hidden suite's metric: its pass rate, and the skips beside it."""
+    counts = payload.get("counts") or {}
+    skipped = counts.get("skipped") or 0
+    partial = None
+    if skipped:
+        partial = ("%d of %d check(s) were skipped, so the pass rate is over "
+                   "the rest" % (skipped, counts.get("total") or 0))
+    return measured(payload["pass_rate"], invocation=argv, report=payload,
+                    skipped=skipped, partial=partial)
 
 
 def lock_lines(text):
@@ -432,6 +447,20 @@ def resolve_lock(lock, where, requirements=REQUIREMENTS):
                 % (frozen["stderr"] or frozen["stdout"])[-600:])
     with io.open(lock, "w", encoding="utf-8") as handle:
         handle.write("\n".join(lock_lines(frozen["stdout"])) + "\n")
+    return None
+
+
+# The browser the resolved Playwright needs, which is a build of its own. The
+# suite skips its browser flows without it and the accessibility probe cannot
+# run, and both read as a trial with less to answer for.
+def install_browser(venv):
+    """Install the browser for the Playwright in `venv`; None, or why not."""
+    outcome = run([python_in(venv), "-m", "playwright", "install", "chromium"],
+                  timeout=1800)
+    if outcome["failed"] or outcome["status"] != 0:
+        return ("the browser for the resolved Playwright could not be "
+                "installed: %s"
+                % (outcome["stderr"] or outcome["stdout"])[-400:])
     return None
 
 
@@ -860,6 +889,24 @@ def cost(record):
                      "outcome": record.get("outcome")})
 
 
+# A metric nested under another is still a metric. `web` carries the HTML
+# validity and accessibility readings inside itself, and a flag list that read
+# only the top level called a trial clean whose accessibility probe never ran.
+def metric_flags(scores):
+    """Every metric recorded missing or partial, nested ones included."""
+    flags = []
+    for key, value in sorted(scores.items()):
+        if not isinstance(value, dict) or "missing" not in value:
+            continue
+        if value.get("missing") or value.get("partial"):
+            flags.append(key)
+        for inner, nested in sorted(value.items()):
+            if (isinstance(nested, dict) and "missing" in nested
+                    and (nested.get("missing") or nested.get("partial"))):
+                flags.append("%s.%s" % (key, inner))
+    return flags
+
+
 def score_trial(record, options, suite, lock):
     """Score one frozen trial and return its scores.
 
@@ -898,9 +945,25 @@ def score_trial(record, options, suite, lock):
     # could move a version out from under it.
     suite_requirements = os.path.join(suite["path"], "requirements.txt")
     pip(venv, "install", "-r", suite_requirements)
+
+    # Before the grader, because its browser flows skip without a browser and
+    # a skipped check is not a passed one.
+    if options.web:
+        refusal = install_browser(venv)
+        if refusal:
+            raise ScoreError("%s; score with --no-web to accept the skips"
+                             % refusal)
     scores["hidden_suite"] = run_hidden_suite(venv, suite, workspace, "build")
 
     scores["battery"] = install_battery(venv, lock)
+
+    # Again after the battery, which installs the lock's own Playwright over
+    # the grader's: the browser matched the version before, not this one.
+    if options.web and not scores["battery"]["missing"]:
+        refusal = install_browser(venv)
+        if refusal:
+            raise ScoreError("%s; score with --no-web to accept the skips"
+                             % refusal)
 
     # What runs from here runs in the trial's interpreter, and much of it
     # imports the package. A package the battery replaced would be measured
@@ -937,9 +1000,7 @@ def score_trial(record, options, suite, lock):
     scores["scope"] = scope(workspace, roots)
     scores["cost"] = cost(record)
 
-    flags = [key for key, value in scores.items()
-             if isinstance(value, dict) and value.get("missing")]
-    scores["flagged"] = flags
+    scores["flagged"] = metric_flags(scores)
     return scores
 
 
@@ -1009,6 +1070,13 @@ def score_change_trial(record, options, suite):
     # The build suite re-runs unchanged beside the change suite: a change that
     # passes its own checks by breaking the application has not scored well.
     pip(venv, "install", "-r", os.path.join(suite["path"], "requirements.txt"))
+
+    # Both suites carry browser flows, which skip where there is no browser.
+    if options.web:
+        refusal = install_browser(venv)
+        if refusal:
+            raise ScoreError("%s; score with --no-web to accept the skips"
+                             % refusal)
     scores["build_suite"] = run_hidden_suite(venv, suite, workspace, "build")
     scores["change_suite"] = run_hidden_suite(venv, suite, workspace,
                                               "change")
@@ -1016,8 +1084,7 @@ def score_change_trial(record, options, suite):
                        else absent("the change record names no starting "
                                    "commit"))
     scores["cost"] = cost(record)
-    scores["flagged"] = [key for key, value in scores.items()
-                         if isinstance(value, dict) and value.get("missing")]
+    scores["flagged"] = metric_flags(scores)
     return scores
 
 
@@ -1213,6 +1280,45 @@ def readonly_checks(scratch):
              and os.path.isfile(os.path.join(target, "app.py")))]
 
 
+# The grader's report as `run_suite.py` writes it, cut to the counts: five
+# checks skipped for want of a browser, as a re-score of A1 recorded.
+PLANTED_SUITE_REPORT = {"graded": True, "pass_rate": 0.9973,
+                        "counts": {"error": 0, "failed": 1, "passed": 371,
+                                   "skipped": 5, "total": 377}}
+
+
+def unrun_checks(scratch):
+    """A skipped check and a missing nested metric both reach the flags."""
+    partial = suite_result(PLANTED_SUITE_REPORT, ["planted"])
+    whole = suite_result({"graded": True, "pass_rate": 1.0,
+                          "counts": {"skipped": 0, "total": 377}}, ["planted"])
+    planted = {"hidden_suite": partial,
+               "web": measured({"builder_status": 200},
+                               accessibility=absent("axe could not run"),
+                               html_validity=measured(0)),
+               "install": measured(True)}
+    flags = metric_flags(planted)
+
+    # The plant landed: the report carries skips, and the nested metric is
+    # missing inside a metric that was taken.
+    landed = (PLANTED_SUITE_REPORT["counts"]["skipped"] == 5
+              and planted["web"]["missing"] is None
+              and planted["web"]["accessibility"]["missing"])
+    return [("the plant skips five checks inside a measured web", landed),
+            ("a skipped check is recorded beside the rate",
+             partial["skipped"] == 5 and bool(partial["partial"])),
+            ("a suite that skipped nothing is not partial",
+             whole["skipped"] == 0 and whole["partial"] is None),
+            ("a partial suite is flagged", "hidden_suite" in flags),
+            ("a missing nested metric is flagged",
+             "web.accessibility" in flags),
+            ("a metric that was taken is not flagged",
+             flags == ["hidden_suite", "web.accessibility"]),
+            ("a venv with no interpreter cannot install a browser",
+             install_browser(os.path.join(scratch, "no-such-venv"))
+             is not None)]
+
+
 def lock_source_checks(scratch):
     """The lock is resolved apart from the trial, so its dependencies stay out."""
     where = os.path.join(scratch, "lock-source")
@@ -1270,7 +1376,7 @@ def self_test():
     os.makedirs(scratch)
     checks = (run_record_checks(scratch) + churn_checks(scratch)
               + lock_checks() + html_checks() + readonly_checks(scratch)
-              + lock_source_checks(scratch))
+              + lock_source_checks(scratch) + unrun_checks(scratch))
     venv = create_venv(os.path.join(scratch, "venv"))
 
     empty = os.path.join(scratch, "empty")
