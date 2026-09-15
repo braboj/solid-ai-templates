@@ -7901,3 +7901,70 @@ project.
   before committing is what caught it
 - "Byte for byte" was true of the working copy, not of the commit: Git
   normalised the record's line endings, and the PR had to be corrected
+
+## 2026-09-14 — The first two trials, a shakedown that found three defects
+
+**Tool:** Claude Code (Opus 5 1M)
+
+**Key changes:**
+- Ran build trials A1 (control) and B1 (candidate) in
+  `C:\efficacy\run-v290`, attended. Both completed: A1 cost $10.09 in 20.5
+  minutes, B1 $11.36 in 21.2 minutes. Measured around B1, one build trial
+  takes about 8 % of the 5-hour usage window and 1 % of the weekly limit
+- Isolated a trial from what it could still reach (#1737). Git's stored
+  credential helper let a trial's environment list the private hidden
+  suite; A1 left a server listening on port 5551 and fourteen entries in the
+  machine's temporary directory; arm B's context file names this repository
+  in its footer. A trial's Git now runs with every helper cleared, each
+  trial has its own temporary directory, named entries it leaves in the
+  shared one are gathered, leftover processes are stopped, and each
+  transcript is scanned for this repository and the hidden suite. The owner
+  decided the shell keeps its network, since every trial installs packages
+- The spec put the application factory "in the package". Both trials
+  defined it in `tariff.web`, the suite reads `tariff.create_app`, and 147 of
+  377 checks errored in both. Section 6 now names `tariff.create_app`
+  (#1739)
+- Scoring installed A1's package into B1: the frozen tool lock carried A1's
+  own `tariff @ file:` line, so B1's coverage, import graph, API surface and
+  web probes measured A1's code without an error. The lock is filtered, the
+  package source is checked after the battery installs, and the complexipy,
+  interrogate and coverage readings are corrected (#1741). A re-score in
+  `C:\efficacy\rescore-1741` measured each trial's own package
+- A1 and B1 are a shakedown. The protocol and the spec moved after them, so
+  the rerun starts from A1 in a fresh root
+- The previous entry's unverified leak did not occur: both trials built in
+  their own `.venv`, and the system Python's Flask and pytest predate them
+
+**Pull requests merged:** 3 — #1738, #1740, #1742.
+
+**Issues closed:** #1737, #1739, #1741. #1184 stays open because no counted
+trial has run.
+
+**Issues filed:** #1737, #1739, #1741.
+
+**ADRs:** none owed. The benchmark's harness, scorer and spec are not
+observable by a consuming project.
+
+**Gaps flagged:**
+- The report still lacks the 10 % relative margin section 1.2 declares for
+  static-analysis counts per KLOC. Not filed
+- Copies of the credentials file remain under `C:\efficacy\dry\home` and
+  `C:\efficacy\run-v290\home`, the owner's to delete
+
+**Lessons:**
+- The near-equal suite scores, 59.1 % and 60.2 %, were the tell. The same
+  147 errors in both came from one sentence of the spec, which the suite and
+  the reference implementation had read the same way
+- A missing metric is loud and a metric measured on the wrong code is
+  silent. B1's coverage collection error was the only visible sign that its
+  environment held A1's package; its graph and surface looked plausible
+- Git Bash maps `/tmp` to the machine's temporary directory whatever `TEMP`
+  says. A control with `TEMP` pointed elsewhere showed it before the
+  isolation was built on the assumption
+- Every new check was run against a copy of its module with the rule
+  broken, and a stand-in CLI drove a whole trial through the harness to
+  prove the temporary directory and the cleared helper reached the agent
+- The usage percentages come from the account's usage endpoint, so a
+  trial's share of the quota no longer rests on a screenshot. Its reset time
+  jitters across the minute, and a comparison by minute read every window
+  as reset
