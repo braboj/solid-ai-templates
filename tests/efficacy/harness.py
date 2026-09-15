@@ -53,6 +53,12 @@ PROMPT = (
 BUDGET_USD = 100.0
 TIMEOUT_S = 7200
 
+# The pre-registered K, and the ceiling of the design's one escalation. No run
+# goes past the ceiling, because sampling until an interval clears zero is the
+# failure the bound exists to prevent.
+K_PRIMARY = 3
+K_CEILING = 5
+
 # The context file each arm starts with, relative to `arms/`. Arm A carries
 # none: it is the bare agent.
 ARMS = {
@@ -829,6 +835,10 @@ def order(arms, k):
 
 def pending_trials(arms, k, start=None):
     """The interleaved order, from `start` onwards where one is given."""
+    if not 1 <= k <= K_CEILING:
+        raise TrialError("--k %d is outside 1 to %d: the design escalates once "
+                         "to K = %d and never further"
+                         % (k, K_CEILING, K_CEILING))
     trials = order(arms, k)
     if start is None:
         return trials
@@ -1065,6 +1075,16 @@ def resume_checks():
         checks.append(("--from an unknown trial refuses", False))
     except TrialError:
         checks.append(("--from an unknown trial refuses", True))
+    try:
+        pending_trials("ABC", K_CEILING + 1)
+        checks.append(("a K past the escalation's ceiling refuses", False))
+    except TrialError:
+        checks.append(("a K past the escalation's ceiling refuses", True))
+    first_escalated = "A%d" % (K_PRIMARY + 1)
+    names = ["%s%d" % pair
+             for pair in pending_trials("ABC", K_CEILING, first_escalated)]
+    checks.append(("the escalation runs its blocks from A4",
+                   names == ["A4", "B4", "C4", "A5", "B5", "C5"]))
 
     blocked = {"outcome": "blocked", "reason": "planted",
                "void": {"dir": os.path.join("void", "A1-planted")}}
@@ -1371,8 +1391,10 @@ def parse_args(argv):
                              "each scorable build trial")
     parser.add_argument("--arms", default="ABC",
                         help="which arms to run, as letters (default ABC)")
-    parser.add_argument("--k", type=int, default=3,
-                        help="trials per arm (default 3, the pre-registered K)")
+    parser.add_argument("--k", type=int, default=K_PRIMARY,
+                        help="trials per arm (default %d, the pre-registered "
+                             "K; at most %d, the escalation's ceiling)"
+                             % (K_PRIMARY, K_CEILING))
     parser.add_argument("--model", default="claude-sonnet-5",
                         help="exact generator model id, recorded in the report")
     parser.add_argument("--effort", default="high")

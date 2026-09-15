@@ -28,7 +28,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
 from generate_arm_b import RECORD as ARM_B_RECORD  # noqa: E402
-from harness import SCORABLE, reach, read_transcripts  # noqa: E402
+from harness import (K_CEILING, K_PRIMARY, SCORABLE,  # noqa: E402
+                     reach, read_transcripts)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 AUDITS = os.path.join(lib.ROOT, "docs", "audits")
@@ -71,6 +72,11 @@ MARGINS = {
 }
 MARGINS.update((key, ("10 % relative", 0.10, RELATIVE))
                for key in STATIC_PER_KLOC)
+
+# The practical thresholds of the design's section 1.2 that can owe the one
+# escalation to K = 5. Only a primary dimension triggers it, so no other
+# metric's threshold is carried here, where something could come to read it.
+PRACTICAL = {key: ("0.5 points", 0.5) for key in PRIMARY}
 
 
 def path(payload, *keys):
@@ -478,6 +484,58 @@ def contrasts(table, seed):
     return results
 
 
+def escalation_triggers(results):
+    """The rows that owe the escalation to K = 5, in one set of contrasts.
+
+    A row owes it where a primary dimension's interval contains zero while its
+    mean paired difference exceeds that dimension's practical threshold.
+    """
+    triggers = []
+    for key in PRIMARY:
+        label, threshold = PRACTICAL[key]
+        for treatment, baseline in CONTRASTS:
+            name = "%s-%s" % (treatment, baseline)
+            contrast = results[key][name]
+            low = contrast["interval"].get("low")
+            high = contrast["interval"].get("high")
+            if low is None or high is None or not contrast["pairs"]:
+                continue
+
+            # Read by size in either direction, as the design's section 1.1
+            # fixes: an escalation owed only to a favourable effect would lean
+            # the stopping rule toward "better".
+            effect = statistics.fmean(contrast["pairs"])
+            if low <= 0 <= high and abs(effect) > threshold:
+                triggers.append({"metric": key, "contrast": name,
+                                 "mean": round(effect, 4), "low": low,
+                                 "high": high, "threshold": label})
+    return triggers
+
+
+def assess_escalation(trials, results, seed):
+    """Whether the escalation to K = 5 is owed, and whether it was run.
+
+    A run past K = 3 is judged on its first three blocks alone, because that is
+    the vector which had to owe the escalation. Their contrasts are kept, so
+    the report prints the K = 3 vector beside the K = 5 one.
+    """
+    k = max((index_of(name) for name in trials), default=0)
+    if k < K_PRIMARY:
+        return {"k": k, "state": "not assessed", "owed": None, "triggers": []}
+    if k == K_PRIMARY:
+        triggers = escalation_triggers(results)
+        return {"k": k, "state": "assessed", "owed": bool(triggers),
+                "triggers": triggers}
+    first = {name: trial for name, trial in trials.items()
+             if index_of(name) <= K_PRIMARY}
+    earlier = contrasts(collect(first), seed)
+    triggers = escalation_triggers(earlier)
+    return {"k": k,
+            "state": "escalated" if k == K_CEILING else "part-escalated",
+            "owed": bool(triggers), "triggers": triggers,
+            "results_k3": earlier}
+
+
 def number(value):
     """One rendering of a number, so the tables line up."""
     if value is None:
@@ -627,7 +685,7 @@ def lost_trials(root):
     return lost
 
 
-def write_report(root, trials, table, results, seed, agreement,
+def write_report(root, trials, table, results, seed, agreement, escalation,
                  out_dir=AUDITS):
     """The report the design names, under `docs/audits/`.
 
@@ -694,6 +752,9 @@ def write_report(root, trials, table, results, seed, agreement,
                  "design. Task success and cost follow.")
     lines.append("")
     lines.extend(contrast_table(table, results, PRIMARY))
+    lines.append("")
+
+    lines.extend(escalation_section(escalation))
     lines.append("")
 
     lines.append("## Task success, adherence and cost")
@@ -802,10 +863,25 @@ def write_report(root, trials, table, results, seed, agreement,
     lines.append("The whole vector, as the design requires: no single "
                  "headline number.")
     lines.append("")
-    lines.append("| Metric | B−A | C−A | B−C |")
-    lines.append("|---|---|---|---|")
+
+    # A run that escalated reports both vectors, as the design requires, so
+    # each contrast at K = 5 sits beside the same contrast over the first
+    # three blocks rather than in a second table a reader has to line up.
+    earlier = escalation.get("results_k3")
+    header = []
+    for treatment, baseline in CONTRASTS:
+        column = "%s−%s" % (treatment, baseline)
+        header.extend(["%s, K = %d" % (column, K_PRIMARY),
+                       "%s, K = %d" % (column, k)] if earlier else [column])
+    lines.append("| Metric | %s |" % " | ".join(header))
+    lines.append("|---|%s" % ("---|" * len(header)))
     for key, label, direction, _ in METRICS:
-        cells = [results[key]["%s-%s" % pair]["verdict"] for pair in CONTRASTS]
+        cells = []
+        for pair in CONTRASTS:
+            name = "%s-%s" % pair
+            if earlier:
+                cells.append(earlier[key][name]["verdict"])
+            cells.append(results[key][name]["verdict"])
         lines.append("| %s | %s |" % (label, " | ".join(cells)))
     lines.append("")
 
@@ -815,6 +891,60 @@ def write_report(root, trials, table, results, seed, agreement,
     with io.open(target, "w", encoding="utf-8", newline="\n") as handle:
         handle.write("\n".join(lines) + "\n")
     return target
+
+
+def escalation_section(escalation):
+    """The report's lines on the one escalation to K = 5 the design permits."""
+    k = escalation["k"]
+    lines = ["## The escalation to K = %d" % K_CEILING,
+             "",
+             "Fixed before the run: one escalation is owed where a primary "
+             "dimension's interval contains zero while its mean paired "
+             "difference exceeds 0.5 points in either direction, on any "
+             "contrast. K never exceeds %d." % K_CEILING,
+             ""]
+    state, owed = escalation["state"], escalation["owed"]
+    if state == "not assessed":
+        lines.append("Not assessed: the run holds K = %d, and the rule reads "
+                     "K = %d." % (k, K_PRIMARY))
+        return lines
+    if state == "assessed" and owed:
+        lines.append("**Owed.** Run blocks %d to %d with `--k %d --from A%d`, "
+                     "then report again. A row still containing zero at K = "
+                     "%d is reported as no improvement shown."
+                     % (K_PRIMARY + 1, K_CEILING, K_CEILING, K_PRIMARY + 1,
+                        K_CEILING))
+    elif state == "assessed":
+        lines.append("**Not owed.** No primary dimension's row meets the "
+                     "rule, so K stays %d." % K_PRIMARY)
+    elif not owed:
+        lines.append("**Run without a trigger.** The first %d blocks owed no "
+                     "escalation, so every block past them was sampled outside "
+                     "the design's rule. Read the K = %d vector; the K = %d "
+                     "rows are not evidence." % (K_PRIMARY, K_PRIMARY, k))
+    elif state == "part-escalated":
+        lines.append("**Part-run.** The first %d blocks owed it and the run "
+                     "holds K = %d, so block %d is still owed before the K = "
+                     "%d vector is read." % (K_PRIMARY, k, K_CEILING,
+                                             K_CEILING))
+    else:
+        lines.append("**Run.** The first %d blocks owed it, on the rows "
+                     "below. No further escalation is permitted: a row still "
+                     "containing zero at K = %d is reported as no improvement "
+                     "shown." % (K_PRIMARY, K_CEILING))
+    if escalation["triggers"]:
+        labels = {key: label for key, label, _, _ in METRICS}
+        lines.append("")
+        lines.append("| Metric | Contrast | Mean difference | Interval "
+                     "| Threshold |")
+        lines.append("|---|---|---|---|---|")
+        for row in escalation["triggers"]:
+            lines.append("| %s | %s | %s | (%s, %s) | %s |"
+                         % (labels[row["metric"]],
+                            row["contrast"].replace("-", "−"),
+                            number(row["mean"]), number(row["low"]),
+                            number(row["high"]), row["threshold"]))
+    return lines
 
 
 def contrast_cell(contrast):
@@ -943,8 +1073,91 @@ def reach_checks():
     return checks
 
 
+# One row on each side of the escalation rule. The interval is planted beside
+# its pairs, so each case turns on the rule rather than on the bootstrap.
+ESCALATING = (
+    ("a crossing interval with an effect of 0.67 owes it", "judge_design",
+     "B-A", [2.0, -1.0, 1.0], -1.0, 2.0, True),
+    ("the same row on C-A owes it", "judge_readability", "C-A",
+     [2.0, -1.0, 1.0], -1.0, 2.0, True),
+    ("an effect of 0.67 the other way owes it", "judge_maintainability",
+     "B-C", [-2.0, 1.0, -1.0], -2.0, 1.0, True),
+    ("an effect of exactly 0.5 does not", "judge_design", "B-A",
+     [1.5, -1.0, 1.0], -1.0, 1.5, False),
+    ("an interval clear of zero does not", "judge_design", "B-A",
+     [1.0, 1.0, 1.0], 1.0, 1.0, False),
+    ("a row outside the primary dimensions does not", "task_success", "B-A",
+     [2.0, -1.0, 1.0], -1.0, 2.0, False),
+    ("an interval not computed does not", "judge_design", "B-A", [2.0],
+     None, None, False),
+)
+
+
+def planted_results(key, name, pairs, low, high):
+    """Contrasts with one planted row, every other row measured nothing."""
+    results = {metric: {"%s-%s" % pair: {"pairs": [],
+                                         "interval": {"low": None,
+                                                      "high": None}}
+                        for pair in CONTRASTS}
+               for metric, _, _, _ in METRICS}
+    results[key][name] = {"pairs": pairs,
+                          "interval": {"low": low, "high": high}}
+    return results
+
+
+def escalation_checks(seed):
+    """The escalation rule on planted rows, and a planted K = 5 run rendered."""
+    checks = []
+    for label, key, name, pairs, low, high, expected in ESCALATING:
+        triggers = escalation_triggers(planted_results(key, name, pairs, low,
+                                                       high))
+        checks.append((label, bool(triggers) == expected, triggers))
+
+    # Five blocks of judged trials. The first three alone must decide the
+    # escalation, and the report must print their vector beside the fifth's.
+    design = {"A": [3, 3, 3, 3, 3], "B": [5, 2, 4, 4, 4], "C": [3, 3, 3, 3, 3]}
+    trials = {"%s%d" % (arm, index): {
+        "scores": {}, "change": None,
+        "judge": {"answer": {"rubric": {"design": {"score": score}}}}}
+        for arm, scores in design.items()
+        for index, score in enumerate(scores, 1)}
+    table = collect(trials)
+    results = contrasts(table, seed)
+    escalation = assess_escalation(trials, results, seed)
+    earlier = escalation.get("results_k3") or {}
+    checks.append(("a K = 5 run is judged on its first three blocks",
+                   escalation["state"] == "escalated"
+                   and len(path(earlier, "judge_design", "B-A", "pairs")
+                           or []) == K_PRIMARY
+                   and len(results["judge_design"]["B-A"]["pairs"])
+                   == K_CEILING, escalation["state"]))
+
+    first = {name: trial for name, trial in trials.items()
+             if index_of(name) <= K_PRIMARY}
+    state = assess_escalation(first, contrasts(collect(first), seed),
+                              seed)["state"]
+    checks.append(("a K = 3 run is assessed on its own vector",
+                   state == "assessed", state))
+
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-report-escalation-self-test")
+    shutil.rmtree(scratch, ignore_errors=True)
+    os.makedirs(scratch)
+    target = write_report(scratch, trials, table, results, seed,
+                          {"status": "planted"}, escalation, out_dir=scratch)
+    with io.open(target, encoding="utf-8") as handle:
+        text = handle.read()
+    shutil.rmtree(scratch, ignore_errors=True)
+    checks.append(("the report carries the escalation section",
+                   "## The escalation to K = 5" in text, None))
+    checks.append(("an escalated report prints both vectors",
+                   "| Metric | B−A, K = 3 | B−A, K = 5 |" in text, None))
+    return checks
+
+
 def self_test(seed):
-    """Check the verdict rule, the relative margin and the reach section."""
+    """Check the verdict rule, the relative margin, the escalation rule and
+    the reach section."""
     checks = []
     for label, differences, direction, expected in WORKED:
         interval = bca_interval(list(differences), seed)
@@ -987,6 +1200,7 @@ def self_test(seed):
                                          "seen": {"lines": 1500}}}}
     got = per_kloc(planted, "complexity", "over_15")
     checks.append(("a nested count is taken per KLOC", got == 2.0, got))
+    checks.extend(escalation_checks(seed))
     checks.extend((label, ok, ok) for label, ok in reach_checks())
     for label, ok, got in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED, got %r" % got))
@@ -1009,16 +1223,26 @@ def main(argv):
     if not trials:
         print("no scores under %s; score.py writes them" % options.root)
         return 2
+
+    # The design escalates once, to K = 5, and never further, so a run past
+    # the ceiling is refused rather than reported as though the bound held.
+    k = max(index_of(name) for name in trials)
+    if k > K_CEILING:
+        print("refused: the run holds K = %d, past the design's ceiling of "
+              "K = %d" % (k, K_CEILING))
+        return 2
     table = collect(trials)
     results = contrasts(table, options.seed)
+    escalation = assess_escalation(trials, results, options.seed)
     agreement = judge_agreement(options.root, trials)
     target = write_report(options.root, trials, table, results, options.seed,
-                          agreement, options.out_dir)
+                          agreement, escalation, options.out_dir)
 
     with io.open(os.path.join(options.root, "aggregate.json"), "w",
                  encoding="utf-8") as handle:
         json.dump({"seed": options.seed, "table": table, "results": results,
-                   "agreement": agreement}, handle, indent=2, sort_keys=True)
+                   "agreement": agreement, "escalation": escalation},
+                  handle, indent=2, sort_keys=True)
     print("Report: %s" % target)
     judged = sum(1 for trial in trials.values() if trial["judge"])
     lib.print_verdict(True, "%d trial(s) aggregated, %d judged"

@@ -223,6 +223,15 @@ if any of them reaches the lock or if a replaced package goes unnoticed.
 `report.py --self-test` runs the design's own worked cases through the
 verdict rule, including the row an earlier draft of the design read wrongly.
 
+The report also computes the design's one escalation to K = 5, so nobody
+decides it by eye. It is owed where a primary dimension's interval contains
+zero while its mean paired difference exceeds 0.5 points, in either direction,
+on any contrast. At K = 3 the report names the rows that owe it and the
+`--k 5 --from A4` run that settles it. At K = 5 it judges the first three
+blocks alone, prints their verdict vector beside the K = 5 one, and flags an
+escalation no row owed. The harness refuses `--k` above 5, and the report
+refuses a run past it. The self test plants a row on each side of the rule.
+
 Judging builds a blind bundle per trial: the context file removed, condition
 markers masked, the order shuffled at a recorded seed, the unblinding map
 written where the judge cannot reach it. A bundle that still names its
