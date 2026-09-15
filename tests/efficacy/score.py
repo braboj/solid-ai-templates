@@ -1127,6 +1127,38 @@ def lock_checks():
              package_moved("file:///run/B1", "file:///run/A1") is not None)]
 
 
+# The validator's JSON report in the shape html5validator 0.4.2 prints: the
+# first message as it printed it over a real trial's pages, then one other
+# error and one note planted beside it.
+PLANTED_VALIDATOR_REPORT = json.dumps({"messages": [
+    {"type": "error", "message": "Attribute 'hx-post' not allowed on element "
+                                 "'form' at this point."},
+    {"type": "error", "message": "Element 'div' not allowed as child of "
+                                 "element 'ul' in this context."},
+    {"type": "info", "message": "Trailing slash on void elements has no "
+                                "effect and interacts badly with unquoted "
+                                "attribute values."},
+]})
+
+
+def html_checks():
+    """The validator's report is read, and only HTMX attributes set aside."""
+
+    # The plant landed: the report carries both kinds of error and a note, so
+    # a count of one is the filter's doing and not a missing message.
+    kinds = [message["type"] for message
+             in json.loads(PLANTED_VALIDATOR_REPORT)["messages"]]
+    counted = probes.html_errors(PLANTED_VALIDATOR_REPORT)
+    return [("the planted report has two errors and a note",
+             kinds == ["error", "error", "info"]),
+            ("the validator's report is read as one object",
+             counted is not None),
+            ("an hx-* error is set aside and another counts",
+             counted == {"errors": 1, "ignored": 1, "messages": 3}),
+            ("a bare list is not read as the report",
+             probes.html_errors("[]") is None)]
+
+
 def self_test():
     """Prove the missing-vs-zero rule fires before any score is believed.
 
@@ -1147,7 +1179,7 @@ def self_test():
     remove_tree(scratch)
     os.makedirs(scratch)
     checks = (run_record_checks(scratch) + churn_checks(scratch)
-              + lock_checks())
+              + lock_checks() + html_checks())
     venv = create_venv(os.path.join(scratch, "venv"))
 
     empty = os.path.join(scratch, "empty")

@@ -205,6 +205,11 @@ static battery at one resolved set of tool versions — frozen to
 `tool-lock.txt` by the first trial scored and installed from there by every
 later one, so the ruler is identical across the arms.
 
+HTML validity counts the validator's errors less those on HTMX's `hx-*`
+attributes. The specification requires HTMX and the HTML standard has no such
+attributes, so without the filter the metric would count how much HTMX a trial
+uses. The score records the pattern and how many errors it set aside.
+
 The lock leaves out anything installed from a local path, in editable mode
 or under the package's own name. A freeze lists the scored trial's package
 too, and a lock carrying it installs the first trial's code over every later
