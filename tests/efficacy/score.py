@@ -25,7 +25,6 @@ import glob
 import io
 import json
 import os
-import shutil
 import subprocess
 import sys
 import tarfile
@@ -159,7 +158,7 @@ def extract(tarball, into, name):
         raise ScoreError("the frozen tarball %s does not exist" % tarball)
     target = os.path.join(into, name)
     if os.path.exists(target):
-        shutil.rmtree(target)
+        remove_tree(target)
     os.makedirs(into, exist_ok=True)
     with tarfile.open(tarball) as archive:
         archive.extractall(into, filter="data")
@@ -171,7 +170,7 @@ def extract(tarball, into, name):
 def create_venv(where):
     """A clean virtual environment for one trial."""
     if os.path.exists(where):
-        shutil.rmtree(where)
+        remove_tree(where)
     outcome = run([sys.executable, "-m", "venv", where], timeout=600)
     if outcome["failed"] or outcome["status"] != 0:
         raise ScoreError("could not create the virtual environment at %s: %s"
@@ -356,7 +355,7 @@ def clone_suite(where):
     it.
     """
     if os.path.isdir(where):
-        shutil.rmtree(where)
+        remove_tree(where)
     outcome = run(["gh", "repo", "clone", HIDDEN_SUITE, where, "--",
                    "--depth", "1"], timeout=600)
     if outcome["failed"] or outcome["status"] != 0:
@@ -1159,6 +1158,38 @@ def html_checks():
              probes.html_errors("[]") is None)]
 
 
+def readonly_checks(scratch):
+    """A tree holding a read-only file is replaced, as Git's pack files are."""
+    into = os.path.join(scratch, "readonly")
+    target = os.path.join(into, "A1")
+    pack = os.path.join(target, ".git", "objects", "pack")
+    os.makedirs(pack)
+    planted = os.path.join(pack, "pack-planted.idx")
+    with io.open(planted, "w", encoding="utf-8") as handle:
+        handle.write("planted")
+    os.chmod(planted, 0o444)
+    source = os.path.join(scratch, "readonly-source", "A1")
+    os.makedirs(source)
+    with io.open(os.path.join(source, "app.py"), "w",
+                 encoding="utf-8") as handle:
+        handle.write("fresh = True\n")
+    tarball = os.path.join(scratch, "readonly-A1.tar")
+    with tarfile.open(tarball, "w") as archive:
+        archive.add(source, arcname="A1")
+
+    # The plant landed: the file the extract must replace is read-only, which
+    # is what stops a plain removal on Windows.
+    landed = not os.access(planted, os.W_OK)
+    try:
+        workspace = extract(tarball, into, "A1")
+    except OSError:
+        workspace = None
+    return [("the planted pack file is read-only", landed),
+            ("an extract replaces a tree holding it",
+             workspace == target and not os.path.exists(planted)
+             and os.path.isfile(os.path.join(target, "app.py")))]
+
+
 def self_test():
     """Prove the missing-vs-zero rule fires before any score is believed.
 
@@ -1179,7 +1210,7 @@ def self_test():
     remove_tree(scratch)
     os.makedirs(scratch)
     checks = (run_record_checks(scratch) + churn_checks(scratch)
-              + lock_checks() + html_checks())
+              + lock_checks() + html_checks() + readonly_checks(scratch))
     venv = create_venv(os.path.join(scratch, "venv"))
 
     empty = os.path.join(scratch, "empty")
