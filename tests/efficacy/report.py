@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import lib  # noqa: E402
 from generate_arm_b import RECORD as ARM_B_RECORD  # noqa: E402
 from harness import (K_CEILING, K_PRIMARY, SCORABLE,  # noqa: E402
-                     reach, read_transcripts)
+                     reach, read_transcripts, scoring_area)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 AUDITS = os.path.join(lib.ROOT, "docs", "audits")
@@ -400,14 +400,15 @@ def non_inferior(key, interval, direction, baseline_mean=None):
 
 def load(root):
     """Every scored trial, with its judging attached where one exists."""
+    area = scoring_area(root)
     trials = {}
-    for file in sorted(glob.glob(os.path.join(root, "scores", "*.json"))):
+    for file in sorted(glob.glob(os.path.join(area, "scores", "*.json"))):
         with io.open(file, encoding="utf-8") as handle:
             scores = json.load(handle)
         trials[scores["name"]] = {"scores": scores, "judge": None,
                                   "change": None}
 
-    for file in sorted(glob.glob(os.path.join(root, "judge", "T*.json"))):
+    for file in sorted(glob.glob(os.path.join(area, "judge", "T*.json"))):
         with io.open(file, encoding="utf-8") as handle:
             judging = json.load(handle)
         name = judging.get("trial")
@@ -416,7 +417,7 @@ def load(root):
 
     # A change task sits beside its own build trial, so one whose build trial
     # was never scored has nothing to pair with and is left out.
-    for file in sorted(glob.glob(os.path.join(root, "scores-change",
+    for file in sorted(glob.glob(os.path.join(area, "scores-change",
                                               "*.json"))):
         with io.open(file, encoding="utf-8") as handle:
             change = json.load(handle)
@@ -556,7 +557,7 @@ def judge_agreement(root, trials):
     never as a correlation: nine non-independent points do not support a
     coefficient.
     """
-    sheet = os.path.join(root, "judge", "holdout-scores.json")
+    sheet = os.path.join(scoring_area(root), "judge", "holdout-scores.json")
     if not os.path.exists(sheet):
         return {"status": "unvalidated: no holdout scores have been recorded"}
     with io.open(sheet, encoding="utf-8") as handle:
@@ -618,30 +619,35 @@ def name_of(record):
 def reaches(root):
     """Every scorable trial's transcript scan, as name and hits.
 
-    A record written before the harness scanned is scanned here, from the
-    transcripts the run root still holds.
+    Scanned here under the current rule wherever the run root still holds the
+    transcripts, so a record scanned under an earlier, narrower rule is read
+    again. A trial whose transcripts are gone keeps its record's own scan.
     """
     home = os.path.join(root, "home")
     scans = []
     for record in run_records(root):
         if record.get("outcome") not in SCORABLE:
             continue
-        scan = record.get("reach")
-        if scan is None:
-            scan = reach(*read_transcripts(home, record.get("workspace")
-                                           or ""))
+        workspace = record.get("workspace") or ""
+        files, calls = read_transcripts(home, workspace)
+        if files:
+            scan = reach(files, calls, workspace, record.get("temp"))
+        else:
+            scan = record.get("reach") or reach(files, calls)
         scans.append({"name": name_of(record), "hits": scan["hits"]})
     return scans
 
 
 def reach_section(root):
-    """The report's lines naming every trial that reached for the templates
-    or the hidden suite."""
-    lines = ["## Trials that reached for the templates or the hidden suite",
+    """The report's lines naming every trial that reached past its own
+    workspace."""
+    lines = ["## Trials that reached past their own workspace",
              "",
-             "The shell keeps its network, so a trial could fetch either one. "
-             "Every transcript is scanned for a tool call naming this "
-             "repository or the hidden suite.",
+             "The shell keeps its network and the file system is not fenced, "
+             "so a trial could fetch this repository or read the hidden "
+             "suite, the scoring area, or another trial's workspace, tarball "
+             "or transcript. Every transcript is scanned for a tool call "
+             "naming any of them.",
              ""]
     scans = reaches(root)
     flagged = [scan for scan in scans if scan["hits"]]
@@ -655,7 +661,7 @@ def reach_section(root):
                              % (scan["name"], hit["tool"], hit["term"],
                                 call[:160]))
     else:
-        lines.append("None: no scanned transcript names either.")
+        lines.append("None: no scanned transcript names any of them.")
     unscanned = [scan["name"] for scan in scans if scan["hits"] is None]
     if unscanned:
         lines.append("")
@@ -1073,6 +1079,45 @@ def reach_checks():
     return checks
 
 
+def rescan_checks():
+    """A record scanned under an earlier rule is read again from its
+    transcript."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-report-rescan-self-test")
+    shutil.rmtree(scratch, ignore_errors=True)
+    workspace = os.path.join(scratch, "A2")
+    os.makedirs(workspace)
+    os.makedirs(os.path.join(scratch, "B1"))
+    folder = "".join(char if char.isalnum() else "-"
+                     for char in os.path.abspath(workspace))
+    projects = os.path.join(scratch, "home", ".claude", "projects", folder)
+    os.makedirs(projects)
+    entry = {"type": "assistant", "message": {"content": [
+        {"type": "tool_use", "name": "Bash",
+         "input": {"command": "cat ../B1/src/tariff/pricing.py"}}]}}
+    with io.open(os.path.join(projects, "planted.jsonl"), "w",
+                 encoding="utf-8") as handle:
+        handle.write(json.dumps(entry) + "\n")
+
+    # Scanned clean when it ran, as the narrower rule would have left it.
+    planted = [{"arm": "A", "trial": 2, "outcome": "completed",
+                "workspace": workspace,
+                "reach": {"transcripts": ["planted"], "hits": []}}]
+    with io.open(os.path.join(scratch, "run-planted.json"), "w",
+                 encoding="utf-8") as handle:
+        json.dump({"trials": planted}, handle)
+
+    # The plant landed: the transcript is found and carries the one call.
+    landed = len(read_transcripts(os.path.join(scratch, "home"),
+                                  workspace)[1]) == 1
+    terms = [hit["term"] for scan in reaches(scratch)
+             for hit in scan["hits"] or []]
+    shutil.rmtree(scratch, ignore_errors=True)
+    return [("the planted transcript carries one call", landed),
+            ("its record's clean scan is read again and flagged",
+             terms == ["../b1"])]
+
+
 # One row on each side of the escalation rule. The interval is planted beside
 # its pairs, so each case turns on the rule rather than on the bootstrap.
 ESCALATING = (
@@ -1202,6 +1247,7 @@ def self_test(seed):
     checks.append(("a nested count is taken per KLOC", got == 2.0, got))
     checks.extend(escalation_checks(seed))
     checks.extend((label, ok, ok) for label, ok in reach_checks())
+    checks.extend((label, ok, ok) for label, ok in rescan_checks())
     for label, ok, got in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED, got %r" % got))
     passed = sum(1 for _, ok, _ in checks if ok)
@@ -1221,7 +1267,8 @@ def main(argv):
 
     trials = load(options.root)
     if not trials:
-        print("no scores under %s; score.py writes them" % options.root)
+        print("no scores under %s; score.py writes them"
+              % scoring_area(options.root))
         return 2
 
     # The design escalates once, to K = 5, and never further, so a run past
@@ -1238,8 +1285,8 @@ def main(argv):
     target = write_report(options.root, trials, table, results, options.seed,
                           agreement, escalation, options.out_dir)
 
-    with io.open(os.path.join(options.root, "aggregate.json"), "w",
-                 encoding="utf-8") as handle:
+    with io.open(os.path.join(scoring_area(options.root), "aggregate.json"),
+                 "w", encoding="utf-8") as handle:
         json.dump({"seed": options.seed, "table": table, "results": results,
                    "agreement": agreement, "escalation": escalation},
                   handle, indent=2, sort_keys=True)
