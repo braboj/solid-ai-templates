@@ -366,8 +366,8 @@ def validate(payload):
 def trees(root):
     """Every scored trial's extracted tree, by trial name."""
     found = {}
-    for path in sorted(glob.glob(os.path.join(root, "scoring", "*",
-                                             "tree", "*"))):
+    scoring = os.path.join(score.scoring_area(root), "scoring")
+    for path in sorted(glob.glob(os.path.join(scoring, "*", "tree", "*"))):
         if os.path.isdir(path):
             found[os.path.basename(path)] = path
     return found
@@ -382,8 +382,8 @@ def main(argv):
         return 2
     if options.record_holdout:
         try:
-            target, scores = record_holdout(os.path.join(options.root,
-                                                         "judge"))
+            target, scores = record_holdout(os.path.join(
+                score.scoring_area(options.root), "judge"))
         except HoldoutError as error:
             print("refused: %s" % error)
             lib.print_verdict(False, "no holdout score recorded")
@@ -397,7 +397,7 @@ def main(argv):
     available = trees(options.root)
     if not available:
         print("no extracted trial trees under %s; score.py writes them"
-              % options.root)
+              % score.scoring_area(options.root))
         return 2
 
     wanted = sorted(options.trial) if options.trial else sorted(available)
@@ -406,7 +406,7 @@ def main(argv):
         print("no tree for %s" % ", ".join(missing))
         return 2
 
-    judging = os.path.join(options.root, "judge")
+    judging = os.path.join(score.scoring_area(options.root), "judge")
     bundles = os.path.join(judging, "bundles")
     os.makedirs(bundles, exist_ok=True)
 
