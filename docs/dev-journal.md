@@ -7968,3 +7968,42 @@ observable by a consuming project.
   trial's share of the quota no longer rests on a screenshot. Its reset time
   jitters across the minute, and a comparison by minute read every window
   as reset
+
+## 2026-09-15 — The wrap-up's two open gaps, closed after it
+
+**Tool:** Claude Code (Opus 5 1M)
+
+**Key changes:**
+- The report gives every static-analysis count a per-KLOC row beside its
+  absolute count, and each row carries the 10 % relative margin section
+  1.2 declares. Before, only lint findings had a per-KLOC row and no static
+  count had a margin, so none could be claimed preserved (#1744)
+- Deleted the copies of the credentials file under `C:\efficacy\dry\home`
+  and `C:\efficacy\run-v290\home`. The harness copies the file into every
+  run's home by design, so each run leaves one to delete
+- Both were open in the previous entry, which stays as written
+
+**Pull requests merged:** 1 — #1745.
+
+**Issues closed:** #1744. #1184 stays open because no counted trial has
+run.
+
+**Issues filed:** #1744.
+
+**ADRs:** none owed. The report applies a threshold the design already
+fixes.
+
+**Gaps flagged:**
+- Section 1.1's escalation to K = 5 is computed nowhere. It is owed where a
+  primary dimension's interval contains zero while its observed effect
+  exceeds the practical threshold in section 1.2, and no file in
+  `tests/efficacy` records those thresholds or states whether it is owed.
+  Not filed
+
+**Lessons:**
+- A broken copy that makes a self test raise, rather than fail one check,
+  still stops the run. The control has to count the exception as detection,
+  or it reports a failed control for a guard that held
+- The new rows were checked end to end on the re-scored trials, where each
+  rendered with a value. Their contrasts stay "not computed" until an arm
+  has two trials
