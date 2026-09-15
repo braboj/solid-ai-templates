@@ -8007,3 +8007,45 @@ fixes.
 - The new rows were checked end to end on the re-scored trials, where each
   rendered with a value. Their contrasts stay "not computed" until an arm
   has two trials
+
+## 2026-09-15 — The escalation to K = 5, computed before a trial reads it
+
+**Tool:** Claude Code (Opus 5 1M)
+
+**Key changes:**
+- The report computes section 1.1's one escalation to K = 5: owed where a
+  primary dimension's interval contains zero while its mean paired
+  difference exceeds 0.5 points. At K = 3 it names the rows that owe it; at
+  K = 5 it judges the first three blocks alone and prints both verdict
+  vectors side by side (#1747)
+- The harness refuses `--k` above 5, and the report refuses a run past it
+- Section 1.1 records the two readings the design left open, settled by the
+  owner before the first counted trial: any of the three contrasts triggers
+  the escalation, and the effect counts by its size in either direction
+- The owner set this week for benchmark testing, before v3.0 starts
+
+**Pull requests merged:** 1 — #1748.
+
+**Issues closed:** #1747. #1184 stays open because no counted trial has
+run.
+
+**Issues filed:** #1747.
+
+**ADRs:** none owed. The escalation was pre-registered in the design, and
+the two readings settle the benchmark's method, not the composition model.
+
+**Gaps flagged:**
+- The remote branch `feat/quality-variadic-contract-test` of merged #1683
+  is still on origin. Flagged again, not deleted
+- The previous entry's open gap is closed by #1747; that entry stays as
+  written
+
+**Lessons:**
+- A pre-registered rule can still leave its readings open. "A primary
+  dimension's interval" named neither the contrast nor the direction, and a
+  reading taken only in the favourable direction would have leaned the
+  stopping rule toward "better". Settle such a reading before the first
+  counted trial, not when a result forces the question
+- Each new guard was mutated before it was trusted. Removing the `--k` cap
+  failed one harness check of 58; reading the rule in one direction failed
+  exactly the planted opposite-direction case, one report check of 27
