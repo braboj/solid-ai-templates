@@ -8049,3 +8049,68 @@ the two readings settle the benchmark's method, not the composition model.
 - Each new guard was mutated before it was trusted. Removing the `--k` cap
   failed one harness check of 58; reading the rule in one direction failed
   exactly the planted opposite-direction case, one report check of 27
+
+## 2026-09-16 — Four defects between a trial and its score
+
+**Tool:** Claude Code (Opus 5 1M)
+
+**Key changes:**
+- A1 and B1 re-ran in a fresh root, `C:\efficacy\run-2026-09-15`, under the
+  settled protocol. Both completed: A1 $10.03 in 20.0 minutes, B1 $14.28 in
+  22.9 minutes, neither reaching past its own workspace
+- The HTML validity probe read html5validator's report as a list, where it
+  prints one object carrying a `messages` list, and scoring crashed on the
+  first trial with pages to read. It reads the object now, and sets aside
+  the errors on HTMX's `hx-*` attributes, which `SPEC.md` requires of every
+  arm and the HTML standard does not carry (#1750)
+- Re-scoring a root that had been scored before failed on Git's read-only
+  pack files. The scorer's three removals use `remove_tree` (#1752)
+- The tool lock was a freeze of the first scored trial's own environment, so
+  it carried A1's Flask and Flask-WTF and installed them into B1 ahead of
+  its battery and web probes. It is resolved in an environment holding only
+  the tools (#1754)
+- Scoring and judging wrote inside the run root, where the next trial's
+  workspace is created: the hidden suite's clone with its reference
+  implementation, every trial's extracted code, the scores. They write to
+  `<root>-scoring`, and the transcript scan flags the scoring area, the run
+  root and any entry of it other than the trial's own workspace and
+  temporary directory (#1756)
+- In the private suite, the `db_path` fixture unlinked a database file an
+  open connection still held, which on Windows errors every check in a
+  module that builds the application; its cleanup ignores that now. Its
+  mutation control baselined on the change-task modules, which the
+  build-only reference cannot pass, and refused before testing a mutation;
+  it baselines on the build modules
+- The merged remote branch `feat/quality-variadic-contract-test`, flagged in
+  the two previous entries, is deleted
+
+**Pull requests merged:** 4 — #1751, #1753, #1755, #1757.
+
+**Issues closed:** #1750, #1752, #1754, #1756. #1184 stays open because no
+counted trial has run.
+
+**Issues filed:** #1750, #1752, #1754, #1756, #1758.
+
+**ADRs:** none owed. The scorer, the run's layout and the private suite are
+not observable by a consuming project.
+
+**Gaps flagged:**
+- #1758, filed and not fixed: the browser binary for the Playwright the lock
+  resolves is absent, so the suite skips its browser flows; a skipped check
+  leaves the pass rate's denominator; and a metric nested under another does
+  not flag when it is missing. A1 read 0.992 with the browser present and
+  0.9973 without it
+- A1's and B1's current scores stand only until #1758 is fixed, since they
+  were taken under exactly those conditions
+
+**Lessons:**
+- Two runs of one scorer over one trial gave different scores, and the
+  higher one had run fewer checks. A pass rate taken over graded checks
+  alone pays a trial for a check that would not start
+- A rough scan of A1's transcript matched 78 of its 90 tool calls, because a
+  trial names its own workspace by absolute path in nearly every one. What
+  the rule turns on is the exclusion, not the match
+- A same-length edit restored within one second leaves a stale `.pyc`. The
+  second control read the first's bytecode, and so did the rerun that was
+  meant to show the tree clean; every control after that ran under a fresh
+  `PYTHONPYCACHEPREFIX`
