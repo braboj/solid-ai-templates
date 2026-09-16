@@ -329,10 +329,36 @@ def verify_evidence(payload, lines):
             "not_found": absent_lines}
 
 
-def codex_version():
-    """The judge CLI's version, which goes in the report."""
-    outcome = score.run(["codex", "--version"], timeout=120)
-    return (outcome["stdout"] or outcome["stderr"]).strip() or "unknown"
+class JudgeError(Exception):
+    """The judge cannot be launched as the design requires."""
+
+
+def judge_executable():
+    """The judge CLI's absolute path.
+
+    A bare "codex" in an argv list is not launchable on Windows, where the
+    command is a `.CMD` shim and `CreateProcess` resolves no extension.
+    """
+    found = shutil.which("codex")
+    if found is None:
+        raise JudgeError("the `codex` CLI is not on PATH, so no trial can be "
+                         "judged")
+    return found
+
+
+def codex_version(executable):
+    """The judge CLI's version, which goes in the report.
+
+    Launched before any bundle is built, the dry run included, so a CLI that
+    cannot start refuses the run rather than failing every trial after it.
+    """
+    outcome = score.run([executable, "--version"], timeout=120)
+    version = (outcome["stdout"] or "").strip()
+    if outcome["failed"] or outcome["status"] != 0 or not version:
+        raise JudgeError("`%s --version` did not report a version: %s"
+                         % (executable, (outcome["failed"] or outcome["stderr"]
+                                         or "no output")[:300]))
+    return version
 
 
 def judge_bundle(bundle, options, schema_path):
@@ -343,7 +369,11 @@ def judge_bundle(bundle, options, schema_path):
     """
     last = os.path.join(os.path.dirname(bundle),
                         os.path.basename(bundle) + "-message.json")
-    argv = ["codex", "exec",
+
+    # The prompt goes on standard input, named by `-`, never as an argument:
+    # the Windows shim runs through `cmd.exe`, which ends a command at a
+    # newline and expands a `%NAME%` pair inside an argument.
+    argv = [options.executable, "exec",
             "--model", options.model,
             "-c", 'model_reasoning_effort="%s"' % options.effort,
             "--sandbox", "read-only",
@@ -352,10 +382,11 @@ def judge_bundle(bundle, options, schema_path):
             "-C", bundle,
             "--output-schema", schema_path,
             "--output-last-message", last,
-            PROMPT]
+            "-"]
     if options.dry_run:
         return {"argv": argv, "dry_run": True}
-    outcome = score.run(argv, cwd=bundle, timeout=options.timeout)
+    outcome = score.run(argv, cwd=bundle, timeout=options.timeout,
+                        stdin=PROMPT)
     if not os.path.exists(last):
         return {"argv": argv, "error": "the judge wrote no final message: %s"
                 % (outcome["stderr"] or outcome["stdout"])[-400:]}
@@ -433,6 +464,14 @@ def main(argv):
         print("no tree for %s" % ", ".join(missing))
         return 2
 
+    try:
+        options.executable = judge_executable()
+        version = codex_version(options.executable)
+    except JudgeError as error:
+        print("refused: %s" % error)
+        lib.print_verdict(False, "no trial judged")
+        return 2
+
     judging = os.path.join(score.scoring_area(options.root), "judge")
     bundles = os.path.join(judging, "bundles")
     os.makedirs(bundles, exist_ok=True)
@@ -449,7 +488,6 @@ def main(argv):
     with io.open(schema_path, "w", encoding="utf-8") as handle:
         json.dump(schema(), handle, indent=2)
 
-    version = codex_version()
     results, failures = [], 0
     for name in order:
         label = blind[name]
@@ -687,8 +725,93 @@ def bundle_checks(scratch):
     return checks
 
 
+# A stand-in for the judge CLI: it reports a version, and otherwise records
+# the arguments and standard input it received where the real CLI writes its
+# final message.
+FAKE_CLI = """\
+import json
+import sys
+
+args = sys.argv[1:]
+if args == ["--version"]:
+    print("codex-cli self-test")
+    raise SystemExit(0)
+last = args[args.index("--output-last-message") + 1]
+with open(last, "w", encoding="utf-8") as handle:
+    json.dump({"argv": args,
+               "stdin": sys.stdin.buffer.read().decode("utf-8")}, handle)
+"""
+
+
+def launch_checks(scratch):
+    """Prove the judge launches through a shim, with the prompt on stdin.
+
+    The stand-in is installed the way npm installs the real CLI: a `.cmd`
+    shim on Windows, so the launch crosses `cmd.exe` as the real one does.
+    """
+    empty = os.path.join(scratch, "empty")
+    bin_dir = os.path.join(scratch, "bin")
+    broken_dir = os.path.join(scratch, "broken")
+    fake = os.path.join(scratch, "fake_codex.py")
+    plant(scratch, {os.path.join("empty", ".keep"): "",
+                    "fake_codex.py": FAKE_CLI})
+    if os.name == "nt":
+        plant(bin_dir, {"codex.cmd": '@echo off\r\n"%s" "%s" %%*\r\n'
+                        % (sys.executable, fake)})
+        plant(broken_dir, {"codex.cmd": "@echo off\r\nexit /b 1\r\n"})
+    else:
+        plant(bin_dir, {"codex": '#!/bin/sh\nexec "%s" "%s" "$@"\n'
+                        % (sys.executable, fake)})
+        plant(broken_dir, {"codex": "#!/bin/sh\nexit 1\n"})
+        for directory in (bin_dir, broken_dir):
+            os.chmod(os.path.join(directory, "codex"), 0o755)
+
+    def refuses(call):
+        try:
+            call()
+        except JudgeError:
+            return True
+        return False
+
+    saved = os.environ.get("PATH", "")
+    checks = []
+    try:
+        os.environ["PATH"] = empty
+        checks.append(("a CLI missing from PATH refuses the run",
+                       refuses(judge_executable)))
+
+        os.environ["PATH"] = broken_dir
+        checks.append(("a CLI that reports no version refuses the run",
+                       refuses(lambda: codex_version(judge_executable()))))
+
+        os.environ["PATH"] = bin_dir
+        executable = judge_executable()
+        checks.append(("the CLI resolves to an absolute path",
+                       os.path.isabs(executable)
+                       and os.path.isfile(executable)))
+        checks.append(("the resolved CLI reports its version",
+                       codex_version(executable) == "codex-cli self-test"))
+
+        bundle = os.path.join(scratch, "launch", "T1")
+        plant(bundle, {"SPEC.md": "# spec\n"})
+        options = argparse.Namespace(executable=executable, model="m",
+                                     effort="high", dry_run=False,
+                                     timeout=120)
+        answer = judge_bundle(bundle, options, os.path.join(scratch, "s.json"))
+    finally:
+        os.environ["PATH"] = saved
+
+    received = answer.get("payload") or {}
+    stdin = (received.get("stdin") or "").replace("\r\n", "\n")
+    checks.append(("the prompt reaches the CLI whole, on stdin",
+                   stdin == PROMPT and PROMPT not in answer["argv"]))
+    checks.append(("every argument reaches the CLI intact",
+                   received.get("argv") == answer["argv"][1:]))
+    return checks
+
+
 def self_test():
-    """Prove the holdout sheet records once filled, and a bundle is blind."""
+    """Prove the holdout sheet records, a bundle is blind, the judge launches."""
     scratch = os.path.join(os.environ.get("TEMP", "."),
                            "efficacy-judge-self-test")
     shutil.rmtree(scratch, ignore_errors=True)
@@ -737,6 +860,7 @@ def self_test():
         checks.append((label, landed and refuses(flawed)))
 
     checks.extend(bundle_checks(scratch))
+    checks.extend(launch_checks(scratch))
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     shutil.rmtree(scratch, ignore_errors=True)
