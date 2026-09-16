@@ -285,6 +285,33 @@ CHANGE = ("change_success", "change_regression", "churn_files", "churn_lines",
           "change_cost_usd")
 
 
+def security_value(trial, key):
+    """A security check's value, or None where it was not taken."""
+    return metric_value({"scores": trial.get("security") or {}}, key)
+
+
+# Security checks declared after a run and before any trial was read for them.
+# Their directions were declared with them. They are kept out of METRICS so no
+# verdict, escalation or verdict-vector row can come from a check chosen after
+# the results were seen.
+POSTHOC = (
+    ("security_secret_key", "Hard-coded secret keys", DOWN,
+     lambda t: security_value(t, "secret_key")),
+    ("security_debug", "Debug enabled", DOWN,
+     lambda t: security_value(t, "debug")),
+    ("security_sql_strings", "SQL statements built from strings", DOWN,
+     lambda t: security_value(t, "sql_strings")),
+    ("security_vulnerable", "Known vulnerabilities in installed dependencies",
+     DOWN, lambda t: security_value(t, "vulnerable_dependencies")),
+    ("security_cookies", "Session cookie flags set, of three", UP,
+     lambda t: security_value(t, "cookie_flags")),
+    ("security_headers", "Security headers on /, of four", UP,
+     lambda t: security_value(t, "security_headers")),
+    ("security_leaks", "Malformed requests answered with a stack trace, of "
+     "five", DOWN, lambda t: security_value(t, "error_leakage")),
+)
+
+
 def change_value(trial, *keys):
     """A change-task metric's value, or None where it was not measured."""
     return metric_value({"scores": trial.get("change") or {}}, *keys)
@@ -406,7 +433,7 @@ def load(root):
         with io.open(file, encoding="utf-8") as handle:
             scores = json.load(handle)
         trials[scores["name"]] = {"scores": scores, "judge": None,
-                                  "change": None}
+                                  "change": None, "security": None}
 
     for file in sorted(glob.glob(os.path.join(area, "judge", "T*.json"))):
         with io.open(file, encoding="utf-8") as handle:
@@ -423,6 +450,13 @@ def load(root):
             change = json.load(handle)
         if change.get("name") in trials:
             trials[change["name"]]["change"] = change
+
+    for file in sorted(glob.glob(os.path.join(area, "security-scores",
+                                              "*.json"))):
+        with io.open(file, encoding="utf-8") as handle:
+            security = json.load(handle)
+        if security.get("name") in trials:
+            trials[security["name"]]["security"] = security
     return trials
 
 
@@ -434,10 +468,10 @@ def index_of(name):
     return int(name[1:])
 
 
-def collect(trials):
+def collect(trials, metrics=METRICS):
     """Metric values by metric, arm and trial index."""
     table = {}
-    for key, label, direction, accessor in METRICS:
+    for key, label, direction, accessor in metrics:
         row = {}
         for name, trial in sorted(trials.items()):
             try:
@@ -692,12 +726,14 @@ def lost_trials(root):
 
 
 def write_report(root, trials, table, results, seed, agreement, escalation,
-                 out_dir=AUDITS):
+                 out_dir=AUDITS, posthoc=None):
     """The report the design names, under `docs/audits/`.
 
     The directory is an argument so a shakedown of the writer can render into
     a scratch directory. A fabricated run must not be able to leave a file
     among the real audits, where its date alone would read as a result.
+    `posthoc` is the table and contrasts of the checks declared after the
+    run, printed in their own section and nowhere else.
     """
     names = sorted(trials)
     arms = sorted({arm_of(name) for name in names})
@@ -789,15 +825,21 @@ def write_report(root, trials, table, results, seed, agreement, escalation,
     lines.extend(contrast_table(table, results, rest))
     lines.append("")
 
+    if posthoc:
+        lines.extend(posthoc_section(*posthoc))
+        lines.append("")
+
     lines.append("## Raw numbers, per trial")
     lines.append("")
     lines.append("| Metric | %s |" % " | ".join(names))
     lines.append("|---|%s" % ("---|" * len(names)))
-    for key, label, direction, _ in METRICS:
-        row = table[key]["values"]
-        cells = [number(row.get(arm_of(name), {}).get(index_of(name)))
-                 for name in names]
-        lines.append("| %s | %s |" % (label, " | ".join(cells)))
+    raw = [(table, METRICS)] + ([(posthoc[0], POSTHOC)] if posthoc else [])
+    for source, metrics in raw:
+        for key, label, direction, _ in metrics:
+            row = source[key]["values"]
+            cells = [number(row.get(arm_of(name), {}).get(index_of(name)))
+                     for name in names]
+            lines.append("| %s | %s |" % (label, " | ".join(cells)))
     lines.append("")
 
     lines.append("## Trials, and what was measured on them")
@@ -899,6 +941,22 @@ def write_report(root, trials, table, results, seed, agreement, escalation,
     return target
 
 
+def posthoc_section(table, results):
+    """The report's lines on the security checks declared after the run."""
+    lines = ["## Security, read with checks declared after the results",
+             "",
+             "The run's own security checks passed on every trial and "
+             "separated nothing. These were declared after the run and before "
+             "any trial was read for them, so each row gives the means and the "
+             "interval and no verdict, and none of them reaches the verdict "
+             "vector or the escalation.",
+             ""]
+    lines.extend(contrast_table(table, results,
+                                [key for key, _, _, _ in POSTHOC],
+                                verdicts=False))
+    return lines
+
+
 def escalation_section(escalation):
     """The report's lines on the one escalation to K = 5 the design permits."""
     k = escalation["k"]
@@ -953,8 +1011,11 @@ def escalation_section(escalation):
     return lines
 
 
-def contrast_cell(contrast):
+def contrast_cell(contrast, verdicts=True):
     """One contrast, as the mean, its interval, its verdict and its method.
+
+    Without `verdicts` the cell stops at the interval, for a row that may
+    describe a run but not decide it.
 
     All three contrasts are printed for every metric, because B − C is the one
     an adopter asks and a table showing only B − A cannot answer it: a large
@@ -974,6 +1035,8 @@ def contrast_cell(contrast):
     method = interval.get("method") or ""
     if not method.startswith("BCa"):
         body += " ‡"
+    if not verdicts:
+        return body
     verdict_text = contrast["verdict"]
     inferiority = contrast.get("non_inferior")
     if inferiority and verdict_text == "no improvement shown":
@@ -983,7 +1046,7 @@ def contrast_cell(contrast):
     return "%s — %s" % (body, verdict_text)
 
 
-def contrast_table(table, results, keys):
+def contrast_table(table, results, keys, verdicts=True):
     """One table of contrasts: every metric against all three comparisons."""
     lines = ["| Metric | Direction | A | B | C | B−A | C−A | B−C |",
              "|---|---|---|---|---|---|---|---|"]
@@ -998,7 +1061,7 @@ def contrast_table(table, results, keys):
         cells = []
         for treatment, baseline in CONTRASTS:
             contrast = results[key]["%s-%s" % (treatment, baseline)]
-            cell = contrast_cell(contrast)
+            cell = contrast_cell(contrast, verdicts)
             degenerate = degenerate or "‡" in cell
             cells.append(cell)
         lines.append("| %s | %s | %s | %s | %s | %s |"
@@ -1200,6 +1263,56 @@ def escalation_checks(seed):
     return checks
 
 
+def posthoc_checks(seed):
+    """Checks declared after a run are printed, and decide nothing."""
+    keys = {key for key, _, _, _ in POSTHOC}
+    checks = [("no after-the-results check is a verdict metric",
+               not keys & {key for key, _, _, _ in METRICS}, sorted(keys))]
+
+    # Arm B sets every header on every trial and arm A none, so the row would
+    # read "better" if a verdict were ever computed for it.
+    headers = {"A": 0, "B": 4, "C": 2}
+    trials = {"%s%d" % (arm, index): {
+        "scores": {}, "change": None, "judge": None,
+        "security": {"security_headers": {"value": value, "missing": None}}}
+        for arm, value in headers.items() for index in range(1, K_PRIMARY + 1)}
+    table = collect(trials)
+    results = contrasts(table, seed)
+    posthoc_table = collect(trials, POSTHOC)
+    posthoc = (posthoc_table, contrasts(posthoc_table, seed))
+    checks.append(("the planted row would read better",
+                   posthoc[1]["security_headers"]["B-A"]["verdict"]
+                   == "better", posthoc[1]["security_headers"]["B-A"]))
+
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-report-posthoc-self-test")
+    shutil.rmtree(scratch, ignore_errors=True)
+    os.makedirs(scratch)
+    target = write_report(scratch, trials, table, results, seed,
+                          {"status": "planted"},
+                          assess_escalation(trials, results, seed),
+                          out_dir=scratch, posthoc=posthoc)
+    with io.open(target, encoding="utf-8") as handle:
+        text = handle.read()
+    shutil.rmtree(scratch, ignore_errors=True)
+
+    label = "Security headers on /, of four"
+    heading = "## Security, read with checks declared after the results"
+    section = text.split(heading)[1].split("\n## ")[0] if heading in text \
+        else ""
+    row = [line for line in section.splitlines() if line.startswith(
+        "| " + label)]
+    vector = text.split("## Verdict vector")[-1]
+    checks.append(("the report prints the section", bool(row), None))
+    checks.append(("its row carries no verdict",
+                   bool(row) and not any(word in row[0] for word in
+                                         ("better", "worse", "improvement")),
+                   row))
+    checks.append(("its row is not in the verdict vector",
+                   label not in vector, None))
+    return checks
+
+
 def self_test(seed):
     """Check the verdict rule, the relative margin, the escalation rule and
     the reach section."""
@@ -1246,6 +1359,7 @@ def self_test(seed):
     got = per_kloc(planted, "complexity", "over_15")
     checks.append(("a nested count is taken per KLOC", got == 2.0, got))
     checks.extend(escalation_checks(seed))
+    checks.extend(posthoc_checks(seed))
     checks.extend((label, ok, ok) for label, ok in reach_checks())
     checks.extend((label, ok, ok) for label, ok in rescan_checks())
     for label, ok, got in checks:
@@ -1282,13 +1396,19 @@ def main(argv):
     results = contrasts(table, options.seed)
     escalation = assess_escalation(trials, results, options.seed)
     agreement = judge_agreement(options.root, trials)
+    posthoc = None
+    if any(trial["security"] for trial in trials.values()):
+        posthoc_table = collect(trials, POSTHOC)
+        posthoc = (posthoc_table, contrasts(posthoc_table, options.seed))
     target = write_report(options.root, trials, table, results, options.seed,
-                          agreement, escalation, options.out_dir)
+                          agreement, escalation, options.out_dir, posthoc)
 
     with io.open(os.path.join(scoring_area(options.root), "aggregate.json"),
                  "w", encoding="utf-8") as handle:
         json.dump({"seed": options.seed, "table": table, "results": results,
-                   "agreement": agreement, "escalation": escalation},
+                   "agreement": agreement, "escalation": escalation,
+                   "posthoc": {"table": posthoc[0], "results": posthoc[1]}
+                   if posthoc else None},
                   handle, indent=2, sort_keys=True)
     print("Report: %s" % target)
     judged = sum(1 for trial in trials.values() if trial["judge"])
