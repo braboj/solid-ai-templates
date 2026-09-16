@@ -8114,3 +8114,53 @@ not observable by a consuming project.
   second control read the first's bytecode, and so did the rerun that was
   meant to show the tree clean; every control after that ran under a fresh
   `PYTHONPYCACHEPREFIX`
+
+## 2026-09-16 — Nine build trials, every check run
+
+**Tool:** Claude Code (Opus 5 1M)
+
+**Key changes:**
+- A check nobody ran no longer raises a trial's score. Scoring installs the
+  browser for the Playwright the lock resolves, before the grader and again
+  after the battery, and refuses the trial where it cannot. A skipped check
+  is recorded beside the pass rate and flags the trial, and the flag list
+  reaches a metric nested under another (#1758)
+- Re-scored with the browser present, A1 read 0.992 with nothing skipped,
+  against 0.9973 when five browser checks had been skipped
+- The remaining seven build trials ran in one batch from C1. All completed
+  and none was blocked, at $89.32 in total and $8.75 to $16.72 each. All nine
+  trials of K = 3 are scored, with nothing skipped
+- Hidden suite by arm: control .992, .984, .987; candidate .584, .989, .984;
+  reference .997, .984, .992. The candidate's .584 is B1 alone: B2 and B3
+  keep Flask in the core dependencies and boot
+- mypy errors by arm: control 211, 381, 103; candidate 30, 146, 195;
+  reference 0 in all three
+- C3's transcript named the run root's shared `tmp/`, the first hit under
+  the wider scan. It wrote a smoke script there, ran it and deleted it, and
+  named nothing of another trial
+
+**Pull requests merged:** 1 — #1760.
+
+**Issues closed:** #1758. #1184 stays open: the build trials are scored, but
+none has been judged and no change task has run.
+
+**Issues filed:** none.
+
+**ADRs:** none owed. How the scorer treats a skipped check is not observable
+by a consuming project.
+
+**Gaps flagged:**
+- The nine build trials are unjudged, so the design's primary dimensions,
+  and any verdict, are not computed yet. Judging spends the owner's Codex
+  quota
+- The nine change tasks have not run
+- Arm B's context file told B1 to make its web dependencies optional, which
+  `SPEC.md` section 10 rejects. One trial of three followed it. The report is
+  where that finding belongs, not a template ticket filed before it
+
+**Lessons:**
+- One trial per arm would have read B1's packaging loss as the arm's pattern.
+  B2 and B3 did not repeat it, which is what K = 3 is for
+- A scan hit is a question to read, not a verdict. Three calls read in
+  order told C3's use of the shared temp directory apart from a reach for
+  another trial's work, where no rule written in advance would have
