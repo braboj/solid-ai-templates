@@ -401,6 +401,19 @@ or was re-run and why, the judge agreement, and the verdict vector. A
 crossing interval is written as "no improvement shown", and every interval
 carries the reminder from §1.1 that at K = 3 it is descriptive.
 
+### Checks declared after a run
+
+A check chosen after the results were seen can describe a run but never
+decide it. Such a check is declared in writing, with its direction, before
+any trial is read for it. The report prints it in a section of its own, with
+the arm means and the interval and no verdict. It never enters the verdict
+vector, a non-inferiority claim or the escalation. A check worth deciding on
+is pre-registered for the next run instead.
+
+The first such checks read round one for security, declared by the owner on
+2026-09-16 after that round's pre-registered security checks passed on every
+trial.
+
 ### In plain terms
 
 The agent is run three times without templates and three times with.

@@ -198,6 +198,8 @@ py tests/efficacy/judge.py --root <the run root> --record-holdout
 py tests/efficacy/judge.py --self-test
 py tests/efficacy/report.py --self-test
 py tests/efficacy/report.py --root <the run root>
+py tests/efficacy/security.py --self-test
+py tests/efficacy/security.py --root <the run root>
 ```
 
 Scoring reads every run record in the root, so a run stopped and resumed
@@ -279,6 +281,16 @@ any bundle is built, the dry run included, or the run is refused. A `.CMD` shim
 also ends an argument at its first newline, so a prompt passed as one arrives
 cut short. The self test installs a stand-in CLI behind a shim and checks that
 the prompt and every argument arrive whole.
+
+`security.py` reads scored trials with security checks declared after a run:
+hard-coded secret keys, debug left on, SQL built from strings, known
+vulnerabilities in the installed dependencies, session cookie flags, security
+headers, and stack traces in answers to malformed requests. Each trial is
+installed into a fresh environment under `security/` in the scoring area, and
+the results go to `security-scores/`. The report prints them in a section of
+their own, with means and intervals and no verdict, and keeps them out of the
+verdict vector and the escalation. A check chosen after the results were seen
+can describe a run but not decide it.
 
 `--holdout` also writes `judge/holdout-sheet.md` in the scoring area, a table
 for the owner's blind scores. Once every cell holds one, `--record-holdout`
