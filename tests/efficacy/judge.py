@@ -65,6 +65,12 @@ EXCLUDED_DIRS = (".git", ".cursor", ".github", "venv", ".venv", "__pycache__",
                  ".score-pages", "node_modules", ".pytest_cache", ".ruff_cache",
                  "build", "dist", ".mypy_cache")
 
+# What scoring leaves in the tree it measured: tool caches, reports and the
+# install's metadata. None of it is the trial's code, and the caches hold
+# absolute paths through the scoring area, which name the trial and so its arm.
+SCORING_OUTPUT_DIRS = (".complexipy_cache", ".grimp_cache")
+SCORING_OUTPUT_NAMES = (".coverage", "complexipy.json")
+
 # Tokens that would tell the judge which arm it is reading. Masked in place,
 # with the count recorded: a bundle that needed many of them is itself a
 # finding about the arm.
@@ -181,6 +187,12 @@ def mask_markers(text):
     return text, count
 
 
+def copied_dir(name):
+    """Whether a directory of the trial's tree belongs in its bundle."""
+    return not (name in EXCLUDED_DIRS or name in SCORING_OUTPUT_DIRS
+                or name.endswith(".egg-info"))
+
+
 def build_bundle(tree, target):
     """Copy one trial's tree into a blind bundle and return what was stripped.
 
@@ -193,14 +205,15 @@ def build_bundle(tree, target):
     os.makedirs(target)
     removed, masked = [], 0
     for base, directories, names in os.walk(tree):
-        directories[:] = [d for d in directories if d not in EXCLUDED_DIRS]
+        directories[:] = [d for d in directories if copied_dir(d)]
         for name in names:
             source = os.path.join(base, name)
             relative = os.path.relpath(source, tree)
             if name in EXCLUDED_NAMES:
                 removed.append(relative)
                 continue
-            if name.startswith(".score-") or name.endswith(".sqlite"):
+            if (name.startswith(".score-") or name.endswith(".sqlite")
+                    or name in SCORING_OUTPUT_NAMES):
                 continue
             destination = os.path.join(target, relative)
             os.makedirs(os.path.dirname(destination), exist_ok=True)
@@ -219,35 +232,49 @@ def build_bundle(tree, target):
     # identical for every arm, so it carries no condition.
     shutil.copyfile(SPEC, os.path.join(target, "SPEC.md"))
     return {"removed": removed, "markers_masked": masked,
-            "leaks": surviving_markers(target), "digest": digest(target)}
+            "leaks": surviving_markers(target, os.path.basename(tree)),
+            "digest": digest(target)}
 
 
-def surviving_markers(bundle):
-    """Markers still readable in the built bundle.
+def surviving_markers(bundle, trial):
+    """Markers, and paths naming the trial, still readable in the bundle.
 
     The masking pass is checked rather than trusted: a marker in a file
     extension the copy treated as binary, or in a name rather than in text,
     would leave the arm legible and every later control would read as blind.
     """
+
+    # The trial's name matched only between path separators, where a path
+    # through the run root or the scoring area puts it and no implementation
+    # would. The escaped separator of a JSON string matches too.
+    segment = re.compile(r"[\\/]%s[\\/]" % re.escape(trial))
+
+    # Every directory, including the ones the copy leaves out: the judge reads
+    # the whole bundle, so a scan that skipped what the copy skipped would
+    # pass a bundle the copy had got wrong.
     found = []
-    for base, directories, names in os.walk(bundle):
-        directories[:] = [d for d in directories if d not in EXCLUDED_DIRS]
+    for base, _, names in os.walk(bundle):
         for name in names:
             path = os.path.join(base, name)
             relative = os.path.relpath(path, bundle)
             for marker in MARKERS:
                 if marker.lower() in name.lower():
                     found.append([relative, marker, "in the file name"])
+            if trial in relative.split(os.sep):
+                found.append([relative, trial, "in the path"])
 
             # Every file, decoded loosely, not only the suffixes the masker
             # recognises. A scan that skipped what the masker skipped would
             # share its blind spot exactly, and a marker in an extension
             # neither of them knows would read as a blind bundle.
             with io.open(path, "rb") as handle:
-                text = handle.read().decode("utf-8", "replace").lower()
+                raw = handle.read().decode("utf-8", "replace")
+            text = raw.lower()
             for marker in MARKERS:
                 if marker.lower() in text:
                     found.append([relative, marker, "in the bytes"])
+            if segment.search(raw):
+                found.append([relative, trial, "as a path segment"])
     return found
 
 
@@ -586,10 +613,84 @@ def record_holdout(judging):
     return target, scores
 
 
+def plant(root, files):
+    """Write each relative path's text under root."""
+    for relative, text in files.items():
+        path = os.path.join(root, relative)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with io.open(path, "w", encoding="utf-8", newline="") as handle:
+            handle.write(text)
+
+
+def bundle_checks(scratch):
+    """Prove a bundle leaves scoring's output out and a trial's path is a leak.
+
+    The planted tree is shaped like one scoring leaves behind: the trial's code
+    beside tool caches that hold absolute paths through the scoring area.
+    """
+    tree = os.path.join(scratch, "scoring", "B2", "tree", "B2")
+    scored = "/".join((scratch.replace(os.sep, "/"), "scoring", "B2", "tree",
+                       "B2", "src"))
+    code = os.path.join("src", "app.py")
+
+    # The trial's name outside a path, where an implementation may use it,
+    # is not a leak.
+    plant(tree, {code: 'CELL = "B2"\n', "CLAUDE.md": "# rules\n"})
+    output = {
+        ".coverage": "SQLite format 3 %s" % scored,
+        "complexipy.json": json.dumps([{"path": scored}]),
+        os.path.join(".complexipy_cache", "v", "cache", "functions"):
+            json.dumps(scored),
+        os.path.join(".grimp_cache", "data.json"): scored,
+        os.path.join("src", "tariff.egg-info", "SOURCES.txt"): scored,
+    }
+    plant(tree, output)
+
+    bundle = os.path.join(scratch, "judge", "bundles", "T1")
+    stripped = build_bundle(tree, bundle)
+    copied = {os.path.relpath(os.path.join(base, name), bundle)
+              for base, _, names in os.walk(bundle) for name in names}
+    checks = [
+        ("the trial's code reaches the bundle", code in copied),
+        ("scoring's output stays out of the bundle",
+         not any(relative in copied for relative in output)),
+        ("a bundle holding neither has no leak", stripped["leaks"] == []),
+    ]
+
+    # A path naming the trial is a leak in whichever file the bundle keeps, in
+    # either separator and escaped inside a JSON string.
+    leaks = (
+        ("a path naming the trial is a leak",
+         os.path.join("docs", "run.txt"), "ran from %s\n" % scored),
+        ("an escaped path naming the trial is a leak",
+         os.path.join("docs", "run.json"),
+         json.dumps({"cwd": scored.replace("/", "\\")})),
+    )
+    for label, relative, text in leaks:
+        landed = os.path.join(bundle, relative)
+        before = os.path.exists(landed)
+        plant(tree, {relative: text})
+        found = build_bundle(tree, bundle)["leaks"]
+        os.remove(os.path.join(tree, relative))
+
+        # The plant landed: the bundle lacked the file and now holds it.
+        checks.append((label, not before and os.path.exists(landed)
+                       and [relative, "B2", "as a path segment"] in found))
+
+    # The scan reads the directories the copy leaves out, because the judge
+    # reads whatever the bundle holds.
+    hidden = os.path.join(".git", "config")
+    plant(bundle, {hidden: "worktree = %s\n" % scored})
+    checks.append(("a leak in a directory the copy skips is found",
+                   [hidden, "B2", "as a path segment"]
+                   in surviving_markers(bundle, "B2")))
+    return checks
+
+
 def self_test():
-    """Prove the sheet the judge writes records once filled, and not before."""
+    """Prove the holdout sheet records once filled, and a bundle is blind."""
     scratch = os.path.join(os.environ.get("TEMP", "."),
-                           "efficacy-holdout-self-test")
+                           "efficacy-judge-self-test")
     shutil.rmtree(scratch, ignore_errors=True)
     os.makedirs(scratch)
     results = [{"trial": "A1", "blind_id": "T2"},
@@ -635,6 +736,7 @@ def self_test():
         landed = old in filled and new in flawed and old not in flawed
         checks.append((label, landed and refuses(flawed)))
 
+    checks.extend(bundle_checks(scratch))
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     shutil.rmtree(scratch, ignore_errors=True)
@@ -654,8 +756,8 @@ def parse_args(argv):
                         help="record the owner's filled sheet for the report; "
                              "judge nothing")
     parser.add_argument("--self-test", action="store_true",
-                        help="prove the holdout sheet records once filled; "
-                             "judge nothing")
+                        help="prove the holdout sheet records once filled "
+                             "and a bundle is blind; judge nothing")
     parser.add_argument("--trial", action="append", default=[],
                         help="judge only this trial, as A1; repeatable")
     parser.add_argument("--model", default=JUDGE_MODEL,

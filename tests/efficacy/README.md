@@ -267,6 +267,12 @@ is checked against the bundle it was quoted from — a judge that never opened
 the code returns plausible numbers, and that check is what tells the two
 apart.
 
+Scoring's own output stays out of the bundle: the tool caches, the complexity
+report, the coverage data and the install's egg-info. The caches hold absolute
+paths through the scoring area, and a path names the trial. The leak scan reads
+every file in the bundle and counts the trial's name between path separators
+as a leak. `judge.py --self-test` plants both cases.
+
 `--holdout` also writes `judge/holdout-sheet.md` in the scoring area, a table
 for the owner's blind scores. Once every cell holds one, `--record-holdout`
 writes the
