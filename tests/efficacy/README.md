@@ -273,6 +273,13 @@ paths through the scoring area, and a path names the trial. The leak scan reads
 every file in the bundle and counts the trial's name between path separators
 as a leak. `judge.py --self-test` plants both cases.
 
+The judge's CLI is launched by its resolved path, with its prompt on standard
+input, for the reason the harness does both. It must report its version before
+any bundle is built, the dry run included, or the run is refused. A `.CMD` shim
+also ends an argument at its first newline, so a prompt passed as one arrives
+cut short. The self test installs a stand-in CLI behind a shim and checks that
+the prompt and every argument arrive whole.
+
 `--holdout` also writes `judge/holdout-sheet.md` in the scoring area, a table
 for the owner's blind scores. Once every cell holds one, `--record-holdout`
 writes the

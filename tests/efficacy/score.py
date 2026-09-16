@@ -82,17 +82,19 @@ def absent(reason, **extra):
     return record
 
 
-def run(argv, cwd=None, env=None, timeout=TOOL_TIMEOUT):
+def run(argv, cwd=None, env=None, timeout=TOOL_TIMEOUT, stdin=None):
     """Run one command and return its outcome as data.
 
     Every invocation is recorded with its argv, so the report can state what
     produced a number. A command that does not exist or does not finish is an
     outcome, not an exception: the caller turns it into a missing metric.
+    `stdin` is text written to the command's standard input.
     """
     record = {"argv": list(argv), "cwd": cwd}
     try:
-        proc = subprocess.run(argv, cwd=cwd, env=env, capture_output=True,
-                              text=True, encoding="utf-8", errors="replace",
+        proc = subprocess.run(argv, cwd=cwd, env=env, input=stdin,
+                              capture_output=True, text=True,
+                              encoding="utf-8", errors="replace",
                               timeout=timeout)
     except subprocess.TimeoutExpired:
         record.update({"status": None, "stdout": "", "stderr": "",
