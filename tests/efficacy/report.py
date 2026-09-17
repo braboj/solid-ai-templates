@@ -1224,9 +1224,71 @@ def reading(answers, lengths):
     return "neither file added quality"
 
 
+# The metrics a why-line reads as more than the task asked for, in the order
+# it names them, each as a signed share of the bare arm's mean.
+BULK = (("files", "tracked_files"), ("source lines", "source_lines"),
+        ("public names beyond the spec", "surface_extra"),
+        ("turns", "turns"), ("output tokens", "output_tokens"),
+        ("cost", "cost_usd"), ("follow-up change files", "churn_files"),
+        ("follow-up change lines", "churn_lines"),
+        ("follow-up change cost", "change_cost_usd"))
+
+
+def counted(n):
+    """A small count as a word, a larger one as digits."""
+    return COUNTED[n] if n < len(COUNTED) else str(n)
+
+
+def boot_failures(trials, arm):
+    """The recorded error of each of an arm's scored trials whose app could
+    not boot, and how many scored trials the arm has."""
+    errors, count = [], 0
+    for name, trial in sorted(trials.items()):
+        if arm_of(name) != arm or not trial["scores"]:
+            continue
+        count += 1
+        if path(trial, "scores", "boot", "value", "factory") is False:
+            errors.append(path(trial, "scores", "boot", "value",
+                               "factory_error") or "no error recorded")
+    return errors, count
+
+
+def why_line(trials, table, results, arm, name, answered):
+    """Why a file arm scored as it did, each clause read off a row below:
+    runs that could not boot, what it added beyond the task, patterns
+    missed, and whether the judge or only the tools counted its wins."""
+    clauses = []
+    errors, count = boot_failures(trials, arm)
+    if errors:
+        clauses.append("%s run of %s could not boot (`%s`)" % (
+            counted(len(errors)), counted(count), errors[0]))
+    bulk = ["%s %s" % (word, share_cell(table, results, key, name, None))
+            for word, key in BULK
+            if results[key][name]["verdict"] == "worse"]
+    if bulk:
+        clauses.append("more than the task asked for: %s" % ", ".join(bulk))
+    missed = results["patterns_missed"][name]
+    if missed["verdict"] == "worse":
+        clauses.append("patterns missed %s" % signed(missed["mean"]))
+    labels = {key: label for key, label, _, _ in METRICS}
+    wins = [key for key in labels if results[key][name]["verdict"] == "better"]
+    judged = [key for key in wins if key.startswith(("judge_", "patterns_"))]
+    if wins and judged:
+        clauses.append("its %d win%s include the judge's %s" % (
+            len(wins), "s" if len(wins) > 1 else "",
+            spoken([labels[key].split(",")[0].lower() for key in judged])))
+    elif wins:
+        clauses.append("its %d win%s all tool counts, none from the judge"
+                       % (len(wins), "s are" if len(wins) > 1 else " is"))
+    text = "; ".join(clauses) if clauses else "nothing below separates it"
+    return "**%s, %s.** %s%s." % (FILES[arm], answered, text[0].upper(),
+                                  text[1:])
+
+
 def executive_section(trials, table, results):
     """The report's first section: one column per context file against no
-    file, each cell read off a verdict or a mean below it.
+    file, each cell read off a verdict or a mean below it, then one line
+    per file on why it scored so.
 
     The owner asked for it on 2026-09-17, after round 1's summary table, and
     for this table the same day. Like the score, it digests the verdict
@@ -1265,6 +1327,10 @@ def executive_section(trials, table, results):
     for label, cells in rows:
         lines.append("| %s | %s |" % (label, " | ".join(cells)))
     lines.append("")
+    for arm, name in zip(arms, names):
+        lines.append(why_line(trials, table, results, arm, name,
+                              answers[arm]))
+        lines.append("")
     k = max((index_of(name) for name in trials), default=0)
     lines.append("Together: %s. K = %d, one project: a signal, not proof."
                  % (reading(answers, lengths), k))
@@ -1983,6 +2049,35 @@ def executive_checks(seed):
     checks.append(("the size cell names the separated measure as a share",
                    got == ("files +40 %", "no change shown"), got))
 
+    # A why-line names the run that could not boot with its recorded error,
+    # each bulk metric read worse as a share, a pattern missed, and which of
+    # its wins the judge gave.
+    trials = {"B1": {"scores": {"boot": {"value": {
+                  "factory": False, "factory_error": "planted error"}}}},
+              "B2": {"scores": {"boot": {"value": {"factory": True}}}},
+              "A1": {"scores": {"boot": {"value": {"factory": False}}}}}
+    got = boot_failures(trials, "B")
+    checks.append(("boot failures are the arm's own, with the error",
+                   got == (["planted error"], 2), got))
+    planted = {key: {"B-A": {"mean": 0.0, "verdict": shown}}
+               for key, _, _, _ in METRICS}
+    planted["tracked_files"]["B-A"] = {"mean": 4.0, "verdict": "worse"}
+    planted["patterns_missed"]["B-A"] = {"mean": 1.0, "verdict": "worse"}
+    planted["judge_readability"]["B-A"] = {"mean": 1.0, "verdict": "better"}
+    planted["adherence"]["B-A"] = {"mean": 0.1, "verdict": "better"}
+    bare = {"tracked_files": {"values": {"A": {1: 10.0}}}}
+    got = why_line(trials, bare, planted, "B", "B-A", "No")
+    checks.append(("the why-line reads its clauses off the rows",
+                   got == "**Templates' file, No.** One run of two could "
+                   "not boot (`planted error`); more than the task asked "
+                   "for: files +40 %; patterns missed +1; its 2 wins "
+                   "include the judge's readability.", got))
+    planted["judge_readability"]["B-A"]["verdict"] = shown
+    got = why_line({}, bare, planted, "B", "B-A", "No")
+    checks.append(("a win the judge did not give is a tool count",
+                   got.endswith("; its 1 win is all tool counts, none from "
+                                "the judge."), got))
+
     # The planted change run has no primary, suite, size or cost values, so
     # every cell reads not measured and the columns carry the arm files'
     # own line counts.
@@ -2000,6 +2095,12 @@ def executive_checks(seed):
          "| Improves the code? | **Not measured** | **Not measured** |"
          in text and "Together: not measured. K = %d," % K_PRIMARY in text,
          prose_of(text, "## Executive summary")),
+        ("each file's why-line sits between the table and the reading",
+         "| Reads as |" in text and 0 < text.find("| Reads as |")
+         < text.find("**Templates' file, Not measured.** Its 2 wins are all "
+                     "tool counts, none from the judge.")
+         < text.find("**Hand-written file, Not measured.**")
+         < text.find("Together:"), prose_of(text, "## Executive summary")),
     ])
     return checks
 
