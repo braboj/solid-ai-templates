@@ -33,8 +33,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
 import probes  # noqa: E402
-from harness import (SCORABLE, TrialError, remove_tree,  # noqa: E402
-                     scorable_trials, scoring_area)
+from harness import (SCORABLE, TrialError, arm_name, canonical,  # noqa: E402
+                     frozen_top, name_of, remove_tree, scorable_trials,
+                     scoring_area)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REQUIREMENTS = os.path.join(HERE, "scoring-requirements.txt")
@@ -159,13 +160,20 @@ def extract(tarball, into, name):
     if not os.path.exists(tarball):
         raise ScoreError("the frozen tarball %s does not exist" % tarball)
     target = os.path.join(into, name)
-    if os.path.exists(target):
-        remove_tree(target)
-    os.makedirs(into, exist_ok=True)
+    if os.path.exists(into):
+        remove_tree(into)
+    os.makedirs(into)
     with tarfile.open(tarball) as archive:
         archive.extractall(into, filter="data")
-    if not os.path.isdir(target):
-        raise ScoreError("%s did not contain a %s directory" % (tarball, name))
+
+    # The tarball's top directory carries the trial's name as spelled when it
+    # was frozen; round 1's `B1` is scored under `full-1` today.
+    try:
+        top = frozen_top(tarball, into)
+    except TrialError as error:
+        raise ScoreError(str(error))
+    if top != name:
+        os.rename(os.path.join(into, top), target)
     return target
 
 
@@ -916,7 +924,7 @@ def score_trial(record, options, suite, lock):
     package importable, and discovery needs the installed copy to answer for
     its own directory.
     """
-    name = "%s%d" % (record["arm"], record["trial"])
+    name = name_of(record)
     scoring = os.path.join(scoring_area(options.root), "scoring", name)
     os.makedirs(scoring, exist_ok=True)
 
@@ -924,7 +932,8 @@ def score_trial(record, options, suite, lock):
     workspace = extract(frozen, os.path.join(scoring, "tree"), name)
     venv = create_venv(os.path.join(scoring, "venv"))
 
-    scores = {"arm": record["arm"], "trial": record["trial"], "name": name,
+    scores = {"arm": arm_name(record["arm"]), "trial": record["trial"],
+              "name": name,
               "workspace": workspace, "templates_tree": record.get(
                   "templates_tree"),
               "model": record.get("model"), "suite_revision": suite["revision"],
@@ -1050,7 +1059,7 @@ def churn(workspace, base):
 
 def score_change_trial(record, options, suite):
     """Score one frozen change task: install, both suites, churn and cost."""
-    name = "%s%d" % (record["arm"], record["trial"])
+    name = name_of(record)
     frozen = "change-%s" % name
 
     # Apart from `scoring/`, whose extracted trees the judge takes for build
@@ -1061,7 +1070,8 @@ def score_change_trial(record, options, suite):
                         os.path.join(scoring, "tree"), frozen)
     venv = create_venv(os.path.join(scoring, "venv"))
 
-    scores = {"arm": record["arm"], "trial": record["trial"], "name": name,
+    scores = {"arm": arm_name(record["arm"]), "trial": record["trial"],
+              "name": name,
               "task": "change", "workspace": workspace,
               "base": record.get("base"), "model": record.get("model"),
               "suite_revision": suite["revision"],
@@ -1135,23 +1145,29 @@ def run_record_checks(scratch):
                      encoding="utf-8") as handle:
             json.dump({"trials": trials}, handle)
 
+    # Round 1's records name their arms by letter, and a record of this round
+    # by word; both are offered under the words.
     plant("run-1.json", [{"arm": "A", "trial": 1, "outcome": "blocked"},
                          {"arm": "A", "trial": 1, "outcome": "completed"},
                          {"arm": "B", "trial": 1, "outcome": "budget"},
-                         {"arm": "C", "trial": 1, "outcome": "refused"}])
+                         {"arm": "C", "trial": 1, "outcome": "refused"},
+                         {"arm": "short", "trial": 1, "outcome": "timeout"}])
     offered = scorable_trials(scratch)
-    checks = [("only completed, budget and timeout endings are offered",
-               sorted(offered) == ["A1", "B1"]),
+    checks = [("only completed, budget and timeout endings are offered, "
+               "under the arms' words",
+               sorted(offered) == ["full-1", "none-1", "short-1"]),
               ("a blocked trial yields to its re-run",
-               offered["A1"]["outcome"] == "completed")]
+               offered["none-1"]["outcome"] == "completed")]
 
     plant("run-2.json", [{"arm": "A", "trial": 1, "outcome": "completed",
                           "task": "change"}])
     checks.append(("a change task is offered only as a change task",
-                   sorted(scorable_trials(scratch, task="change")) == ["A1"]
-                   and sorted(scorable_trials(scratch)) == ["A1", "B1"]))
+                   sorted(scorable_trials(scratch, task="change"))
+                   == ["none-1"]
+                   and sorted(scorable_trials(scratch))
+                   == ["full-1", "none-1", "short-1"]))
 
-    plant("run-3.json", [{"arm": "A", "trial": 1, "outcome": "completed"}])
+    plant("run-3.json", [{"arm": "none", "trial": 1, "outcome": "completed"}])
     try:
         scorable_trials(scratch)
         checks.append(("a trial two records offer refuses", False))
@@ -1253,7 +1269,7 @@ def html_checks():
 def readonly_checks(scratch):
     """A tree holding a read-only file is replaced, as Git's pack files are."""
     into = os.path.join(scratch, "readonly")
-    target = os.path.join(into, "A1")
+    target = os.path.join(into, "none-1")
     pack = os.path.join(target, ".git", "objects", "pack")
     os.makedirs(pack)
     planted = os.path.join(pack, "pack-planted.idx")
@@ -1265,6 +1281,9 @@ def readonly_checks(scratch):
     with io.open(os.path.join(source, "app.py"), "w",
                  encoding="utf-8") as handle:
         handle.write("fresh = True\n")
+
+    # Frozen under round 1's spelling, so the extract under the word has to
+    # take the directory it finds and rename it.
     tarball = os.path.join(scratch, "readonly-A1.tar")
     with tarfile.open(tarball, "w") as archive:
         archive.add(source, arcname="A1")
@@ -1273,13 +1292,15 @@ def readonly_checks(scratch):
     # is what stops a plain removal on Windows.
     landed = not os.access(planted, os.W_OK)
     try:
-        workspace = extract(tarball, into, "A1")
-    except OSError:
+        workspace = extract(tarball, into, "none-1")
+    except (OSError, ScoreError):
         workspace = None
     return [("the planted pack file is read-only", landed),
-            ("an extract replaces a tree holding it",
+            ("an extract replaces a tree holding it, under the trial's "
+             "name whatever the tarball spelled",
              workspace == target and not os.path.exists(planted)
-             and os.path.isfile(os.path.join(target, "app.py")))]
+             and os.path.isfile(os.path.join(target, "app.py"))
+             and os.listdir(into) == ["none-1"])]
 
 
 # The grader's report as `run_suite.py` writes it, cut to the counts: five
@@ -1433,7 +1454,7 @@ def parse_args(argv):
                         help="score only this run record; default is every "
                              "run record in the root")
     parser.add_argument("--trial", action="append", default=[],
-                        help="score only this trial, as A1; repeatable")
+                        help="score only this trial, as none-1; repeatable")
     parser.add_argument("--task", choices=("build", "change"),
                         default="build",
                         help="score the build trials, or the change tasks "
@@ -1490,7 +1511,12 @@ def main(argv):
     lock = os.path.join(area, "tool-lock.txt")
     target = os.path.join(area, "scores" if options.task == "build"
                           else "scores-change")
-    wanted = set(options.trial)
+    try:
+        wanted = {canonical(name) for name in options.trial}
+    except TrialError as error:
+        print("refused: %s" % error)
+        lib.print_verdict(False, "0 scored, 1 refused")
+        return 1
     scored, refused = [], 0
     for name in sorted(wanted - set(offered)):
         print("%s  refused: no run record offers it for scoring" % name)

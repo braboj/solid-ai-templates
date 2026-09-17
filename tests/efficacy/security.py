@@ -23,7 +23,7 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
-from harness import remove_tree, scoring_area  # noqa: E402
+from harness import canonical, remove_tree, scoring_area  # noqa: E402
 from score import (absent, create_venv, lock_lines, measured, pip,  # noqa: E402
                    python_in, run, script_in)
 
@@ -406,10 +406,9 @@ def audit_dependencies(venv, where, auditor):
     return audit_metric(outcome["stdout"] or outcome["stderr"], audited_at)
 
 
-def read_trial(area, name, auditor, auditor_reason):
-    """Every security check on one scored trial."""
-    with io.open(os.path.join(area, "scores", "%s.json" % name),
-                 encoding="utf-8") as handle:
+def read_trial(area, name, scores_file, auditor, auditor_reason):
+    """Every security check on one scored trial, read from its score file."""
+    with io.open(scores_file, encoding="utf-8") as handle:
         scores = json.load(handle)
     roots = (scores.get("discovery") or {}).get("roots") or []
     tree = scores.get("workspace")
@@ -674,7 +673,7 @@ def parse_args(argv):
         description="Read scored efficacy trials for security.")
     parser.add_argument("--root", help="the harness's run root")
     parser.add_argument("--trial", action="append", default=[],
-                        help="read only this trial, as A1; repeatable")
+                        help="read only this trial, as none-1; repeatable")
     parser.add_argument("--self-test", action="store_true",
                         help="prove every check against planted trees; read "
                              "no trial")
@@ -689,12 +688,17 @@ def main(argv):
         print("--root is required unless --self-test is given")
         return 2
 
+    # A score round 1 wrote sits under its letter name, `A1.json`, and is read
+    # under its word, `none-1`.
     area = scoring_area(options.root)
-    scored = sorted(os.path.splitext(name)[0]
-                    for name in os.listdir(os.path.join(area, "scores"))
-                    if name.endswith(".json")) \
-        if os.path.isdir(os.path.join(area, "scores")) else []
-    wanted = sorted(options.trial) if options.trial else scored
+    scores = os.path.join(area, "scores")
+    scored = {canonical(os.path.splitext(entry)[0]):
+              os.path.join(scores, entry)
+              for entry in (sorted(os.listdir(scores))
+                            if os.path.isdir(scores) else [])
+              if entry.endswith(".json")}
+    wanted = (sorted(canonical(name) for name in options.trial)
+              if options.trial else sorted(scored))
     missing = [name for name in wanted if name not in scored]
     if not scored or missing:
         print("no build score for %s under %s; score.py writes them"
@@ -706,7 +710,7 @@ def main(argv):
     os.makedirs(target, exist_ok=True)
     for name in wanted:
         print("%s  reading" % name)
-        result = read_trial(area, name, auditor, reason)
+        result = read_trial(area, name, scored[name], auditor, reason)
         with io.open(os.path.join(target, "%s.json" % name), "w",
                      encoding="utf-8") as handle:
             json.dump(result, handle, indent=2, sort_keys=True)
