@@ -64,7 +64,12 @@ EXCLUDED_NAMES = ("CLAUDE.md", "AGENTS.md", "GEMINI.md", ".cursorrules",
                   ".windsurfrules", "copilot-instructions.md")
 EXCLUDED_DIRS = (".git", ".cursor", ".github", "venv", ".venv", "__pycache__",
                  ".score-pages", "node_modules", ".pytest_cache", ".ruff_cache",
-                 "build", "dist", ".mypy_cache")
+                 "build", "dist", ".mypy_cache",
+
+                 # The hybrid arm's vendored templates, which name the arm on
+                 # every page: stripped with the context file, under the
+                 # repository's own name.
+                 "solid-ai-templates")
 
 # What scoring leaves in the tree it measured: tool caches, reports and the
 # install's metadata. None of it is the trial's code, and the caches hold

@@ -59,6 +59,18 @@ TIMEOUT_S = 7200
 K_PRIMARY = 3
 K_CEILING = 5
 
+# The release every generated arm is produced from, and the one the hybrid
+# arm's vendored templates are taken at. The design fixes it: the last 2.x,
+# before the v3.0 split moves any template.
+RELEASE = "v2.90.0"
+
+# What the hybrid arm's workspace carries besides its file: this repository's
+# `templates/` directory at the release, where a submodule would put it. The
+# rest of the repository stays out, because the release's tree holds the
+# benchmark's own design and the arm would be reading its brief.
+VENDORED = {"ref": RELEASE, "path": "templates",
+            "into": "docs/solid-ai-templates"}
+
 # The arms, each a word, and the context file each starts with, relative to
 # `arms/`. Arm `none` carries no file: it is the bare agent. The two files
 # round 1 ran keep the directories its generation record names.
@@ -69,7 +81,7 @@ ARMS = {
     "short": {"label": "the templates' file, 40 lines",
               "context": "short/CLAUDE.md"},
     "hybrid": {"label": "the templates' file, hybrid",
-               "context": "hybrid/CLAUDE.md"},
+               "context": "hybrid/CLAUDE.md", "vendor": VENDORED},
     "hand": {"label": "the hand-written file",
              "context": "C-reference/CLAUDE.md"},
 }
@@ -124,9 +136,15 @@ def name_of(record):
 DISALLOWED_TOOLS = ["WebSearch", "WebFetch"]
 
 # What a tool call names when a trial reaches for what no arm may read: this
-# repository, which arm B's generated file names in its footer, and the
-# private hidden suite under any clone's name, the scorer's own included.
+# repository, which a generated file names in its footer, and the private
+# hidden suite under any clone's name, the scorer's own included.
 REACH_TERMS = ("solid-ai-templates", "hidden-suite")
+
+# The hybrid arm's workspace carries the templates by design, so a call
+# naming that tree is the arm reading its own file. For it the repository is
+# reached only under its owner's name, which no path into the vendored copy
+# carries and every clone or fetch of the repository does.
+REPOSITORY_TERM = "braboj/solid-ai-templates"
 
 # No user, project or local settings, and no MCP server the harness did not
 # pass -- which is none. Both flags are isolation, not preference.
@@ -229,8 +247,40 @@ def git(workspace, *args):
     return proc.stdout.strip()
 
 
+def vendor_templates(workspace, vendor):
+    """Put this repository's templates at the release into the workspace,
+    where a submodule would, and return the record of what was vendored.
+
+    The copy is kept out of the workspace's index through `.git/info/exclude`
+    rather than a `.gitignore`: it is the arm's reading matter, not its
+    output, so it must count in no size or scope metric; a submodule would
+    add one entry, and the agent may rewrite a `.gitignore` at will.
+    """
+    target = os.path.join(workspace, *vendor["into"].split("/"))
+    os.makedirs(target, exist_ok=True)
+    proc = subprocess.run(["git", "-C", repository_root(), "archive",
+                           "--format=tar", vendor["ref"], vendor["path"]],
+                          capture_output=True)
+    if proc.returncode != 0:
+        raise TrialError("could not export %s at %s: %s"
+                         % (vendor["path"], vendor["ref"],
+                            proc.stderr.decode("utf-8", "replace").strip()))
+    with tarfile.open(fileobj=io.BytesIO(proc.stdout)) as archive:
+        archive.extractall(target, filter="data")
+    tree = subprocess.run(["git", "-C", repository_root(), "rev-parse",
+                           "%s:%s" % (vendor["ref"], vendor["path"])],
+                          capture_output=True, text=True,
+                          encoding="utf-8").stdout.strip()
+    exclude = os.path.join(workspace, ".git", "info", "exclude")
+    os.makedirs(os.path.dirname(exclude), exist_ok=True)
+    with io.open(exclude, "a", encoding="utf-8", newline="\n") as handle:
+        handle.write("/%s/\n" % vendor["into"])
+    return dict(vendor, tree=tree)
+
+
 def prepare_workspace(arm, trial, root):
-    """Create the starting workspace for one trial and return its path.
+    """Create the starting workspace for one trial; return its path and the
+    record of what was vendored into it, None for every arm but the hybrid.
 
     Fresh directory, `git init`, the arm's starting files, one commit. The
     commit is what the freeze at the end of the trial is measured against:
@@ -258,11 +308,14 @@ def prepare_workspace(arm, trial, root):
         shutil.copyfile(source, os.path.join(workspace, "CLAUDE.md"))
 
     git(workspace, "init", "-q")
+    vendored = None
+    if ARMS[arm].get("vendor"):
+        vendored = vendor_templates(workspace, ARMS[arm]["vendor"])
     git(workspace, "add", "-A")
     git(workspace, "-c", "user.name=efficacy",
         "-c", "user.email=efficacy@example.invalid",
         "commit", "-q", "-m", "start: %s arm %s" % (ARMS[arm]["label"], arm))
-    return workspace
+    return workspace, vendored
 
 
 # The one thing the scratch home must inherit. Credentials live under the
@@ -558,19 +611,24 @@ def read_transcripts(home, workspace, since=None):
     return files, tool_calls(files)
 
 
-def reach(files, calls, workspace=None, temp=None):
+def reach(files, calls, workspace=None, temp=None, vendored=None):
     """The tool calls naming this repository or the hidden suite and, given
     the trial's workspace, the scoring area or any part of the run root other
     than the trial's own workspace and temporary directory.
 
-    Only what the agent sent is read, never what came back: arm B's own file
-    names this repository, and reading it is not reaching for it. With no
-    transcript the hits are None rather than empty, because nothing scanned
-    and nothing found are opposite facts.
+    Only what the agent sent is read, never what came back: a generated file
+    names this repository, and reading it is not reaching for it. A trial
+    whose workspace carries the templates (`vendored`) names them in every
+    read, so for it the repository counts as reached only under its owner's
+    name. With no transcript the hits are None rather than empty, because
+    nothing scanned and nothing found are opposite facts.
     """
     if not files:
         return {"transcripts": [], "hits": None}
     terms, outside = list(REACH_TERMS), None
+    if vendored:
+        terms = [REPOSITORY_TERM if term == "solid-ai-templates" else term
+                 for term in terms]
     if workspace:
         root = os.path.dirname(os.path.abspath(workspace))
         terms.append(os.path.basename(scoring_area(root)).lower())
@@ -748,7 +806,7 @@ def gather_leftovers(shared, entries, target):
     return moved
 
 
-def contain(workspace, temp, home, shared, since):
+def contain(workspace, temp, home, shared, since, vendored=None):
     """Close a finished trial off from the next one; say what it left.
 
     Processes are stopped before anything moves, because a running process
@@ -758,7 +816,7 @@ def contain(workspace, temp, home, shared, since):
     leftovers = shared_leftovers(shared, since, calls)
     owned = [workspace, temp, home] + [os.path.join(shared, entry)
                                        for entry in leftovers]
-    result = {"reach": reach(files, calls, workspace, temp),
+    result = {"reach": reach(files, calls, workspace, temp, vendored),
               "shared_temp_dir": shared}
     try:
         result["stopped"] = stop_processes(owned)
@@ -842,9 +900,9 @@ def prepare_change_workspace(arm, trial, root, build):
 
 def run_trial(arm, trial, root, home, options):
     """Run one build trial and return its record."""
-    workspace = prepare_workspace(arm, trial, root)
+    workspace, vendored = prepare_workspace(arm, trial, root)
     record = {"arm": arm, "label": ARMS[arm]["label"], "trial": trial,
-              "task": "build"}
+              "task": "build", "vendored": vendored}
     return run_agent(workspace, trial_name(arm, trial), PROMPT, record, root,
                      home, options)
 
@@ -854,7 +912,8 @@ def run_change_trial(arm, trial, root, home, options, build):
     workspace, base = prepare_change_workspace(arm, trial, root, build)
     record = {"arm": arm, "label": ARMS[arm]["label"], "trial": trial,
               "task": "change", "base": base,
-              "build_frozen": build.get("frozen")}
+              "build_frozen": build.get("frozen"),
+              "vendored": build.get("vendored")}
     return run_agent(workspace, "change-%s" % trial_name(arm, trial),
                      read_change_prompt(), record, root, home, options)
 
@@ -956,7 +1015,8 @@ def run_agent(workspace, name, prompt, record, root, home, options):
         record["exit_status"] = None
 
     record["elapsed_s"] = round(time.monotonic() - started, 1)
-    record.update(contain(workspace, temp, home, shared, since))
+    record.update(contain(workspace, temp, home, shared, since,
+                          record.get("vendored")))
     record["frozen"] = freeze(workspace, root, name)
     if record["outcome"] == "blocked":
         try:
@@ -1608,13 +1668,54 @@ def naming_checks():
     return checks
 
 
+def vendor_checks():
+    """The hybrid arm's workspace carries the templates at the release, out
+    of its index, and the reach scan reads that tree as the arm's own."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-vendor-self-test")
+    remove_tree(scratch)
+    workspace = os.path.join(scratch, "hybrid-1")
+    os.makedirs(workspace)
+    git(workspace, "init", "-q")
+    vendored = vendor_templates(workspace, VENDORED)
+    git(workspace, "add", "-A")
+    expected = git(repository_root(), "rev-parse",
+                   "%s:%s" % (VENDORED["ref"], VENDORED["path"]))
+    planted = os.path.join(workspace, "docs", "solid-ai-templates",
+                           "templates", "base", "core", "git.md")
+    checks = [
+        ("the templates at the release are in the workspace",
+         os.path.isfile(planted) and len(expected) == 40
+         and vendored["tree"] == expected),
+        ("the vendored tree is out of the workspace's index",
+         git(workspace, "ls-files") == ""
+         and git(workspace, "status", "--porcelain") == ""),
+    ]
+
+    # The first call reads the vendored tree; the second fetches the
+    # repository. Both name it, and only the second reaches for it.
+    calls = [("Read", json.dumps({"file_path": planted})),
+             ("Bash", json.dumps({"command": "git clone https://github.com/"
+                                             "braboj/solid-ai-templates"}))]
+    own = reach(["planted.jsonl"], calls, workspace, None, vendored)["hits"]
+    bare = reach(["planted.jsonl"], calls, workspace, None)["hits"]
+    checks.append(("a read of the vendored tree is not a reach for the arm "
+                   "carrying it, and a fetch of the repository is",
+                   [hit["call"] for hit in own] == [calls[1][1]]))
+    checks.append(("the same read is a reach for an arm carrying no copy",
+                   [hit["call"] for hit in bare]
+                   == [calls[0][1][:300], calls[1][1]]))
+    remove_tree(scratch)
+    return checks
+
+
 def self_test():
-    """Prove the naming, isolation, outcome, resume and change rules before a
-    trial."""
+    """Prove the naming, isolation, outcome, resume, change and vendoring
+    rules before a trial."""
     checks = (naming_checks() + environment_checks() + credential_checks()
               + outcome_checks() + resume_checks() + change_checks()
               + process_checks() + leftover_checks() + reach_checks()
-              + outside_checks())
+              + outside_checks() + vendor_checks())
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     passed = sum(1 for _, ok in checks if ok)

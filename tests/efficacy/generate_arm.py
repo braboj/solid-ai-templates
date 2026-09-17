@@ -30,10 +30,10 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
-from harness import (TrialError, agent_environment,  # noqa: E402
-                     agent_executable, assert_authenticated,
-                     assert_outside_repository, prepare_home,
-                     quoted_passage)
+from harness import (RELEASE, VENDORED, TrialError,  # noqa: E402
+                     agent_environment, agent_executable,
+                     assert_authenticated, assert_outside_repository,
+                     prepare_home, quoted_passage)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DESIGN = os.path.join(lib.ROOT, "docs", "design", "efficacy-benchmark.md")
@@ -62,10 +62,6 @@ def record_path(arm):
     return os.path.join(HERE, "arms", GENERATED[arm]["dir"],
                         "generation.json")
 
-
-# The release every arm is generated from. The design fixes it: the last
-# 2.x, before the v3.0 split moves any template.
-RELEASE = "v2.90.0"
 
 # The roots the design's brief resolves to. Each resolves as its own root
 # per ADR-035, and their chains overlap heavily, so the union is
@@ -155,10 +151,12 @@ explanation, no code fence around the whole document.
 MODELS = {
     "inline": "Use the interview's inline model.",
     "hybrid": ("Use the interview's hybrid model. The templates are present "
-               "in the project at `docs/solid-ai-templates/`, at the same "
-               "revision as the rules below, as a vendored copy rather than "
-               "a submodule: point there, list the template files to read "
-               "from there, and do not tell anyone to add a submodule."),
+               "in the project at `%s/%s/`, the repository's `%s/` directory "
+               "at the same revision as the rules below, as a vendored copy "
+               "rather than a submodule: point there, list the template "
+               "files to read by their paths under it, and do not tell "
+               "anyone to add a submodule."
+               % (VENDORED["into"], VENDORED["path"], VENDORED["path"])),
 }
 
 # The budget clause, stated in the instruction as the design's section 12

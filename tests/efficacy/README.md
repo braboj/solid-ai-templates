@@ -12,6 +12,7 @@ run.
 | `arms/C-reference/CLAUDE.md` | arm `hand`: the hand-written reference context file, the arm that asks whether the effect is the templates or merely having a file |
 | `arms/B-candidate/CLAUDE.md` | arm `full`: the generated context file, produced once by `generate_arm.py` and never hand-edited |
 | `arms/short/CLAUDE.md` | arm `short`: the same generation under a 40-line budget |
+| `arms/hybrid/CLAUDE.md` | arm `hybrid`: the same generation in the interview's hybrid model, read beside the templates the harness vendors into the workspace |
 | `generate_arm.py` | produces each generated arm's file: resolves the chain at the recorded release, builds the prompt from the interview, the pinned brief and the arm's output model and budget, scans for a specification leak, refuses a file over its budget |
 | `score.py` | takes one frozen trial to a JSON score: clean install, boot, source discovery, the hidden suite, the static battery, the adherence checklist, scope and cost |
 | `probes.py` | the measurements that must run inside the trial's own interpreter — the structural design probes, and the web-quality probes |
@@ -115,6 +116,19 @@ a workspace.
 A generated arm refuses until its context file exists. That file is
 generated once, through the interview at the recorded release, and is
 never hand-written.
+
+Arm `hybrid`'s file refers to the templates rather than inlining them, so
+its workspace carries this repository's `templates/` directory at the
+recorded release under `docs/solid-ai-templates/templates/`, where a
+submodule would put it. Only that directory: the release's tree also holds
+this benchmark's own design, and the arm would be reading its brief. The
+copy is the arm's reading matter, not its output, so it is kept out of the
+workspace's index through `.git/info/exclude` and counts in no size or
+scope metric; the trial record names the release and the tree it was taken
+from. For that arm the reach scan counts the repository as reached only
+under its owner's name, `braboj/solid-ai-templates`, which every clone or
+fetch names and no path into the vendored copy does; the judge strips the
+copy from the bundle with the context file.
 
 One preflight runs before the first trial: a trivial prompt through the
 isolated home. The CLI answers an unauthenticated run with a result object
