@@ -1,0 +1,152 @@
+{
+  "arm": "hybrid",
+  "output_model": "hybrid",
+  "budget": null,
+  "ref": "v2.90.0",
+  "commit": "4b1be7d8dec1186cc63d22f01969fc0c93ac822b",
+  "roots": [
+    "stack-flask",
+    "stack-htmx",
+    "frontend-ux",
+    "frontend-quality"
+  ],
+  "resolved_files": [
+    "templates/base/core/quality.md",
+    "templates/base/core/git.md",
+    "templates/base/core/docs.md",
+    "templates/base/core/readme.md",
+    "templates/base/core/testing.md",
+    "templates/base/core/review.md",
+    "templates/base/core/oop.md",
+    "templates/base/core/config.md",
+    "templates/backend/http.md",
+    "templates/backend/database.md",
+    "templates/backend/observability.md",
+    "templates/base/security/security.md",
+    "templates/base/infra/containers.md",
+    "templates/backend/quality.md",
+    "templates/backend/features.md",
+    "templates/backend/messaging.md",
+    "templates/base/infra/cicd.md",
+    "templates/base/security/devsecops.md",
+    "templates/base/data/data-modeling.md",
+    "templates/base/data/data-quality.md",
+    "templates/base/language/python.md",
+    "templates/base/core/cli.md",
+    "templates/base/workflow/quality-gates.md",
+    "templates/base/core/examples.md",
+    "templates/stack/python-lib.md",
+    "templates/stack/python-service.md",
+    "templates/stack/python-flask.md",
+    "templates/backend/templating.md",
+    "templates/stack/htmx.md",
+    "templates/frontend/ux.md",
+    "templates/frontend/quality.md"
+  ],
+  "prompt_chars": 586070,
+  "model": "claude-sonnet-5",
+  "effort": "high",
+  "started_at": "2026-09-17T15:14:18",
+  "prompt_leak": null,
+  "prompt_file": "C:/efficacy/gen-hybrid\\arm-hybrid-prompt.txt",
+  "auth_probe": "ready",
+  "command": [
+    "C:\\Users\\braboj\\AppData\\Roaming\\npm\\claude.CMD",
+    "-p",
+    "--output-format",
+    "json",
+    "--model",
+    "claude-sonnet-5",
+    "--effort",
+    "high",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "",
+    "--settings",
+    "C:/efficacy/gen-hybrid\\home\\settings.json",
+    "--strict-mcp-config",
+    "--disallowed-tools",
+    "WebSearch",
+    "WebFetch"
+  ],
+  "elapsed_s": 228.0,
+  "exit_status": 0,
+  "result": {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "duration_ms": 226848,
+    "duration_api_ms": 229241,
+    "ttft_ms": 165127,
+    "num_turns": 1,
+    "result": "# CLAUDE.md\n\n## 1. Project overview\n\n`tariff` is a pricing and invoicing application built for Imbra Ltd. It\nmaintains a product catalog, several kinds of discount rules, and tax\njurisdiction data, and assembles invoices from them. The system has two\nindependent interfaces rather than one: a web UI for a person, and a\nPython library API for another program. Both are read as first-class\nconsumers \u2014 neither is a thin wrapper around the other.\n\n- **Owner:** Imbra Ltd\n- **Repository:** not yet hosted \u2014 treat this file as the source of\n  truth until a remote exists\n- **Output file:** `CLAUDE.md` (Claude Code)\n- **Rule model:** hybrid \u2014 this file inlines the rules that are\n  critical or safety-relevant for this project and references the\n  vendored template chain for the rest (see \u00a712)\n\n## 2. Stack\n\n- Language: Python 3.12\n- Web framework: Flask 3\n- Templates: Jinja, with HTMX 2.x for partial-page interactivity\n- Storage: SQLite \u2014 a single local file, no database server\n- Package manager: uv\n- Lint / format: ruff\n- Type checker: mypy (strict)\n- Test runner: pytest\n- Deployment target: **none** \u2014 the application runs locally only\n\n## 3. Boundaries and actors\n\nTwo actors use this system, and the architecture is built around\nkeeping them independent:\n\n- **A person, working in a browser.** Served by the Flask/HTMX web\n  application (`tariff.web`), which renders the catalog, discount\n  rules, tax jurisdictions, and invoices as HTML and HTML fragments.\n- **Another program.** Imports the pricing engine (`tariff.engine`)\n  directly as a Python library, with the web application entirely\n  absent. This MUST keep working with Flask uninstalled or unimported.\n\n`tariff.web` is one caller of `tariff.engine` \u2014 not the other way\nround. Business logic (catalog lookups, discount evaluation, tax\ncalculation, invoice assembly) lives in `tariff.engine` and MUST NOT\nimport anything from `tariff.web`.\n\nThe store is a local SQLite file. Nothing in this system reaches the\nnetwork: no outbound HTTP calls, no third-party APIs, no telemetry, no\nCDN-hosted assets. Rules in the vendored chain written for a\nnetwork-facing service (transport security, CORS, SSRF egress\nallow-listing, distributed tracing) do not apply here and are declined\nin \u00a711 \u2014 but rules protecting the browser actor from a hostile local\npage (CSRF, output escaping, input validation) still apply, because the\nthreat model for a browser talking to `localhost` is not \"the network\nis trusted,\" it is \"other tabs and other local processes are not.\"\n\nThe system's only two supported interfaces are:\n\n1. **The engine's Python API** \u2014 the contract the other-program actor\n   depends on.\n2. **The invoice export formats** the engine produces.\n\nA breaking change to either is an architectural decision under\n`docs/solid-ai-templates/templates/base/core/docs.md` (\"Decision\nlogs\") and MUST get an ADR in `docs/decisions/`.\n\n## 4. Project structure\n\n```\nsrc/\n  tariff/\n    engine/            # the pricing library -- importable with tariff.web absent\n      catalog.py        # product catalog\n      discounts.py       # discount rules (several kinds)\n      tax.py              # tax jurisdictions\n      invoicing.py         # invoice assembly\n      export.py             # invoice export formats -- the library's other interface\n      errors.py              # TariffError hierarchy (see SS8)\n    web/                # Flask application -- one caller of engine/, never the reverse\n      __init__.py        # create_app application factory\n      config.py\n      extensions.py\n      blueprints/\n        catalog/\n        invoices/\n      templates/\n        partials/          # HTMX fragment responses\n      static/\ndata/                  # editable content: tax rates, discount definitions, catalog seed data\nmigrations/            # versioned SQLite schema migrations\ntests/\n  engine/\n  web/\nexamples/\n  README.md\n  standalone_invoice.py  # demonstrates importing tariff.engine with tariff.web absent\ndocs/\n  solid-ai-templates/\n    templates/            # vendored rule chain -- see SS12\n  ONBOARDING.md\n  PLAYBOOK.md\n  dev-journal.md\n  decisions/\npyproject.toml\nREADME.md\nCLAUDE.md\n```\n\n`README.md` is the single source of truth for the full structure \u2014 see\n`docs/solid-ai-templates/templates/base/core/docs.md`. This section is a\npointer to it plus the one placement rule specific to agent work: new\npricing logic goes in `engine/`, never in `web/`; new HTTP-only concerns\n(routing, request parsing, session handling) go in `web/`, never in\n`engine/`.\n\n## 5. Off-limits paths\n\nThese paths MUST NOT be modified without a proposal, a rollback strategy,\nand named test coverage, per\n`docs/solid-ai-templates/templates/base/core/git.md` (\"Off-limits paths\"):\n\n- `migrations/` \u2014 schema changes are data-loss-capable\n- `.env*` and any file holding the Flask `SECRET_KEY` or other secrets\n- CI workflow definitions, if and when any are added under `.github/workflows/`\n- `docs/solid-ai-templates/templates/` \u2014 the vendored rule chain this file\n  is built from; editing it changes the rules governing the whole\n  project\n\nThe default off-limits set also names auth/session code and\npayment/billing code. Neither exists in this project: there is no\nauthentication subsystem (single local user, no login) and no payment\nprocessor (this is a pricing/invoicing tool, not a payment gateway), so\nthose two categories are dropped rather than mapped onto something\nelse. If either subsystem is added later, add it back here in the same\nchange.\n\n## 6. Session practices\n\n### 6.1 Plan before implementing\n\nFor anything beyond a one-line fix, produce a plan (files touched,\nfunction signatures, edge cases, assumptions) before writing\nimplementation code, per\n`docs/solid-ai-templates/templates/base/core/review.md` (\"Plan before\nimplementing\"). Stop and resurface options if a constraint invalidates\nthe plan mid-implementation rather than silently re-planning.\n\n### 6.2 Verify before reporting\n\nA finding, a fix, or a test result is a hypothesis until demonstrated.\nReproduce a defect before reporting it; hand-check at least one\nflagged item from any automated scan; confirm a check's scope before\ntrusting a zero. Full detail:\n`docs/solid-ai-templates/templates/base/core/review.md` (\"Verifying a\nfinding before reporting it\").\n\n### 6.3 End-of-session audit\n\nBefore ending a session that touched code, execute \u2014 do not\nsummarize, do not paraphrase into a bullet list \u2014 every item in:\n\n- the **MUST checklist** and the **CI signals** checklist in\n  `docs/solid-ai-templates/templates/base/core/review.md`\n- the **Structure audit** section of the same file, checking every\n  MUST sub-clause of `docs/solid-ai-templates/templates/base/core/docs.md`,\n  `docs/solid-ai-templates/templates/base/core/readme.md`, and\n  `docs/solid-ai-templates/templates/base/core/git.md` independently\n- the **Documentation rule** in\n  `docs/solid-ai-templates/templates/base/core/docs.md` (CLAUDE.md,\n  README.md, PLAYBOOK.md, ONBOARDING.md kept in sync with the change)\n\nRun each item against the actual diff and repository state and report\nwhat each check found. A summary of intentions (\"ran the checklist, all\ngood\") is not a substitute for running it.\n\n## 7. Git conventions (inlined)\n\nFull detail: `docs/solid-ai-templates/templates/base/core/git.md`.\n\n- Configure git with a full name and a consistent professional email \u2014\n  no personal addresses.\n- Conventional commit prefixes (`feat:`, `fix:`, `chore:`, `docs:`,\n  `refactor:`, `style:`, `test:`), imperative mood, subject line under\n  80 characters.\n- Always work on a branch \u2014 never commit directly to `main`. Branch\n  naming: `feat/\u2026`, `fix/\u2026`, `chore/\u2026`, `docs/\u2026`.\n- No hosted CI exists yet (see \u00a711). Until one is wired up, tests\n  (`uv run pytest`), type checking (`uv run mypy src/ --strict`), and\n  linting (`uv run ruff check`) MUST be run locally before every commit\n  that touches `src/` or `tests/`. Revisit trigger: wire up hosted CI\n  the moment a remote repository exists or a second contributor joins,\n  and drop this substitution.\n- Never force-push. Delete merged branches (remote and local) and pull\n  `main` afterward.\n- Squash-merge safety, off-limits-path handling, and the review\n  priority order (security \u2192 correctness \u2192 clarity \u2192 conventions) all\n  apply as written in the vendored file \u2014 nothing about this project\n  changes them.\n- `.gitignore` MUST exclude `.venv/`, `__pycache__/`, `*.egg-info/`,\n  `.mypy_cache/`, `.ruff_cache/`, `.pytest_cache/`, `.env`, and the\n  runtime SQLite file (e.g. `instance/tariff.db`). `data/` (tax rates,\n  discount definitions, catalog seed data) and `migrations/` ARE\n  tracked \u2014 they are source, not runtime state.\n- Commit messages touching `data/` MUST state what changed and why\n  (e.g. \"fix: correct VAT rate for jurisdiction DE \u2014 statute updated\n  2026-01-01\"), per the data changelog rule in \u00a79.\n\n## 8. Python safety rules (inlined)\n\nFull detail: `docs/solid-ai-templates/templates/base/language/python.md`.\n\n- `ruff` is the single lint and format tool; `mypy --strict` is\n  non-negotiable for both `engine/` and `web/`. No `Any` in public API\n  \u2014 `tariff.engine`'s public surface is the contract the other-program\n  actor depends on, and an untyped hole in it is a hole in that\n  contract.\n- All tool configuration lives in `pyproject.toml` \u2014 no `setup.cfg`,\n  no `tox.ini`.\n- Every exception `tariff` raises on purpose MUST derive from a single\n  package base (`tariff.engine.errors.TariffError`), and each concrete\n  type MUST also derive from the built-in its site previously raised.\n  Distinguish by whether a caller could act differently:\n  `CatalogError`, `DiscountError`, `TaxJurisdictionError`,\n  `InvoiceError` \u2014 not one exception class per raise site.\n- `tariff.engine` MUST attach only `logging.NullHandler()` to its own\n  module logger and install no writing handler \u2014 it is a library, and\n  a library that writes to stdout on import breaks the other-program\n  actor's own logging setup. `tariff.web` MAY configure a writing\n  handler at its own entry point.\n- No debug `print()`, no commented-out code, no hardcoded breakpoints\n  in committed code, per\n  `docs/solid-ai-templates/templates/base/core/quality.md` (\"Debug\n  code\").\n- SQLite is accessed through the standard library `sqlite3` module or a\n  thin repository layer \u2014 no ORM is currently justified for a\n  single-file local store; introduce one only when the repository layer\n  itself becomes the bottleneck (YAGNI revisit trigger).\n- No parameter string-building for SQL \u2014 parameterized queries only,\n  per `docs/solid-ai-templates/templates/backend/database.md` and\n  `docs/solid-ai-templates/templates/base/security/security.md`\n  (\"Injection prevention\").\n\n## 9. Data and content rules (inlined)\n\nFull detail:\n`docs/solid-ai-templates/templates/base/data/data-modeling.md` and\n`docs/solid-ai-templates/templates/base/data/data-quality.md`.\n\nThis project's \"content\" is its pricing data \u2014 the product catalog,\ndiscount rules, and tax jurisdiction tables that drive every invoice.\nGetting this wrong produces a wrong invoice, so these rules are treated\nas safety-relevant, not decorative:\n\n- All editable pricing content (tax rates, discount definitions, catalog\n  seed data) lives under `data/` \u2014 never hardcoded inside\n  `engine/*.py`. A tax rate embedded in a function is a stale tax rate\n  waiting to happen.\n- Every tax rate and discount rule MUST trace to a named source (a\n  statute, a published rate table) and record when it was last\n  verified. Undocumented, guessed, or estimated rates are not\n  acceptable in this domain.\n- Explicit absence over invented values: a product, jurisdiction, or\n  discount with no rate on record is `None` \u2014 never defaulted to zero,\n  never extrapolated from a neighboring entry. An invoice silently\n  computed against a fabricated rate is worse than one that refuses to\n  compute.\n- Naming: snake_case tables and columns, foreign keys as\n  `<table>_id`, boolean columns prefixed `is_`/`has_`.\n- Money is stored and computed as integers (cents) or `Decimal` \u2014\n  never `float`. This applies throughout `engine/` and in SQLite\n  column types.\n- Schema changes to `data/` or the SQLite schema are additive by\n  default (add new \u2192 migrate \u2192 drop old); a destructive change without\n  that sequence is a red flag in review.\n- Invoice computation is deterministic: the same catalog + discount\n  rules + tax rates + line items MUST always produce the same invoice.\n  Pin this with golden/characterization tests over representative\n  invoices (see\n  `docs/solid-ai-templates/templates/base/core/testing.md`,\n  \"Prove a behaviour-preserving refactor with a fingerprint\") so a\n  refactor of `engine/` cannot silently change a total.\n- A change to `data/` is committed with a message stating what changed\n  and why (see \u00a77) \u2014 no batching unrelated rate or catalog changes into\n  one commit.\n\n## 10. Referenced, not inlined\n\nThese are adopted in full but not reproduced here \u2014 read the vendored\nfile when working in the relevant area:\n\n| Area | File |\n| --- | --- |\n| Quality bar (DRY/KISS/YAGNI, readability, maintainability) | `docs/solid-ai-templates/templates/base/core/quality.md` |\n| Testing taxonomy and patterns | `docs/solid-ai-templates/templates/base/core/testing.md` |\n| Peer review process and checklists | `docs/solid-ai-templates/templates/base/core/review.md` |\n| OOP / SOLID / composition | `docs/solid-ai-templates/templates/base/core/oop.md` |\n| Configuration (env vars, precedence) | `docs/solid-ai-templates/templates/base/core/config.md` |\n| CLI/driver shape for maintenance scripts | `docs/solid-ai-templates/templates/base/core/cli.md` |\n| `examples/` directory rules | `docs/solid-ai-templates/templates/base/core/examples.md` |\n| README structure | `docs/solid-ai-templates/templates/base/core/readme.md` |\n| Documentation (ADRs, journal, changelog) | `docs/solid-ai-templates/templates/base/core/docs.md` |\n| Quality gate layers and thresholds | `docs/solid-ai-templates/templates/base/workflow/quality-gates.md` |\n| HTTP/URI conventions for Flask routes | `docs/solid-ai-templates/templates/backend/http.md` |\n| Database/migration conventions | `docs/solid-ai-templates/templates/backend/database.md` |\n| Handler \u2192 service \u2192 repository layering | `docs/solid-ai-templates/templates/backend/quality.md` |\n| Jinja templating, escaping, CSRF, partials | `docs/solid-ai-templates/templates/backend/templating.md` |\n| Application security baseline | `docs/solid-ai-templates/templates/base/security/security.md` |\n| HTMX attributes, partials, OOB swaps | `docs/solid-ai-templates/templates/stack/htmx.md` |\n| Flask application factory / blueprints | `docs/solid-ai-templates/templates/stack/python-flask.md` |\n| Library packaging and structure | `docs/solid-ai-templates/templates/stack/python-lib.md` |\n\nThere is no a11y- or SEO-specific template in this project's resolved\nchain (`templates/frontend/ux.md` and the SEO sections of\n`templates/frontend/quality.md` were not pulled in by any stack this\nproject uses). Baseline accessibility still applies through\n`backend-templating`: semantic HTML, labeled form fields, and visible\nfocus states are expected of every Jinja template, reviewed by eye \u2014\nthere is no automated a11y gate for this project. SEO rules do not\napply at all: `tariff` has no publicly indexed pages.\n\n## 11. Adopted vs. declined\n\nPer `docs/solid-ai-templates/templates/base/core/docs.md`\n(\"Adopting shared rules\"), this file is the adoption boundary. A newer\nrevision of the vendored templates does not, by itself, expand what is\nadopted here \u2014 that always takes an explicit edit to this file.\n\n**Adopted in full:** `base/core/quality.md`, `base/core/testing.md`,\n`base/core/review.md`, `base/core/oop.md`, `base/core/config.md`,\n`base/core/cli.md`, `base/core/examples.md`, `base/core/readme.md`,\n`base/core/docs.md`, `base/language/python.md`,\n`base/workflow/quality-gates.md`, `base/data/data-modeling.md`,\n`base/data/data-quality.md`, `backend/http.md`, `backend/database.md`,\n`backend/quality.md`, `backend/templating.md`, and the four stack files\n(`python-lib.md`, `python-service.md`, `python-flask.md`, `htmx.md`).\n\n**Adopted partially:** `base/security/security.md` \u2014 input validation,\noutput encoding, injection prevention, CSRF, secrets-in-code, error\nhandling, and logging sections apply. The transport-security, security\nheaders (HSTS/CSP tuned for a public site), and SSRF/CORS sections are\ndeclined \u2014 there is no outbound traffic and no cross-origin caller to\ndefend against. `backend/observability.md` \u2014 structured local logging\napplies; distributed tracing, span propagation, and OpenTelemetry are\ndeclined (single process, no downstream services to trace).\n\n**Declined, with a revisit trigger:**\n\n| File | Why declined | Revisit trigger |\n| --- | --- | --- |\n| `base/infra/cicd.md` | No deployment target; no hosted pipeline to define | A remote repository or CI runner is set up |\n| `base/infra/containers.md` | Runs locally, no artifact is ever shipped as an image | A deployment target is introduced |\n| `base/security/devsecops.md` | Hosted SAST/DAST/SBOM/release-signing all assume a release pipeline this project doesn't have | A deployment or distribution process is introduced |\n| `backend/messaging.md` | Single local process; no broker, no async workers | Background job processing across processes is introduced |\n| `backend/features.md` | No multi-environment rollout; single local user, single environment | Staged rollout or multi-tenant use is introduced |\n\nDeclining any of the above needs no ADR and no separate ticket \u2014 this\ntable is the record.\n\n## 12. Governing rules and template chain\n\nThe rules above are drawn from a vendored copy of the project's rule\ntemplates, checked into this repository at\n`docs/solid-ai-templates/templates/` \u2014 **not** a git submodule. Do not\nadd one; the copy here is already the source of truth for this\nrevision. To update it, replace the files under that path directly and\nre-run the resolution this file was generated from.\n\nFull dependency chain resolved for this project's stack\n(`stack-python-lib` + `stack-flask` + `stack-htmx`), listed by path\nunder `docs/solid-ai-templates/templates/`:\n\n```\nbase/core/git.md\nbase/core/docs.md\nbase/core/readme.md\nbase/core/quality.md\nbase/core/testing.md\nbase/core/review.md\nbase/core/oop.md\nbase/core/config.md\nbase/core/cli.md\nbase/core/examples.md\nbase/language/python.md\nbase/workflow/quality-gates.md\nbase/security/security.md\nbase/security/devsecops.md\nbase/infra/containers.md\nbase/infra/cicd.md\nbase/data/data-modeling.md\nbase/data/data-quality.md\nbackend/http.md\nbackend/database.md\nbackend/observability.md\nbackend/quality.md\nbackend/features.md\nbackend/messaging.md\nbackend/templating.md\nstack/python-lib.md\nstack/python-service.md\nstack/python-flask.md\nstack/htmx.md\n```\n\n## 13. Commands\n\n```\nuv sync                              # install dependencies\nuv run pytest                        # run the full test suite\nuv run pytest tests/engine           # run only the library's tests\nuv run mypy src/ --strict            # type check\nuv run ruff check src/ tests/        # lint\nuv run ruff format src/ tests/       # format\nuv run flask --app tariff.web run    # run the web app locally\n```\n\n<!-- Generated with solid-ai-templates (github.com/braboj/solid-ai-templates) -->",
+    "stop_reason": "end_turn",
+    "session_id": "5a428433-200c-490e-af60-1bce0998efd9",
+    "total_cost_usd": 2.20887475,
+    "usage": {
+      "input_tokens": 1,
+      "cache_creation_input_tokens": 236251,
+      "cache_read_input_tokens": 0,
+      "output_tokens": 23355,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 236251,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "not_available",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 23355,
+          "cache_read_input_tokens": 0,
+          "cache_creation_input_tokens": 236251,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 236251
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "inputTokens": 148356,
+        "outputTokens": 14,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "webSearchRequests": 0,
+        "costUSD": 0.14842599999999997,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      },
+      "claude-sonnet-5": {
+        "inputTokens": 1,
+        "outputTokens": 23355,
+        "cacheReadInputTokens": 0,
+        "cacheCreationInputTokens": 236251,
+        "webSearchRequests": 0,
+        "costUSD": 2.06044875,
+        "contextWindow": 200000,
+        "maxOutputTokens": 32000
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "uuid": "cf58e7f9-8966-440b-92a6-2c9ccc2fe12c"
+  },
+  "output_leak": null,
+  "over_budget": [],
+  "outcome": "generated",
+  "output": "C:\\Workspace\\solid-ai-templates\\tests\\efficacy\\arms\\hybrid\\CLAUDE.md",
+  "output_chars": 19301,
+  "output_lines": 418,
+  "output_width": 181
+}

@@ -716,7 +716,8 @@ def reaches(root):
         workspace = record.get("workspace") or ""
         files, calls = read_transcripts(home, workspace, started(record))
         if files:
-            scan = reach(files, calls, workspace, record.get("temp"))
+            scan = reach(files, calls, workspace, record.get("temp"),
+                         record.get("vendored"))
         else:
             scan = record.get("reach") or reach(files, calls)
         scans.append({"name": name_of(record), "hits": scan["hits"]})
