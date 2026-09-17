@@ -8224,3 +8224,47 @@ by a consuming project.
   derives losses from records alone then states that nothing was lost
 - A voided attempt and its re-run share one transcript folder, because the
   CLI keys the folder by working directory
+
+## 2026-09-17 — Round 1's summary, from a verdict list to a score
+
+**Tool:** Claude Code (Opus 5 1M)
+
+**Key changes:**
+- The report opens with a generated summary. The first form listed every
+  metric read better or worse per contrast (#1782). The owner read it as a
+  table, so the second form stated the findings in sentences (#1784)
+- The owner then asked for something simpler. The summary is one table: per
+  contrast a score from 1 to 10, the metrics won and the metrics failed. The
+  score is 1 + 9 × wins ÷ (wins + fails), each metric counting once (#1786)
+- The score replaces design §1.2's "no single headline number". It was
+  declared after round 1's results, so §6 records it as a digest that
+  decides nothing
+- Round 1 scores 4.8 for the templates against no context file, 8.2 for the
+  hand-written file against none, and 3.0 for the templates against the
+  hand-written file
+- Round 1's result is recorded on the spike, with its caveats
+
+**Pull requests merged:** 3 — #1783, #1785 and #1787.
+
+**Issues closed:** #1782, #1784 and #1786. The spike #1184 stays open: its
+checklist asks for two stacks and a recommendation, and round 1 covers one
+stack.
+
+**Issues filed:** #1782, #1784 and #1786.
+
+**ADRs:** none owed. The report's summary is not observable by a consuming
+project.
+
+**Gaps flagged:**
+- The score weights every metric equally, so turns and cost count as much as
+  design. That weighting was chosen after the results were seen
+- The epic #1767's rubric item named the holdout sheet, which no longer
+  exists. The reference is removed
+- The P3 bugs #1768 and #1770 stay open
+
+**Lessons:**
+- A summary built to avoid a headline number read to the owner as a table.
+  The reader asked for the headline, so the design now states what the
+  number is allowed to decide
+- Every summary form was generated from the verdicts, so each change was a
+  regeneration and never a hand edit to the committed report
