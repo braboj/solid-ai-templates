@@ -29,7 +29,7 @@ import textwrap
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
-from generate_arm_b import RECORD as ARM_B_RECORD  # noqa: E402
+from generate_arm import GENERATED, record_path  # noqa: E402
 from harness import (ARMS, ARMS_DIR, K_CEILING, K_PRIMARY,  # noqa: E402
                      SCORABLE, canonical, reach, read_transcripts,
                      scoring_area, split_name, trial_name)
@@ -657,12 +657,16 @@ def number(value):
     return str(value)
 
 
-def generation_record():
-    """Arm full's generation record, committed beside the file it produced."""
-    if not os.path.exists(ARM_B_RECORD):
-        return None
-    with io.open(ARM_B_RECORD, encoding="utf-8") as handle:
-        return json.load(handle)
+def generation_records():
+    """Each generated arm's record, committed beside the file it produced,
+    by arm; an arm whose record is absent is left out."""
+    records = {}
+    for arm in GENERATED:
+        path = record_path(arm)
+        if os.path.exists(path):
+            with io.open(path, encoding="utf-8") as handle:
+                records[arm] = json.load(handle)
+    return records
 
 
 def run_records(root):
@@ -833,7 +837,7 @@ def write_report(root, trials, table, results, seed, escalation,
     arms = [arm for arm in ARMS if arm in {arm_of(name) for name in names}]
     k = max((index_of(name) for name in names), default=0)
     any_scores = trials[names[0]]["scores"] if names else {}
-    generation = generation_record()
+    generation = generation_records()
 
     lines = []
     lines.append("# Efficacy benchmark — %s"
@@ -880,15 +884,20 @@ def write_report(root, trials, table, results, seed, escalation,
                  % any_scores.get("suite_revision", "unknown"))
     lines.append("| Bootstrap | %d resamples, %d%%, seed %s |"
                  % (RESAMPLES, int(100 * CONFIDENCE), seed))
-    if generation:
-        lines.append("| Arm full's file | generated %s, %s lines, leak scan: "
-                     "%s |"
-                     % (generation.get("started_at", "unknown"),
-                        generation.get("output_lines", "?"),
-                        "clean" if not (generation.get("output_leak") or {})
-                        .get("hits") else "HITS"))
-    else:
-        lines.append("| Arm full's file | no generation record beside it |")
+    for arm in arms:
+        if arm not in GENERATED:
+            continue
+        record = generation.get(arm)
+        if record:
+            lines.append("| Arm %s's file | generated %s, %s lines, leak "
+                         "scan: %s |"
+                         % (arm, record.get("started_at", "unknown"),
+                            record.get("output_lines", "?"),
+                            "clean" if not (record.get("output_leak") or {})
+                            .get("hits") else "HITS"))
+        else:
+            lines.append("| Arm %s's file | no generation record beside it |"
+                         % arm)
     lines.append("")
 
     if withdrawn:

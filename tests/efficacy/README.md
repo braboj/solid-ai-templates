@@ -10,8 +10,9 @@ run.
 | `SPEC.md` | the application every arm is asked to build; the harness copies it into each workspace under this name |
 | `harness.py` | sets up a workspace, runs one trial under an isolated configuration, freezes the result |
 | `arms/C-reference/CLAUDE.md` | arm `hand`: the hand-written reference context file, the arm that asks whether the effect is the templates or merely having a file |
-| `arms/B-candidate/CLAUDE.md` | arm `full`: the generated context file, produced once by `generate_arm_b.py` and never hand-edited |
-| `generate_arm_b.py` | produces that file: resolves the chain at the recorded release, builds the prompt from the interview and the pinned brief, scans for a specification leak |
+| `arms/B-candidate/CLAUDE.md` | arm `full`: the generated context file, produced once by `generate_arm.py` and never hand-edited |
+| `arms/short/CLAUDE.md` | arm `short`: the same generation under a 40-line budget |
+| `generate_arm.py` | produces each generated arm's file: resolves the chain at the recorded release, builds the prompt from the interview, the pinned brief and the arm's output model and budget, scans for a specification leak, refuses a file over its budget |
 | `score.py` | takes one frozen trial to a JSON score: clean install, boot, source discovery, the hidden suite, the static battery, the adherence checklist, scope and cost |
 | `probes.py` | the measurements that must run inside the trial's own interpreter — the structural design probes, and the web-quality probes |
 | `scoring-requirements.txt`, `toolconfig/` | the one ruler: the tools, and the lint and type configuration every arm is measured under |
@@ -55,30 +56,37 @@ its trials `A1`, `B2`, `C3`; its run root and scoring area keep those
 spellings, and every reader turns them into `none`, `full` and `hand`, so
 the round is never rewritten on disk.
 
-## Generating arm `full`
+## Generating an arm
 
 ```bash
-py tests/efficacy/generate_arm_b.py --self-test
-py tests/efficacy/generate_arm_b.py --root <outside this repository> --dry-run
-py tests/efficacy/generate_arm_b.py --root <outside this repository>
+py tests/efficacy/generate_arm.py --self-test
+py tests/efficacy/generate_arm.py --arm short --root <outside this repository> --dry-run
+py tests/efficacy/generate_arm.py --arm short --root <outside this repository>
 ```
 
-One non-interactive invocation, per the design's section 11. Nobody answers
-questions: the brief is read out of the design and treated as the client's
-answers, so the arm is reproducible and re-running it would produce a
-different one. It refuses to overwrite an existing file without `--replace`.
+One non-interactive invocation per generated arm (`full`, `short`,
+`hybrid`), per the design's sections 11 and 12. Nobody answers questions:
+the brief is read out of the design and treated as the client's answers,
+so the arm is reproducible and re-running it would produce a different one.
+It refuses to overwrite an existing file without `--replace`.
 
-The record of the generation behind the committed file sits beside it as
-`arms/B-candidate/generation.json`: the release and the chain it resolved,
-the model, the CLI's result and both leak scans. The generator writes it
+The instruction names the arm's output model, and for `short` its budget:
+at most 40 lines, none over 88 characters. A result over either bound is
+refused and kept beside the record as rejected, never trimmed, because a
+trim by hand would put a person's judgement into the arm.
+
+The record of the generation behind each committed file sits beside it as
+`generation.json`: the release and the chain it resolved, the model, the
+CLI's result, both leak scans and the budget check. The generator writes it
 there whenever it writes the file, and the report reads it from there.
 
-The self test proves the leak scan can fail before it is trusted. The dry
-run builds and scans the prompt without calling a model, which is the cheap
-way to check the wiring after any change to the brief or the roots.
+The self test proves the leak scan and the budget can fail before they are
+trusted. The dry run builds and scans the prompt without calling a model,
+which is the cheap way to check the wiring after any change to the brief,
+the roots or an arm's clause.
 
 Two scans run, and they ask different questions. The prompt scan is broad,
-because arm `full`'s generation is never handed `SPEC.md` and a hit means the
+because a generation is never handed `SPEC.md` and a hit means the
 plumbing is wrong. The output scan is narrow, and the prompt scan earns it:
 once the prompt is clean the model demonstrably never read the
 specification, so only data nobody could derive, a seed sku or a rule id or
