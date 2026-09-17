@@ -443,16 +443,24 @@ def void(root, workspace, frozen, name):
     return moved
 
 
-def transcript_files(home, workspace):
-    """The transcripts the CLI wrote for a session run in `workspace`.
+def transcript_files(home, workspace, since=None):
+    """The transcripts the CLI wrote for a session run in `workspace`, left
+    out where last written before `since`.
 
     The CLI files a session under its working directory with every character
-    other than a letter or digit replaced by a hyphen. A workspace is never
-    reused, so every file there is this trial's.
+    other than a letter or digit replaced by a hyphen.
     """
     folder = re.sub(r"[^A-Za-z0-9]", "-", os.path.abspath(workspace))
-    return sorted(glob.glob(os.path.join(home, ".claude", "projects", folder,
-                                         "*.jsonl")))
+    files = sorted(glob.glob(os.path.join(home, ".claude", "projects", folder,
+                                          "*.jsonl")))
+
+    # A voided trial re-runs in the same workspace, so its folder also holds
+    # the voided attempt's transcripts. Those stopped being written before the
+    # re-run started, and a scan charging them to the re-run reports calls it
+    # never made.
+    if since is None:
+        return files
+    return [file for file in files if os.path.getmtime(file) >= since]
 
 
 def tool_calls(files):
@@ -479,9 +487,9 @@ def tool_calls(files):
     return calls
 
 
-def read_transcripts(home, workspace):
+def read_transcripts(home, workspace, since=None):
     """A trial's transcript files and every tool call in them."""
-    files = transcript_files(home, workspace)
+    files = transcript_files(home, workspace, since)
     return files, tool_calls(files)
 
 
@@ -554,7 +562,12 @@ def outside_pattern(workspace, temp):
     if temp:
         name = os.path.basename(os.path.abspath(temp)).lower()
         own.append("tmp/" + re.escape(name))
-    not_own = "(?!(?:%s)%s)" % ("|".join(own), PATH_END)
+
+    # A sentence can end on the trial's own path, as in "the repo at
+    # ...\A1. I need", so punctuation before the path ends still leaves it
+    # the trial's own. A suffix is not punctuation: `A1.tar` stays another
+    # entry of the root.
+    not_own = "(?!(?:%s)[.:!?)\\]]*%s)" % ("|".join(own), PATH_END)
     forms = "|".join(re.escape(form) for form in path_forms([root]))
 
     # The root itself, whose listing names every other trial, and any entry
@@ -676,7 +689,7 @@ def contain(workspace, temp, home, shared, since):
     Processes are stopped before anything moves, because a running process
     holds its files open.
     """
-    files, calls = read_transcripts(home, workspace)
+    files, calls = read_transcripts(home, workspace, since)
     leftovers = shared_leftovers(shared, since, calls)
     owned = [workspace, temp, home] + [os.path.join(shared, entry)
                                        for entry in leftovers]
@@ -1422,6 +1435,23 @@ def reach_checks():
                == [("Bash", "solid-ai-templates")]),
               ("no transcript reads as not scanned",
                unscanned["hits"] is None)]
+
+    # A voided attempt in the same workspace: its transcript was last written
+    # an hour before the re-run started, and the re-run's is written after.
+    voided = os.path.join(os.path.dirname(transcript), "voided.jsonl")
+    with io.open(voided, "w", encoding="utf-8") as handle:
+        handle.write(json.dumps(entries[0]) + "\n")
+    since = time.time()
+    os.utime(voided, (since - 3600, since - 3600))
+    os.utime(transcript, (since + 1, since + 1))
+    landed = (sorted(transcript_files(home, workspace))
+              == sorted([transcript, voided])
+              and os.path.getmtime(voided) < since
+              <= os.path.getmtime(transcript))
+    checks.append(("a re-run reads only transcripts written since it "
+                   "started", landed
+                   and transcript_files(home, workspace, since)
+                   == [transcript]))
     remove_tree(scratch)
     return checks
 
@@ -1444,12 +1474,14 @@ def outside_checks():
     if bash_root[1:2] == ":":
         bash_root = "/%s%s" % (bash_root[0].lower(), bash_root[2:])
 
-    # The first three stay inside the trial; each of the last four reaches out.
+    # The first four stay inside the trial; each of the last four reaches out.
     calls = [
         ("Write", {"file_path": os.path.join(workspace, "tariff", "rules.py")}),
         ("Bash", {"command": 'cd "%s" && ls' % workspace}),
         ("Bash", {"command": "pip install . --cache-dir %s"
                              % os.path.join(temp, "pip")}),
+        ("Agent", {"prompt": "The repo is at %s. Map its modules."
+                             % workspace}),
         ("Bash", {"command": "cat ../B1/src/tariff/pricing.py"}),
         ("PowerShell", {"command": "Get-Item %s"
                                    % os.path.join(root, "B1.tar")}),
@@ -1470,9 +1502,9 @@ def outside_checks():
             ("the scoring area lies outside the run root",
              not scoring_area(root).startswith(root + os.sep)),
             ("the trial's own paths are not flagged",
-             not [index for index in flagged if index < 3]),
+             not [index for index in flagged if index < 4]),
             ("every call reaching past the trial is flagged",
-             flagged == [3, 4, 5, 6])]
+             flagged == [4, 5, 6, 7])]
 
 
 def self_test():
