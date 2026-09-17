@@ -24,6 +24,7 @@ import re
 import shutil
 import statistics
 import sys
+import textwrap
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -1008,8 +1009,32 @@ def write_report(root, trials, table, results, seed, escalation,
     target = os.path.join(out_dir, "%s-efficacy.md"
                           % datetime.date.today().isoformat())
     with io.open(target, "w", encoding="utf-8", newline="\n") as handle:
-        handle.write("\n".join(lines) + "\n")
+        handle.write("\n".join(wrap_prose(lines, markdown_width())) + "\n")
     return target
+
+
+def markdown_width():
+    """The Markdown line width the repository declares."""
+    with io.open(os.path.join(lib.ROOT, ".markdownlint.json"),
+                 encoding="utf-8") as handle:
+        return json.load(handle)["MD013"]["line_length"]
+
+
+def wrap_prose(lines, width):
+    """Each prose line wrapped to `width`; tables and headings left whole.
+
+    The report lands among the repository's documents, whose width check
+    reads every tracked Markdown file. A table row cannot wrap without
+    breaking its table, and that check exempts rows and headings.
+    """
+    wrapped = []
+    for line in lines:
+        if len(line) <= width or line.startswith(("|", "#")):
+            wrapped.append(line)
+            continue
+        wrapped.extend(textwrap.wrap(line, width, break_long_words=False,
+                                     break_on_hyphens=False))
+    return wrapped
 
 
 def posthoc_section(table, results):
@@ -1401,6 +1426,15 @@ def escalation_checks(seed):
     checks.append(("the judge is checked by its evidence, not a person",
                    "No person scores the judge." in text
                    and "holdout" not in text.lower(), None))
+
+    # The planted report carries prose far over the width, such as the
+    # escalation rule's paragraph, so the wrap is exercised, not assumed.
+    width = markdown_width()
+    long_prose = [line for line in text.splitlines()
+                  if len(line) > width and not line.startswith(("|", "#"))]
+    checks.append(("no prose line exceeds the declared width",
+                   width == 88 and "exceeds 0.5 points" in text
+                   and not long_prose, long_prose[:2]))
     return checks
 
 
