@@ -829,6 +829,8 @@ def write_report(root, trials, table, results, seed, escalation,
 
     lost = lost_trials(root)
     scans = reaches(root)
+    lines.extend(executive_section(trials, table, results))
+    lines.append("")
     lines.extend(summary_section(trials, results, escalation,
                                  withdrawn or {}, lost, scans))
     lines.append("")
@@ -1082,6 +1084,171 @@ def score(wins, fails):
     if not wins + fails:
         return None
     return round(1 + 9 * wins / (wins + fails), 1)
+
+
+# The metric groups the executive summary names, in the order it names them.
+# The primary dimensions, task success and the install check are outside
+# every group because each gets its own clause; a neutral metric carries no
+# verdict and belongs nowhere.
+GROUPS = (
+    ("rule-following", ("adherence",)),
+    ("static checks", ("ruff_per_kloc", "ruff_total", "unformatted",
+                       "unformatted_per_kloc", "mypy_errors", "mypy_per_kloc",
+                       "bandit_serious", "bandit_per_kloc", "complexity_max",
+                       "complexity_over_15", "complexity_over_15_per_kloc",
+                       "mean_cc", "unused", "unused_per_kloc")),
+    ("design signals", ("judge_srp", "judge_ocp", "judge_lsp", "judge_isp",
+                        "judge_dip", "judge_naming", "judge_errors",
+                        "patterns_warranted", "patterns_over_engineered",
+                        "patterns_missed", "extension_points",
+                        "layering_violations", "money_in_routes",
+                        "bool_parameters", "kind_ladders", "surface_extra",
+                        "surface_missing", "mutual_imports")),
+    ("tests and docs", ("judge_tests", "coverage", "docstrings")),
+    ("web quality", ("xss_inert", "csrf_refused", "axe_violations",
+                     "html_invalid", "builder_bytes", "builder_subrequests")),
+    ("size", ("source_lines", "tracked_files", "unasked_artifacts")),
+    ("cost", ("output_tokens", "turns", "wall_seconds", "cost_usd")),
+    ("follow-up changes", CHANGE),
+)
+
+# The metrics the executive summary answers from, and the words it uses.
+ANSWERED = PRIMARY + ("task_success",)
+SHORT = {"judge_design": "design", "judge_readability": "readability",
+         "judge_maintainability": "maintainability"}
+QUESTIONS = {
+    "B-A": ("Do the templates help?", "no context file", "the templates"),
+    "C-A": ("Does a hand-written file help?", "no context file",
+            "the hand-written file"),
+    "B-C": ("Do the templates beat the hand-written file?",
+            "the hand-written file", "the templates"),
+}
+COUNTED = ("no", "one", "two", "three", "four", "five")
+
+# A run whose hidden-suite pass rate sits under the baseline arm's mean by
+# more than this is named in the executive summary. It is the design's
+# practical threshold for task success, section 1.2; nothing else reads it.
+SUITE_DIP = 0.05
+
+
+def answer(verdicts):
+    """One word from the verdicts of the primary dimensions and task success:
+    No where any is worse, Yes where any is better and none worse, Not yet
+    where none separated the pair, Not measured where none was computed."""
+    if "worse" in verdicts:
+        return "No"
+    if "better" in verdicts:
+        return "Yes"
+    if all(verdict == "not computed" for verdict in verdicts):
+        return "Not measured"
+    return "Not yet"
+
+
+def grouped(results, name):
+    """The groups won, lost and split on one contrast. A group with a better
+    and a worse metric is split; one no metric separated is left out."""
+    won, lost, split = [], [], []
+    for group, keys in GROUPS:
+        verdicts = {results[key][name]["verdict"] for key in keys
+                    if key in results}
+        better, worse = "better" in verdicts, "worse" in verdicts
+        if better and worse:
+            split.append(group)
+        elif better:
+            won.append(group)
+        elif worse:
+            lost.append(group)
+    return won, lost, split
+
+
+def arm_mean(table, key, arm):
+    """The mean of one arm's measured values of a metric, None where none."""
+    values = [value for value in table[key]["values"].get(arm, {}).values()
+              if value is not None]
+    return statistics.fmean(values) if values else None
+
+
+def moved_clause(results, name):
+    """Which primary dimensions moved, and by how much; None where none was
+    computed."""
+    clauses = []
+    computed = False
+    for key in PRIMARY:
+        entry = results[key][name]
+        computed = computed or entry["verdict"] != "not computed"
+        if entry["verdict"] in ("better", "worse"):
+            clauses.append("%s %s (%+.1f of 5)" % (
+                SHORT[key],
+                "improved" if entry["verdict"] == "better" else "fell",
+                entry["mean"]))
+    if not computed:
+        return None
+    return spoken(clauses) if clauses else (
+        "readability, design and maintainability did not move")
+
+
+def suite_clause(table, name):
+    """The hidden-suite pass rates, naming any run under the baseline mean
+    by more than the practical threshold; None where an arm has none."""
+    treatment, baseline = name.split("-")
+    left = [value for value in table["task_success"]["values"]
+            .get(treatment, {}).values() if value is not None]
+    right = arm_mean(table, "task_success", baseline)
+    if not left or right is None:
+        return None
+    text = "hidden tests passed at %d %% against %d %%" % (
+        round(100 * statistics.fmean(left)), round(100 * right))
+    dipped = [value for value in left if value < right - SUITE_DIP]
+    if dipped:
+        text += ", %s of %s at %d %%" % (
+            COUNTED[len(dipped)], COUNTED[len(left)], round(100 * min(dipped)))
+    return text
+
+
+def cost_clause(table, results, name):
+    """The cost difference as a share of the baseline arm's; None where an
+    arm has none."""
+    mean = results["cost_usd"][name]["mean"]
+    baseline = arm_mean(table, "cost_usd", name.split("-")[1])
+    if mean is None or not baseline:
+        return None
+    share = round(100 * mean / baseline)
+    if not share:
+        return "at the same cost"
+    return "%d %% %s" % (abs(share), "dearer" if share > 0 else "cheaper")
+
+
+def executive_section(trials, table, results):
+    """The report's first section: per contrast, the question, a one-word
+    answer and the effects in plain words, each read off a verdict below it.
+
+    The owner asked for it on 2026-09-17, after round 1's summary table.
+    Like the score, it digests the verdict vector and decides nothing.
+    """
+    lines = ["## Executive summary", ""]
+    for treatment, baseline in CONTRASTS:
+        name = "%s-%s" % (treatment, baseline)
+        question, against, subject = QUESTIONS[name]
+        verdicts = [results[key][name]["verdict"] for key in ANSWERED]
+        won, lost, split = grouped(results, name)
+        outcomes = ([("won on %s" % spoken(won))] if won else []) + \
+            ([("lost on %s" % spoken(lost))] if lost else []) + \
+            ([("split on %s" % spoken(split))] if split else [])
+        clauses = [
+            "Against %s %s %s" % (against, subject,
+                                  spoken(outcomes) if outcomes
+                                  else "separated on nothing"),
+            moved_clause(results, name),
+            suite_clause(table, name),
+            cost_clause(table, results, name),
+        ]
+        lines.append("**%s %s.** %s." % (
+            question, answer(verdicts),
+            "; ".join(clause for clause in clauses if clause)))
+        lines.append("")
+    k = max((index_of(name) for name in trials), default=0)
+    lines.append("K = %d on one project: a signal, not proof." % k)
+    return lines
 
 
 def summary_section(trials, results, escalation, withdrawn, lost, scans):
@@ -1724,12 +1891,70 @@ def withdrawal_checks(seed):
     return checks
 
 
-def summary_of(text):
-    """The report's Summary section with its wrapping undone."""
-    heading = "## Summary"
+def prose_of(text, heading):
+    """One report section with its wrapping undone."""
     section = text.split(heading)[1].split("\n## ")[0] if heading in text \
         else ""
     return " ".join(section.split())
+
+
+def summary_of(text):
+    """The report's Summary section with its wrapping undone."""
+    return prose_of(text, "## Summary")
+
+
+def executive_checks(seed):
+    """The executive summary answers from the primary dimensions and task
+    success, groups every other verdict, and opens the report."""
+    checks = []
+
+    # A metric added without a group would be missing from the summary
+    # while its verdict counted in the score below it.
+    grouped_keys = [key for _, keys in GROUPS for key in keys]
+    spoken_for = {key for key, _, direction, _ in METRICS
+                  if direction != NEUTRAL} - set(ANSWERED) - {"install"}
+    checks.append(("every verdict outside the answer is in one group",
+                   set(grouped_keys) == spoken_for
+                   and len(grouped_keys) == len(set(grouped_keys)),
+                   sorted(spoken_for ^ set(grouped_keys))))
+
+    shown = "no improvement shown"
+    for label, verdicts, expected in (
+            ("a worse primary answers No", ["better", "worse", shown, shown],
+             "No"),
+            ("a better primary and no worse answers Yes",
+             ["better", shown, shown, shown], "Yes"),
+            ("nothing separated answers Not yet", [shown] * 4, "Not yet"),
+            ("nothing computed answers Not measured",
+             ["not computed"] * 4, "Not measured")):
+        got = answer(verdicts)
+        checks.append((label, got == expected, got))
+
+    # One group with a metric each way is split, not won or lost.
+    planted = {key: {"B-A": {"verdict": shown}} for _, keys in GROUPS
+               for key in keys}
+    planted["turns"]["B-A"]["verdict"] = "better"
+    planted["cost_usd"]["B-A"]["verdict"] = "worse"
+    planted["adherence"]["B-A"]["verdict"] = "better"
+    got = grouped(planted, "B-A")
+    checks.append(("a group won and lost is split",
+                   got == (["rule-following"], [], ["cost"]), got))
+
+    # The planted change run has no primary, suite or cost values, so the
+    # line is the question, Not measured, and the one group its rows fill.
+    _, _, text = rendered(planted_change_run("any-revision"), seed, {})
+    executive = prose_of(text, "## Executive summary")
+    checks.extend([
+        ("the executive summary opens the report",
+         0 <= text.find("## Executive summary") < text.find("## Summary"),
+         None),
+        ("it answers Not measured and names the group won",
+         "**Do the templates help? Not measured.** Against no context file "
+         "the templates won on follow-up changes." in executive, executive),
+        ("it states K", "K = %d on one project" % K_PRIMARY in executive,
+         executive),
+    ])
+    return checks
 
 
 def self_test(seed):
@@ -1780,6 +2005,7 @@ def self_test(seed):
     checks.extend(escalation_checks(seed))
     checks.extend(posthoc_checks(seed))
     checks.extend(withdrawal_checks(seed))
+    checks.extend(executive_checks(seed))
     checks.extend((label, ok, ok) for label, ok in reach_checks())
     checks.extend((label, ok, ok) for label, ok in lost_checks())
     checks.extend((label, ok, ok) for label, ok in rescan_checks())
