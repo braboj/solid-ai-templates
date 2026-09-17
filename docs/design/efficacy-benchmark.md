@@ -726,15 +726,17 @@ so nothing round 1 froze is rewritten.
 
 **The length rule.** A file's length is its count of newline-terminated
 lines, the figure the finding table prints beside each column. `short`'s
-file MUST be at most 40 lines. It is generated as §11 generates `full`'s —
-one non-interactive invocation, the same brief, the same release, its
-record committed beside it — with the budget stated in the instruction,
-and the generator refuses a longer result rather than trimming it, because
-a trim by hand would put a person's judgement into the arm. `hybrid`'s
-inline part carries no budget; the interview's hybrid model fixes what it
-inlines and what it refers to, and its length is reported. `short` and
-`hand` then sit within a line of each other, which is what makes
-short − hand a comparison of content at a fixed length.
+file MUST be at most 40 lines, none longer than 88 characters — the width
+the templates keep for their own documents, so that a line cannot carry a
+paragraph. It is generated as §11 generates `full`'s — one non-interactive
+invocation, the same brief, the same release, its record committed beside
+it — with the budget stated in the instruction, and the generator refuses a
+result over either bound rather than trimming it, because a trim by hand
+would put a person's judgement into the arm. `hybrid`'s inline part carries
+no budget; the interview's hybrid model fixes what it inlines and what it
+refers to, and its length is reported. `short` and `hand` then sit within a
+line of each other, which is what makes short − hand a comparison of
+content at a fixed length.
 
 Same spec, generator (`claude-sonnet-5` at effort `high`), judge
 (`gpt-6-astra` at effort `high`), hidden-suite revision (`48f4785`), bounds
