@@ -1,14 +1,16 @@
-"""Generate arm B's context file, once, without anybody answering anything.
+"""Generate one arm's context file, once, without anybody answering anything.
 
-The design's section 11 fixes what arm B's interview is told and requires
-the generation to be one non-interactive invocation. This module is that
-invocation. It resolves the chain at the recorded release, builds the
-prompt from `INTERVIEW.md`, that chain and the pinned brief, calls the
-generator, writes `arms/B-candidate/CLAUDE.md`, and refuses to keep a
-result the specification leaked into.
+The design's section 11 fixes what the interview is told and requires the
+generation to be one non-interactive invocation; section 12 adds the
+40-line budget arm `short` is generated under and the hybrid model arm
+`hybrid` asks for. This module is that invocation. It resolves the chain at
+the recorded release, builds the prompt from `INTERVIEW.md`, that chain,
+the pinned brief and the arm's model and budget, calls the generator,
+writes `arms/<arm>/CLAUDE.md`, and refuses to keep a result the
+specification leaked into or one over the arm's budget.
 
-Run it once. Re-running it produces a different file and therefore a
-different arm, so it refuses to overwrite an existing one without
+Run it once per arm. Re-running it produces a different file and therefore
+a different arm, so it refuses to overwrite an existing one without
 `--replace`, and the record it writes is what the report cites.
 """
 
@@ -34,25 +36,45 @@ from harness import (TrialError, agent_environment,  # noqa: E402
                      quoted_passage)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUTPUT = os.path.join(HERE, "arms", "B-candidate", "CLAUDE.md")
-
-# The record of the generation that produced OUTPUT, committed beside it. The
-# report cites it, and a scratch directory would not outlive the run.
-RECORD = os.path.join(HERE, "arms", "B-candidate", "generation.json")
 DESIGN = os.path.join(lib.ROOT, "docs", "design", "efficacy-benchmark.md")
 
-# The release arm B is generated from. The design fixes it: the last 2.x,
-# before the v3.0 split moves any template.
+# The arms the interview generates, each with the directory under `arms/`
+# its file and record live in, the interview's output model it is asked for,
+# and its budget as (lines, width) where the design's section 12 sets one.
+# Arm `full` keeps the directory round 1 generated it into, which its record
+# names.
+GENERATED = {
+    "full": {"dir": "B-candidate", "model": "inline", "budget": None},
+    "short": {"dir": "short", "model": "inline", "budget": (40, 88)},
+    "hybrid": {"dir": "hybrid", "model": "hybrid", "budget": None},
+}
+
+
+def output_path(arm):
+    """Where an arm's generated file is committed."""
+    return os.path.join(HERE, "arms", GENERATED[arm]["dir"], "CLAUDE.md")
+
+
+def record_path(arm):
+    """The record of the generation behind an arm's file, committed beside
+    it. The report cites it, and a scratch directory would not outlive the
+    run."""
+    return os.path.join(HERE, "arms", GENERATED[arm]["dir"],
+                        "generation.json")
+
+
+# The release every arm is generated from. The design fixes it: the last
+# 2.x, before the v3.0 split moves any template.
 RELEASE = "v2.90.0"
 
-# The roots the design's arm B names. Each resolves as its own root per
-# ADR-035, and their chains overlap heavily, so the union is deduplicated
-# before it reaches the prompt.
+# The roots the design's brief resolves to. Each resolves as its own root
+# per ADR-035, and their chains overlap heavily, so the union is
+# deduplicated before it reaches the prompt.
 ROOTS = ["stack-flask", "stack-htmx", "frontend-ux", "frontend-quality"]
 
 # Two lists, because the prompt and the output are different questions.
 #
-# The PROMPT scan is a wiring check: arm B's generation is never handed
+# The PROMPT scan is a wiring check: a generation is never handed
 # `SPEC.md`, so any of these appearing in the prompt means the plumbing is
 # wrong. It can afford to be broad, since a false positive costs a look
 # rather than a generation.
@@ -111,6 +133,7 @@ below already imply and move on.
 Output the finished `CLAUDE.md` and nothing else: no preamble, no
 explanation, no code fence around the whole document.
 
+%s
 ## Project brief
 
 %s
@@ -123,6 +146,54 @@ explanation, no code fence around the whole document.
 
 %s
 """
+
+# What each output model's clause tells the generation, in place of the
+# interview's own question about the model. The hybrid clause names where
+# the templates sit in the workspace, because the harness vendors them
+# there rather than adding a submodule, and a file telling its reader to
+# add one would be wrong from its first line.
+MODELS = {
+    "inline": "Use the interview's inline model.",
+    "hybrid": ("Use the interview's hybrid model. The templates are present "
+               "in the project at `docs/solid-ai-templates/`, at the same "
+               "revision as the rules below, as a vendored copy rather than "
+               "a submodule: point there, list the template files to read "
+               "from there, and do not tell anyone to add a submodule."),
+}
+
+# The budget clause, stated in the instruction as the design's section 12
+# requires. The width keeps a line from carrying a paragraph.
+BUDGET = """\
+The finished `CLAUDE.md` MUST be at most %d lines, blank lines counted, and
+no line may be longer than %d characters. Keep the rules that matter most
+for this project and leave the rest out; a rule that does not fit is left
+out, not squeezed onto another rule's line."""
+
+
+def arm_clause(arm):
+    """The model and budget paragraph for one arm's instruction."""
+    entry = GENERATED[arm]
+    lines = ["## The output model", "", MODELS[entry["model"]]]
+    if entry["budget"]:
+        lines.extend(["", "## The budget", "", BUDGET % entry["budget"]])
+    return "\n".join(lines) + "\n"
+
+
+def over_budget(document, budget):
+    """Every way a generated file exceeds its (lines, width) budget, as
+    sentences; empty where it fits or has no budget."""
+    if not budget:
+        return []
+    lines, width = budget
+    text = document.rstrip("\n").split("\n")
+    findings = []
+    if len(text) > lines:
+        findings.append("%d lines, over the budget of %d" % (len(text), lines))
+    widest = max((len(line) for line in text), default=0)
+    if widest > width:
+        findings.append("a line of %d characters, over the width of %d"
+                        % (widest, width))
+    return findings
 
 
 def read_brief(path=DESIGN):
@@ -205,13 +276,13 @@ def scan(text, label, tokens):
     return {"where": label, "hits": hits}
 
 
-def build_prompt(tree):
+def build_prompt(tree, arm):
     interview_path = os.path.join(tree, "templates", "INTERVIEW.md")
     with io.open(interview_path, encoding="utf-8") as handle:
         interview = handle.read()
     files = resolve_union(tree, ROOTS)
     chain = read_chain(tree, files)
-    prompt = INSTRUCTION % (read_brief(), interview, chain)
+    prompt = INSTRUCTION % (arm_clause(arm), read_brief(), interview, chain)
     return prompt, files
 
 
@@ -245,7 +316,10 @@ def extract_document(payload, raw):
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(
-        description="Generate arm B's context file, non-interactively.")
+        description="Generate one arm's context file, non-interactively.")
+    parser.add_argument("--arm", choices=sorted(GENERATED),
+                        help="the arm to generate; required for everything "
+                             "but --self-test")
     parser.add_argument("--root",
                         help="scratch directory for the isolated home and the "
                              "record; MUST be outside this repository. "
@@ -258,20 +332,23 @@ def parse_args(argv):
     parser.add_argument("--budget", type=float, default=None)
     parser.add_argument("--timeout", type=int, default=3600)
     parser.add_argument("--replace", action="store_true",
-                        help="overwrite an existing arm B file; the arm "
+                        help="overwrite the arm's existing file; the arm "
                              "changes when you do")
     parser.add_argument("--dry-run", action="store_true",
                         help="build and scan the prompt, call no model")
     parser.add_argument("--self-test", action="store_true",
-                        help="prove the leak scan can fail, then exit")
+                        help="prove the leak scan and the budget can fail, "
+                             "then exit")
     return parser.parse_args(argv)
 
 
 def self_test():
-    """A scan that cannot fail is not a control.
+    """A scan that cannot fail is not a control, and neither is a budget.
 
     Plants one specification-only token in a clean text and requires the
-    scan to report it, then requires a clean text to scan clean.
+    scan to report it, then requires a clean text to scan clean. Plants a
+    file one line over the budget and one a character too wide, and
+    requires each refused and a file at both bounds kept.
     """
     clean = "A pricing and invoicing web application with discount rules."
     if scan(clean, "clean", PROMPT_TOKENS) is not None:
@@ -284,6 +361,28 @@ def self_test():
         return 1
     print("the leak scan reports a planted token and passes clean text")
     print("  planted hit: %r" % found["hits"])
+
+    budget = GENERATED["short"]["budget"]
+    lines, width = budget
+    at_bounds = "\n".join(["x" * width] * lines) + "\n"
+    if over_budget(at_bounds, budget):
+        print("FAIL: a file at both bounds was refused")
+        return 1
+    long = "\n".join(["x"] * (lines + 1)) + "\n"
+    wide = "\n".join(["x" * (width + 1)] + ["x"] * (lines - 1)) + "\n"
+    if not over_budget(long, budget) or not over_budget(wide, budget):
+        print("FAIL: a file over the budget was kept")
+        return 1
+    if over_budget(long, None):
+        print("FAIL: an arm with no budget refused a file")
+        return 1
+    print("the budget keeps a file at %d lines of %d characters and refuses "
+          "one over either" % (lines, width))
+    if "MUST be at most %d lines" % lines not in arm_clause("short") \
+            or "budget" in arm_clause("full").lower():
+        print("FAIL: the budget clause is not in short's instruction alone")
+        return 1
+    print("the budget is stated in short's instruction and no other")
     return 0
 
 
@@ -291,8 +390,8 @@ def main(argv):
     options = parse_args(argv)
     if options.self_test:
         return self_test()
-    if not options.root:
-        print("refused: --root is required")
+    if not options.root or not options.arm:
+        print("refused: --root and --arm are required")
         return 2
 
     try:
@@ -301,17 +400,18 @@ def main(argv):
         print("refused: %s" % error)
         return 1
 
-    if os.path.exists(OUTPUT) and not options.replace:
-        print("refused: %s already exists. Arm B is generated once; "
+    output = output_path(options.arm)
+    if os.path.exists(output) and not options.replace:
+        print("refused: %s already exists. An arm is generated once; "
               "regenerating changes the arm. Pass --replace if that is what "
-              "you mean." % OUTPUT)
+              "you mean." % output)
         return 1
 
     os.makedirs(options.root, exist_ok=True)
     started_at = datetime.datetime.now()
     tree = worktree_at(options.ref)
     try:
-        prompt, files = build_prompt(tree)
+        prompt, files = build_prompt(tree, options.arm)
         head = subprocess.run(["git", "-C", tree, "rev-parse", "HEAD"],
                               capture_output=True, text=True,
                               encoding="utf-8").stdout.strip()
@@ -319,6 +419,9 @@ def main(argv):
         remove_worktree(tree)
 
     record = {
+        "arm": options.arm,
+        "output_model": GENERATED[options.arm]["model"],
+        "budget": GENERATED[options.arm]["budget"],
         "ref": options.ref,
         "commit": head,
         "roots": ROOTS,
@@ -339,7 +442,7 @@ def main(argv):
         return 1
     print("prompt carries no specification-only token")
 
-    prompt_path = os.path.join(options.root, "arm-b-prompt.txt")
+    prompt_path = os.path.join(options.root, "arm-%s-prompt.txt" % options.arm)
     with io.open(prompt_path, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(prompt)
     record["prompt_file"] = prompt_path
@@ -391,28 +494,37 @@ def main(argv):
 
     leak = scan(document, "generated file", NON_INVENTABLE)
     record["output_leak"] = leak
-    if leak is not None:
-        rejected = os.path.join(options.root, "arm-b-REJECTED.md")
+    excess = over_budget(document, GENERATED[options.arm]["budget"])
+    record["over_budget"] = excess
+    if leak is not None or excess:
+        rejected = os.path.join(options.root, "arm-%s-REJECTED.md"
+                                % options.arm)
         with io.open(rejected, "w", encoding="utf-8", newline="\n") as handle:
             handle.write(document)
-        record["outcome"] = "refused: specification leaked"
-        print("refused: the generated file carries data only the "
-              "specification supplies: %r" % leak["hits"])
+        if leak is not None:
+            record["outcome"] = "refused: specification leaked"
+            print("refused: the generated file carries data only the "
+                  "specification supplies: %r" % leak["hits"])
+        else:
+            record["outcome"] = "refused: over the budget"
+            print("refused: the generated file is %s" % "; ".join(excess))
         print("the rejected file is at %s" % rejected)
         return write_record(options.root, record, started_at) or 1
 
-    os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
-    with io.open(OUTPUT, "w", encoding="utf-8", newline="\n") as handle:
+    os.makedirs(os.path.dirname(output), exist_ok=True)
+    with io.open(output, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(document.rstrip() + "\n")
     record["outcome"] = "generated"
-    record["output"] = OUTPUT
+    record["output"] = output
     record["output_chars"] = len(document)
-    record["output_lines"] = document.count("\n") + 1
-    print("wrote %s: %d lines, %d chars"
-          % (OUTPUT, record["output_lines"], record["output_chars"]))
+    record["output_lines"] = document.rstrip("\n").count("\n") + 1
+    record["output_width"] = max(len(line) for line in document.splitlines())
+    print("wrote %s: %d lines, %d chars, widest line %d"
+          % (output, record["output_lines"], record["output_chars"],
+             record["output_width"]))
     print("no specification-only token in the generated file")
-    keep_record(record, RECORD)
-    print("Record kept beside it: %s" % RECORD)
+    keep_record(record, record_path(options.arm))
+    print("Record kept beside it: %s" % record_path(options.arm))
     return write_record(options.root, record, started_at)
 
 
@@ -423,8 +535,9 @@ def keep_record(record, path):
 
 
 def write_record(root, record, started_at):
-    path = os.path.join(root, "arm-b-generation-%s.json"
-                        % started_at.strftime("%Y-%m-%dT%H-%M-%S"))
+    path = os.path.join(root, "arm-%s-generation-%s.json"
+                        % (record["arm"],
+                           started_at.strftime("%Y-%m-%dT%H-%M-%S")))
     with io.open(path, "w", encoding="utf-8") as handle:
         json.dump(record, handle, indent=2)
     print("Record: %s" % path)
