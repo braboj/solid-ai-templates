@@ -360,10 +360,10 @@ being asked.
 
 ## Reports
 
-Each run writes a dated report to `docs/audits/`. It opens with a summary in
-sentences generated from its own verdicts: the primary dimensions per
-contrast, the count of other metrics read better and worse with task success,
-cost and change-task lines changed quoted, then the caveats. It goes on to
-name the model ids, the template revision, K, every trial's raw numbers, the
-judge's evidence check and the verdict vector. No person scores the judge:
-the evidence check is the only check on it.
+Each run writes a dated report to `docs/audits/`. It opens with a summary
+table generated from its own verdicts: per contrast, a score from 1 to 10 and
+the metrics won and failed, then one line of caveats. The score is 1 + 9 ×
+wins ÷ (wins + fails) and decides nothing. The report goes on to name the
+model ids, the template revision, K, every trial's raw numbers, the judge's
+evidence check and the verdict vector. No person scores the judge: the
+evidence check is the only check on it.

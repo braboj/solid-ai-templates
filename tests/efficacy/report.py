@@ -829,7 +829,7 @@ def write_report(root, trials, table, results, seed, escalation,
 
     lost = lost_trials(root)
     scans = reaches(root)
-    lines.extend(summary_section(trials, table, results, escalation,
+    lines.extend(summary_section(trials, results, escalation,
                                  withdrawn or {}, lost, scans))
     lines.append("")
 
@@ -985,8 +985,8 @@ def write_report(root, trials, table, results, seed, escalation,
 
     lines.append("## Verdict vector")
     lines.append("")
-    lines.append("The whole vector, as the design requires: no single "
-                 "headline number.")
+    lines.append("The whole vector, which the summary's scores digest "
+                 "and never replace.")
     lines.append("")
 
     # A run that escalated reports both vectors, as the design requires, so
@@ -1062,27 +1062,12 @@ def posthoc_section(table, results):
     return lines
 
 
-# How the summary names each contrast's two sides.
-SIDES = {
-    "B-A": ("the generated templates (arm B)", "no context file (arm A)"),
-    "C-A": ("forty hand-written lines (arm C)", "no context file"),
-    "B-C": ("the generated templates", "forty hand-written lines"),
+# How the summary names each contrast.
+COMPARISONS = {
+    "B-A": "Templates (B) vs no context file (A)",
+    "C-A": "Hand-written file (C) vs no context file (A)",
+    "B-C": "Templates (B) vs hand-written file (C)",
 }
-
-# The measures the summary quotes beside each contrast's counts: task success
-# and cost, which the design reports straight after the primary dimensions,
-# and the change task's churn, each at the precision a reader compares.
-QUOTED = (("task_success", "task success", "%.3f"),
-          ("cost_usd", "cost per build trial", "$%.2f"),
-          ("churn_lines", "change-task lines changed", "%.0f"))
-
-# How a primary dimension's verdict reads in a sentence, in the order the
-# summary gives them.
-READS = (("better", "read better on %s"),
-         ("worse", "read worse on %s"),
-         ("no improvement shown", "showed no improvement on %s"),
-         ("withdrawn", "had %s withdrawn"),
-         ("not computed", "had no verdict computed on %s"))
 
 
 def spoken(names):
@@ -1091,110 +1076,65 @@ def spoken(names):
         ", ".join(names[:-1]), names[-1])
 
 
-def plural(count, noun):
-    """A count and its noun, as `1 other metric` or `2 other metrics`."""
-    return "%d %s%s" % (count, noun, "" if count == 1 else "s")
+def score(wins, fails):
+    """1 to 10: 1 where a side lost every metric that separated the pair,
+    10 where it won every one, None where no metric separated them."""
+    if not wins + fails:
+        return None
+    return round(1 + 9 * wins / (wins + fails), 1)
 
 
-def primary_clauses(results, name):
-    """What one contrast read on the primary dimensions, as clauses."""
-    groups = {}
-    for key in PRIMARY:
-        groups.setdefault(results[key][name]["verdict"], []).append(
-            key.replace("judge_", ""))
-    patterns = list(READS) + [(verdict, verdict + " on %s")
-                              for verdict in groups
-                              if verdict not in dict(READS)]
-    clauses = []
-    for verdict, pattern in patterns:
-        names = groups.get(verdict)
-        if names:
-            clauses.append(pattern % ("all three" if len(names) == len(PRIMARY)
-                                      else spoken(names)))
-    return spoken(clauses)
+def summary_section(trials, results, escalation, withdrawn, lost, scans):
+    """The report's opening table: a score, the wins and the fails per
+    contrast, each read off a verdict below it.
 
-
-def arm_mean(table, key, arm):
-    """One arm's mean on a metric, or None where nothing was measured."""
-    values = [value for value in table[key]["values"].get(arm, {}).values()
-              if value is not None]
-    return statistics.fmean(values) if values else None
-
-
-def summary_section(trials, table, results, escalation, withdrawn, lost,
-                    scans):
-    """The report's opening findings, in sentences read off its verdicts.
-
-    It states no finding the verdict vector does not hold: the primary
-    dimensions per contrast, how many other metrics read better or worse,
-    three quoted measures, and the caveats every finding carries.
+    The score was declared after round 1's results were seen. It digests the
+    verdict vector and decides nothing: no verdict, escalation or
+    non-inferiority claim reads it.
     """
     labels = {key: label for key, label, _, _ in METRICS}
-    others = [key for key, _, _, _ in METRICS if key not in PRIMARY]
-    sentences = ["The report leads with design, readability and "
-                 "maintainability."]
+    lines = ["## Summary",
+             "",
+             "| Comparison | Score, 1-10 | Wins | Fails |",
+             "|---|---|---|---|"]
     for treatment, baseline in CONTRASTS:
         name = "%s-%s" % (treatment, baseline)
-        subject, against = SIDES[name]
-        sentences.append("Against %s, %s %s." % (
-            against, subject, primary_clauses(results, name)))
-    lines = ["## Summary", "", " ".join(sentences), ""]
-
-    for treatment, baseline in CONTRASTS:
-        name = "%s-%s" % (treatment, baseline)
-        verdicts = [results[key][name]["verdict"] for key in others]
-        quoted = []
-        for key, label, form in QUOTED:
-            before = arm_mean(table, key, baseline)
-            after = arm_mean(table, key, treatment)
-            verdict = results[key][name]["verdict"]
-            quoted.append("%s %s" % (label, verdict)
-                          if before is None or after is None else
-                          "%s %s to %s, %s" % (label, form % before,
-                                               form % after, verdict))
-        detail = "; ".join(quoted)
-        lines.append("- %s against %s: better on %s and worse on %d. %s."
-                     % (treatment, baseline,
-                        plural(verdicts.count("better"), "other metric"),
-                        verdicts.count("worse"),
-                        detail[0].upper() + detail[1:]))
+        wins = [labels[key] for key, _, _, _ in METRICS
+                if results[key][name]["verdict"] == "better"]
+        fails = [labels[key] for key, _, _, _ in METRICS
+                 if results[key][name]["verdict"] == "worse"]
+        value = score(len(wins), len(fails))
+        lines.append("| %s | %s | %s | %s |"
+                     % (COMPARISONS[name],
+                        "—" if value is None else "%.1f" % value,
+                        "; ".join(wins) or "none",
+                        "; ".join(fails) or "none"))
+    lines.append("")
+    lines.append("The score is 1 + 9 × wins ÷ (wins + fails). A win or a fail "
+                 "is a metric whose interval separated the pair in its "
+                 "declared direction, each metric counting once; one showing "
+                 "no improvement counts neither way. The score digests the "
+                 "verdict vector at the end and decides nothing.")
     lines.append("")
 
     judged = [trial["judge"] for trial in trials.values() if trial["judge"]]
-    shares = [path(judging, "evidence", "share") for judging in judged]
-    shares = [share for share in shares if share is not None]
     reached = []
     for scan in scans:
         if scan["hits"] and scan["name"] not in reached:
             reached.append(scan["name"])
-    unscanned = [scan["name"] for scan in scans if scan["hits"] is None]
-
-    caveats = ["%d trials scored and %d judged" % (len(trials), len(judged)),
+    caveats = ["%d trials, %d judged" % (len(trials), len(judged)),
                "escalation to K = %d %s" % (K_CEILING,
-                                            escalation_phrase(escalation))]
-    caveats.append("withdrawn, and printed without numbers: %s"
-                   % "; ".join(labels.get(key, key)
-                               for key in sorted(withdrawn))
-                   if withdrawn else "nothing withdrawn")
-    caveats.append("lost and re-run: %s"
-                   % "; ".join("%s, re-run %s" % (entry["name"],
-                                                  entry["rerun"] or "never")
-                               for entry in lost)
-                   if lost else "no trial lost")
-    caveats.append("reached past their own workspace, each call listed "
-                   "below: %s" % spoken(reached)
-                   if reached else "no trial reached past its own workspace")
-    if unscanned:
-        caveats.append("not scanned, having no transcript: %s"
-                       % spoken(unscanned))
-    caveats.append("the judge is checked only by its evidence lines, the "
-                   "lowest share found being %.0f %% over %d judged trials"
-                   % (100 * min(shares), len(shares))
-                   if shares else "no trial was judged")
+                                            escalation_phrase(escalation)),
+               "withdrawn: %s" % ("; ".join(labels.get(key, key)
+                                            for key in sorted(withdrawn))
+                                  or "nothing"),
+               "lost and re-run: %s" % ("; ".join(
+                   "%s, %s" % (entry["name"], entry["rerun"] or "never re-run")
+                   for entry in lost) or "none"),
+               "reached past their workspace: %s" % (spoken(reached)
+                                                     if reached else "none"),
+               "the judge is checked only by its evidence lines"]
     lines.append("Caveats: %s." % "; ".join(caveats))
-    lines.append("")
-    lines.append("The verdict vector at the end names every metric behind "
-                 "these counts.")
     return lines
 
 
@@ -1752,16 +1692,13 @@ def withdrawal_checks(seed):
     checks.extend([
         ("the summary opens the report",
          0 <= text.find("## Summary") < text.find("## What produced"), None),
-        ("it states the primary dimensions' verdict in a sentence",
-         "Against no context file (arm A), the generated templates (arm B) "
-         "had no verdict computed on all three." in summary, summary[:160]),
-        ("its counts are the verdicts, the withdrawn metric not among them",
-         summary.count("better on 1 other metric and worse on 0.") == 3
-         and "change-task lines changed 298 to 198, better" in summary,
-         summary[:400]),
+        ("its row scores the verdicts, the withdrawn metric not among them",
+         section_rows(text, "## Summary", COMPARISONS["B-A"])
+         == ["| %s | 10.0 | Change task, lines changed | none |"
+             % COMPARISONS["B-A"]],
+         section_rows(text, "## Summary", COMPARISONS["B-A"])),
         ("it names the withdrawal among the caveats",
-         "withdrawn, and printed without numbers: %s;" % label in summary,
-         None),
+         "withdrawn: %s;" % label in summary, None),
     ])
 
     _, _, text = rendered(other, seed, spared)
@@ -1770,9 +1707,20 @@ def withdrawal_checks(seed):
                    kept == ["| %s | better | better | better |" % label]
                    and "## Withdrawn measurements" not in text, kept))
     summary = summary_of(text)
-    checks.append(("that run's summary counts the row better",
-                   summary.count("better on 2 other metrics and worse on 0.")
-                   == 3 and "nothing withdrawn" in summary, summary[:400]))
+    row = section_rows(text, "## Summary", COMPARISONS["B-A"])
+    checks.append(("that run's summary counts the row a win",
+                   row == ["| %s | 10.0 | %s; Change task, lines changed | "
+                           "none |" % (COMPARISONS["B-A"], label)]
+                   and "withdrawn: nothing;" in summary, row))
+
+    # The rule at its ends and in the middle: round 1's templates against no
+    # context file won 8 and failed 11.
+    checks.extend([("a pair won and failed 8 to 11 scores 4.8",
+                    score(8, 11) == 4.8, score(8, 11)),
+                   ("a pair lost on every separating metric scores 1",
+                    score(0, 3) == 1.0, score(0, 3)),
+                   ("a pair nothing separated has no score",
+                    score(0, 0) is None, score(0, 0))])
     return checks
 
 

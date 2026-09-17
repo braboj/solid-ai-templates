@@ -97,7 +97,8 @@ non-inferior by this table, and a trim is a free win only where every
 quality metric is non-inferior by it — not merely where each interval
 happens to contain zero.
 
-The whole vector is reported; no single headline number.
+The whole vector is reported. The score in §6's summary digests it and
+decides nothing.
 
 ## 2. The app — `tariff`
 
@@ -386,12 +387,18 @@ complexity, tokens, turns, wall time, cost, files, lines, artifacts nobody
 asked for, change-task churn, axe violations, HTML invalidity. Neutral,
 reported without a verdict: maintainability index, instability.
 
-The report opens with a summary in sentences, generated from its own
-verdicts. It states each contrast's verdicts on the primary dimensions, then
-per contrast how many other metrics read better and worse, with task success,
-cost and change-task lines changed quoted. The caveats follow: the
-escalation, withdrawn metrics, lost trials, reaches past a workspace and the
-judge's evidence check. It adds no finding the verdict vector does not hold.
+The report opens with a summary table generated from its own verdicts: per
+contrast, a score from 1 to 10, the metrics won and the metrics failed. A win
+or a fail is a metric read better or worse; one showing no improvement counts
+neither way. The score is 1 + 9 × wins ÷ (wins + fails), each metric counting
+once, and a pair no metric separated has none. One line of caveats follows:
+the escalation, withdrawn metrics, lost trials, reaches past a workspace and
+the judge's evidence check.
+
+The owner asked for the score on 2026-09-17, after round one's results were
+seen (#1786). It replaces §1.2's earlier "no single headline number". Like a
+check declared after a run, it describes the vector and decides nothing: no
+verdict, escalation or non-inferiority claim reads it.
 
 Report file: `docs/audits/YYYY-MM-DD-efficacy.md` with the model IDs, the
 CLI versions, the template revision, the arm B brief and its token scan,
