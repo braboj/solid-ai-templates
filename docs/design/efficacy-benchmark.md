@@ -409,14 +409,16 @@ that moved, the hidden-suite pass rate against the bare arm naming any run
 under it by more than §1.2's practical threshold, code size (source lines
 and files) and cost as signed shares of the bare arm's where the interval
 separated them, and one phrase from the answer and the size and cost
-verdicts. One line per file follows, on why it scored so (#1796): runs that
-could not boot with the recorded error, every bulk and cost metric read
-worse as a share of the bare arm's, patterns missed where worse, and
-whether the judge's rubric or only the tools counted its wins. One line
-then reads the columns together: length is not quality where the shorter
-file's answer is Yes and the longer's is not, and the other three pairings
-have their own words. Every cell and clause is read off a verdict or a mean
-below it, and the table decides nothing either.
+verdicts. One line per file follows, on why it scored so, in words with the
+numbers left in the table (#1796, #1798): a clean install that could not
+boot, structure built beyond the task and the work it took, the follow-up
+change moving through that structure, what the judge read its code as or
+that it saw none of it as better, wins that are all tool counts, and
+patterns missed — each sentence said only where its record or verdict
+holds. One line then reads the columns together: length is not quality
+where the shorter file's answer is Yes and the longer's is not, and the
+other three pairings have their own words. Every cell and sentence stands
+on a verdict or a record below it, and the table decides nothing either.
 
 The owner's reading of round one, 2026-09-17: the generated file is too
 long to add quality, and a short, focused one can. It agrees with
