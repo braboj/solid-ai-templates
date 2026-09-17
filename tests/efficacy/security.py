@@ -23,7 +23,8 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
-from harness import canonical, remove_tree, scoring_area  # noqa: E402
+from harness import (canonical, remove_tree, scoring_area,  # noqa: E402
+                     spellings)
 from score import (absent, create_venv, lock_lines, measured, pip,  # noqa: E402
                    python_in, run, script_in)
 
@@ -668,12 +669,25 @@ def self_test():
     return 0 if passed == len(checks) else 1
 
 
+def existing_file(directory, name):
+    """The JSON file a trial's reading is filed under, in either spelling,
+    or None."""
+    for spelled in spellings(name):
+        path = os.path.join(directory, "%s.json" % spelled)
+        if os.path.isfile(path):
+            return path
+    return None
+
+
 def parse_args(argv):
     parser = argparse.ArgumentParser(
         description="Read scored efficacy trials for security.")
     parser.add_argument("--root", help="the harness's run root")
     parser.add_argument("--trial", action="append", default=[],
                         help="read only this trial, as none-1; repeatable")
+    parser.add_argument("--reread", action="store_true",
+                        help="read a trial already read; by default such a "
+                             "trial is skipped")
     parser.add_argument("--self-test", action="store_true",
                         help="prove every check against planted trees; read "
                              "no trial")
@@ -705,8 +719,24 @@ def main(argv):
               % (", ".join(missing) or "any trial", area))
         return 2
 
-    auditor, reason = install_auditor(os.path.join(area, "security", "tools"))
+    # A trial already read keeps its reading, as a reused trial from an
+    # earlier round does; the checks were declared after that round.
     target = os.path.join(area, "security-scores")
+    done = []
+    if not options.reread:
+        for name in wanted:
+            written = existing_file(target, name)
+            if written:
+                print("%s  already read at %s; --reread to read it again"
+                      % (name, written))
+                done.append(name)
+        wanted = [name for name in wanted if name not in done]
+    if not wanted:
+        lib.print_verdict(True, "0 trial(s) read, %d already read"
+                          % len(done))
+        return 0
+
+    auditor, reason = install_auditor(os.path.join(area, "security", "tools"))
     os.makedirs(target, exist_ok=True)
     for name in wanted:
         print("%s  reading" % name)
@@ -720,7 +750,8 @@ def main(argv):
             for key in ("secret_key", "debug", "sql_strings",
                         "vulnerable_dependencies", "cookie_flags",
                         "security_headers", "error_leakage")))
-    lib.print_verdict(True, "%d trial(s) read" % len(wanted))
+    lib.print_verdict(True, "%d trial(s) read, %d already read"
+                      % (len(wanted), len(done)))
     return 0
 
 

@@ -449,11 +449,14 @@ def load(root):
         trials[canonical(scores["name"])] = {
             "scores": scores, "judge": None, "change": None, "security": None}
 
+    # A completed judging stands over any other record of the same trial,
+    # such as a dry run's or a failed attempt's left beside it.
     for file in sorted(glob.glob(os.path.join(area, "judge", "T*.json"))):
         with io.open(file, encoding="utf-8") as handle:
             judging = json.load(handle)
         name = canonical(judging.get("trial") or "")
-        if name in trials:
+        if name in trials and (trials[name]["judge"] is None
+                               or judging.get("outcome") == "judged"):
             trials[name]["judge"] = judging
 
     # A change task sits beside its own build trial, so one whose build trial
@@ -879,10 +882,12 @@ def write_report(root, trials, table, results, seed, escalation,
                      "at seed %s |" % judgings[0].get("seed"))
     else:
         lines.append("| Judge | not run |")
-    lines.append("| Templates revision | `%s` |"
-                 % any_scores.get("templates_tree", "unknown"))
-    lines.append("| Hidden suite | `%s` |"
-                 % any_scores.get("suite_revision", "unknown"))
+    for label, key in (("Templates revision", "templates_tree"),
+                       ("Hidden suite", "suite_revision")):
+        seen = sorted({str(trial["scores"].get(key) or "unknown")
+                       for trial in trials.values()}) or ["unknown"]
+        lines.append("| %s | %s |" % (label, ", ".join(
+            "`%s`" % value for value in seen)))
     lines.append("| Bootstrap | %d resamples, %d%%, seed %s |"
                  % (RESAMPLES, int(100 * CONFIDENCE), seed))
     for arm in arms:

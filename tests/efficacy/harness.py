@@ -125,6 +125,21 @@ def canonical(name):
     return trial_name(*split_name(name))
 
 
+def round_one_name(name):
+    """Round 1's spelling of a trial name, `B1` for `full-1`, or None where
+    the arm was not in round 1."""
+    arm, block = split_name(name)
+    letters = {word: letter for letter, word in ROUND_ONE.items()}
+    return "%s%d" % (letters[arm], block) if arm in letters else None
+
+
+def spellings(name):
+    """Every name a trial's files may be filed under: its canonical name
+    and, for a round 1 arm, its letter."""
+    return [spelled for spelled in (canonical(name), round_one_name(name))
+            if spelled]
+
+
 def name_of(record):
     """The trial a run record or a score describes, by canonical name."""
     return trial_name(arm_name(record.get("arm")), record.get("trial"))
@@ -561,6 +576,11 @@ def void(root, workspace, frozen, name):
     return moved
 
 
+def project_folder(workspace):
+    """The folder the CLI files a workspace's sessions under."""
+    return re.sub(r"[^A-Za-z0-9]", "-", os.path.abspath(workspace))
+
+
 def transcript_files(home, workspace, since=None):
     """The transcripts the CLI wrote for a session run in `workspace`, left
     out where last written before `since`.
@@ -568,8 +588,8 @@ def transcript_files(home, workspace, since=None):
     The CLI files a session under its working directory with every character
     other than a letter or digit replaced by a hyphen.
     """
-    folder = re.sub(r"[^A-Za-z0-9]", "-", os.path.abspath(workspace))
-    files = sorted(glob.glob(os.path.join(home, ".claude", "projects", folder,
+    files = sorted(glob.glob(os.path.join(home, ".claude", "projects",
+                                          project_folder(workspace),
                                           "*.jsonl")))
 
     # A voided trial re-runs in the same workspace, so its folder also holds

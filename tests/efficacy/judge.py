@@ -442,6 +442,48 @@ def trees(root):
     return found
 
 
+def judged(judging):
+    """Every trial with a completed judging under `judging`, by canonical
+    name, with its blind label."""
+    found = {}
+    for file in sorted(glob.glob(os.path.join(judging, "T*.json"))):
+        with io.open(file, encoding="utf-8") as handle:
+            record = json.load(handle)
+        if record.get("outcome") != "judged":
+            continue
+        try:
+            found[canonical(record.get("trial") or "")] = record.get(
+                "blind_id")
+        except TrialError:
+            continue
+    return found
+
+
+def highest_label(judging):
+    """The highest blind label number in use under `judging`: every judging
+    file's, whatever its outcome, and every one the map names."""
+    numbers = [0]
+    for file in glob.glob(os.path.join(judging, "T*.json")):
+        match = re.match(r"T(\d+)\.json$", os.path.basename(file))
+        if match:
+            numbers.append(int(match.group(1)))
+    path = os.path.join(judging, "map.json")
+    if os.path.isfile(path):
+        with io.open(path, encoding="utf-8") as handle:
+            for label in json.load(handle).get("blind", {}).values():
+                match = re.match(r"T(\d+)$", str(label))
+                if match:
+                    numbers.append(int(match.group(1)))
+    return max(numbers)
+
+
+def blind_labels(order, after):
+    """A blind label per trial in `order`, numbered from `after` + 1, so a
+    root holding an earlier round's judgings never reuses one of theirs."""
+    return {name: "T%d" % (after + index + 1)
+            for index, name in enumerate(order)}
+
+
 def main(argv):
     options = parse_args(argv)
     if options.self_test:
@@ -467,6 +509,20 @@ def main(argv):
         print("no tree for %s" % ", ".join(missing))
         return 2
 
+    # A trial already judged is left as it is, because a second judging of
+    # the same tree would replace a result with a resample of the judge.
+    judging = os.path.join(score.scoring_area(options.root), "judge")
+    done = judged(judging)
+    if not options.rejudge:
+        for name in [name for name in wanted if name in done]:
+            print("%s  already judged as %s; --rejudge to judge it again"
+                  % (name, done[name]))
+        wanted = [name for name in wanted if name not in done]
+    if not wanted:
+        lib.print_verdict(True, "0 judged, 0 failed, %d already judged"
+                          % len(done))
+        return 0
+
     try:
         options.executable = judge_executable()
         version = codex_version(options.executable)
@@ -475,17 +531,16 @@ def main(argv):
         lib.print_verdict(False, "no trial judged")
         return 2
 
-    judging = os.path.join(score.scoring_area(options.root), "judge")
     bundles = os.path.join(judging, "bundles")
     os.makedirs(bundles, exist_ok=True)
 
     # Shuffled with a recorded seed, so the order is reproducible and is not
     # the arm order. The map is written for the report and never passed to the
-    # judge.
+    # judge. Labels continue past any an earlier round left in this area.
     shuffler = random.Random(options.seed)
     order = list(wanted)
     shuffler.shuffle(order)
-    blind = {name: "T%d" % (index + 1) for index, name in enumerate(order)}
+    blind = blind_labels(order, highest_label(judging))
 
     schema_path = os.path.join(judging, "rubric-schema.json")
     with io.open(schema_path, "w", encoding="utf-8") as handle:
@@ -541,11 +596,15 @@ def main(argv):
         results.append(record)
 
     # The unblinding map, written last and kept out of the bundles directory
-    # the judge was pointed at.
-    with io.open(os.path.join(judging, "map.json"), "w",
-                 encoding="utf-8") as handle:
-        json.dump({"seed": options.seed, "blind": blind}, handle, indent=2,
-                  sort_keys=True)
+    # the judge was pointed at. An earlier round's entries stay in it.
+    path = os.path.join(judging, "map.json")
+    mapping = {"seed": options.seed, "blind": {}}
+    if os.path.isfile(path):
+        with io.open(path, encoding="utf-8") as handle:
+            mapping["blind"] = json.load(handle).get("blind", {})
+    mapping["blind"].update(blind)
+    with io.open(path, "w", encoding="utf-8") as handle:
+        json.dump(mapping, handle, indent=2, sort_keys=True)
 
     lib.print_verdict(failures == 0,
                       "%d judged, %d failed" % (len(results) - failures,
@@ -712,13 +771,37 @@ def launch_checks(scratch):
     return checks
 
 
+def label_checks(scratch):
+    """Blind labels continue past an earlier round's, and a judged trial is
+    known by its canonical name."""
+    judging = os.path.join(scratch, "labels", "judge")
+    os.makedirs(judging)
+    plant(judging, {
+        "T3.json": json.dumps({"trial": "B1", "blind_id": "T3",
+                               "outcome": "judged"}),
+        "T10.json": json.dumps({"trial": "C2", "blind_id": "T10",
+                                "outcome": "failed"}),
+        "map.json": json.dumps({"seed": 1, "blind": {"A1": "T12"}}),
+    })
+    return [
+        ("a judged trial is known under its word, a failed one is not",
+         judged(judging) == {"full-1": "T3"}),
+        ("the highest label counts every file and the map",
+         highest_label(judging) == 12),
+        ("new labels continue past it",
+         blind_labels(["short-1", "none-1"], 12)
+         == {"short-1": "T13", "none-1": "T14"}),
+    ]
+
+
 def self_test():
-    """Prove a bundle is blind and the judge launches."""
+    """Prove a bundle is blind, labels continue, and the judge launches."""
     scratch = os.path.join(os.environ.get("TEMP", "."),
                            "efficacy-judge-self-test")
     shutil.rmtree(scratch, ignore_errors=True)
     os.makedirs(scratch)
     checks = bundle_checks(scratch)
+    checks.extend(label_checks(scratch))
     checks.extend(launch_checks(scratch))
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
@@ -740,6 +823,9 @@ def parse_args(argv):
                              "judge nothing")
     parser.add_argument("--trial", action="append", default=[],
                         help="judge only this trial, as none-1; repeatable")
+    parser.add_argument("--rejudge", action="store_true",
+                        help="judge a trial already judged; by default such "
+                             "a trial is skipped")
     parser.add_argument("--model", default=JUDGE_MODEL,
                         help="judge model id, recorded in the report")
     parser.add_argument("--effort", default=JUDGE_EFFORT,
