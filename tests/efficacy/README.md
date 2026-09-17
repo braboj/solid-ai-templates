@@ -206,6 +206,32 @@ py tests/efficacy/harness.py --root <the run root> --arms none,short,hybrid \
     --from short-2 --resume-after-block
 ```
 
+## Reusing an earlier round's trials
+
+```bash
+py tests/efficacy/reuse.py --self-test
+py tests/efficacy/reuse.py --from <round 1's root> --into <the run root> --arms full,hand
+```
+
+Round 2 reuses round 1's `full` and `hand` trials rather than running them
+again. The reuse copies what the report reads for each: its run record,
+frozen tarball and transcripts into the new root, and its score, judging
+and security reading into the new scoring area, each filed under the arm's
+word and marked with where it came from. The judgings keep their blind
+labels and the map carries them. The earlier round's tool lock comes along
+too, so both rounds are measured with one ruler, and a target already
+holding a different lock is refused as another run. The earlier root is
+never touched.
+
+Nothing copied is measured again. `score.py` skips a trial whose score is
+already written, `judge.py` one already judged, and `security.py` one
+already read, each saying so and each with a flag (`--rescore`,
+`--rejudge`, `--reread`) to do it anyway; the judge numbers new blind
+labels past any the area holds. `score.py` also refuses a root whose
+existing scores were graded at another hidden-suite revision than the one
+it cloned: a corrected grader is never run on the same trials, so a run at
+another revision is another root.
+
 ## The change task
 
 ```bash

@@ -35,7 +35,7 @@ import lib  # noqa: E402
 import probes  # noqa: E402
 from harness import (SCORABLE, TrialError, arm_name, canonical,  # noqa: E402
                      frozen_top, name_of, remove_tree, scorable_trials,
-                     scoring_area)
+                     scoring_area, spellings)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REQUIREMENTS = os.path.join(HERE, "scoring-requirements.txt")
@@ -1173,6 +1173,19 @@ def run_record_checks(scratch):
         checks.append(("a trial two records offer refuses", False))
     except TrialError:
         checks.append(("a trial two records offer refuses", True))
+
+    # A score round 1 wrote under its letter is the trial's score under its
+    # word, and a revision it was graded at is read back.
+    written = os.path.join(scratch, "scores")
+    os.makedirs(written)
+    with io.open(os.path.join(written, "A1.json"), "w",
+                 encoding="utf-8") as handle:
+        json.dump({"name": "A1", "suite_revision": "earlier"}, handle)
+    checks.append(("an existing score is found under either spelling",
+                   existing_score(written, "none-1")
+                   == os.path.join(written, "A1.json")
+                   and existing_score(written, "short-1") is None
+                   and graded_revisions(written) == {"earlier"}))
     return checks
 
 
@@ -1446,10 +1459,35 @@ def self_test():
     return 0 if passed == len(checks) else 1
 
 
+def existing_score(target, name):
+    """The score file already written for a trial, in either spelling, or
+    None."""
+    for spelled in spellings(name):
+        path = os.path.join(target, "%s.json" % spelled)
+        if os.path.isfile(path):
+            return path
+    return None
+
+
+def graded_revisions(target):
+    """Every hidden-suite revision the scores already in `target` were
+    graded at."""
+    revisions = set()
+    for file in glob.glob(os.path.join(target, "*.json")):
+        with io.open(file, encoding="utf-8") as handle:
+            revision = json.load(handle).get("suite_revision")
+        if revision:
+            revisions.add(revision)
+    return revisions
+
+
 def parse_args(argv):
     parser = argparse.ArgumentParser(
         description="Score frozen efficacy-benchmark trials.")
     parser.add_argument("--root", help="the harness's run root")
+    parser.add_argument("--rescore", action="store_true",
+                        help="score a trial whose score is already written; "
+                             "by default such a trial is skipped")
     parser.add_argument("--run",
                         help="score only this run record; default is every "
                              "run record in the root")
@@ -1517,12 +1555,30 @@ def main(argv):
         print("refused: %s" % error)
         lib.print_verdict(False, "0 scored, 1 refused")
         return 1
-    scored, refused = [], 0
+
+    # A root holding two rounds carries the earlier round's scores, graded
+    # at its suite revision. A grader corrected since is never run on the
+    # same trials, and the two rounds are never graded by two suites.
+    earlier = graded_revisions(target) - {suite["revision"]}
+    if earlier:
+        print("refused: %s holds scores graded at %s, and the hidden suite "
+              "is at %s; a run at another revision is another root"
+              % (target, ", ".join(sorted(earlier)), suite["revision"]))
+        lib.print_verdict(False, "0 scored, 1 refused")
+        return 1
+
+    scored, skipped, refused = [], [], 0
     for name in sorted(wanted - set(offered)):
         print("%s  refused: no run record offers it for scoring" % name)
         refused += 1
     for name, record in sorted(offered.items()):
         if wanted and name not in wanted:
+            continue
+        written = existing_score(target, name)
+        if written and not options.rescore:
+            print("%s  already scored at %s; --rescore to score it again"
+                  % (name, written))
+            skipped.append(name)
             continue
         print("%s  scoring the %s task" % (name, options.task))
         try:
@@ -1541,9 +1597,11 @@ def main(argv):
         print("  %s" % summary(scores))
         scored.append(name)
 
-    lib.print_verdict(refused == 0 and bool(scored),
-                      "%d scored, %d refused" % (len(scored), refused))
-    return 0 if refused == 0 and scored else 1
+    done = bool(scored or skipped)
+    lib.print_verdict(refused == 0 and done,
+                      "%d scored, %d already scored, %d refused"
+                      % (len(scored), len(skipped), refused))
+    return 0 if refused == 0 and done else 1
 
 
 if __name__ == "__main__":
