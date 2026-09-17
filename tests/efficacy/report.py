@@ -1216,7 +1216,8 @@ def reading(answers, lengths):
         return NOT_MEASURED
     longer, shorter = sorted(answers, key=lengths.get, reverse=True)
     if answers[shorter] == "Yes" and answers[longer] != "Yes":
-        return "length is not quality"
+        return ("length is not quality — the long file spent the agent's "
+                "attention on conventions, the short one on the code")
     if answers[shorter] == "Yes":
         return "a context file adds quality, long or short"
     if answers[longer] == "Yes":
@@ -1224,14 +1225,26 @@ def reading(answers, lengths):
     return "neither file added quality"
 
 
-# The metrics a why-line reads as more than the task asked for, in the order
-# it names them, each as a signed share of the bare arm's mean.
-BULK = (("files", "tracked_files"), ("source lines", "source_lines"),
-        ("public names beyond the spec", "surface_extra"),
-        ("turns", "turns"), ("output tokens", "output_tokens"),
-        ("cost", "cost_usd"), ("follow-up change files", "churn_files"),
-        ("follow-up change lines", "churn_lines"),
-        ("follow-up change cost", "change_cost_usd"))
+# What a why-line says a file built beyond the task, the work that took,
+# the follow-up change's churn, and what the judge read — each phrase said
+# only where its metric was read better or worse.
+STRUCTURE = (("more files", "tracked_files"), ("more code", "source_lines"),
+             ("more public names beyond the spec", "surface_extra"))
+EFFORT = (("turns", "turns"), ("tokens", "output_tokens"),
+          ("time", "wall_seconds"), ("cost", "cost_usd"))
+CHURN = ("churn_files", "churn_lines", "change_cost_usd")
+READS = (("judge_readability", "more readable"),
+         ("judge_design", "better designed"),
+         ("judge_maintainability", "more maintainable"),
+         ("judge_tests", "better tested"))
+
+# A context file of at most this many lines is one the why-line calls a few
+# rules the agent could hold.
+SHORT_FILE = 60
+
+
+def read_as(results, name, key, verdict):
+    return results[key][name]["verdict"] == verdict
 
 
 def counted(n):
@@ -1253,36 +1266,71 @@ def boot_failures(trials, arm):
     return errors, count
 
 
-def why_line(trials, table, results, arm, name, answered):
-    """Why a file arm scored as it did, each clause read off a row below:
-    runs that could not boot, what it added beyond the task, patterns
-    missed, and whether the judge or only the tools counted its wins."""
-    clauses = []
+def why_line(trials, results, arm, name, answered, length):
+    """Why a file arm scored as it did, in words. Each sentence stands on a
+    verdict or a record below: a clean install that could not boot, structure
+    built beyond the task and the work it took, what the judge read, wins
+    only a tool counts, and patterns missed. The numbers stay in the table.
+    """
+    sentences = []
     errors, count = boot_failures(trials, arm)
     if errors:
-        clauses.append("%s run of %s could not boot (`%s`)" % (
-            counted(len(errors)), counted(count), errors[0]))
-    bulk = ["%s %s" % (word, share_cell(table, results, key, name, None))
-            for word, key in BULK
-            if results[key][name]["verdict"] == "worse"]
-    if bulk:
-        clauses.append("more than the task asked for: %s" % ", ".join(bulk))
-    missed = results["patterns_missed"][name]
-    if missed["verdict"] == "worse":
-        clauses.append("patterns missed %s" % signed(missed["mean"]))
-    labels = {key: label for key, label, _, _ in METRICS}
-    wins = [key for key in labels if results[key][name]["verdict"] == "better"]
+        # A missing module after an install that passed is a dependency the
+        # project declared wrongly, not one the environment lacked.
+        cause = ("declared its dependencies so that a clean install left "
+                 "the app unable to boot"
+                 if errors[0].startswith("ModuleNotFoundError")
+                 else "left the app unable to boot (`%s`)" % errors[0])
+        sentences.append("%s run of %s %s." % (
+            counted(len(errors)).capitalize(), counted(count), cause))
+
+    built = [word for word, key in STRUCTURE
+             if read_as(results, name, key, "worse")]
+    effort = [word for word, key in EFFORT
+              if read_as(results, name, key, "worse")]
+    churned = any(read_as(results, name, key, "worse") for key in CHURN)
+    if built:
+        text = "It built more than the task asked for: %s" % spoken(built)
+        if effort:
+            text += ", and took more %s to do it" % spoken(effort)
+        if churned:
+            text += ("; the follow-up change had to move through that "
+                     "structure too")
+        sentences.append(text + ".")
+
+    judge = [words for key, words in READS
+             if read_as(results, name, key, "better")]
+    computed = any(not read_as(results, name, key, "not computed")
+                   for key in PRIMARY)
+    wins = [key for key, _, _, _ in METRICS
+            if read_as(results, name, key, "better")]
     judged = [key for key in wins if key.startswith(("judge_", "patterns_"))]
-    if wins and judged:
-        clauses.append("its %d win%s include the judge's %s" % (
-            len(wins), "s" if len(wins) > 1 else "",
-            spoken([labels[key].split(",")[0].lower() for key in judged])))
-    elif wins:
-        clauses.append("its %d win%s all tool counts, none from the judge"
-                       % (len(wins), "s are" if len(wins) > 1 else " is"))
-    text = "; ".join(clauses) if clauses else "nothing below separates it"
-    return "**%s, %s.** %s%s." % (FILES[arm], answered, text[0].upper(),
-                                  text[1:])
+    tail = []
+    if wins and not judged:
+        tail.append("every win is something a tool counts")
+    if read_as(results, name, "patterns_missed", "worse"):
+        tail.append("it missed more of the patterns the domain called for")
+    if judge:
+        lead = "the judge read its code as %s" % spoken(judge)
+        if answered == "Yes" and length is not None and length <= SHORT_FILE:
+            lead = "A few rules the agent could hold: " + lead
+        if not built:
+            lead += ", and it wrote no more code than without a file"
+            if effort:
+                lead += " — for more %s" % spoken(effort)
+    elif computed:
+        lead = ("the judge saw none of it as better design, readability or "
+                "maintainability")
+    elif not built and effort:
+        lead = "it took more %s than without a file" % spoken(effort)
+    else:
+        lead = ""
+    closing = "; ".join(part for part in (lead, spoken(tail) if tail else "")
+                        if part)
+    if closing:
+        sentences.append(closing[0].upper() + closing[1:] + ".")
+    text = " ".join(sentences) if sentences else "Nothing below separates it."
+    return "**%s, %s.** %s" % (FILES[arm], answered, text)
 
 
 def executive_section(trials, table, results):
@@ -1328,8 +1376,8 @@ def executive_section(trials, table, results):
         lines.append("| %s | %s |" % (label, " | ".join(cells)))
     lines.append("")
     for arm, name in zip(arms, names):
-        lines.append(why_line(trials, table, results, arm, name,
-                              answers[arm]))
+        lines.append(why_line(trials, results, arm, name, answers[arm],
+                              lengths[arm]))
         lines.append("")
     k = max((index_of(name) for name in trials), default=0)
     lines.append("Together: %s. K = %d, one project: a signal, not proof."
@@ -2007,7 +2055,9 @@ def executive_checks(seed):
     lengths = {"B": 400, "C": 40}
     for label, answers, expected in (
             ("a short Yes beside a long No reads length is not quality",
-             {"B": "No", "C": "Yes"}, "length is not quality"),
+             {"B": "No", "C": "Yes"},
+             "length is not quality — the long file spent the agent's "
+             "attention on conventions, the short one on the code"),
             ("a long Yes beside a short Worse reads the long file's gain",
              {"B": "Yes", "C": "Worse"},
              "the long file added quality, the short one did not"),
@@ -2049,9 +2099,9 @@ def executive_checks(seed):
     checks.append(("the size cell names the separated measure as a share",
                    got == ("files +40 %", "no change shown"), got))
 
-    # A why-line names the run that could not boot with its recorded error,
-    # each bulk metric read worse as a share, a pattern missed, and which of
-    # its wins the judge gave.
+    # A why-line says, in words, what stands on a record or verdict below:
+    # the run that could not boot, the structure built beyond the task and
+    # the work it took, what the judge read, and the patterns missed.
     trials = {"B1": {"scores": {"boot": {"value": {
                   "factory": False, "factory_error": "planted error"}}}},
               "B2": {"scores": {"boot": {"value": {"factory": True}}}},
@@ -2061,22 +2111,48 @@ def executive_checks(seed):
                    got == (["planted error"], 2), got))
     planted = {key: {"B-A": {"mean": 0.0, "verdict": shown}}
                for key, _, _, _ in METRICS}
-    planted["tracked_files"]["B-A"] = {"mean": 4.0, "verdict": "worse"}
-    planted["patterns_missed"]["B-A"] = {"mean": 1.0, "verdict": "worse"}
-    planted["judge_readability"]["B-A"] = {"mean": 1.0, "verdict": "better"}
-    planted["adherence"]["B-A"] = {"mean": 0.1, "verdict": "better"}
-    bare = {"tracked_files": {"values": {"A": {1: 10.0}}}}
-    got = why_line(trials, bare, planted, "B", "B-A", "No")
-    checks.append(("the why-line reads its clauses off the rows",
-                   got == "**Templates' file, No.** One run of two could "
-                   "not boot (`planted error`); more than the task asked "
-                   "for: files +40 %; patterns missed +1; its 2 wins "
-                   "include the judge's readability.", got))
+    planted["tracked_files"]["B-A"]["verdict"] = "worse"
+    planted["turns"]["B-A"]["verdict"] = "worse"
+    planted["churn_lines"]["B-A"]["verdict"] = "worse"
+    planted["patterns_missed"]["B-A"]["verdict"] = "worse"
+    planted["judge_readability"]["B-A"]["verdict"] = "better"
+    planted["adherence"]["B-A"]["verdict"] = "better"
+    got = why_line(trials, planted, "B", "B-A", "No", 400)
+    checks.append(("the why-line says what the records and verdicts hold",
+                   got == "**Templates' file, No.** One run of two left the "
+                   "app unable to boot (`planted error`). It built more than "
+                   "the task asked for: more files, and took more turns to "
+                   "do it; the follow-up change had to move through that "
+                   "structure too. The judge read its code as more "
+                   "readable; it missed more of the patterns the domain "
+                   "called for.", got))
+    trials["B1"]["scores"]["boot"]["value"]["factory_error"] = \
+        "ModuleNotFoundError(\"No module named 'planted'\")"
     planted["judge_readability"]["B-A"]["verdict"] = shown
-    got = why_line({}, bare, planted, "B", "B-A", "No")
-    checks.append(("a win the judge did not give is a tool count",
-                   got.endswith("; its 1 win is all tool counts, none from "
-                                "the judge."), got))
+    got = why_line(trials, planted, "B", "B-A", "No", 400)
+    checks.append(("a module missing after a clean install is a declared "
+                   "dependency, and a win the judge did not give is a tool "
+                   "count",
+                   got.startswith("**Templates' file, No.** One run of two "
+                                  "declared its dependencies so that a clean "
+                                  "install left the app unable to boot.")
+                   and got.endswith("The judge saw none of it as better "
+                                    "design, readability or maintainability; "
+                                    "every win is something a tool counts "
+                                    "and it missed more of the patterns the "
+                                    "domain called for."), got))
+    planted = {key: {"C-A": {"mean": 0.0, "verdict": shown}}
+               for key, _, _, _ in METRICS}
+    for key in ("judge_readability", "judge_tests", "coverage"):
+        planted[key]["C-A"]["verdict"] = "better"
+    for key in ("turns", "cost_usd", "churn_lines"):
+        planted[key]["C-A"]["verdict"] = "worse"
+    got = why_line({}, planted, "C", "C-A", "Yes", 39)
+    checks.append(("a short Yes file is a few rules the agent could hold",
+                   got == "**Hand-written file, Yes.** A few rules the agent "
+                   "could hold: the judge read its code as more readable "
+                   "and better tested, and it wrote no more code than "
+                   "without a file — for more turns and cost.", got))
 
     # The planted change run has no primary, suite, size or cost values, so
     # every cell reads not measured and the columns carry the arm files'
@@ -2097,8 +2173,8 @@ def executive_checks(seed):
          prose_of(text, "## Executive summary")),
         ("each file's why-line sits between the table and the reading",
          "| Reads as |" in text and 0 < text.find("| Reads as |")
-         < text.find("**Templates' file, Not measured.** Its 2 wins are all "
-                     "tool counts, none from the judge.")
+         < text.find("**Templates' file, Not measured.** Every win is "
+                     "something a tool counts.")
          < text.find("**Hand-written file, Not measured.**")
          < text.find("Together:"), prose_of(text, "## Executive summary")),
     ])
