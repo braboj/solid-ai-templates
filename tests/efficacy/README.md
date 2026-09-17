@@ -9,8 +9,8 @@ run.
 |---|---|
 | `SPEC.md` | the application every arm is asked to build; the harness copies it into each workspace under this name |
 | `harness.py` | sets up a workspace, runs one trial under an isolated configuration, freezes the result |
-| `arms/C-reference/CLAUDE.md` | the hand-written reference context file, the arm that asks whether the effect is the templates or merely having a file |
-| `arms/B-candidate/CLAUDE.md` | the generated context file, produced once by `generate_arm_b.py` and never hand-edited |
+| `arms/C-reference/CLAUDE.md` | arm `hand`: the hand-written reference context file, the arm that asks whether the effect is the templates or merely having a file |
+| `arms/B-candidate/CLAUDE.md` | arm `full`: the generated context file, produced once by `generate_arm_b.py` and never hand-edited |
 | `generate_arm_b.py` | produces that file: resolves the chain at the recorded release, builds the prompt from the interview and the pinned brief, scans for a specification leak |
 | `score.py` | takes one frozen trial to a JSON score: clean install, boot, source discovery, the hidden suite, the static battery, the adherence checklist, scope and cost |
 | `probes.py` | the measurements that must run inside the trial's own interpreter — the structural design probes, and the web-quality probes |
@@ -29,7 +29,7 @@ piece shows up as a refusal or a metric recorded missing, not as a crash:
 
 | Needs | For | Without it |
 |---|---|---|
-| `claude` on `PATH`, logged in | every trial and arm B's generation | the preflight refuses the run |
+| `claude` on `PATH`, logged in | every trial and arm `full`'s generation | the preflight refuses the run |
 | `gh`, logged in with access to `braboj/tariff-hidden-suite` | scoring clones the hidden suite | scoring refuses |
 | a Java runtime on `PATH` | `html5validator`, the HTML validity metric | that metric is recorded missing |
 | a Playwright browser | the suite's browser flows and the accessibility probe | scoring installs one for the Playwright it resolves, and refuses the trial where it cannot |
@@ -38,7 +38,24 @@ piece shows up as a refusal or a metric recorded missing, not as a crash:
 `score.py --no-web` skips both browser-side probes and installs no browser.
 The suite then skips its browser flows, and the trial is flagged as partial.
 
-## Generating arm B
+## The arms, and how a trial is named
+
+| Arm | Starts with |
+|---|---|
+| `none` | `SPEC.md` alone: the bare agent |
+| `full` | the templates' file, generated through the interview, inline |
+| `short` | the templates' file, generated with a 40-line budget |
+| `hybrid` | the templates' file in the hybrid model, the templates vendored |
+| `hand` | the hand-written file |
+
+A trial is `<arm>-<block>`: `short-2` is arm `short`'s trial in block 2,
+paired with `none-2`. Every workspace, tarball, score, judging and `--from`
+or `--trial` argument uses that name. Round 1 named its arms by letter and
+its trials `A1`, `B2`, `C3`; its run root and scoring area keep those
+spellings, and every reader turns them into `none`, `full` and `hand`, so
+the round is never rewritten on disk.
+
+## Generating arm `full`
 
 ```bash
 py tests/efficacy/generate_arm_b.py --self-test
@@ -61,7 +78,7 @@ run builds and scans the prompt without calling a model, which is the cheap
 way to check the wiring after any change to the brief or the roots.
 
 Two scans run, and they ask different questions. The prompt scan is broad,
-because arm B's generation is never handed `SPEC.md` and a hit means the
+because arm `full`'s generation is never handed `SPEC.md` and a hit means the
 plumbing is wrong. The output scan is narrow, and the prompt scan earns it:
 once the prompt is clean the model demonstrably never read the
 specification, so only data nobody could derive, a seed sku or a rule id or
@@ -71,22 +88,25 @@ a figure from the worked example, is evidence of a leak.
 
 ```bash
 py tests/efficacy/harness.py --root <a directory outside this repository> \
-    --k 3 --model <exact id> --dry-run
+    --arms none,short,hybrid --k 3 --model <exact id> --dry-run
 ```
 
 A dry run prepares every workspace and records the command without calling
-a model. Drop `--dry-run` to run the trials. Trials are interleaved — A1,
-B1, C1, A2 and so on — so a model-side change part-way through lands
-across the arms rather than on one of them.
+a model. Drop `--dry-run` to run the trials. `--arms` is required, because
+two of the arms are reused from an earlier round and never re-run. Trials
+are interleaved — none-1, short-1, hybrid-1, none-2 and so on — so a
+model-side change part-way through lands across the arms rather than on
+one of them.
 
 The root must lie outside this repository, and the harness refuses one
 that does not: an arm working inside the templates repository can read the
-templates that arm A is defined not to have. It also refuses a run that a
-context file above the workspace would reach, and refuses to reuse a
-workspace.
+templates that arm `none` is defined not to have. It also refuses a run
+that a context file above the workspace would reach, and refuses to reuse
+a workspace.
 
-Arm B refuses until its context file exists. That file is generated once,
-through the interview at the recorded release, and is never hand-written.
+A generated arm refuses until its context file exists. That file is
+generated once, through the interview at the recorded release, and is
+never hand-written.
 
 One preflight runs before the first trial: a trivial prompt through the
 isolated home. The CLI answers an unauthenticated run with a result object
@@ -117,7 +137,7 @@ caught:
   workspace is frozen, and the record lists them.
 
 The shell keeps its network, because every trial installs packages; only
-the two web tools are disallowed. Arm B's file names this repository in its
+the two web tools are disallowed. Arm `full`'s file names this repository in its
 footer, and a trial's workspace sits in the run root beside earlier trials,
 so each transcript is scanned for a tool call naming this repository, the
 hidden suite, the scoring area, the run root, or any entry of the root other
@@ -160,7 +180,8 @@ keeps the record of everything it finished. `--from` starts a new run at a
 given trial in the interleaved order:
 
 ```bash
-py tests/efficacy/harness.py --root <the run root> --from B2 --resume-after-block
+py tests/efficacy/harness.py --root <the run root> --arms none,short,hybrid \
+    --from short-2 --resume-after-block
 ```
 
 ## The change task
@@ -254,7 +275,7 @@ The report also computes the design's one escalation to K = 5, so nobody
 decides it by eye. It is owed where a primary dimension's interval contains
 zero while its mean paired difference exceeds 0.5 points, in either direction,
 on any contrast. At K = 3 the report names the rows that owe it and the
-`--k 5 --from A4` run that settles it. At K = 5 it judges the first three
+`--k 5 --from none-4` run that settles it. At K = 5 it judges the first three
 blocks alone, prints their verdict vector beside the K = 5 one, and flags an
 escalation no row owed. The harness refuses `--k` above 5, and the report
 refuses a run past it. The self test plants a row on each side of the rule.

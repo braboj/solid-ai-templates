@@ -59,13 +59,63 @@ TIMEOUT_S = 7200
 K_PRIMARY = 3
 K_CEILING = 5
 
-# The context file each arm starts with, relative to `arms/`. Arm A carries
-# none: it is the bare agent.
+# The arms, each a word, and the context file each starts with, relative to
+# `arms/`. Arm `none` carries no file: it is the bare agent. The two files
+# round 1 ran keep the directories its generation record names.
 ARMS = {
-    "A": {"label": "control", "context": None},
-    "B": {"label": "candidate", "context": "B-candidate/CLAUDE.md"},
-    "C": {"label": "reference", "context": "C-reference/CLAUDE.md"},
+    "none": {"label": "no context file", "context": None},
+    "full": {"label": "the templates' file, inline",
+             "context": "B-candidate/CLAUDE.md"},
+    "short": {"label": "the templates' file, 40 lines",
+              "context": "short/CLAUDE.md"},
+    "hybrid": {"label": "the templates' file, hybrid",
+               "context": "hybrid/CLAUDE.md"},
+    "hand": {"label": "the hand-written file",
+             "context": "C-reference/CLAUDE.md"},
 }
+
+# Round 1 named its arms by letter and its trials `A1`, `B2`, `C3`. Its run
+# records, tarballs, scores and judgings keep those spellings, and every
+# reader turns them into the words, so the round is never rewritten on disk.
+ROUND_ONE = {"A": "none", "B": "full", "C": "hand"}
+ROUND_ONE_NAME = re.compile(r"^([A-Z])(\d+)$")
+
+
+def arm_name(raw):
+    """An arm as its word, whether a record names it by word or by round 1's
+    letter."""
+    return ROUND_ONE.get(raw, raw)
+
+
+def trial_name(arm, block):
+    """A trial's name: the arm's word, a hyphen, the block it runs in."""
+    return "%s-%d" % (arm, int(block))
+
+
+def split_name(name):
+    """A trial name as (arm, block), round 1's letters read as their words.
+
+    The block is the last hyphenated part, so an arm's word never carries a
+    hyphen of its own.
+    """
+    match = ROUND_ONE_NAME.match(name)
+    if match and match.group(1) in ROUND_ONE:
+        return ROUND_ONE[match.group(1)], int(match.group(2))
+    arm, _, block = name.rpartition("-")
+    if not arm or not block.isdigit():
+        raise TrialError("%r is not a trial name; one reads as `full-1`, the "
+                         "arm's word and its block" % name)
+    return arm, int(block)
+
+
+def canonical(name):
+    """A trial name in the form the arms are named today, `none-1` for `A1`."""
+    return trial_name(*split_name(name))
+
+
+def name_of(record):
+    """The trial a run record or a score describes, by canonical name."""
+    return trial_name(arm_name(record.get("arm")), record.get("trial"))
 
 # Web access is the confound the design names: an arm that reads the
 # templates online is not the arm being measured. The two web tools are
@@ -190,7 +240,7 @@ def prepare_workspace(arm, trial, root):
     if arm not in ARMS:
         raise TrialError("unknown arm %r; the arms are %s"
                          % (arm, ", ".join(sorted(ARMS))))
-    workspace = os.path.join(root, "%s%d" % (arm, trial))
+    workspace = os.path.join(root, trial_name(arm, trial))
     if os.path.exists(workspace):
         raise TrialError("workspace %s already exists; a trial never reuses "
                          "one" % workspace)
@@ -202,8 +252,8 @@ def prepare_workspace(arm, trial, root):
         source = os.path.join(ARMS_DIR, context)
         if not os.path.isfile(source):
             raise TrialError(
-                "arm %s needs %s, which does not exist. Arm B's file is "
-                "generated through the interview at the recorded release, "
+                "arm %s needs %s, which does not exist. A generated file is "
+                "produced through the interview at the recorded release, "
                 "never hand-written." % (arm, source))
         shutil.copyfile(source, os.path.join(workspace, "CLAUDE.md"))
 
@@ -399,6 +449,21 @@ def freeze(workspace, record_dir, name):
     with tarfile.open(tarball, "w") as archive:
         archive.add(workspace, arcname=name)
     return {"head": head, "uncommitted": status.splitlines(), "tarball": tarball}
+
+
+def frozen_top(tarball, unpacked):
+    """The one top-level directory a frozen tarball unpacked to.
+
+    A workspace is frozen under the trial's name as spelled on the day, so a
+    tarball round 1 froze as `B1` unpacks to `B1` whatever the trial is
+    called now, and the reader takes the directory it finds.
+    """
+    entries = os.listdir(unpacked)
+    if len(entries) != 1 or not os.path.isdir(os.path.join(unpacked,
+                                                           entries[0])):
+        raise TrialError("%s did not unpack to one directory: %s"
+                         % (tarball, ", ".join(entries) or "nothing"))
+    return entries[0]
 
 
 # The one error ending the protocol sets itself. A trial the budget stopped
@@ -740,24 +805,26 @@ def prepare_change_workspace(arm, trial, root, build):
 
     Returns the workspace and the commit its starting state is recorded in.
     """
-    name = "change-%s%d" % (arm, trial)
+    name = "change-%s" % trial_name(arm, trial)
     workspace = os.path.join(root, name)
     if os.path.exists(workspace):
         raise TrialError("workspace %s already exists; a trial never reuses "
                          "one" % workspace)
     tarball = (build.get("frozen") or {}).get("tarball")
     if not tarball or not os.path.isfile(tarball):
-        raise TrialError("build trial %s%d left no frozen tarball at %s"
-                         % (arm, trial, tarball))
+        raise TrialError("build trial %s left no frozen tarball at %s"
+                         % (trial_name(arm, trial), tarball))
 
     # Unpacked beside the workspace and renamed, because the tarball's top
-    # directory carries the build trial's name, not the change task's.
+    # directory carries the build trial's name as it was spelled when frozen,
+    # not the change task's.
     unpacking = os.path.join(root, ".unpacking-%s" % name)
     shutil.rmtree(unpacking, ignore_errors=True)
     try:
         with tarfile.open(tarball) as archive:
             archive.extractall(unpacking, filter="data")
-        shutil.move(os.path.join(unpacking, "%s%d" % (arm, trial)), workspace)
+        shutil.move(os.path.join(unpacking, frozen_top(tarball, unpacking)),
+                    workspace)
     except (OSError, tarfile.TarError) as error:
         raise TrialError("could not unpack %s: %s" % (tarball, error))
     finally:
@@ -778,7 +845,7 @@ def run_trial(arm, trial, root, home, options):
     workspace = prepare_workspace(arm, trial, root)
     record = {"arm": arm, "label": ARMS[arm]["label"], "trial": trial,
               "task": "build"}
-    return run_agent(workspace, "%s%d" % (arm, trial), PROMPT, record, root,
+    return run_agent(workspace, trial_name(arm, trial), PROMPT, record, root,
                      home, options)
 
 
@@ -788,7 +855,7 @@ def run_change_trial(arm, trial, root, home, options, build):
     record = {"arm": arm, "label": ARMS[arm]["label"], "trial": trial,
               "task": "change", "base": base,
               "build_frozen": build.get("frozen")}
-    return run_agent(workspace, "change-%s%d" % (arm, trial),
+    return run_agent(workspace, "change-%s" % trial_name(arm, trial),
                      read_change_prompt(), record, root, home, options)
 
 
@@ -813,7 +880,7 @@ def scorable_trials(root, run=None, task="build"):
         with io.open(file, encoding="utf-8") as handle:
             records = json.load(handle).get("trials", [])
         for record in records:
-            name = "%s%s" % (record.get("arm"), record.get("trial"))
+            name = name_of(record)
 
             # A record written before the change task existed is a build one.
             if record.get("task", "build") != task:
@@ -902,7 +969,7 @@ def run_agent(workspace, name, prompt, record, root, home, options):
 
 
 def order(arms, k):
-    """Interleave the trials: A1, B1, C1, A2, ...
+    """Interleave the trials by block: none-1, short-1, hybrid-1, none-2, ...
 
     A model-side change part-way through a run then lands across the arms
     rather than on one of them, which is the confound the design names.
@@ -919,7 +986,7 @@ def pending_trials(arms, k, start=None):
     trials = order(arms, k)
     if start is None:
         return trials
-    names = ["%s%d" % pair for pair in trials]
+    names = [trial_name(*pair) for pair in trials]
     if start not in names:
         raise TrialError("--from %s is not in this run's order: %s"
                          % (start, ", ".join(names)))
@@ -958,7 +1025,7 @@ def run_in_place(arm, trial, runner, wait, records, write):
 
     Returns False when the run has to stop.
     """
-    name = "%s%d" % (arm, trial)
+    name = trial_name(arm, trial)
     lost = None
     while True:
         print("%s  %s%s" % (name, ARMS[arm]["label"],
@@ -1087,12 +1154,12 @@ def outcome_checks():
     scratch = os.path.join(os.environ.get("TEMP", "."),
                            "efficacy-void-self-test")
     shutil.rmtree(scratch, ignore_errors=True)
-    workspace = os.path.join(scratch, "A1")
+    workspace = os.path.join(scratch, "none-1")
     os.makedirs(workspace)
     with io.open(os.path.join(workspace, "partial.py"), "w",
                  encoding="utf-8") as handle:
         handle.write("# partial work\n")
-    tarball = os.path.join(scratch, "A1.tar")
+    tarball = os.path.join(scratch, "none-1.tar")
     with io.open(tarball, "wb") as handle:
         handle.write(b"frozen")
 
@@ -1102,7 +1169,7 @@ def outcome_checks():
                    os.path.isfile(os.path.join(workspace, "partial.py"))
                    and os.path.isfile(tarball)))
     try:
-        moved = void(scratch, workspace, {"tarball": tarball}, "A1")
+        moved = void(scratch, workspace, {"tarball": tarball}, "none-1")
     except TrialError:
         moved = None
     checks.append(("a voided workspace leaves its slot", moved is not None
@@ -1132,7 +1199,7 @@ def replay(outcomes, answers):
 
     saved, sys.stdout = sys.stdout, io.StringIO()
     try:
-        carried_on = run_in_place("A", 1, runner, wait, records,
+        carried_on = run_in_place("none", 1, runner, wait, records,
                                   lambda: writes.append(len(records)))
     finally:
         sys.stdout = saved
@@ -1144,27 +1211,30 @@ def replay(outcomes, answers):
 def resume_checks():
     """A blocked trial re-runs once in its place; the run stops when it must."""
     checks = []
-    names = ["%s%d" % pair for pair in pending_trials("ABC", 3, "B2")]
-    checks.append(("--from B2 starts there and keeps the order",
-                   names == ["B2", "C2", "A3", "B3", "C3"]))
+    arms = ["none", "short", "hybrid"]
+    names = [trial_name(*pair) for pair in pending_trials(arms, 3, "short-2")]
+    checks.append(("--from short-2 starts there and keeps the order",
+                   names == ["short-2", "hybrid-2", "none-3", "short-3",
+                             "hybrid-3"]))
     try:
-        pending_trials("ABC", 3, "D1")
+        pending_trials(arms, 3, "other-1")
         checks.append(("--from an unknown trial refuses", False))
     except TrialError:
         checks.append(("--from an unknown trial refuses", True))
     try:
-        pending_trials("ABC", K_CEILING + 1)
+        pending_trials(arms, K_CEILING + 1)
         checks.append(("a K past the escalation's ceiling refuses", False))
     except TrialError:
         checks.append(("a K past the escalation's ceiling refuses", True))
-    first_escalated = "A%d" % (K_PRIMARY + 1)
-    names = ["%s%d" % pair
-             for pair in pending_trials("ABC", K_CEILING, first_escalated)]
-    checks.append(("the escalation runs its blocks from A4",
-                   names == ["A4", "B4", "C4", "A5", "B5", "C5"]))
+    first_escalated = trial_name("none", K_PRIMARY + 1)
+    names = [trial_name(*pair)
+             for pair in pending_trials(arms, K_CEILING, first_escalated)]
+    checks.append(("the escalation runs its blocks from none-4",
+                   names == ["none-4", "short-4", "hybrid-4", "none-5",
+                             "short-5", "hybrid-5"]))
 
     blocked = {"outcome": "blocked", "reason": "planted",
-               "void": {"dir": os.path.join("void", "A1-planted")}}
+               "void": {"dir": os.path.join("void", "none-1-planted")}}
     completed = {"outcome": "completed"}
 
     rerun = replay([blocked, completed], [True])
@@ -1254,6 +1324,9 @@ def change_checks():
     with io.open(os.path.join(build, "draft.py"), "w",
                  encoding="utf-8") as handle:
         handle.write("left_uncommitted = True\n")
+
+    # Frozen under round 1's spelling of the trial, so the change task of
+    # `none-1` has to find a top directory named `A1`.
     frozen = freeze(build, scratch, "A1")
 
     # The plant landed: the build trial ended with work it never committed,
@@ -1261,19 +1334,20 @@ def change_checks():
     checks.append(("the build trial left uncommitted work",
                    frozen["uncommitted"] == ["?? draft.py"]))
     try:
-        workspace, base = prepare_change_workspace("A", 1, scratch,
+        workspace, base = prepare_change_workspace("none", 1, scratch,
                                                    {"frozen": frozen})
     except TrialError:
         workspace, base = None, None
-    checks.append(("the change workspace unpacks under its own name",
-                   workspace == os.path.join(scratch, "change-A1")
+    checks.append(("the change workspace unpacks under its own name, from "
+                   "a tarball frozen under round 1's",
+                   workspace == os.path.join(scratch, "change-none-1")
                    and os.path.isfile(os.path.join(workspace, "draft.py"))))
     checks.append(("its starting state is committed", workspace is not None
                    and git(workspace, "status", "--porcelain") == ""
                    and git(workspace, "rev-parse", "HEAD") == base
                    and base != frozen["head"]))
     try:
-        prepare_change_workspace("A", 1, scratch, {"frozen": frozen})
+        prepare_change_workspace("none", 1, scratch, {"frozen": frozen})
         checks.append(("a change workspace is never reused", False))
     except TrialError:
         checks.append(("a change workspace is never reused", True))
@@ -1319,8 +1393,8 @@ def process_checks():
     """A process running from a trial's directory is stopped, and no other."""
     scratch = os.path.join(os.environ.get("TEMP", "."),
                            "efficacy-process-self-test")
-    owned = os.path.join(scratch, "A1")
-    neighbour = os.path.join(scratch, "A10")
+    owned = os.path.join(scratch, "none-1")
+    neighbour = os.path.join(scratch, "none-10")
     sleeper = [sys.executable, "-c", "import time; time.sleep(120)"]
     procs = [subprocess.Popen(sleeper + [os.path.join(where, "server.db")])
              for where in (owned, neighbour)]
@@ -1463,13 +1537,13 @@ def outside_checks():
                            "efficacy-outside-self-test")
     remove_tree(scratch)
     root = os.path.abspath(os.path.join(scratch, "run"))
-    workspace = os.path.join(root, "A1")
-    temp = os.path.join(root, "tmp", "A1-planted")
-    for directory in (workspace, temp, os.path.join(root, "B1"),
-                      os.path.join(root, "tmp", "B1-planted"),
+    workspace = os.path.join(root, "none-1")
+    temp = os.path.join(root, "tmp", "none-1-planted")
+    for directory in (workspace, temp, os.path.join(root, "short-1"),
+                      os.path.join(root, "tmp", "short-1-planted"),
                       os.path.join(root, "home", ".claude")):
         os.makedirs(directory)
-    io.open(os.path.join(root, "B1.tar"), "wb").close()
+    io.open(os.path.join(root, "short-1.tar"), "wb").close()
     bash_root = root.replace("\\", "/")
     if bash_root[1:2] == ":":
         bash_root = "/%s%s" % (bash_root[0].lower(), bash_root[2:])
@@ -1482,9 +1556,9 @@ def outside_checks():
                              % os.path.join(temp, "pip")}),
         ("Agent", {"prompt": "The repo is at %s. Map its modules."
                              % workspace}),
-        ("Bash", {"command": "cat ../B1/src/tariff/pricing.py"}),
+        ("Bash", {"command": "cat ../short-1/src/tariff/pricing.py"}),
         ("PowerShell", {"command": "Get-Item %s"
-                                   % os.path.join(root, "B1.tar")}),
+                                   % os.path.join(root, "short-1.tar")}),
         ("Bash", {"command": "ls %s/home/.claude/projects" % bash_root}),
         ("Read", {"file_path": os.path.join(scoring_area(root),
                                             "hidden-suite", "conftest.py")}),
@@ -1493,7 +1567,8 @@ def outside_checks():
 
     # The plant landed: the root holds another trial beside this one, so a
     # call left unflagged is the scan's doing and not an empty run.
-    landed = sorted(os.listdir(root)) == ["A1", "B1", "B1.tar", "home", "tmp"]
+    landed = sorted(os.listdir(root)) == ["home", "none-1", "short-1",
+                                          "short-1.tar", "tmp"]
     hits = reach(["planted.jsonl"], texts, workspace, temp)["hits"] or []
     flagged = sorted({index for index, (_, text) in enumerate(texts)
                       for hit in hits if hit["call"] == text[:300]})
@@ -1507,11 +1582,39 @@ def outside_checks():
              flagged == [4, 5, 6, 7])]
 
 
+def naming_checks():
+    """A trial is named by its arm's word and its block, and round 1's
+    letters read as the words they became."""
+    checks = [
+        ("a trial is the arm's word, a hyphen and its block",
+         trial_name("short", 2) == "short-2"
+         and split_name("short-2") == ("short", 2)),
+        ("round 1's letters read as their words",
+         [split_name(name) for name in ("A1", "B2", "C3")]
+         == [("none", 1), ("full", 2), ("hand", 3)]
+         and canonical("B2") == "full-2"),
+        ("a record names its trial whichever way it spells the arm",
+         name_of({"arm": "B", "trial": 1}) == "full-1"
+         and name_of({"arm": "hybrid", "trial": 3}) == "hybrid-3"),
+        ("a word name canonicalises to itself",
+         canonical("hybrid-3") == "hybrid-3"),
+    ]
+    for name in ("none", "D1", "short-x", "-1"):
+        try:
+            split_name(name)
+            checks.append(("%r is refused as a trial name" % name, False))
+        except TrialError:
+            checks.append(("%r is refused as a trial name" % name, True))
+    return checks
+
+
 def self_test():
-    """Prove the isolation, outcome, resume and change rules before a trial."""
-    checks = (environment_checks() + credential_checks() + outcome_checks()
-              + resume_checks() + change_checks() + process_checks()
-              + leftover_checks() + reach_checks() + outside_checks())
+    """Prove the naming, isolation, outcome, resume and change rules before a
+    trial."""
+    checks = (naming_checks() + environment_checks() + credential_checks()
+              + outcome_checks() + resume_checks() + change_checks()
+              + process_checks() + leftover_checks() + reach_checks()
+              + outside_checks())
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     passed = sum(1 for _, ok in checks if ok)
@@ -1534,8 +1637,11 @@ def parse_args(argv):
                         default="build",
                         help="run the build trials, or the change task on "
                              "each scorable build trial")
-    parser.add_argument("--arms", default="ABC",
-                        help="which arms to run, as letters (default ABC)")
+    parser.add_argument("--arms",
+                        help="which arms to run, as words separated by "
+                             "commas: none,short,hybrid. Required for a run, "
+                             "because two of the arms are reused from an "
+                             "earlier round and never re-run")
     parser.add_argument("--k", type=int, default=K_PRIMARY,
                         help="trials per arm (default %d, the pre-registered "
                              "K; at most %d, the escalation's ceiling)"
@@ -1552,7 +1658,7 @@ def parse_args(argv):
                              "(default %s, the design's)" % TIMEOUT_S)
     parser.add_argument("--from", dest="start",
                         help="start at this trial in the interleaved order, "
-                             "as B2")
+                             "as short-2")
     parser.add_argument("--resume-after-block", action="store_true",
                         help="after a blocked trial, probe until the "
                              "generator answers and re-run it in its place")
@@ -1586,10 +1692,13 @@ def main(argv):
     os.makedirs(options.root, exist_ok=True)
     home = prepare_home(options.root)
 
-    arms = list(options.arms.upper())
-    unknown = [a for a in arms if a not in ARMS]
-    if unknown:
-        print("unknown arm(s): %s" % ", ".join(unknown))
+    arms = [arm.strip() for arm in (options.arms or "").split(",")
+            if arm.strip()]
+    unknown = [arm for arm in arms if arm not in ARMS]
+    if not arms or unknown:
+        print("--arms names %s; the arms are %s"
+              % (", ".join(unknown) if unknown else "nothing",
+                 ", ".join(ARMS)))
         return 2
     try:
         pending = pending_trials(arms, options.k, options.start)
@@ -1630,7 +1739,7 @@ def main(argv):
     def runner(arm, trial):
         if options.task == "build":
             return run_trial(arm, trial, options.root, home, options)
-        name = "%s%d" % (arm, trial)
+        name = trial_name(arm, trial)
         if name not in builds:
             raise TrialError("build trial %s has no scorable outcome, so it "
                              "has no change task" % name)

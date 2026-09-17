@@ -31,7 +31,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import lib  # noqa: E402
 from generate_arm_b import RECORD as ARM_B_RECORD  # noqa: E402
 from harness import (ARMS, ARMS_DIR, K_CEILING, K_PRIMARY,  # noqa: E402
-                     SCORABLE, reach, read_transcripts, scoring_area)
+                     SCORABLE, canonical, reach, read_transcripts,
+                     scoring_area, split_name, trial_name)
+from harness import name_of as trial_of  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 AUDITS = os.path.join(lib.ROOT, "docs", "audits")
@@ -45,10 +47,10 @@ WITHDRAWN = os.path.join(HERE, "withdrawn.json")
 RESAMPLES = 10000
 CONFIDENCE = 0.95
 
-# The three contrasts, and the question each answers. B - C is the one an
-# adopter asks: a large B - A beside an equally large C - A is not a result
-# for the templates.
-CONTRASTS = (("B", "A"), ("C", "A"), ("B", "C"))
+# The contrasts, each a treatment arm against a baseline, and the question
+# each answers. full - hand is the one an adopter asks: a large full - none
+# beside an equally large hand - none is not a result for the templates.
+CONTRASTS = (("full", "none"), ("hand", "none"), ("full", "hand"))
 
 # Declared in the design before the run. "up" improves upward, "down"
 # improves downward, "neutral" is reported without a verdict.
@@ -434,19 +436,23 @@ def non_inferior(key, interval, direction, baseline_mean=None):
 
 
 def load(root):
-    """Every scored trial, with its judging attached where one exists."""
+    """Every scored trial, with its judging attached where one exists.
+
+    Keyed by canonical name: a score, judging or reading round 1 wrote names
+    its trial `A1`, and is read here as `none-1`.
+    """
     area = scoring_area(root)
     trials = {}
     for file in sorted(glob.glob(os.path.join(area, "scores", "*.json"))):
         with io.open(file, encoding="utf-8") as handle:
             scores = json.load(handle)
-        trials[scores["name"]] = {"scores": scores, "judge": None,
-                                  "change": None, "security": None}
+        trials[canonical(scores["name"])] = {
+            "scores": scores, "judge": None, "change": None, "security": None}
 
     for file in sorted(glob.glob(os.path.join(area, "judge", "T*.json"))):
         with io.open(file, encoding="utf-8") as handle:
             judging = json.load(handle)
-        name = judging.get("trial")
+        name = canonical(judging.get("trial") or "")
         if name in trials:
             trials[name]["judge"] = judging
 
@@ -456,24 +462,40 @@ def load(root):
                                               "*.json"))):
         with io.open(file, encoding="utf-8") as handle:
             change = json.load(handle)
-        if change.get("name") in trials:
-            trials[change["name"]]["change"] = change
+        name = canonical(change.get("name") or "")
+        if name in trials:
+            trials[name]["change"] = change
 
     for file in sorted(glob.glob(os.path.join(area, "security-scores",
                                               "*.json"))):
         with io.open(file, encoding="utf-8") as handle:
             security = json.load(handle)
-        if security.get("name") in trials:
-            trials[security["name"]]["security"] = security
+        name = canonical(security.get("name") or "")
+        if name in trials:
+            trials[name]["security"] = security
     return trials
 
 
 def arm_of(name):
-    return name[0]
+    return split_name(name)[0]
 
 
 def index_of(name):
-    return int(name[1:])
+    return split_name(name)[1]
+
+
+def ordered(names):
+    """Trial names by arm in the arms' declared order, then by block."""
+    position = list(ARMS)
+    return sorted(names, key=lambda name: (
+        position.index(arm_of(name)) if arm_of(name) in position
+        else len(position), index_of(name)))
+
+
+def contrast_arms():
+    """The arms any contrast names, in the arms' declared order."""
+    named = {arm for pair in CONTRASTS for arm in pair}
+    return [arm for arm in ARMS if arm in named]
 
 
 def collect(trials, metrics=METRICS):
@@ -636,7 +658,7 @@ def number(value):
 
 
 def generation_record():
-    """Arm B's generation record, committed beside the file it produced."""
+    """Arm full's generation record, committed beside the file it produced."""
     if not os.path.exists(ARM_B_RECORD):
         return None
     with io.open(ARM_B_RECORD, encoding="utf-8") as handle:
@@ -657,7 +679,7 @@ def name_of(record):
 
     # A change task shares its build trial's name, so the task tells them
     # apart; a record written before tasks existed is a build trial.
-    name = "%s%s" % (record.get("arm"), record.get("trial"))
+    name = trial_of(record)
     if record.get("task", "build") == "change":
         name += " (change task)"
     return name
@@ -754,8 +776,9 @@ def lost_trials(root):
 
 
 # A voided directory is named for the workspace it held and when it was
-# voided, as `change-C2-2026-09-16T20-29-18`.
-VOIDED = re.compile(r"^(change-)?([A-Z]\d+)-(\d{4}-\d{2}-\d{2})"
+# voided, as `change-hand-2-2026-09-16T20-29-18`; round 1 spelled the trial
+# `C2`.
+VOIDED = re.compile(r"^(change-)?([a-z]+-\d+|[A-Z]\d+)-(\d{4}-\d{2}-\d{2})"
                     r"T(\d{2})-(\d{2})-(\d{2})$")
 
 
@@ -780,8 +803,8 @@ def unrecorded_voids(root, sequence, recorded):
         match = VOIDED.match(entry)
         name, voided_at = entry, ""
         if match:
-            name = match.group(2) + (" (change task)" if match.group(1)
-                                     else "")
+            name = canonical(match.group(2)) + (" (change task)"
+                                                if match.group(1) else "")
             voided_at = "%sT%s:%s:%s" % match.group(3, 4, 5, 6)
         later = next((record for record in sequence
                       if name_of(record) == name
@@ -806,8 +829,8 @@ def write_report(root, trials, table, results, seed, escalation,
     run, printed in their own section and nowhere else. `withdrawn` maps each
     withdrawn metric to its record, already blanked from `table` and `results`.
     """
-    names = sorted(trials)
-    arms = sorted({arm_of(name) for name in names})
+    names = ordered(trials)
+    arms = [arm for arm in ARMS if arm in {arm_of(name) for name in names}]
     k = max((index_of(name) for name in names), default=0)
     any_scores = trials[names[0]]["scores"] if names else {}
     generation = generation_record()
@@ -858,13 +881,14 @@ def write_report(root, trials, table, results, seed, escalation,
     lines.append("| Bootstrap | %d resamples, %d%%, seed %s |"
                  % (RESAMPLES, int(100 * CONFIDENCE), seed))
     if generation:
-        lines.append("| Arm B's file | generated %s, %s lines, leak scan: %s |"
+        lines.append("| Arm full's file | generated %s, %s lines, leak scan: "
+                     "%s |"
                      % (generation.get("started_at", "unknown"),
                         generation.get("output_lines", "?"),
                         "clean" if not (generation.get("output_leak") or {})
                         .get("hits") else "HITS"))
     else:
-        lines.append("| Arm B's file | no generation record beside it |")
+        lines.append("| Arm full's file | no generation record beside it |")
     lines.append("")
 
     if withdrawn:
@@ -1066,9 +1090,9 @@ def posthoc_section(table, results):
 
 # How the summary names each contrast.
 COMPARISONS = {
-    "B-A": "Templates (B) vs no context file (A)",
-    "C-A": "Hand-written file (C) vs no context file (A)",
-    "B-C": "Templates (B) vs hand-written file (C)",
+    "full-none": "Templates' file (full) vs no context file (none)",
+    "hand-none": "Hand-written file (hand) vs no context file (none)",
+    "full-hand": "Templates' file (full) vs hand-written file (hand)",
 }
 
 
@@ -1090,7 +1114,11 @@ def score(wins, fails):
 ANSWERED = PRIMARY + ("task_success",)
 SHORT = {"judge_design": "design", "judge_readability": "readability",
          "judge_maintainability": "maintainability"}
-FILES = {"B": "Templates' file", "C": "Hand-written file"}
+FILES = {"full": "Templates' file", "short": "Templates' short file",
+         "hybrid": "Templates' hybrid file", "hand": "Hand-written file"}
+
+# The arm every file arm is read against: the bare agent.
+BARE = "none"
 SIZE = (("lines", "source_lines"), ("files", "tracked_files"))
 COUNTED = ("no", "one", "two", "three", "four", "five")
 NOT_MEASURED = "not measured"
@@ -1343,13 +1371,13 @@ def executive_section(trials, table, results):
     vector and decides nothing.
     """
     names = ["%s-%s" % (treatment, baseline)
-             for treatment, baseline in CONTRASTS if baseline == "A"]
+             for treatment, baseline in CONTRASTS if baseline == BARE]
     arms = [name.split("-")[0] for name in names]
     lengths = {arm: context_lines(arm) for arm in arms}
     answers = {arm: answer([results[key][name]["verdict"]
                             for key in ANSWERED])
                for arm, name in zip(arms, names)}
-    bare = arm_mean(table, "task_success", "A")
+    bare = arm_mean(table, "task_success", BARE)
     suite = "Hidden tests passed"
     if bare is not None:
         suite += ", against %d %% without a file" % round(100 * bare)
@@ -1565,14 +1593,18 @@ def contrast_cell(contrast, verdicts=True):
 
 
 def contrast_table(table, results, keys, verdicts=True):
-    """One table of contrasts: every metric against all three comparisons."""
-    lines = ["| Metric | Direction | A | B | C | B−A | C−A | B−C |",
-             "|---|---|---|---|---|---|---|---|"]
+    """One table of contrasts: every metric, each arm's mean, and every
+    comparison."""
+    arms = contrast_arms()
+    lines = ["| Metric | Direction | %s | %s |"
+             % (" | ".join(arms),
+                " | ".join("%s−%s" % pair for pair in CONTRASTS)),
+             "|---|---|%s|" % "|".join("---" for _ in arms + list(CONTRASTS))]
     degenerate = False
     for key in keys:
         entry = table[key]
         means = {}
-        for arm in ("A", "B", "C"):
+        for arm in arms:
             values = [v for v in entry["values"].get(arm, {}).values()
                       if v is not None]
             means[arm] = statistics.fmean(values) if values else None
@@ -1582,9 +1614,9 @@ def contrast_table(table, results, keys, verdicts=True):
             cell = contrast_cell(contrast, verdicts)
             degenerate = degenerate or "‡" in cell
             cells.append(cell)
-        lines.append("| %s | %s | %s | %s | %s | %s |"
-                     % (entry["label"], entry["direction"], number(means["A"]),
-                        number(means["B"]), number(means["C"]),
+        lines.append("| %s | %s | %s | %s |"
+                     % (entry["label"], entry["direction"],
+                        " | ".join(number(means[arm]) for arm in arms),
                         " | ".join(cells)))
     if degenerate:
         lines.append("")
@@ -1653,9 +1685,9 @@ def reach_checks():
     checks = [("the planted run record is read",
                len(run_records(scratch)) == len(planted)),
               ("a trial whose scan hit is named",
-               [row.split(" | ")[0] for row in rows] == ["| B1"]),
+               [row.split(" | ")[0] for row in rows] == ["| full-1"]),
               ("a trial with no transcript is not scanned",
-               "Not scanned, having no transcript: C1." in lines)]
+               "Not scanned, having no transcript: hand-1." in lines)]
     shutil.rmtree(scratch, ignore_errors=True)
     return checks
 
@@ -1698,10 +1730,11 @@ def lost_checks():
     shutil.rmtree(scratch, ignore_errors=True)
     rows = [(entry["name"], entry["rerun"]) for entry in lost]
     unrecorded_row = [entry for entry in lost
-                      if entry["name"] == "C2 (change task)"]
+                      if entry["name"] == "hand-2 (change task)"]
     return [("the planted voids and run records are read", landed),
             ("a voided trial is listed once, recorded or not",
-             rows == [("A1", "completed"), ("C2 (change task)", "completed")]),
+             rows == [("none-1", "completed"),
+                      ("hand-2 (change task)", "completed")]),
             ("an unrecorded void says no run record holds it",
              len(unrecorded_row) == 1
              and "no run record" in unrecorded_row[0]["reason"])]
@@ -1713,22 +1746,22 @@ def rescan_checks():
     scratch = os.path.join(os.environ.get("TEMP", "."),
                            "efficacy-report-rescan-self-test")
     shutil.rmtree(scratch, ignore_errors=True)
-    workspace = os.path.join(scratch, "A2")
+    workspace = os.path.join(scratch, "none-2")
     os.makedirs(workspace)
-    os.makedirs(os.path.join(scratch, "B1"))
+    os.makedirs(os.path.join(scratch, "full-1"))
     folder = "".join(char if char.isalnum() else "-"
                      for char in os.path.abspath(workspace))
     projects = os.path.join(scratch, "home", ".claude", "projects", folder)
     os.makedirs(projects)
     entry = {"type": "assistant", "message": {"content": [
         {"type": "tool_use", "name": "Bash",
-         "input": {"command": "cat ../B1/src/tariff/pricing.py"}}]}}
+         "input": {"command": "cat ../full-1/src/tariff/pricing.py"}}]}}
     with io.open(os.path.join(projects, "planted.jsonl"), "w",
                  encoding="utf-8") as handle:
         handle.write(json.dumps(entry) + "\n")
 
     # Scanned clean when it ran, as the narrower rule would have left it.
-    planted = [{"arm": "A", "trial": 2, "outcome": "completed",
+    planted = [{"arm": "none", "trial": 2, "outcome": "completed",
                 "workspace": workspace,
                 "reach": {"transcripts": ["planted"], "hits": []}}]
     with io.open(os.path.join(scratch, "run-planted.json"), "w",
@@ -1743,25 +1776,25 @@ def rescan_checks():
     shutil.rmtree(scratch, ignore_errors=True)
     return [("the planted transcript carries one call", landed),
             ("its record's clean scan is read again and flagged",
-             terms == ["../b1"])]
+             terms == ["../full-1"])]
 
 
 # One row on each side of the escalation rule. The interval is planted beside
 # its pairs, so each case turns on the rule rather than on the bootstrap.
 ESCALATING = (
     ("a crossing interval with an effect of 0.67 owes it", "judge_design",
-     "B-A", [2.0, -1.0, 1.0], -1.0, 2.0, True),
-    ("the same row on C-A owes it", "judge_readability", "C-A",
+     "full-none", [2.0, -1.0, 1.0], -1.0, 2.0, True),
+    ("the same row on C-A owes it", "judge_readability", "hand-none",
      [2.0, -1.0, 1.0], -1.0, 2.0, True),
     ("an effect of 0.67 the other way owes it", "judge_maintainability",
-     "B-C", [-2.0, 1.0, -1.0], -2.0, 1.0, True),
-    ("an effect of exactly 0.5 does not", "judge_design", "B-A",
+     "full-hand", [-2.0, 1.0, -1.0], -2.0, 1.0, True),
+    ("an effect of exactly 0.5 does not", "judge_design", "full-none",
      [1.5, -1.0, 1.0], -1.0, 1.5, False),
-    ("an interval clear of zero does not", "judge_design", "B-A",
+    ("an interval clear of zero does not", "judge_design", "full-none",
      [1.0, 1.0, 1.0], 1.0, 1.0, False),
-    ("a row outside the primary dimensions does not", "task_success", "B-A",
+    ("a row outside the primary dimensions does not", "task_success", "full-none",
      [2.0, -1.0, 1.0], -1.0, 2.0, False),
-    ("an interval not computed does not", "judge_design", "B-A", [2.0],
+    ("an interval not computed does not", "judge_design", "full-none", [2.0],
      None, None, False),
 )
 
@@ -1788,8 +1821,9 @@ def escalation_checks(seed):
 
     # Five blocks of judged trials. The first three alone must decide the
     # escalation, and the report must print their vector beside the fifth's.
-    design = {"A": [3, 3, 3, 3, 3], "B": [5, 2, 4, 4, 4], "C": [3, 3, 3, 3, 3]}
-    trials = {"%s%d" % (arm, index): {
+    design = {"none": [3, 3, 3, 3, 3], "full": [5, 2, 4, 4, 4],
+              "hand": [3, 3, 3, 3, 3]}
+    trials = {trial_name(arm, index): {
         "scores": {}, "change": None,
         "judge": {"answer": {"rubric": {"design": {"score": score}}}}}
         for arm, scores in design.items()
@@ -1800,9 +1834,9 @@ def escalation_checks(seed):
     earlier = escalation.get("results_k3") or {}
     checks.append(("a K = 5 run is judged on its first three blocks",
                    escalation["state"] == "escalated"
-                   and len(path(earlier, "judge_design", "B-A", "pairs")
+                   and len(path(earlier, "judge_design", "full-none", "pairs")
                            or []) == K_PRIMARY
-                   and len(results["judge_design"]["B-A"]["pairs"])
+                   and len(results["judge_design"]["full-none"]["pairs"])
                    == K_CEILING, escalation["state"]))
 
     first = {name: trial for name, trial in trials.items()
@@ -1824,7 +1858,8 @@ def escalation_checks(seed):
     checks.append(("the report carries the escalation section",
                    "## The escalation to K = 5" in text, None))
     checks.append(("an escalated report prints both vectors",
-                   "| Metric | B−A, K = 3 | B−A, K = 5 |" in text, None))
+                   "| Metric | full−none, K = 3 | full−none, K = 5 |" in text,
+                   None))
     checks.append(("the judge is checked by its evidence, not a person",
                    "No person scores the judge." in text
                    and "holdout" not in text.lower(), None))
@@ -1846,10 +1881,11 @@ def posthoc_checks(seed):
     checks = [("no after-the-results check is a verdict metric",
                not keys & {key for key, _, _, _ in METRICS}, sorted(keys))]
 
-    # Arm B sets every header on every trial and arm A none, so the row would
+    # Arm full sets every header on every trial and the bare arm sets none,
+    # so the row would
     # read "better" if a verdict were ever computed for it.
-    headers = {"A": 0, "B": 4, "C": 2}
-    trials = {"%s%d" % (arm, index): {
+    headers = {"none": 0, "full": 4, "hand": 2}
+    trials = {trial_name(arm, index): {
         "scores": {}, "change": None, "judge": None,
         "security": {"security_headers": {"value": value, "missing": None}}}
         for arm, value in headers.items() for index in range(1, K_PRIMARY + 1)}
@@ -1858,8 +1894,8 @@ def posthoc_checks(seed):
     posthoc_table = collect(trials, POSTHOC)
     posthoc = (posthoc_table, contrasts(posthoc_table, seed))
     checks.append(("the planted row would read better",
-                   posthoc[1]["security_headers"]["B-A"]["verdict"]
-                   == "better", posthoc[1]["security_headers"]["B-A"]))
+                   posthoc[1]["security_headers"]["full-none"]["verdict"]
+                   == "better", posthoc[1]["security_headers"]["full-none"]))
 
     scratch = os.path.join(os.environ.get("TEMP", "."),
                            "efficacy-report-posthoc-self-test")
@@ -1890,9 +1926,9 @@ def posthoc_checks(seed):
 
 
 def planted_change_run(revision):
-    """K = 3 change tasks graded at `revision`, arm B ahead on every row."""
-    rates = {"A": 0.25, "B": 0.75, "C": 0.5}
-    lines = {"A": 300, "B": 200, "C": 250}
+    """K = 3 change tasks graded at `revision`, arm full ahead on every row."""
+    rates = {"none": 0.25, "full": 0.75, "hand": 0.5}
+    lines = {"none": 300, "full": 200, "hand": 250}
 
     def change(arm, index):
         return {"suite_revision": revision,
@@ -1901,7 +1937,7 @@ def planted_change_run(revision):
                 "churn": {"value": {"files": 10, "lines": lines[arm] - index},
                           "missing": None}}
 
-    return {"%s%d" % (arm, index): {"scores": {}, "judge": None,
+    return {trial_name(arm, index): {"scores": {}, "judge": None,
                                     "security": None,
                                     "change": change(arm, index)}
             for arm in rates for index in range(1, K_PRIMARY + 1)}
@@ -1911,7 +1947,7 @@ def rendered(trials, seed, withdrawn):
     """The report a planted run renders, withdrawn metrics blanked first."""
     table = collect(trials)
     results = contrasts(table, seed)
-    before = results["change_success"]["B-A"]["verdict"]
+    before = results["change_success"]["full-none"]["verdict"]
     withdraw(withdrawn, table, results)
     scratch = os.path.join(os.environ.get("TEMP", "."),
                            "efficacy-report-withdrawal-render")
@@ -1994,9 +2030,9 @@ def withdrawal_checks(seed):
         ("the summary opens the report",
          0 <= text.find("## Summary") < text.find("## What produced"), None),
         ("its row scores the verdicts, the withdrawn metric not among them",
-         section_rows(text, "## Summary", COMPARISONS["B-A"])
-         == ["| %s | 10.0 | 1 | 0 |" % COMPARISONS["B-A"]],
-         section_rows(text, "## Summary", COMPARISONS["B-A"])),
+         section_rows(text, "## Summary", COMPARISONS["full-none"])
+         == ["| %s | 10.0 | 1 | 0 |" % COMPARISONS["full-none"]],
+         section_rows(text, "## Summary", COMPARISONS["full-none"])),
         ("it names the withdrawal among the caveats",
          "withdrawn: %s;" % label in summary, None),
     ])
@@ -2007,9 +2043,9 @@ def withdrawal_checks(seed):
                    kept == ["| %s | better | better | better |" % label]
                    and "## Withdrawn measurements" not in text, kept))
     summary = summary_of(text)
-    row = section_rows(text, "## Summary", COMPARISONS["B-A"])
+    row = section_rows(text, "## Summary", COMPARISONS["full-none"])
     checks.append(("that run's summary counts the row a win",
-                   row == ["| %s | 10.0 | 2 | 0 |" % COMPARISONS["B-A"]]
+                   row == ["| %s | 10.0 | 2 | 0 |" % COMPARISONS["full-none"]]
                    and "withdrawn: nothing;" in summary, row))
 
     # The rule at its ends and in the middle: round 1's templates against no
@@ -2052,72 +2088,73 @@ def executive_checks(seed):
         checks.append((label, got == expected, got))
 
     # The reading sets the longer file's answer beside the shorter's.
-    lengths = {"B": 400, "C": 40}
+    lengths = {"full": 400, "hand": 40}
     for label, answers, expected in (
             ("a short Yes beside a long No reads length is not quality",
-             {"B": "No", "C": "Yes"},
+             {"full": "No", "hand": "Yes"},
              "length is not quality — the long file spent the agent's "
              "attention on conventions, the short one on the code"),
             ("a long Yes beside a short Worse reads the long file's gain",
-             {"B": "Yes", "C": "Worse"},
+             {"full": "Yes", "hand": "Worse"},
              "the long file added quality, the short one did not"),
             ("two Yes answers read long or short",
-             {"B": "Yes", "C": "Yes"},
+             {"full": "Yes", "hand": "Yes"},
              "a context file adds quality, long or short"),
-            ("two No answers read neither", {"B": "No", "C": "No"},
+            ("two No answers read neither", {"full": "No", "hand": "No"},
              "neither file added quality"),
             ("an unmeasured column reads not measured",
-             {"B": "Not measured", "C": "Yes"}, NOT_MEASURED)):
+             {"full": "Not measured", "hand": "Yes"}, NOT_MEASURED)):
         got = reading(answers, lengths)
         checks.append((label, got == expected, got))
 
     # A moved primary dimension prints its change alone, whole where it is.
-    planted = {key: {"C-A": {"mean": 0.0, "verdict": shown}}
+    planted = {key: {"hand-none": {"mean": 0.0, "verdict": shown}}
                for key in PRIMARY}
-    planted["judge_readability"]["C-A"] = {"mean": 1.0, "verdict": "better"}
-    planted["judge_design"]["C-A"] = {"mean": -0.667, "verdict": "worse"}
-    got = moved_cell(planted, "C-A")
+    planted["judge_readability"]["hand-none"] = {"mean": 1.0, "verdict": "better"}
+    planted["judge_design"]["hand-none"] = {"mean": -0.667, "verdict": "worse"}
+    got = moved_cell(planted, "hand-none")
     checks.append(("a moved dimension prints its change alone",
                    got == "design -0.7, readability +1", got))
 
     # A No with files and cost worse names bulk and cost; a Yes with neither
     # names only the bulk it lacks. The size cell names only the measure
     # whose interval separated the arms, as a share of the bare arm's.
-    planted = {"source_lines": {"B-A": {"mean": 5.0, "verdict": shown},
-                                "C-A": {"mean": -1.0, "verdict": shown}},
-               "tracked_files": {"B-A": {"mean": 4.0, "verdict": "worse"},
-                                 "C-A": {"mean": 0.0, "verdict": shown}},
-               "cost_usd": {"B-A": {"verdict": "worse"},
-                            "C-A": {"verdict": "worse"}}}
-    got = (reads_cell("No", planted, "B-A"), reads_cell("Yes", planted, "C-A"))
+    planted = {"source_lines": {"full-none": {"mean": 5.0, "verdict": shown},
+                                "hand-none": {"mean": -1.0, "verdict": shown}},
+               "tracked_files": {"full-none": {"mean": 4.0, "verdict": "worse"},
+                                 "hand-none": {"mean": 0.0, "verdict": shown}},
+               "cost_usd": {"full-none": {"verdict": "worse"},
+                            "hand-none": {"verdict": "worse"}}}
+    got = (reads_cell("No", planted, "full-none"),
+           reads_cell("Yes", planted, "hand-none"))
     checks.append(("the phrase names what the verdicts added",
                    got == ("bulk and cost, no quality", "quality, no bulk"),
                    got))
-    bare = {"source_lines": {"values": {"A": {1: 100.0}}},
-            "tracked_files": {"values": {"A": {1: 10.0}}}}
-    got = (size_cell(bare, planted, "B-A"), size_cell(bare, planted, "C-A"))
+    bare = {"source_lines": {"values": {"none": {1: 100.0}}},
+            "tracked_files": {"values": {"none": {1: 10.0}}}}
+    got = (size_cell(bare, planted, "full-none"), size_cell(bare, planted, "hand-none"))
     checks.append(("the size cell names the separated measure as a share",
                    got == ("files +40 %", "no change shown"), got))
 
     # A why-line says, in words, what stands on a record or verdict below:
     # the run that could not boot, the structure built beyond the task and
     # the work it took, what the judge read, and the patterns missed.
-    trials = {"B1": {"scores": {"boot": {"value": {
+    trials = {"full-1": {"scores": {"boot": {"value": {
                   "factory": False, "factory_error": "planted error"}}}},
-              "B2": {"scores": {"boot": {"value": {"factory": True}}}},
-              "A1": {"scores": {"boot": {"value": {"factory": False}}}}}
-    got = boot_failures(trials, "B")
+              "full-2": {"scores": {"boot": {"value": {"factory": True}}}},
+              "none-1": {"scores": {"boot": {"value": {"factory": False}}}}}
+    got = boot_failures(trials, "full")
     checks.append(("boot failures are the arm's own, with the error",
                    got == (["planted error"], 2), got))
-    planted = {key: {"B-A": {"mean": 0.0, "verdict": shown}}
+    planted = {key: {"full-none": {"mean": 0.0, "verdict": shown}}
                for key, _, _, _ in METRICS}
-    planted["tracked_files"]["B-A"]["verdict"] = "worse"
-    planted["turns"]["B-A"]["verdict"] = "worse"
-    planted["churn_lines"]["B-A"]["verdict"] = "worse"
-    planted["patterns_missed"]["B-A"]["verdict"] = "worse"
-    planted["judge_readability"]["B-A"]["verdict"] = "better"
-    planted["adherence"]["B-A"]["verdict"] = "better"
-    got = why_line(trials, planted, "B", "B-A", "No", 400)
+    planted["tracked_files"]["full-none"]["verdict"] = "worse"
+    planted["turns"]["full-none"]["verdict"] = "worse"
+    planted["churn_lines"]["full-none"]["verdict"] = "worse"
+    planted["patterns_missed"]["full-none"]["verdict"] = "worse"
+    planted["judge_readability"]["full-none"]["verdict"] = "better"
+    planted["adherence"]["full-none"]["verdict"] = "better"
+    got = why_line(trials, planted, "full", "full-none", "No", 400)
     checks.append(("the why-line says what the records and verdicts hold",
                    got == "**Templates' file, No.** One run of two left the "
                    "app unable to boot (`planted error`). It built more than "
@@ -2126,10 +2163,10 @@ def executive_checks(seed):
                    "structure too. The judge read its code as more "
                    "readable; it missed more of the patterns the domain "
                    "called for.", got))
-    trials["B1"]["scores"]["boot"]["value"]["factory_error"] = \
+    trials["full-1"]["scores"]["boot"]["value"]["factory_error"] = \
         "ModuleNotFoundError(\"No module named 'planted'\")"
-    planted["judge_readability"]["B-A"]["verdict"] = shown
-    got = why_line(trials, planted, "B", "B-A", "No", 400)
+    planted["judge_readability"]["full-none"]["verdict"] = shown
+    got = why_line(trials, planted, "full", "full-none", "No", 400)
     checks.append(("a module missing after a clean install is a declared "
                    "dependency, and a win the judge did not give is a tool "
                    "count",
@@ -2141,13 +2178,13 @@ def executive_checks(seed):
                                     "every win is something a tool counts "
                                     "and it missed more of the patterns the "
                                     "domain called for."), got))
-    planted = {key: {"C-A": {"mean": 0.0, "verdict": shown}}
+    planted = {key: {"hand-none": {"mean": 0.0, "verdict": shown}}
                for key, _, _, _ in METRICS}
     for key in ("judge_readability", "judge_tests", "coverage"):
-        planted[key]["C-A"]["verdict"] = "better"
+        planted[key]["hand-none"]["verdict"] = "better"
     for key in ("turns", "cost_usd", "churn_lines"):
-        planted[key]["C-A"]["verdict"] = "worse"
-    got = why_line({}, planted, "C", "C-A", "Yes", 39)
+        planted[key]["hand-none"]["verdict"] = "worse"
+    got = why_line({}, planted, "hand", "hand-none", "Yes", 39)
     checks.append(("a short Yes file is a few rules the agent could hold",
                    got == "**Hand-written file, Yes.** A few rules the agent "
                    "could hold: the judge read its code as more readable "
@@ -2159,13 +2196,13 @@ def executive_checks(seed):
     # own line counts.
     _, _, text = rendered(planted_change_run("any-revision"), seed, {})
     header = "| | %s |" % " | ".join(
-        "%s, %s lines" % (FILES[arm], context_lines(arm)) for arm in "BC")
+        "%s, %s lines" % (FILES[arm], context_lines(arm)) for arm in ("full", "hand"))
     checks.extend([
         ("the finding table opens the report",
          0 <= text.find("## Executive summary") < text.find("## Summary"),
          None),
         ("its columns are the arm files with their line counts",
-         header in text and context_lines("B") > context_lines("C"),
+         header in text and context_lines("full") > context_lines("hand"),
          header),
         ("an unmeasured run answers Not measured in every cell",
          "| Improves the code? | **Not measured** | **Not measured** |"

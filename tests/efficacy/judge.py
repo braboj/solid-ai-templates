@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
 import score  # noqa: E402
+from harness import TrialError, canonical  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPEC = os.path.join(HERE, "SPEC.md")
@@ -82,7 +83,8 @@ SCORING_OUTPUT_NAMES = (".coverage", "complexipy.json")
 # would have changed what is being judged.
 MARKERS = ("CLAUDE.md", "AGENTS.md", "GEMINI.md", "solid-ai-templates",
            "Claude Code", "claude.ai", "CLAUDE", "context file",
-           "arm A", "arm B", "arm C")
+           "arm A", "arm B", "arm C", "arm none", "arm full", "arm short",
+           "arm hybrid", "arm hand")
 
 MASK = "[redacted]"
 
@@ -422,12 +424,16 @@ def validate(payload):
 
 
 def trees(root):
-    """Every scored trial's extracted tree, by trial name."""
+    """Every scored trial's extracted tree, by canonical trial name.
+
+    A tree round 1 scored sits under its letter name, `B1`, and is judged
+    under its word, `full-1`.
+    """
     found = {}
     scoring = os.path.join(score.scoring_area(root), "scoring")
     for path in sorted(glob.glob(os.path.join(scoring, "*", "tree", "*"))):
         if os.path.isdir(path):
-            found[os.path.basename(path)] = path
+            found[canonical(os.path.basename(path))] = path
     return found
 
 
@@ -445,7 +451,12 @@ def main(argv):
               % score.scoring_area(options.root))
         return 2
 
-    wanted = sorted(options.trial) if options.trial else sorted(available)
+    try:
+        wanted = (sorted(canonical(name) for name in options.trial)
+                  if options.trial else sorted(available))
+    except TrialError as error:
+        print("refused: %s" % error)
+        return 2
     missing = [name for name in wanted if name not in available]
     if missing:
         print("no tree for %s" % ", ".join(missing))
@@ -552,14 +563,14 @@ def bundle_checks(scratch):
     The planted tree is shaped like one scoring leaves behind: the trial's code
     beside tool caches that hold absolute paths through the scoring area.
     """
-    tree = os.path.join(scratch, "scoring", "B2", "tree", "B2")
-    scored = "/".join((scratch.replace(os.sep, "/"), "scoring", "B2", "tree",
-                       "B2", "src"))
+    tree = os.path.join(scratch, "scoring", "full-2", "tree", "full-2")
+    scored = "/".join((scratch.replace(os.sep, "/"), "scoring", "full-2", "tree",
+                       "full-2", "src"))
     code = os.path.join("src", "app.py")
 
     # The trial's name outside a path, where an implementation may use it,
     # is not a leak.
-    plant(tree, {code: 'CELL = "B2"\n', "CLAUDE.md": "# rules\n"})
+    plant(tree, {code: 'CELL = "full-2"\n', "CLAUDE.md": "# rules\n"})
     output = {
         ".coverage": "SQLite format 3 %s" % scored,
         "complexipy.json": json.dumps([{"path": scored}]),
@@ -599,15 +610,15 @@ def bundle_checks(scratch):
 
         # The plant landed: the bundle lacked the file and now holds it.
         checks.append((label, not before and os.path.exists(landed)
-                       and [relative, "B2", "as a path segment"] in found))
+                       and [relative, "full-2", "as a path segment"] in found))
 
     # The scan reads the directories the copy leaves out, because the judge
     # reads whatever the bundle holds.
     hidden = os.path.join(".git", "config")
     plant(bundle, {hidden: "worktree = %s\n" % scored})
     checks.append(("a leak in a directory the copy skips is found",
-                   [hidden, "B2", "as a path segment"]
-                   in surviving_markers(bundle, "B2")))
+                   [hidden, "full-2", "as a path segment"]
+                   in surviving_markers(bundle, "full-2")))
     return checks
 
 
@@ -723,7 +734,7 @@ def parse_args(argv):
                         help="prove a bundle is blind and the judge launches; "
                              "judge nothing")
     parser.add_argument("--trial", action="append", default=[],
-                        help="judge only this trial, as A1; repeatable")
+                        help="judge only this trial, as none-1; repeatable")
     parser.add_argument("--model", default=JUDGE_MODEL,
                         help="judge model id, recorded in the report")
     parser.add_argument("--effort", default=JUDGE_EFFORT,
