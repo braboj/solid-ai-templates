@@ -363,8 +363,9 @@ being asked.
 Each run writes a dated report to `docs/audits/`. It opens with a finding
 table generated from its own verdicts: one column per context file against
 none, with whether it improves the code, what moved, hidden tests passed,
-size, cost and a one-phrase reading, then a line reading the columns
-together. A summary table follows: per contrast, a score from 1 to 10 and the
+size, cost and a one-phrase reading, then a line per file on why it scored
+so and a line reading the columns together. A summary table follows: per
+contrast, a score from 1 to 10 and the
 number of metrics won and failed, then one line of caveats. The score is 1 +
 9 × wins ÷ (wins + fails) and decides nothing, and neither does the finding
 table. The report goes on to name the
