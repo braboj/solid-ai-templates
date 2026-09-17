@@ -661,6 +661,18 @@ def name_of(record):
     return name
 
 
+def started(record):
+    """When a trial record's trial started, as a timestamp, or None."""
+
+    # Recorded to the second and before the CLI launched, so it never falls
+    # after a transcript the trial itself wrote.
+    try:
+        moment = datetime.datetime.fromisoformat(record["started_at"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    return moment.timestamp()
+
+
 def reaches(root):
     """Every scorable trial's transcript scan, as name and hits.
 
@@ -674,7 +686,7 @@ def reaches(root):
         if record.get("outcome") not in SCORABLE:
             continue
         workspace = record.get("workspace") or ""
-        files, calls = read_transcripts(home, workspace)
+        files, calls = read_transcripts(home, workspace, started(record))
         if files:
             scan = reach(files, calls, workspace, record.get("temp"))
         else:
