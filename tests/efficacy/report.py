@@ -20,6 +20,7 @@ import io
 import json
 import os
 import random
+import re
 import shutil
 import statistics
 import sys
@@ -734,16 +735,61 @@ def lost_trials(root):
     # in its place or by a later run started `--from` it.
     sequence = run_records(root)
 
-    lost = []
+    lost, recorded = [], set()
     for index, record in enumerate(sequence):
         if record.get("outcome") != "blocked":
             continue
         later = next((other for other in sequence[index + 1:]
                       if name_of(other) == name_of(record)), None)
+        kept = path(record, "void", "dir")
+        if kept:
+            recorded.add(os.path.normcase(os.path.abspath(kept)))
         lost.append({"name": name_of(record),
                      "started_at": record.get("started_at"),
                      "reason": record.get("reason"),
-                     "kept": path(record, "void", "dir"),
+                     "kept": kept,
+                     "rerun": later.get("outcome") if later else None})
+    return lost + unrecorded_voids(root, sequence, recorded)
+
+
+# A voided directory is named for the workspace it held and when it was
+# voided, as `change-C2-2026-09-16T20-29-18`.
+VOIDED = re.compile(r"^(change-)?([A-Z]\d+)-(\d{4}-\d{2}-\d{2})"
+                    r"T(\d{2})-(\d{2})-(\d{2})$")
+
+
+def unrecorded_voids(root, sequence, recorded):
+    """Each voided workspace under `void/` that no run record names.
+
+    A run that stops before recording a trial leaves the voided workspace as
+    the only trace of the loss, so the directory is read for the trial and
+    the time, and the first record for that trial started after it is the
+    re-run.
+    """
+    voided = os.path.join(root, "void")
+    entries = sorted(os.listdir(voided)) if os.path.isdir(voided) else []
+    lost = []
+    for entry in entries:
+        kept = os.path.join(voided, entry)
+        if os.path.normcase(os.path.abspath(kept)) in recorded:
+            continue
+
+        # A directory named otherwise is still a loss, listed under its own
+        # name rather than skipped.
+        match = VOIDED.match(entry)
+        name, voided_at = entry, ""
+        if match:
+            name = match.group(2) + (" (change task)" if match.group(1)
+                                     else "")
+            voided_at = "%sT%s:%s:%s" % match.group(3, 4, 5, 6)
+        later = next((record for record in sequence
+                      if name_of(record) == name
+                      and (record.get("started_at") or "") >= voided_at),
+                     None)
+        lost.append({"name": name, "started_at": None,
+                     "reason": "no run record holds it: the run stopped "
+                               "before recording the trial",
+                     "kept": kept,
                      "rerun": later.get("outcome") if later else None})
     return lost
 
@@ -1187,6 +1233,53 @@ def reach_checks():
     return checks
 
 
+def lost_checks():
+    """A voided trial is listed whether or not a run record names it."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-report-lost-self-test")
+    shutil.rmtree(scratch, ignore_errors=True)
+    recorded = os.path.join(scratch, "void", "A1-2026-09-15T10-00-00")
+    unrecorded = os.path.join(scratch, "void", "change-C2-2026-09-16T18-30-00")
+    for directory in (recorded, unrecorded):
+        os.makedirs(directory)
+
+    # A1 was blocked and recorded; the run holding change C2 stopped before
+    # recording it, and C2's change task re-ran in a later run.
+    runs = {
+        "run-2026-09-15T09-00-00.json": [
+            {"arm": "A", "trial": 1, "task": "build", "outcome": "blocked",
+             "started_at": "2026-09-15T09:00:00", "reason": "planted",
+             "void": {"dir": recorded}},
+            {"arm": "A", "trial": 1, "task": "build",
+             "outcome": "completed", "started_at": "2026-09-15T10:05:00"}],
+        "run-2026-09-16T17-00-00.json": [
+            {"arm": "C", "trial": 2, "task": "build",
+             "outcome": "completed", "started_at": "2026-09-16T17:00:00"}],
+        "run-2026-09-16T20-00-00.json": [
+            {"arm": "C", "trial": 2, "task": "change",
+             "outcome": "completed", "started_at": "2026-09-16T20:00:00"}],
+    }
+    for file, trials in runs.items():
+        with io.open(os.path.join(scratch, file), "w",
+                     encoding="utf-8") as handle:
+            json.dump({"trials": trials}, handle)
+
+    landed = (sorted(os.listdir(os.path.join(scratch, "void")))
+              == ["A1-2026-09-15T10-00-00", "change-C2-2026-09-16T18-30-00"]
+              and len(run_records(scratch)) == 4)
+    lost = lost_trials(scratch)
+    shutil.rmtree(scratch, ignore_errors=True)
+    rows = [(entry["name"], entry["rerun"]) for entry in lost]
+    unrecorded_row = [entry for entry in lost
+                      if entry["name"] == "C2 (change task)"]
+    return [("the planted voids and run records are read", landed),
+            ("a voided trial is listed once, recorded or not",
+             rows == [("A1", "completed"), ("C2 (change task)", "completed")]),
+            ("an unrecorded void says no run record holds it",
+             len(unrecorded_row) == 1
+             and "no run record" in unrecorded_row[0]["reason"])]
+
+
 def rescan_checks():
     """A record scanned under an earlier rule is read again from its
     transcript."""
@@ -1517,6 +1610,7 @@ def self_test(seed):
     checks.extend(posthoc_checks(seed))
     checks.extend(withdrawal_checks(seed))
     checks.extend((label, ok, ok) for label, ok in reach_checks())
+    checks.extend((label, ok, ok) for label, ok in lost_checks())
     checks.extend((label, ok, ok) for label, ok in rescan_checks())
     for label, ok, got in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED, got %r" % got))
