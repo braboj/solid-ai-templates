@@ -1131,6 +1131,13 @@ def arm_mean(table, key, arm):
     return statistics.fmean(values) if values else None
 
 
+def signed(value):
+    """A paired difference with its sign, to one decimal, a whole number
+    printed as one: +1, -0.7."""
+    text = "%+.1f" % value
+    return text[:-2] if text.endswith(".0") else text
+
+
 def moved_cell(results, name):
     """Which primary dimensions moved, and by how much."""
     cells = []
@@ -1139,7 +1146,7 @@ def moved_cell(results, name):
         entry = results[key][name]
         computed = computed or entry["verdict"] != "not computed"
         if entry["verdict"] in ("better", "worse"):
-            cells.append("%s %+.1f of 5" % (SHORT[key], entry["mean"]))
+            cells.append("%s %s" % (SHORT[key], signed(entry["mean"])))
     if not computed:
         return NOT_MEASURED
     return ", ".join(cells) if cells else "did not move"
@@ -1947,6 +1954,15 @@ def executive_checks(seed):
              {"B": "Not measured", "C": "Yes"}, NOT_MEASURED)):
         got = reading(answers, lengths)
         checks.append((label, got == expected, got))
+
+    # A moved primary dimension prints its change alone, whole where it is.
+    planted = {key: {"C-A": {"mean": 0.0, "verdict": shown}}
+               for key in PRIMARY}
+    planted["judge_readability"]["C-A"] = {"mean": 1.0, "verdict": "better"}
+    planted["judge_design"]["C-A"] = {"mean": -0.667, "verdict": "worse"}
+    got = moved_cell(planted, "C-A")
+    checks.append(("a moved dimension prints its change alone",
+                   got == "design -0.7, readability +1", got))
 
     # A No with files and cost worse names bulk and cost; a Yes with neither
     # names only the bulk it lacks. The size cell names only the measure
