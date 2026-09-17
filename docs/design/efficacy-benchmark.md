@@ -388,27 +388,37 @@ asked for, change-task churn, axe violations, HTML invalidity. Neutral,
 reported without a verdict: maintainability index, instability.
 
 The report opens with a summary table generated from its own verdicts: per
-contrast, a score from 1 to 10, the metrics won and the metrics failed. A win
-or a fail is a metric read better or worse; one showing no improvement counts
-neither way. The score is 1 + 9 × wins ÷ (wins + fails), each metric counting
-once, and a pair no metric separated has none. One line of caveats follows:
-the escalation, withdrawn metrics, lost trials, reaches past a workspace and
-the judge's evidence check.
+contrast, a score from 1 to 10 and the number of metrics won and failed. A
+win or a fail is a metric read better or worse; one showing no improvement
+counts neither way. The score is 1 + 9 × wins ÷ (wins + fails), each metric
+counting once, and a pair no metric separated has none. One line of caveats
+follows: the escalation, withdrawn metrics, lost trials, reaches past a
+workspace and the judge's evidence check.
 
 The owner asked for the score on 2026-09-17, after round one's results were
 seen (#1786). It replaces §1.2's earlier "no single headline number". Like a
 check declared after a run, it describes the vector and decides nothing: no
 verdict, escalation or non-inferiority claim reads it.
 
-An executive summary precedes the table, asked for the same day after the
-table was read (#1789). Per contrast it gives the question and one word read
-off the primary dimensions and task success — No where any is worse, Yes
-where any is better and none worse, Not yet where none separated the pair —
-then the metric groups won, lost and split, the primary dimensions that
-moved, the hidden-suite pass rates naming any run under the baseline mean by
-more than §1.2's practical threshold, and the cost difference as a share of
-the baseline's. Every clause is read off a verdict or a mean below it, and
-it decides nothing either.
+A finding table precedes it, asked for the same day after the score table
+was read (#1789, distilled in #1791). One column per context file against no
+file, headed by the file's line count. Rows: whether it improves the code —
+Yes where a primary dimension or task success is better and none worse,
+Worse where any is worse, No where none is better — the primary dimensions
+that moved, the hidden-suite pass rate against the bare arm naming any run
+under it by more than §1.2's practical threshold, code size (source lines
+and files) and cost as signed shares of the bare arm's where the interval
+separated them, and one phrase from the answer and the size and cost
+verdicts. One line reads the columns together: length is not quality where
+the shorter file's answer is Yes and the longer's is not, and the other
+three pairings have their own words. Every cell is read off a verdict or a
+mean below it, and the table decides nothing either.
+
+The owner's reading of round one, 2026-09-17: the generated file is too
+long to add quality, and a short, focused one can. It agrees with
+Anthropic's guidance on context engineering, which asks for the smallest
+set of high-signal tokens:
+[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents).
 
 Report file: `docs/audits/YYYY-MM-DD-efficacy.md` with the model IDs, the
 CLI versions, the template revision, the arm B brief and its token scan,
