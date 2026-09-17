@@ -386,6 +386,12 @@ complexity, tokens, turns, wall time, cost, files, lines, artifacts nobody
 asked for, change-task churn, axe violations, HTML invalidity. Neutral,
 reported without a verdict: maintainability index, instability.
 
+The report opens with a summary generated from its own verdicts. For each
+contrast it gives the primary dimensions' verdicts and every other metric
+read better or worse, then what qualifies them: the escalation, withdrawn
+metrics, lost trials, reaches past a workspace and the judge's evidence
+check. It adds no finding the verdict vector does not hold.
+
 Report file: `docs/audits/YYYY-MM-DD-efficacy.md` with the model IDs, the
 CLI versions, the template revision, the arm B brief and its token scan,
 K, the bootstrap seed, every trial's raw numbers, every trial that failed

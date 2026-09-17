@@ -360,7 +360,9 @@ being asked.
 
 ## Reports
 
-Each run writes a dated report to `docs/audits/`, naming the model ids,
-the template revision, K, every trial's raw numbers, the judge's evidence
-check and the verdict vector. No person scores the judge: the evidence check
-is the only check on it.
+Each run writes a dated report to `docs/audits/`. It opens with a summary
+generated from its own verdicts: per contrast, the primary dimensions and
+every other metric read better or worse, then what qualifies them. It goes on
+to name the model ids, the template revision, K, every trial's raw numbers,
+the judge's evidence check and the verdict vector. No person scores the
+judge: the evidence check is the only check on it.
