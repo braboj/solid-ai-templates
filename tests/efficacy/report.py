@@ -697,9 +697,9 @@ def reaches(root):
     return scans
 
 
-def reach_section(root):
+def reach_section(root, scans=None):
     """The report's lines naming every trial that reached past its own
-    workspace."""
+    workspace, from `scans` where the caller has already taken them."""
     lines = ["## Trials that reached past their own workspace",
              "",
              "The shell keeps its network and the file system is not fenced, "
@@ -708,7 +708,7 @@ def reach_section(root):
              "or transcript. Every transcript is scanned for a tool call "
              "naming any of them.",
              ""]
-    scans = reaches(root)
+    scans = reaches(root) if scans is None else scans
     flagged = [scan for scan in scans if scan["hits"]]
     if flagged:
         lines.append("| Trial | Tool | Names | Call |")
@@ -827,6 +827,12 @@ def write_report(root, trials, table, results, seed, escalation,
                  "repeats rather than footnotes." % k)
     lines.append("")
 
+    lost = lost_trials(root)
+    scans = reaches(root)
+    lines.extend(summary_section(trials, results, escalation, withdrawn or {},
+                                 lost, scans))
+    lines.append("")
+
     lines.append("## What produced these numbers")
     lines.append("")
     lines.append("| | |")
@@ -935,7 +941,6 @@ def write_report(root, trials, table, results, seed, escalation,
 
     lines.append("## Trials lost to the provider or the harness")
     lines.append("")
-    lost = lost_trials(root)
     if not lost:
         lines.append("None: no trial was voided.")
     else:
@@ -955,7 +960,7 @@ def write_report(root, trials, table, results, seed, escalation,
                             entry["rerun"] or "not re-run"))
     lines.append("")
 
-    lines.extend(reach_section(root))
+    lines.extend(reach_section(root, scans))
     lines.append("")
 
     lines.append("## The judge, and how it is checked")
@@ -1032,7 +1037,11 @@ def wrap_prose(lines, width):
         if len(line) <= width or line.startswith(("|", "#")):
             wrapped.append(line)
             continue
-        wrapped.extend(textwrap.wrap(line, width, break_long_words=False,
+
+        # A list item's continuation is indented, so it stays in the item.
+        indent = "  " if line.startswith("- ") else ""
+        wrapped.extend(textwrap.wrap(line, width, subsequent_indent=indent,
+                                     break_long_words=False,
                                      break_on_hyphens=False))
     return wrapped
 
@@ -1051,6 +1060,111 @@ def posthoc_section(table, results):
                                 [key for key, _, _, _ in POSTHOC],
                                 verdicts=False))
     return lines
+
+
+# What each contrast asks, in the words of the design's section 6.
+QUESTIONS = {
+    "B-A": "do the templates beat no context file at all",
+    "C-A": "does any context file beat none",
+    "B-C": "do the generated templates beat forty hand-written lines",
+}
+
+# The verdicts a finding is made of. Every other verdict is counted beside
+# them and never listed as a finding.
+FINDINGS = ("better", "worse")
+COUNTED = ("no improvement shown", "reported without a verdict", "withdrawn",
+           "not computed")
+
+
+def spoken(names):
+    """Names as a sentence lists them: a, b and c."""
+    return names[0] if len(names) == 1 else "%s and %s" % (
+        ", ".join(names[:-1]), names[-1])
+
+
+def summary_section(trials, results, escalation, withdrawn, lost, scans):
+    """The report's opening findings, each read off a verdict below it."""
+    labels = {key: label for key, label, _, _ in METRICS}
+    others = [key for key, _, _, _ in METRICS if key not in PRIMARY]
+    lines = ["## Summary",
+             "",
+             "Arm A has no context file, arm B the one the templates generate, "
+             "and arm C forty hand-written lines. Every finding here is a "
+             "verdict from the tables below, read against the direction "
+             "declared before the run.",
+             ""]
+    for treatment, baseline in CONTRASTS:
+        name = "%s-%s" % (treatment, baseline)
+        verdicts = {key: results[key][name]["verdict"]
+                    for key, _, _, _ in METRICS}
+        primary = {}
+        for key in PRIMARY:
+            primary.setdefault(verdicts[key], []).append(
+                key.replace("judge_", ""))
+        lines.extend(["### %s − %s: %s?" % (treatment, baseline,
+                                            QUESTIONS[name]), ""])
+        lines.append("- Primary dimensions: %s."
+                     % "; ".join("%s on %s" % (verdict, spoken(names))
+                                 for verdict, names in primary.items()))
+        for finding in FINDINGS:
+            keys = [key for key in others if verdicts[key] == finding]
+            lines.append("- Other metrics %s on %d: %s."
+                         % (finding, len(keys),
+                            "; ".join(labels[key] for key in keys)
+                            if keys else "none"))
+        counts = [(sum(1 for key in others if verdicts[key] == verdict),
+                   verdict) for verdict in COUNTED]
+        lines.append("- The rest: %s."
+                     % ", ".join("%d %s" % pair for pair in counts if pair[0]))
+        lines.append("")
+
+    judged = [trial["judge"] for trial in trials.values() if trial["judge"]]
+    shares = [path(judging, "evidence", "share") for judging in judged]
+    shares = [share for share in shares if share is not None]
+    reached = []
+    for scan in scans:
+        if scan["hits"] and scan["name"] not in reached:
+            reached.append(scan["name"])
+    unscanned = [scan["name"] for scan in scans if scan["hits"] is None]
+
+    lines.extend(["### What qualifies these findings", ""])
+    lines.append("- Trials: %d scored, %d of them judged."
+                 % (len(trials), len(judged)))
+    lines.append("- Escalation to K = %d: %s."
+                 % (K_CEILING, escalation_phrase(escalation)))
+    lines.append("- Withdrawn: %s."
+                 % ("; ".join(labels.get(key, key) for key in sorted(withdrawn))
+                    or "none"))
+    lines.append("- Trials lost and re-run: %s."
+                 % ("; ".join("%s, re-run %s" % (entry["name"],
+                                                 entry["rerun"] or "never")
+                              for entry in lost) or "none"))
+    lines.append("- Reached past their own workspace: %s.%s"
+                 % ("; ".join(reached) or "none",
+                    " Not scanned, having no transcript: %s."
+                    % "; ".join(unscanned) if unscanned else ""))
+    lines.append("- Judge evidence: %s."
+                 % ("the lowest share of quoted lines found in the tree is "
+                    "%.0f %%, over %d judged trials"
+                    % (100 * min(shares), len(shares)) if shares
+                    else "no trial was judged"))
+    return lines
+
+
+def escalation_phrase(escalation):
+    """The escalation's state, as the summary states it."""
+    state, owed, k = escalation["state"], escalation["owed"], escalation["k"]
+    if state == "not assessed":
+        return "not assessed, the run holding K = %d" % k
+    if state == "assessed":
+        return ("owed and not yet run" if owed
+                else "not owed, so K stays %d" % K_PRIMARY)
+    if not owed:
+        return ("run to K = %d without a trigger, so only the K = %d vector "
+                "counts" % (k, K_PRIMARY))
+    if state == "part-escalated":
+        return "owed and part-run, at K = %d" % k
+    return "owed and run to K = %d" % K_CEILING
 
 
 def withdrawn_section(withdrawn):
@@ -1587,12 +1701,37 @@ def withdrawal_checks(seed):
          sorted(spared)),
     ]
 
+    summary = summary_of(text)
+    checks.extend([
+        ("the summary opens the report",
+         0 <= text.find("## Summary") < text.find("## What produced"), None),
+        ("its findings are the verdicts, the withdrawn metric not among them",
+         summary.count("Other metrics better on 1: Change task, lines "
+                       "changed.") == 3
+         and summary.count("1 withdrawn") == 3, summary[:160]),
+        ("it names the withdrawal among the qualifications",
+         "Withdrawn: %s." % label in summary, None),
+    ])
+
     _, _, text = rendered(other, seed, spared)
     kept = section_rows(text, "## Verdict vector", label)
     checks.append(("that run's row keeps its verdict",
                    kept == ["| %s | better | better | better |" % label]
                    and "## Withdrawn measurements" not in text, kept))
+    summary = summary_of(text)
+    checks.append(("that run's summary finds the row better",
+                   summary.count("Other metrics better on 2: %s; Change task, "
+                                 "lines changed." % label) == 3
+                   and "Withdrawn: none." in summary, summary[:160]))
     return checks
+
+
+def summary_of(text):
+    """The report's Summary section with its wrapping undone."""
+    heading = "## Summary"
+    section = text.split(heading)[1].split("\n## ")[0] if heading in text \
+        else ""
+    return " ".join(section.split())
 
 
 def self_test(seed):
