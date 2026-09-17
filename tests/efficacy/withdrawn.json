@@ -1,0 +1,8 @@
+[
+  {
+    "metric": "change_success",
+    "suite_revision": "48f47851ed43ac0734dcb72183930ae4d86055cc",
+    "decided": "2026-09-17",
+    "reason": "The acceptance modules construct both new behaviours through class and keyword names the change prompt never gave, so a trial passed a check only where it guessed them. Every round 1 trial failed all 22 threshold checks on construction, and only B3 and C2 used a cap keyword the grader accepts."
+  }
+]
