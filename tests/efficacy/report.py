@@ -633,44 +633,6 @@ def number(value):
     return str(value)
 
 
-def judge_agreement(root, trials):
-    """Agreement between the judge and the owner's holdout, where it exists.
-
-    Reported as the share of scores the judge lands on or within one point of,
-    never as a correlation: nine non-independent points do not support a
-    coefficient.
-    """
-    sheet = os.path.join(scoring_area(root), "judge", "holdout-scores.json")
-    if not os.path.exists(sheet):
-        return {"status": "unvalidated: no holdout scores have been recorded"}
-    with io.open(sheet, encoding="utf-8") as handle:
-        human = json.load(handle)
-    exact_or_adjacent, total, disagreements = 0, 0, []
-    for blind, scores in sorted(human.items()):
-        trial = next((t for t in trials.values()
-                      if path(t, "judge", "blind_id") == blind), None)
-        if trial is None:
-            continue
-        for dimension, given in sorted(scores.items()):
-            key = "judge_%s" % dimension
-            model = judge_score(trial, dimension)
-            if model is None or given is None:
-                continue
-            total += 1
-            gap = abs(model - given)
-            if gap <= 1:
-                exact_or_adjacent += 1
-            if gap >= 2:
-                disagreements.append([blind, dimension, given, model, key])
-    if not total:
-        return {"status": "unvalidated: no holdout score matched a judging"}
-    return {"status": "validated" if not disagreements else
-            "unvalidated: the judge differs by two or more on a primary "
-            "dimension",
-            "share": round(exact_or_adjacent / total, 3),
-            "scores": total, "disagreements": disagreements}
-
-
 def generation_record():
     """Arm B's generation record, committed beside the file it produced."""
     if not os.path.exists(ARM_B_RECORD):
@@ -774,7 +736,7 @@ def lost_trials(root):
     return lost
 
 
-def write_report(root, trials, table, results, seed, agreement, escalation,
+def write_report(root, trials, table, results, seed, escalation,
                  out_dir=AUDITS, posthoc=None, withdrawn=None):
     """The report the design names, under `docs/audits/`.
 
@@ -937,7 +899,7 @@ def write_report(root, trials, table, results, seed, agreement, escalation,
     lines.extend(reach_section(root))
     lines.append("")
 
-    lines.append("## The judge, and whether anyone checked it")
+    lines.append("## The judge, and how it is checked")
     lines.append("")
     lines.append("| Trial | Blind id | Evidence lines found in the tree |")
     lines.append("|---|---|---|")
@@ -952,12 +914,9 @@ def write_report(root, trials, table, results, seed, agreement, escalation,
                         "%.0f%%" % (100 * share) if share is not None
                         else "—"))
     lines.append("")
-    lines.append("Holdout: %s" % agreement.get("status"))
-    if agreement.get("share") is not None:
-        lines.append("")
-        lines.append("The judge landed on the owner's number or within one "
-                     "point of it on %.0f%% of %d scores."
-                     % (100 * agreement["share"], agreement["scores"]))
+    lines.append("No person scores the judge. Each score it gives quotes an "
+                 "evidence line, and the share of those lines found in the "
+                 "tree they were quoted from is the only check on it.")
     lines.append("")
 
     lines.append("## Verdict vector")
@@ -1326,7 +1285,7 @@ def escalation_checks(seed):
     shutil.rmtree(scratch, ignore_errors=True)
     os.makedirs(scratch)
     target = write_report(scratch, trials, table, results, seed,
-                          {"status": "planted"}, escalation, out_dir=scratch)
+                          escalation, out_dir=scratch)
     with io.open(target, encoding="utf-8") as handle:
         text = handle.read()
     shutil.rmtree(scratch, ignore_errors=True)
@@ -1334,6 +1293,9 @@ def escalation_checks(seed):
                    "## The escalation to K = 5" in text, None))
     checks.append(("an escalated report prints both vectors",
                    "| Metric | B−A, K = 3 | B−A, K = 5 |" in text, None))
+    checks.append(("the judge is checked by its evidence, not a person",
+                   "No person scores the judge." in text
+                   and "holdout" not in text.lower(), None))
     return checks
 
 
@@ -1363,7 +1325,6 @@ def posthoc_checks(seed):
     shutil.rmtree(scratch, ignore_errors=True)
     os.makedirs(scratch)
     target = write_report(scratch, trials, table, results, seed,
-                          {"status": "planted"},
                           assess_escalation(trials, results, seed),
                           out_dir=scratch, posthoc=posthoc)
     with io.open(target, encoding="utf-8") as handle:
@@ -1416,7 +1377,6 @@ def rendered(trials, seed, withdrawn):
     shutil.rmtree(scratch, ignore_errors=True)
     os.makedirs(scratch)
     target = write_report(scratch, trials, table, results, seed,
-                          {"status": "planted"},
                           assess_escalation(trials, results, seed, withdrawn),
                           out_dir=scratch, withdrawn=withdrawn)
     with io.open(target, encoding="utf-8") as handle:
@@ -1581,19 +1541,18 @@ def main(argv):
     withdrawn = withdrawals(trials)
     withdraw(withdrawn, table, results)
     escalation = assess_escalation(trials, results, options.seed, withdrawn)
-    agreement = judge_agreement(options.root, trials)
     posthoc = None
     if any(trial["security"] for trial in trials.values()):
         posthoc_table = collect(trials, POSTHOC)
         posthoc = (posthoc_table, contrasts(posthoc_table, options.seed))
     target = write_report(options.root, trials, table, results, options.seed,
-                          agreement, escalation, options.out_dir, posthoc,
+                          escalation, options.out_dir, posthoc,
                           withdrawn)
 
     with io.open(os.path.join(scoring_area(options.root), "aggregate.json"),
                  "w", encoding="utf-8") as handle:
         json.dump({"seed": options.seed, "table": table, "results": results,
-                   "agreement": agreement, "escalation": escalation,
+                   "escalation": escalation,
                    "withdrawn": withdrawn,
                    "posthoc": {"table": posthoc[0], "results": posthoc[1]}
                    if posthoc else None},

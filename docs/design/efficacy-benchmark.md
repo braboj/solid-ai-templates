@@ -194,11 +194,9 @@ template revision to produce the comparison §9 exists for, and quietly
 admits the operator's judgement into whichever arm they touched. An
 unreproducible measurement of reproducibility would be a poor joke.
 
-One thing sits outside the loop by design: the human holdout of §5. It
-validates the judge rather than producing a metric, runs once against a
-frozen sample the harness selects, and no trial or verdict waits on it. A
-run whose holdout has not been scored reports its subjective row as
-unvalidated and completes.
+Nothing sits outside the loop, the check on the judge included: it is the
+evidence check of §5, run by the judging script, and no person scores
+anything.
 
 ## 5. Scoring — the layered judge
 
@@ -353,22 +351,16 @@ readability, maintainability. The report leads with these; task success
 and cost follow. Judged by a different vendor from the generator, blind to
 arm, order shuffled, condition markers stripped. Judge model ID recorded.
 
-### Human holdout
+### How the judge is checked
 
-The owner scores three outputs blind, one per arm, chosen by the harness.
-Scoring is on the three primary dimensions above rather than the full
-rubric: those are what the report leads with, and they are the only rows
-that rest on the model judge alone. Three outputs on three dimensions give
-nine paired scores where the full rubric would give the reader thirty
-readings and the statistic three.
+Every evidence line the judge quotes is looked up in the bundle it was
+quoted from, and the report prints the share found for each trial. A judge
+that never opened the code still returns plausible numbers, and the share
+of its evidence actually present in the tree is what tells the two apart.
 
-Agreement is reported as the share of scores where the judge lands on the
-human's number or within one point of it, not as a correlation. Nine
-non-independent points do not support a coefficient, and a threshold
-applied to one would be a statistic doing the work of a judgement. The
-share and the disagreements themselves are printed, and where the judge
-differs by two or more on any primary dimension the subjective row is
-reported as unvalidated.
+No person checks the judge. The primary dimensions rest on the model judge
+and its evidence check alone, and the report says so. §10 item 9 records
+why the human holdout was removed.
 
 ## 6. Aggregation and report
 
@@ -397,7 +389,7 @@ reported without a verdict: maintainability index, instability.
 Report file: `docs/audits/YYYY-MM-DD-efficacy.md` with the model IDs, the
 CLI versions, the template revision, the arm B brief and its token scan,
 K, the bootstrap seed, every trial's raw numbers, every trial that failed
-or was re-run and why, the judge agreement, and the verdict vector. A
+or was re-run and why, the judge's evidence check, and the verdict vector. A
 crossing interval is written as "no improvement shown", and every interval
 carries the reminder from §1.1 that at K = 3 it is descriptive.
 
@@ -574,13 +566,15 @@ section.
    is not marked wrong; a mutation control plants five specification
    violations one at a time and the suite catches five. Both live in that
    repository and neither reaches a workspace.
-9. The human holdout stays, reshaped: three outputs, three primary
-   dimensions, agreement reported as an exact-or-adjacent share rather
-   than a correlation (§5). It stays because the report leads with design,
-   readability and maintainability, and those rows come from the model
-   judge and nowhere else. A benchmark built to stop opinion passing as
-   evidence cannot rest its headline on a judge nobody checked, and §9
-   hands that same judge a say in which template trims ship.
+9. No human holdout. On 2026-09-12 the owner kept one: three outputs
+   scored blind on the three primary dimensions, with agreement reported
+   as an exact-or-adjacent share. On 2026-09-17 the owner removed it
+   (#1774). Scoring many implementations by hand cannot be sustained, and
+   a step that waits on a person breaks §4.1. The cost is stated rather
+   than hidden: the report leads with design, readability and
+   maintainability, those rows come from the model judge, and §9 gives the
+   same judge a say in which template trims ship. The judge is checked
+   only by its evidence lines (§5).
 
 ## 11. Arm B's project brief
 

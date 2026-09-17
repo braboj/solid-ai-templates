@@ -193,8 +193,7 @@ happens to hold no such pair.
 py tests/efficacy/score.py --self-test
 py tests/efficacy/score.py --root <the run root>
 py tests/efficacy/judge.py --root <the run root> --dry-run
-py tests/efficacy/judge.py --root <the run root> --holdout
-py tests/efficacy/judge.py --root <the run root> --record-holdout
+py tests/efficacy/judge.py --root <the run root>
 py tests/efficacy/judge.py --self-test
 py tests/efficacy/report.py --self-test
 py tests/efficacy/report.py --root <the run root>
@@ -298,13 +297,6 @@ blanks its values, intervals and verdicts, and lists it under "Withdrawn
 measurements" with the reason. A run graded by any other revision keeps the
 metric. The self test plants a run on each side.
 
-`--holdout` also writes `judge/holdout-sheet.md` in the scoring area, a table
-for the owner's blind scores. Once every cell holds one, `--record-holdout`
-writes the
-scores file the report reads. A blank cell, a score outside 1-5 or a bundle
-that was never judged refuses the whole sheet, and until it records the
-report calls the subjective row unvalidated.
-
 ## What is not here
 
 The hidden acceptance suite lives in the private repository
@@ -369,5 +361,6 @@ being asked.
 ## Reports
 
 Each run writes a dated report to `docs/audits/`, naming the model ids,
-the template revision, K, every trial's raw numbers, the judge agreement
-and the verdict vector.
+the template revision, K, every trial's raw numbers, the judge's evidence
+check and the verdict vector. No person scores the judge: the evidence check
+is the only check on it.
