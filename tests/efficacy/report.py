@@ -47,10 +47,16 @@ WITHDRAWN = os.path.join(HERE, "withdrawn.json")
 RESAMPLES = 10000
 CONFIDENCE = 0.95
 
-# The contrasts, each a treatment arm against a baseline, and the question
-# each answers. full - hand is the one an adopter asks: a large full - none
-# beside an equally large hand - none is not a result for the templates.
-CONTRASTS = (("full", "none"), ("hand", "none"), ("full", "hand"))
+# Every contrast the design declares, each a treatment arm against a
+# baseline: round 1's three, then round 2's four (design, section 12). A run
+# prints the contrasts whose arms it holds; the rest are computed as not
+# computed and left out of every table. full - hand is the one an adopter
+# asks: a large full - none beside an equally large hand - none is not a
+# result for the templates. short - hand holds length fixed, and
+# hybrid - full the content.
+CONTRASTS = (("full", "none"), ("short", "none"), ("hybrid", "none"),
+             ("hand", "none"), ("full", "hand"), ("short", "hand"),
+             ("hybrid", "full"))
 
 # Declared in the design before the run. "up" improves upward, "down"
 # improves downward, "neutral" is reported without a verdict.
@@ -495,10 +501,34 @@ def ordered(names):
         else len(position), index_of(name)))
 
 
-def contrast_arms():
-    """The arms any contrast names, in the arms' declared order."""
-    named = {arm for pair in CONTRASTS for arm in pair}
+def active_contrasts(trials):
+    """The declared contrasts whose both arms the run holds, in the declared
+    order."""
+    present = {arm_of(name) for name in trials}
+    return [pair for pair in CONTRASTS if set(pair) <= present]
+
+
+def contrast_arms(active):
+    """The arms the given contrasts name, in the arms' declared order."""
+    named = {arm for pair in active for arm in pair}
     return [arm for arm in ARMS if arm in named]
+
+
+def reused_arms(trials):
+    """The arms whose trials were reused from an earlier round, with how
+    many, in the arms' declared order."""
+    counts = {}
+    for name, trial in trials.items():
+        if (trial.get("scores") or {}).get("reused_from"):
+            counts[arm_of(name)] = counts.get(arm_of(name), 0) + 1
+    return [(arm, counts[arm]) for arm in ARMS if arm in counts]
+
+
+def crossing(active, reused):
+    """The contrasts pairing a reused arm with one run in this round."""
+    earlier = {arm for arm, _ in reused}
+    return [pair for pair in active
+            if len(set(pair) & earlier) == 1]
 
 
 def collect(trials, metrics=METRICS):
@@ -860,10 +890,11 @@ def write_report(root, trials, table, results, seed, escalation,
 
     lost = lost_trials(root)
     scans = reaches(root)
+    active = active_contrasts(trials)
     lines.extend(executive_section(trials, table, results))
     lines.append("")
     lines.extend(summary_section(trials, results, escalation,
-                                 withdrawn or {}, lost, scans))
+                                 withdrawn or {}, lost, scans, active))
     lines.append("")
 
     lines.append("## What produced these numbers")
@@ -915,7 +946,7 @@ def write_report(root, trials, table, results, seed, escalation,
     lines.append("The report leads with these three, owner-declared in the "
                  "design. Task success and cost follow.")
     lines.append("")
-    lines.extend(contrast_table(table, results, PRIMARY))
+    lines.extend(contrast_table(table, results, PRIMARY, active=active))
     lines.append("")
 
     lines.extend(escalation_section(escalation))
@@ -926,7 +957,7 @@ def write_report(root, trials, table, results, seed, escalation,
     lines.extend(contrast_table(table, results,
                                 ("task_success", "install", "adherence",
                                  "output_tokens", "turns", "wall_seconds",
-                                 "cost_usd")))
+                                 "cost_usd"), active=active))
     lines.append("")
 
     lines.append("## The change task")
@@ -935,7 +966,7 @@ def write_report(root, trials, table, results, seed, escalation,
                  "was not built for, read beside whether the change works and "
                  "whether the build still passes after it.")
     lines.append("")
-    lines.extend(contrast_table(table, results, CHANGE))
+    lines.extend(contrast_table(table, results, CHANGE, active=active))
     lines.append("")
 
     lines.append("## Every other metric")
@@ -944,11 +975,11 @@ def write_report(root, trials, table, results, seed, escalation,
             if key not in PRIMARY and key not in CHANGE and key not in
             ("task_success", "install", "adherence", "output_tokens", "turns",
              "wall_seconds", "cost_usd")]
-    lines.extend(contrast_table(table, results, rest))
+    lines.extend(contrast_table(table, results, rest, active=active))
     lines.append("")
 
     if posthoc:
-        lines.extend(posthoc_section(*posthoc))
+        lines.extend(posthoc_section(*posthoc, active=active))
         lines.append("")
 
     lines.append("## Raw numbers, per trial")
@@ -1035,7 +1066,7 @@ def write_report(root, trials, table, results, seed, escalation,
     # three blocks rather than in a second table a reader has to line up.
     earlier = escalation.get("results_k3")
     header = []
-    for treatment, baseline in CONTRASTS:
+    for treatment, baseline in active:
         column = "%s−%s" % (treatment, baseline)
         header.extend(["%s, K = %d" % (column, K_PRIMARY),
                        "%s, K = %d" % (column, k)] if earlier else [column])
@@ -1043,7 +1074,7 @@ def write_report(root, trials, table, results, seed, escalation,
     lines.append("|---|%s" % ("---|" * len(header)))
     for key, label, direction, _ in METRICS:
         cells = []
-        for pair in CONTRASTS:
+        for pair in active:
             name = "%s-%s" % pair
             if earlier:
                 cells.append(earlier[key][name]["verdict"])
@@ -1087,7 +1118,7 @@ def wrap_prose(lines, width):
     return wrapped
 
 
-def posthoc_section(table, results):
+def posthoc_section(table, results, active=None):
     """The report's lines on the security checks declared after the run."""
     lines = ["## Security, read with checks declared after the results",
              "",
@@ -1099,15 +1130,19 @@ def posthoc_section(table, results):
              ""]
     lines.extend(contrast_table(table, results,
                                 [key for key, _, _, _ in POSTHOC],
-                                verdicts=False))
+                                verdicts=False, active=active))
     return lines
 
 
 # How the summary names each contrast.
 COMPARISONS = {
     "full-none": "Templates' file (full) vs no context file (none)",
+    "short-none": "Templates' short file (short) vs no context file (none)",
+    "hybrid-none": "Templates' hybrid file (hybrid) vs no context file (none)",
     "hand-none": "Hand-written file (hand) vs no context file (none)",
     "full-hand": "Templates' file (full) vs hand-written file (hand)",
+    "short-hand": "Templates' short file (short) vs hand-written file (hand)",
+    "hybrid-full": "Templates' hybrid file (hybrid) vs templates' file (full)",
 }
 
 
@@ -1252,12 +1287,14 @@ def reads_cell(answered, results, name):
 
 
 def reading(answers, lengths):
-    """The two columns read together: what the longer and the shorter file
-    each did for quality."""
-    if len(answers) != 2 or "Not measured" in answers.values() \
-            or None in lengths.values():
+    """The columns read together: what the longest and the shortest measured
+    file each did for quality."""
+    measured = [arm for arm in answers
+                if answers[arm] != "Not measured" and lengths.get(arm)]
+    if len(measured) < 2:
         return NOT_MEASURED
-    longer, shorter = sorted(answers, key=lengths.get, reverse=True)
+    longer = max(measured, key=lengths.get)
+    shorter = min(measured, key=lengths.get)
     if answers[shorter] == "Yes" and answers[longer] != "Yes":
         return ("length is not quality — the long file spent the agent's "
                 "attention on conventions, the short one on the code")
@@ -1385,8 +1422,13 @@ def executive_section(trials, table, results):
     for this table the same day. Like the score, it digests the verdict
     vector and decides nothing.
     """
+    active = active_contrasts(trials)
     names = ["%s-%s" % (treatment, baseline)
-             for treatment, baseline in CONTRASTS if baseline == BARE]
+             for treatment, baseline in active if baseline == BARE]
+    if not names:
+        return ["## Executive summary", "",
+                "No file arm has a trial to read against `%s`, which has "
+                "none in this run yet." % BARE]
     arms = [name.split("-")[0] for name in names]
     lengths = {arm: context_lines(arm) for arm in arms}
     answers = {arm: answer([results[key][name]["verdict"]
@@ -1422,15 +1464,32 @@ def executive_section(trials, table, results):
         lines.append(why_line(trials, results, arm, name, answers[arm],
                               lengths[arm]))
         lines.append("")
+
+    # A column or a contrast pairing a reused trial with one run in this
+    # round crosses rounds, which the design's section 12 has the report say
+    # here rather than in a footnote.
+    reused = reused_arms(trials)
+    if reused:
+        crossed = crossing(active, reused)
+        lines.append("Reused from an earlier round: %s. %s The model is "
+                     "pinned by exact id; the day is the residual confound."
+                     % (spoken(["%s (%d trials)" % pair for pair in reused]),
+                        "Pairing them with this round's trials, across "
+                        "days: %s." % spoken(["%s − %s" % pair
+                                              for pair in crossed])
+                        if crossed else "No contrast pairs them with this "
+                        "round's trials."))
+        lines.append("")
     k = max((index_of(name) for name in trials), default=0)
     lines.append("Together: %s. K = %d, one project: a signal, not proof."
                  % (reading(answers, lengths), k))
     return lines
 
 
-def summary_section(trials, results, escalation, withdrawn, lost, scans):
+def summary_section(trials, results, escalation, withdrawn, lost, scans,
+                    active=None):
     """The report's opening table: a score, the wins and the fails per
-    contrast, each read off a verdict below it.
+    contrast the run holds, each read off a verdict below it.
 
     The score was declared after round 1's results were seen. It digests the
     verdict vector and decides nothing: no verdict, escalation or
@@ -1441,7 +1500,8 @@ def summary_section(trials, results, escalation, withdrawn, lost, scans):
              "",
              "| Comparison | Score, 1-10 | Wins | Fails |",
              "|---|---|---|---|"]
-    for treatment, baseline in CONTRASTS:
+    for treatment, baseline in (active if active is not None
+                                else active_contrasts(trials)):
         name = "%s-%s" % (treatment, baseline)
         wins = [labels[key] for key, _, _, _ in METRICS
                 if results[key][name]["verdict"] == "better"]
@@ -1478,6 +1538,10 @@ def summary_section(trials, results, escalation, withdrawn, lost, scans):
                "reached past their workspace: %s" % (spoken(reached)
                                                      if reached else "none"),
                "the judge is checked only by its evidence lines"]
+    reused = reused_arms(trials)
+    if reused:
+        caveats.insert(1, "reused from an earlier round: %s"
+                       % spoken([arm for arm, _ in reused]))
     lines.append("Caveats: %s." % "; ".join(caveats))
     return lines
 
@@ -1607,14 +1671,15 @@ def contrast_cell(contrast, verdicts=True):
     return "%s — %s" % (body, verdict_text)
 
 
-def contrast_table(table, results, keys, verdicts=True):
+def contrast_table(table, results, keys, verdicts=True, active=None):
     """One table of contrasts: every metric, each arm's mean, and every
-    comparison."""
-    arms = contrast_arms()
+    comparison the run holds."""
+    active = list(CONTRASTS if active is None else active)
+    arms = contrast_arms(active)
     lines = ["| Metric | Direction | %s | %s |"
              % (" | ".join(arms),
-                " | ".join("%s−%s" % pair for pair in CONTRASTS)),
-             "|---|---|%s|" % "|".join("---" for _ in arms + list(CONTRASTS))]
+                " | ".join("%s−%s" % pair for pair in active)),
+             "|---|---|%s|" % "|".join("---" for _ in arms + active)]
     degenerate = False
     for key in keys:
         entry = table[key]
@@ -1624,7 +1689,7 @@ def contrast_table(table, results, keys, verdicts=True):
                       if v is not None]
             means[arm] = statistics.fmean(values) if values else None
         cells = []
-        for treatment, baseline in CONTRASTS:
+        for treatment, baseline in active:
             contrast = results[key]["%s-%s" % (treatment, baseline)]
             cell = contrast_cell(contrast, verdicts)
             degenerate = degenerate or "‡" in cell
@@ -2211,7 +2276,8 @@ def executive_checks(seed):
     # own line counts.
     _, _, text = rendered(planted_change_run("any-revision"), seed, {})
     header = "| | %s |" % " | ".join(
-        "%s, %s lines" % (FILES[arm], context_lines(arm)) for arm in ("full", "hand"))
+        "%s, %s lines" % (FILES[arm], context_lines(arm))
+        for arm in ("full", "hand"))
     checks.extend([
         ("the finding table opens the report",
          0 <= text.find("## Executive summary") < text.find("## Summary"),
@@ -2229,6 +2295,46 @@ def executive_checks(seed):
                      "something a tool counts.")
          < text.find("**Hand-written file, Not measured.**")
          < text.find("Together:"), prose_of(text, "## Executive summary")),
+    ])
+
+    # A round 2 run: five arms, `full` and `hand` reused from round 1, the
+    # judge's design score constant per arm so each contrast's verdict is
+    # known. Every declared contrast is printed, one column per file arm,
+    # and the reused arms and the contrasts crossing rounds are named.
+    design = {"none": 3, "full": 3, "short": 4, "hybrid": 3, "hand": 4}
+    trials = {trial_name(arm, index): {
+        "scores": ({"reused_from": {"name": "planted"}}
+                   if arm in ("full", "hand") else {}),
+        "change": None, "security": None,
+        "judge": {"answer": {"rubric": {"design": {"score": score}}}}}
+        for arm, score in design.items() for index in range(1, K_PRIMARY + 1)}
+    _, _, text = rendered(trials, seed, {})
+    finding = prose_of(text, "## Executive summary")
+    header = "| | %s |" % " | ".join(
+        "%s, %s lines" % (FILES[arm], context_lines(arm))
+        for arm in ("full", "short", "hybrid", "hand"))
+    summary = text.split("## Summary")[1].split("\n## ")[0]
+    checks.extend([
+        ("a five-arm run prints one column per file arm",
+         header in text, header),
+        ("it prints every declared contrast",
+         all(COMPARISONS[name] in summary for name in COMPARISONS)
+         and len(section_rows(text, "## Verdict vector",
+                              "Design (SOLID and patterns), 1-5")[0]
+                 .split(" | ")) == len(CONTRASTS) + 1, summary),
+        ("the reused arms and the contrasts crossing rounds are named",
+         "Reused from an earlier round: full (3 trials) and hand (3 "
+         "trials). Pairing them with this round's trials, across days: "
+         "full − none, hand − none, short − hand and hybrid − full."
+         in finding and "reused from an earlier round: full and hand"
+         in summary_of(text), finding),
+        ("the reading sets the longest measured file against the shortest",
+         "Together: length is not quality" in finding
+         and "| Improves the code? | **No** | **Yes** | **No** | **Yes** |"
+         in text, finding),
+        ("a three-arm run prints only its own contrasts",
+         "| Metric | full−none | hand−none | full−hand |"
+         in rendered(planted_change_run("r"), seed, {})[2], None),
     ])
     return checks
 
