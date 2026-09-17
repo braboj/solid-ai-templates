@@ -8164,3 +8164,63 @@ by a consuming project.
 - A scan hit is a question to read, not a verdict. Three calls read in
   order told C3's use of the shared temp directory apart from a reach for
   another trial's work, where no rule written in advance would have
+
+## 2026-09-17 — Round 1 reported, with no human step left in it
+
+**Tool:** Claude Code (Opus 5 1M)
+
+**Key changes:**
+- The judge's bundles carried scoring's caches, whose absolute paths named
+  the trial. They are left out, and a bundle whose bytes or paths name its
+  trial is refused (#1762)
+- The judge launches through its resolved path with the prompt on stdin, and
+  refuses a CLI that reports no version (#1764)
+- All nine build trials were judged by `gpt-6-astra` at effort `high`. Every
+  quoted evidence line was found in its tree
+- Round 1 was read for security with seven checks declared after the results.
+  The report prints them without verdicts (#1766)
+- All nine change tasks completed. The first batch stopped mid-freeze on C2
+  when the disk filled. C2 was voided and re-ran in a second batch
+- The change-task acceptance pass rate is withdrawn for suite revision
+  `48f47851ed43`. Its modules build the new behaviours through names the
+  change prompt never gave, and every trial failed all 22 threshold checks on
+  construction (#1772)
+- The human holdout is removed on the owner's decision, so no step waits on a
+  person. The judge is checked only by its evidence lines (#1774)
+- The reach scan reads only transcripts written since a trial started, and a
+  sentence ending on the trial's own path no longer counts as a reach (#1771)
+- The report lists a voided trial that no run record names (#1777), and
+  wraps its prose to the declared Markdown width (#1779)
+- `docs/audits/2026-09-17-efficacy.md` is round 1's report. Design and
+  maintainability score 3 in every arm. Readability is A 3, B 3.33, C 4.
+  Hidden suite A .988, B .852, C .991
+- Change-task lines changed: A 446, B 667, C 511. B − A and B − C read worse
+
+**Pull requests merged:** 8 — #1763, #1765, #1769, #1773, #1775, #1776, #1778
+and #1780.
+
+**Issues closed:** #1762, #1764, #1766, #1771, #1772, #1774, #1777 and #1779. The
+spike #1184 stays open: round 1 is reported, and the epic #1767 and round 2 are
+not started.
+
+**Issues filed:** #1762, #1764, #1766, #1767, #1768, #1770, #1771, #1772, #1774, #1777
+and #1779.
+
+**ADRs:** none owed. The benchmark's tooling and protocol are not observable
+by a consuming project.
+
+**Gaps flagged:**
+- Round 1 has no change-task acceptance measure. Round 2's change prompt
+  must name the API its acceptance modules drive, tracked on #1767
+- The primary dimensions rest on the model judge, checked only by its
+  evidence lines
+- #1768 and #1770 stay open at P3
+
+**Lessons:**
+- Nine trials failing the same 22 checks with the same message described
+  the grader, not the arms. A uniform result is read against the grader
+  before it is read as a finding
+- A run killed mid-trial writes no record of that trial. A report that
+  derives losses from records alone then states that nothing was lost
+- A voided attempt and its re-run share one transcript folder, because the
+  CLI keys the folder by working directory
