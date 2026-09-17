@@ -8268,3 +8268,64 @@ project.
   number is allowed to decide
 - Every summary form was generated from the verdicts, so each change was a
   regeneration and never a hand edit to the committed report
+
+## 2026-09-17 — Round 1's summary, from a score to a finding in words
+
+**Tool:** Claude Code (Fable 5.1 1M)
+
+**Key changes:**
+- The report opens with an executive summary generated from the verdicts.
+  The first form answered each contrast's question in one word and named
+  the metric groups won, lost and split (#1789). The owner wanted it read
+  as a conclusion, in table form: one column per context file against no
+  file, headed by the file's line count, with whether it improves the code,
+  the primary dimensions that moved, hidden tests passed, size, cost and a
+  one-phrase reading, and a line reading the columns together (#1791)
+- The score table's Wins and Fails cells are counts; the vector names the
+  metrics. A moved dimension prints its change alone, `readability +1`
+  (#1793)
+- One line per file says why it scored so. The first form repeated the rows
+  as counts (#1796); the owner asked for the qualitative reading, so each
+  sentence now stands on a record or verdict below with the numbers left in
+  the table: a clean install that could not boot, structure built beyond
+  the task, what the judge read, wins only a tool counts, patterns missed
+  (#1798)
+- Round 1 reads: the 406-line generated file, No — one run declared its
+  dependencies so a clean install could not boot, it built more than the
+  task asked for, and the judge saw none of it as better; the 39-line
+  hand-written file, Yes. Together: length is not quality
+- Design §6 records the table, the answer and reading rules, and the
+  owner's reading against Anthropic's context-engineering guidance
+- The owner asked whether arm B's file is the hybrid model pyomb runs. It
+  is inline: the brief chose no model, and the harness copies only
+  `SPEC.md` and `CLAUDE.md` into the workspace, so a hybrid file's
+  referenced templates would not exist for the agent. Round 1 says nothing
+  about the hybrid model
+- Round 2 is planned as epic #1795: file length and context model, arms
+  named by word — `none` (re-run), `full` (reuse), `short` (≤40 generated),
+  `hybrid` (submodule vendored), `hand` (reuse) — trials `<arm>-<block>`,
+  contrasts short − none, hybrid − none, short − hand, hybrid − full, about
+  $90. #1767's specification extension is re-sequenced to round 3
+
+**Pull requests merged:** 5 — #1790, #1792, #1794, #1797 and #1799.
+
+**Issues closed:** #1789, #1791, #1793, #1796 and #1798.
+
+**Issues filed:** #1789, #1791, #1793, #1795, #1796 and #1798.
+
+**ADRs:** none owed. The report's opening and the arm names are the
+repository's own tooling.
+
+**Gaps flagged:**
+- The judge is blind to the arm by construction and by record (`CLAUDE.md`
+  removed, markers masked, zero leaks in nine bundles), but not to the
+  code's own style: a templated docstring or error hierarchy stays
+  recognisable. Design §5 names it
+- The P3 bugs #1768 and #1770 stay open
+
+**Lessons:**
+- Every form of the opening was generated from the verdicts, so a reader's
+  request for a conclusion in words became a set of sentences each
+  conditioned on a verdict, never a hand edit to the committed report
+- Round 1 compared a long generated file with a short hand-written one, so
+  it cannot separate generated from long. The next round holds length fixed
