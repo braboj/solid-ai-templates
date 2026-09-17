@@ -400,6 +400,16 @@ seen (#1786). It replaces §1.2's earlier "no single headline number". Like a
 check declared after a run, it describes the vector and decides nothing: no
 verdict, escalation or non-inferiority claim reads it.
 
+An executive summary precedes the table, asked for the same day after the
+table was read (#1789). Per contrast it gives the question and one word read
+off the primary dimensions and task success — No where any is worse, Yes
+where any is better and none worse, Not yet where none separated the pair —
+then the metric groups won, lost and split, the primary dimensions that
+moved, the hidden-suite pass rates naming any run under the baseline mean by
+more than §1.2's practical threshold, and the cost difference as a share of
+the baseline's. Every clause is read off a verdict or a mean below it, and
+it decides nothing either.
+
 Report file: `docs/audits/YYYY-MM-DD-efficacy.md` with the model IDs, the
 CLI versions, the template revision, the arm B brief and its token scan,
 K, the bootstrap seed, every trial's raw numbers, every trial that failed
