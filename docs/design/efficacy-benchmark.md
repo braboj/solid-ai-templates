@@ -1,7 +1,9 @@
 # Efficacy benchmark — does a generated context file improve the result?
 
-**Status:** design, pre-registered; no trial has run.
-**Date:** 2026-09-12
+**Status:** round 1 run and reported, 2026-09-17
+(`docs/audits/2026-09-17-efficacy.md`); round 2 pre-registered in §12, and
+no round 2 trial has run.
+**Date:** 2026-09-12; §12 added 2026-09-17
 **Owning issue:** #1184, applying the generic method in
 `Imbra-Ltd/imbra-explore`, `cross-cutting/SPIKE-TESTING-AI-ASSETS.md`.
 **Artifacts to follow:** the spec and runner under `tests/efficacy/`; the
@@ -134,6 +136,9 @@ they stay out of the spec.
 
 Arm C is the one that can hurt and the one an adopter will ask about;
 running it is recommended.
+
+These are round 1's arms. Round 2 names every arm by a word, reuses B and C
+as `full` and `hand`, and adds two; see §12.
 
 ## 4. Protocol
 
@@ -377,7 +382,7 @@ interval and verdict §1.1 fixes.
 B − C is the one an adopter actually asks and the first draft omitted it,
 reporting only each arm against the control. A large B − A beside an
 equally large C − A is not a result for the templates, and only B − C
-separates them.
+separates them. Round 2's contrasts are in §12.
 
 **Metric direction, declared before the run.** Improving upward: task
 success, adherence, coverage, docstring coverage, mutation score,
@@ -690,5 +695,99 @@ requirement tokens, and a hit refuses the run rather than warning. The
 token list is drawn when the brief is pinned, which is now, because
 drawing it after seeing the generated file is the drift §10 item 8 exists
 to prevent.
+
+## 12. Round 2 — file length and the context model
+
+Pre-registered 2026-09-17, after round 1's report and before any round 2
+trial; decided with the owner under #1795.
+
+Round 1 compared a 406-line generated inline file with a 39-line
+hand-written one, so it could not tell *generated* from *long*, and it ran
+no hybrid file, which is the model the owner's own projects use. Round 2
+holds length fixed and adds the hybrid model. The question, the verdict
+rule, the margins, the metrics and their directions are §1 and §6's,
+unchanged.
+
+### Arms
+
+Arms are named by word, and a trial is `<arm>-<block>`: `full-1` is arm
+`full`'s trial in block 1, paired with `none-1` under §1.1. Round 1's
+letters map A → `none`, B → `full`, C → `hand`. Its run root and scoring
+area keep the letters on disk, and every reader turns them into the words,
+so nothing round 1 froze is rewritten.
+
+| Arm | Workspace at start | Lines | Trials |
+|---|---|---|---|
+| `none` | `SPEC.md`, empty git repo — the bare agent | — | 3, run again in round 2's blocks |
+| `full` | `none` + the file generated through the interview at `v2.90.0`, inline, as round 1's arm B | 406 | none: round 1's B₁ B₂ B₃ are reused |
+| `short` | `none` + a file generated through the same interview, brief and release, under a 40-line budget | ≤ 40 | 3 |
+| `hybrid` | `none` + a file generated through the interview's hybrid model, with the templates vendored into the workspace under `docs/solid-ai-templates/` at `v2.90.0` | about 100, plus the list of template files to read | 3 |
+| `hand` | `none` + round 1's hand-written file, as arm C | 39 | none: round 1's C₁ C₂ C₃ are reused |
+
+**The length rule.** A file's length is its count of newline-terminated
+lines, the figure the finding table prints beside each column. `short`'s
+file MUST be at most 40 lines, none longer than 88 characters — the width
+the templates keep for their own documents, so that a line cannot carry a
+paragraph. It is generated as §11 generates `full`'s — one non-interactive
+invocation, the same brief, the same release, its record committed beside
+it — with the budget stated in the instruction, and the generator refuses a
+result over either bound rather than trimming it, because a trim by hand
+would put a person's judgement into the arm. `hybrid`'s inline part carries
+no budget; the interview's hybrid model fixes what it inlines and what it
+refers to, and its length is reported. `short` and `hand` then sit within a
+line of each other, which is what makes short − hand a comparison of
+content at a fixed length.
+
+Same spec, generator (`claude-sonnet-5` at effort `high`), judge
+(`gpt-6-astra` at effort `high`), hidden-suite revision (`48f4785`), bounds
+and isolation as round 1. K = 3, escalating once under §1.1's rule. Nine
+build trials, about $90 at round 1's cost per trial.
+
+**What the reach scan reads for `hybrid`.** §7's control flags a tool call
+naming the templates repository. `hybrid`'s workspace carries the templates
+by design, under its own `docs/solid-ai-templates/`, so a call naming that
+tree is the arm reading its own file and is not a reach; the scan reads the
+vendored tree as part of the workspace. A call naming the repository's URL,
+the hidden suite, the scoring area or any other entry of the run root is
+flagged as before. The leak scan that guards the judge reads the vendored
+tree too, since a bundle carrying it would name the arm; the tree is
+stripped from the bundle with the context file.
+
+### Contrasts
+
+| Contrast | The question it answers |
+|---|---|
+| short − none | does a short generated file help |
+| hybrid − none | does the model the owner's projects run help |
+| short − hand | can the templates pick the right forty lines, length held fixed |
+| hybrid − full | does the hybrid model beat the same content inline |
+
+**Reading rule, fixed now.** short ≈ hand — short − hand shows no
+improvement and every quality metric is non-inferior by §1.2 — means the
+templates' content is sound and the interview over-emits. short worse than
+hand on a primary dimension means the content is the defect. The finding
+table (§6) takes one column per file arm against `none`, so full − none
+and hand − none are printed again, each pairing a round 1 trial with round
+2's `none`.
+
+**What crosses rounds, stated.** §1.1's pairing rests on the arms within a
+block meeting the same model on the same day. short − none and
+hybrid − none hold that: both arms run in round 2's blocks. short − hand
+and hybrid − full pair a round 2 trial with one round 1 ran on 2026-09-15
+or 16, and so do the finding table's `full` and `hand` columns. The model
+is pinned by exact ID, so the day is the residual confound; the report
+states it beside those rows rather than in a footnote.
+
+**What is not run.** The change task is not part of round 2. Its
+acceptance grader was withdrawn (§6) and its corrected prompt is
+pre-registered for round 3 (#1767), so every change-task row reads not
+computed for this round's contrasts; round 1's change-task churn stands in
+round 1's report. Security is read after the run as in round 1 (§6,
+"Checks declared after a run"), and decides nothing.
+
+Round 3 (#1767) extends the specification with security and data
+protection as primary dimensions and runs on this round's winning arm
+against `none`. Which arm that is gets read off this round's finding table
+and fixed in #1767 before round 3's first trial.
 
 The brief and the scan's result are committed beside the report.
