@@ -30,8 +30,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
 from generate_arm_b import RECORD as ARM_B_RECORD  # noqa: E402
-from harness import (K_CEILING, K_PRIMARY, SCORABLE,  # noqa: E402
-                     reach, read_transcripts, scoring_area)
+from harness import (ARMS, ARMS_DIR, K_CEILING, K_PRIMARY,  # noqa: E402
+                     SCORABLE, reach, read_transcripts, scoring_area)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 AUDITS = os.path.join(lib.ROOT, "docs", "audits")
@@ -1086,79 +1086,42 @@ def score(wins, fails):
     return round(1 + 9 * wins / (wins + fails), 1)
 
 
-# The metric groups the executive summary names, in the order it names them.
-# The primary dimensions, task success and the install check are outside
-# every group because each gets its own clause; a neutral metric carries no
-# verdict and belongs nowhere.
-GROUPS = (
-    ("rule-following", ("adherence",)),
-    ("static checks", ("ruff_per_kloc", "ruff_total", "unformatted",
-                       "unformatted_per_kloc", "mypy_errors", "mypy_per_kloc",
-                       "bandit_serious", "bandit_per_kloc", "complexity_max",
-                       "complexity_over_15", "complexity_over_15_per_kloc",
-                       "mean_cc", "unused", "unused_per_kloc")),
-    ("design signals", ("judge_srp", "judge_ocp", "judge_lsp", "judge_isp",
-                        "judge_dip", "judge_naming", "judge_errors",
-                        "patterns_warranted", "patterns_over_engineered",
-                        "patterns_missed", "extension_points",
-                        "layering_violations", "money_in_routes",
-                        "bool_parameters", "kind_ladders", "surface_extra",
-                        "surface_missing", "mutual_imports")),
-    ("tests and docs", ("judge_tests", "coverage", "docstrings")),
-    ("web quality", ("xss_inert", "csrf_refused", "axe_violations",
-                     "html_invalid", "builder_bytes", "builder_subrequests")),
-    ("size", ("source_lines", "tracked_files", "unasked_artifacts")),
-    ("cost", ("output_tokens", "turns", "wall_seconds", "cost_usd")),
-    ("follow-up changes", CHANGE),
-)
-
-# The metrics the executive summary answers from, and the words it uses.
+# The metrics the finding table answers from, and the words it uses.
 ANSWERED = PRIMARY + ("task_success",)
 SHORT = {"judge_design": "design", "judge_readability": "readability",
          "judge_maintainability": "maintainability"}
-QUESTIONS = {
-    "B-A": ("Do the templates help?", "no context file", "the templates"),
-    "C-A": ("Does a hand-written file help?", "no context file",
-            "the hand-written file"),
-    "B-C": ("Do the templates beat the hand-written file?",
-            "the hand-written file", "the templates"),
-}
+FILES = {"B": "Templates' file", "C": "Hand-written file"}
+SIZE = (("lines", "source_lines"), ("files", "tracked_files"))
 COUNTED = ("no", "one", "two", "three", "four", "five")
+NOT_MEASURED = "not measured"
 
-# A run whose hidden-suite pass rate sits under the baseline arm's mean by
-# more than this is named in the executive summary. It is the design's
-# practical threshold for task success, section 1.2; nothing else reads it.
+# A run whose hidden-suite pass rate sits under the bare arm's mean by more
+# than this is named in the finding table. It is the design's practical
+# threshold for task success, section 1.2; nothing else reads it.
 SUITE_DIP = 0.05
+
+
+def context_lines(arm):
+    """The line count of the context file an arm's trials received, None
+    where the arm receives none."""
+    context = ARMS[arm]["context"]
+    if not context:
+        return None
+    with io.open(os.path.join(ARMS_DIR, context), encoding="utf-8") as handle:
+        return len(handle.read().splitlines())
 
 
 def answer(verdicts):
     """One word from the verdicts of the primary dimensions and task success:
-    No where any is worse, Yes where any is better and none worse, Not yet
-    where none separated the pair, Not measured where none was computed."""
+    Worse where any is worse, Yes where any is better and none worse, No
+    where none is better, Not measured where none was computed."""
     if "worse" in verdicts:
-        return "No"
+        return "Worse"
     if "better" in verdicts:
         return "Yes"
     if all(verdict == "not computed" for verdict in verdicts):
         return "Not measured"
-    return "Not yet"
-
-
-def grouped(results, name):
-    """The groups won, lost and split on one contrast. A group with a better
-    and a worse metric is split; one no metric separated is left out."""
-    won, lost, split = [], [], []
-    for group, keys in GROUPS:
-        verdicts = {results[key][name]["verdict"] for key in keys
-                    if key in results}
-        better, worse = "better" in verdicts, "worse" in verdicts
-        if better and worse:
-            split.append(group)
-        elif better:
-            won.append(group)
-        elif worse:
-            lost.append(group)
-    return won, lost, split
+    return "No"
 
 
 def arm_mean(table, key, arm):
@@ -1168,86 +1131,136 @@ def arm_mean(table, key, arm):
     return statistics.fmean(values) if values else None
 
 
-def moved_clause(results, name):
-    """Which primary dimensions moved, and by how much; None where none was
-    computed."""
-    clauses = []
+def moved_cell(results, name):
+    """Which primary dimensions moved, and by how much."""
+    cells = []
     computed = False
     for key in PRIMARY:
         entry = results[key][name]
         computed = computed or entry["verdict"] != "not computed"
         if entry["verdict"] in ("better", "worse"):
-            clauses.append("%s %s (%+.1f of 5)" % (
-                SHORT[key],
-                "improved" if entry["verdict"] == "better" else "fell",
-                entry["mean"]))
+            cells.append("%s %+.1f of 5" % (SHORT[key], entry["mean"]))
     if not computed:
-        return None
-    return spoken(clauses) if clauses else (
-        "readability, design and maintainability did not move")
+        return NOT_MEASURED
+    return ", ".join(cells) if cells else "did not move"
 
 
-def suite_clause(table, name):
-    """The hidden-suite pass rates, naming any run under the baseline mean
-    by more than the practical threshold; None where an arm has none."""
+def suite_cell(table, name):
+    """The arm's hidden-suite pass rate, naming any run under the bare arm's
+    mean by more than the practical threshold."""
     treatment, baseline = name.split("-")
     left = [value for value in table["task_success"]["values"]
             .get(treatment, {}).values() if value is not None]
     right = arm_mean(table, "task_success", baseline)
     if not left or right is None:
-        return None
-    text = "hidden tests passed at %d %% against %d %%" % (
-        round(100 * statistics.fmean(left)), round(100 * right))
+        return NOT_MEASURED
+    text = "%d %%" % round(100 * statistics.fmean(left))
     dipped = [value for value in left if value < right - SUITE_DIP]
     if dipped:
-        text += ", %s of %s at %d %%" % (
+        text += ", %s run of %s at %d %%" % (
             COUNTED[len(dipped)], COUNTED[len(left)], round(100 * min(dipped)))
     return text
 
 
-def cost_clause(table, results, name):
-    """The cost difference as a share of the baseline arm's; None where an
-    arm has none."""
-    mean = results["cost_usd"][name]["mean"]
-    baseline = arm_mean(table, "cost_usd", name.split("-")[1])
-    if mean is None or not baseline:
-        return None
-    share = round(100 * mean / baseline)
-    if not share:
-        return "at the same cost"
-    return "%d %% %s" % (abs(share), "dearer" if share > 0 else "cheaper")
+def share_cell(table, results, key, name, held):
+    """A metric's paired difference as a signed share of the bare arm's mean,
+    or `held` where the interval showed no difference."""
+    entry = results[key][name]
+    baseline = arm_mean(table, key, name.split("-")[1])
+    if entry["mean"] is None or not baseline:
+        return NOT_MEASURED
+    if entry["verdict"] not in ("better", "worse"):
+        return held
+    return "%+d %%" % round(100 * entry["mean"] / baseline)
+
+
+def size_cell(table, results, name):
+    """Source lines and files as signed shares of the bare arm's, naming
+    only the ones the interval separated."""
+    parts, measured = [], False
+    for word, key in SIZE:
+        cell = share_cell(table, results, key, name, None)
+        measured = measured or cell != NOT_MEASURED
+        if cell not in (None, NOT_MEASURED):
+            parts.append("%s %s" % (word, cell))
+    if not measured:
+        return NOT_MEASURED
+    return ", ".join(parts) if parts else "no change shown"
+
+
+def reads_cell(answered, results, name):
+    """One phrase from the answer and the size and cost verdicts."""
+    if answered == "Not measured":
+        return NOT_MEASURED
+    bulk = any(results[key][name]["verdict"] == "worse" for _, key in SIZE)
+    if answered == "Yes":
+        return "quality, %s bulk" % ("with" if bulk else "no")
+    added = (["bulk"] if bulk else []) + (
+        ["cost"] if results["cost_usd"][name]["verdict"] == "worse" else [])
+    quality = "worse quality" if answered == "Worse" else "no quality"
+    return "%s, %s" % (spoken(added), quality) if added else quality
+
+
+def reading(answers, lengths):
+    """The two columns read together: what the longer and the shorter file
+    each did for quality."""
+    if len(answers) != 2 or "Not measured" in answers.values() \
+            or None in lengths.values():
+        return NOT_MEASURED
+    longer, shorter = sorted(answers, key=lengths.get, reverse=True)
+    if answers[shorter] == "Yes" and answers[longer] != "Yes":
+        return "length is not quality"
+    if answers[shorter] == "Yes":
+        return "a context file adds quality, long or short"
+    if answers[longer] == "Yes":
+        return "the long file added quality, the short one did not"
+    return "neither file added quality"
 
 
 def executive_section(trials, table, results):
-    """The report's first section: per contrast, the question, a one-word
-    answer and the effects in plain words, each read off a verdict below it.
+    """The report's first section: one column per context file against no
+    file, each cell read off a verdict or a mean below it.
 
-    The owner asked for it on 2026-09-17, after round 1's summary table.
-    Like the score, it digests the verdict vector and decides nothing.
+    The owner asked for it on 2026-09-17, after round 1's summary table, and
+    for this table the same day. Like the score, it digests the verdict
+    vector and decides nothing.
     """
-    lines = ["## Executive summary", ""]
-    for treatment, baseline in CONTRASTS:
-        name = "%s-%s" % (treatment, baseline)
-        question, against, subject = QUESTIONS[name]
-        verdicts = [results[key][name]["verdict"] for key in ANSWERED]
-        won, lost, split = grouped(results, name)
-        outcomes = ([("won on %s" % spoken(won))] if won else []) + \
-            ([("lost on %s" % spoken(lost))] if lost else []) + \
-            ([("split on %s" % spoken(split))] if split else [])
-        clauses = [
-            "Against %s %s %s" % (against, subject,
-                                  spoken(outcomes) if outcomes
-                                  else "separated on nothing"),
-            moved_clause(results, name),
-            suite_clause(table, name),
-            cost_clause(table, results, name),
-        ]
-        lines.append("**%s %s.** %s." % (
-            question, answer(verdicts),
-            "; ".join(clause for clause in clauses if clause)))
-        lines.append("")
+    names = ["%s-%s" % (treatment, baseline)
+             for treatment, baseline in CONTRASTS if baseline == "A"]
+    arms = [name.split("-")[0] for name in names]
+    lengths = {arm: context_lines(arm) for arm in arms}
+    answers = {arm: answer([results[key][name]["verdict"]
+                            for key in ANSWERED])
+               for arm, name in zip(arms, names)}
+    bare = arm_mean(table, "task_success", "A")
+    suite = "Hidden tests passed"
+    if bare is not None:
+        suite += ", against %d %% without a file" % round(100 * bare)
+    rows = [
+        ("Improves the code?",
+         ["**%s**" % answers[arm] for arm in arms]),
+        ("Readability, design, maintainability",
+         [moved_cell(results, name) for name in names]),
+        (suite, [suite_cell(table, name) for name in names]),
+        ("Code size", [size_cell(table, results, name) for name in names]),
+        ("Cost",
+         [share_cell(table, results, "cost_usd", name, "no change shown")
+          for name in names]),
+        ("Reads as",
+         [reads_cell(answers[arm], results, name)
+          for arm, name in zip(arms, names)]),
+    ]
+    lines = ["## Executive summary", "",
+             "| | %s |" % " | ".join(
+                 "%s, %s lines" % (FILES[arm], lengths[arm])
+                 for arm in arms),
+             "|---|%s|" % "|".join("---" for _ in arms)]
+    for label, cells in rows:
+        lines.append("| %s | %s |" % (label, " | ".join(cells)))
+    lines.append("")
     k = max((index_of(name) for name in trials), default=0)
-    lines.append("K = %d on one project: a signal, not proof." % k)
+    lines.append("Together: %s. K = %d, one project: a signal, not proof."
+                 % (reading(answers, lengths), k))
     return lines
 
 
@@ -1271,17 +1284,17 @@ def summary_section(trials, results, escalation, withdrawn, lost, scans):
         fails = [labels[key] for key, _, _, _ in METRICS
                  if results[key][name]["verdict"] == "worse"]
         value = score(len(wins), len(fails))
-        lines.append("| %s | %s | %s | %s |"
+        lines.append("| %s | %s | %d | %d |"
                      % (COMPARISONS[name],
                         "—" if value is None else "%.1f" % value,
-                        "; ".join(wins) or "none",
-                        "; ".join(fails) or "none"))
+                        len(wins), len(fails)))
     lines.append("")
     lines.append("The score is 1 + 9 × wins ÷ (wins + fails). A win or a fail "
                  "is a metric whose interval separated the pair in its "
                  "declared direction, each metric counting once; one showing "
-                 "no improvement counts neither way. The score digests the "
-                 "verdict vector at the end and decides nothing.")
+                 "no improvement counts neither way. The verdict vector at "
+                 "the end names them. The score digests it and decides "
+                 "nothing.")
     lines.append("")
 
     judged = [trial["judge"] for trial in trials.values() if trial["judge"]]
@@ -1861,8 +1874,7 @@ def withdrawal_checks(seed):
          0 <= text.find("## Summary") < text.find("## What produced"), None),
         ("its row scores the verdicts, the withdrawn metric not among them",
          section_rows(text, "## Summary", COMPARISONS["B-A"])
-         == ["| %s | 10.0 | Change task, lines changed | none |"
-             % COMPARISONS["B-A"]],
+         == ["| %s | 10.0 | 1 | 0 |" % COMPARISONS["B-A"]],
          section_rows(text, "## Summary", COMPARISONS["B-A"])),
         ("it names the withdrawal among the caveats",
          "withdrawn: %s;" % label in summary, None),
@@ -1876,8 +1888,7 @@ def withdrawal_checks(seed):
     summary = summary_of(text)
     row = section_rows(text, "## Summary", COMPARISONS["B-A"])
     checks.append(("that run's summary counts the row a win",
-                   row == ["| %s | 10.0 | %s; Change task, lines changed | "
-                           "none |" % (COMPARISONS["B-A"], label)]
+                   row == ["| %s | 10.0 | 2 | 0 |" % COMPARISONS["B-A"]]
                    and "withdrawn: nothing;" in summary, row))
 
     # The rule at its ends and in the middle: round 1's templates against no
@@ -1904,55 +1915,75 @@ def summary_of(text):
 
 
 def executive_checks(seed):
-    """The executive summary answers from the primary dimensions and task
-    success, groups every other verdict, and opens the report."""
+    """The finding table answers from the primary dimensions and task
+    success, reads its two columns together, and opens the report."""
     checks = []
-
-    # A metric added without a group would be missing from the summary
-    # while its verdict counted in the score below it.
-    grouped_keys = [key for _, keys in GROUPS for key in keys]
-    spoken_for = {key for key, _, direction, _ in METRICS
-                  if direction != NEUTRAL} - set(ANSWERED) - {"install"}
-    checks.append(("every verdict outside the answer is in one group",
-                   set(grouped_keys) == spoken_for
-                   and len(grouped_keys) == len(set(grouped_keys)),
-                   sorted(spoken_for ^ set(grouped_keys))))
-
     shown = "no improvement shown"
     for label, verdicts, expected in (
-            ("a worse primary answers No", ["better", "worse", shown, shown],
-             "No"),
+            ("a worse primary answers Worse",
+             ["better", "worse", shown, shown], "Worse"),
             ("a better primary and no worse answers Yes",
              ["better", shown, shown, shown], "Yes"),
-            ("nothing separated answers Not yet", [shown] * 4, "Not yet"),
+            ("nothing separated answers No", [shown] * 4, "No"),
             ("nothing computed answers Not measured",
              ["not computed"] * 4, "Not measured")):
         got = answer(verdicts)
         checks.append((label, got == expected, got))
 
-    # One group with a metric each way is split, not won or lost.
-    planted = {key: {"B-A": {"verdict": shown}} for _, keys in GROUPS
-               for key in keys}
-    planted["turns"]["B-A"]["verdict"] = "better"
-    planted["cost_usd"]["B-A"]["verdict"] = "worse"
-    planted["adherence"]["B-A"]["verdict"] = "better"
-    got = grouped(planted, "B-A")
-    checks.append(("a group won and lost is split",
-                   got == (["rule-following"], [], ["cost"]), got))
+    # The reading sets the longer file's answer beside the shorter's.
+    lengths = {"B": 400, "C": 40}
+    for label, answers, expected in (
+            ("a short Yes beside a long No reads length is not quality",
+             {"B": "No", "C": "Yes"}, "length is not quality"),
+            ("a long Yes beside a short Worse reads the long file's gain",
+             {"B": "Yes", "C": "Worse"},
+             "the long file added quality, the short one did not"),
+            ("two Yes answers read long or short",
+             {"B": "Yes", "C": "Yes"},
+             "a context file adds quality, long or short"),
+            ("two No answers read neither", {"B": "No", "C": "No"},
+             "neither file added quality"),
+            ("an unmeasured column reads not measured",
+             {"B": "Not measured", "C": "Yes"}, NOT_MEASURED)):
+        got = reading(answers, lengths)
+        checks.append((label, got == expected, got))
 
-    # The planted change run has no primary, suite or cost values, so the
-    # line is the question, Not measured, and the one group its rows fill.
+    # A No with files and cost worse names bulk and cost; a Yes with neither
+    # names only the bulk it lacks. The size cell names only the measure
+    # whose interval separated the arms, as a share of the bare arm's.
+    planted = {"source_lines": {"B-A": {"mean": 5.0, "verdict": shown},
+                                "C-A": {"mean": -1.0, "verdict": shown}},
+               "tracked_files": {"B-A": {"mean": 4.0, "verdict": "worse"},
+                                 "C-A": {"mean": 0.0, "verdict": shown}},
+               "cost_usd": {"B-A": {"verdict": "worse"},
+                            "C-A": {"verdict": "worse"}}}
+    got = (reads_cell("No", planted, "B-A"), reads_cell("Yes", planted, "C-A"))
+    checks.append(("the phrase names what the verdicts added",
+                   got == ("bulk and cost, no quality", "quality, no bulk"),
+                   got))
+    bare = {"source_lines": {"values": {"A": {1: 100.0}}},
+            "tracked_files": {"values": {"A": {1: 10.0}}}}
+    got = (size_cell(bare, planted, "B-A"), size_cell(bare, planted, "C-A"))
+    checks.append(("the size cell names the separated measure as a share",
+                   got == ("files +40 %", "no change shown"), got))
+
+    # The planted change run has no primary, suite, size or cost values, so
+    # every cell reads not measured and the columns carry the arm files'
+    # own line counts.
     _, _, text = rendered(planted_change_run("any-revision"), seed, {})
-    executive = prose_of(text, "## Executive summary")
+    header = "| | %s |" % " | ".join(
+        "%s, %s lines" % (FILES[arm], context_lines(arm)) for arm in "BC")
     checks.extend([
-        ("the executive summary opens the report",
+        ("the finding table opens the report",
          0 <= text.find("## Executive summary") < text.find("## Summary"),
          None),
-        ("it answers Not measured and names the group won",
-         "**Do the templates help? Not measured.** Against no context file "
-         "the templates won on follow-up changes." in executive, executive),
-        ("it states K", "K = %d on one project" % K_PRIMARY in executive,
-         executive),
+        ("its columns are the arm files with their line counts",
+         header in text and context_lines("B") > context_lines("C"),
+         header),
+        ("an unmeasured run answers Not measured in every cell",
+         "| Improves the code? | **Not measured** | **Not measured** |"
+         in text and "Together: not measured. K = %d," % K_PRIMARY in text,
+         prose_of(text, "## Executive summary")),
     ])
     return checks
 
