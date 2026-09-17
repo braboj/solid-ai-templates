@@ -34,6 +34,12 @@ from harness import (K_CEILING, K_PRIMARY, SCORABLE,  # noqa: E402
 HERE = os.path.dirname(os.path.abspath(__file__))
 AUDITS = os.path.join(lib.ROOT, "docs", "audits")
 
+# Metrics withdrawn after grading, each for the grader revision found to
+# measure something other than the metric. Keyed by revision rather than by
+# run, so every run that grader scored loses the metric and a corrected grader
+# does not.
+WITHDRAWN = os.path.join(HERE, "withdrawn.json")
+
 RESAMPLES = 10000
 CONFIDENCE = 0.95
 
@@ -519,6 +525,47 @@ def contrasts(table, seed):
     return results
 
 
+def withdrawals(trials, path=WITHDRAWN):
+    """Each withdrawn metric whose grader revision scored any of these trials.
+
+    One trial graded by the withdrawn revision withdraws the metric for the
+    run, because the contrasts pair trials and a pair measured by two graders
+    compares the graders.
+    """
+    if not os.path.exists(path):
+        return {}
+    with io.open(path, encoding="utf-8") as handle:
+        records = json.load(handle)
+    withdrawn = {}
+    for record in records:
+        part = "change" if record["metric"] in CHANGE else "scores"
+        graded = {(trial.get(part) or {}).get("suite_revision")
+                  for trial in trials.values()}
+        if record["suite_revision"] in graded:
+            withdrawn[record["metric"]] = record
+    return withdrawn
+
+
+def withdraw(withdrawn, table, *result_sets):
+    """Blank each withdrawn metric's values, intervals and verdicts in place."""
+    for key in withdrawn:
+
+        # A number left in the raw table still reads as a result, so the
+        # values go as well as the verdict.
+        if key in table:
+            table[key]["values"] = {arm: dict.fromkeys(row) for arm, row
+                                    in table[key]["values"].items()}
+        for results in result_sets:
+            if key in results:
+                results[key] = {"%s-%s" % pair: {
+                    "pairs": [], "mean": None,
+                    "interval": {"low": None, "high": None,
+                                 "method": "withdrawn, see Withdrawn "
+                                           "measurements"},
+                    "verdict": "withdrawn", "non_inferior": None}
+                    for pair in CONTRASTS}
+
+
 def escalation_triggers(results):
     """The rows that owe the escalation to K = 5, in one set of contrasts.
 
@@ -547,12 +594,13 @@ def escalation_triggers(results):
     return triggers
 
 
-def assess_escalation(trials, results, seed):
+def assess_escalation(trials, results, seed, withdrawn=None):
     """Whether the escalation to K = 5 is owed, and whether it was run.
 
     A run past K = 3 is judged on its first three blocks alone, because that is
     the vector which had to owe the escalation. Their contrasts are kept, so
-    the report prints the K = 3 vector beside the K = 5 one.
+    the report prints the K = 3 vector beside the K = 5 one, with `withdrawn`
+    blanked from them as it is from `results`.
     """
     k = max((index_of(name) for name in trials), default=0)
     if k < K_PRIMARY:
@@ -564,6 +612,7 @@ def assess_escalation(trials, results, seed):
     first = {name: trial for name, trial in trials.items()
              if index_of(name) <= K_PRIMARY}
     earlier = contrasts(collect(first), seed)
+    withdraw(withdrawn or {}, {}, earlier)
     triggers = escalation_triggers(earlier)
     return {"k": k,
             "state": "escalated" if k == K_CEILING else "part-escalated",
@@ -726,14 +775,15 @@ def lost_trials(root):
 
 
 def write_report(root, trials, table, results, seed, agreement, escalation,
-                 out_dir=AUDITS, posthoc=None):
+                 out_dir=AUDITS, posthoc=None, withdrawn=None):
     """The report the design names, under `docs/audits/`.
 
     The directory is an argument so a shakedown of the writer can render into
     a scratch directory. A fabricated run must not be able to leave a file
     among the real audits, where its date alone would read as a result.
     `posthoc` is the table and contrasts of the checks declared after the
-    run, printed in their own section and nowhere else.
+    run, printed in their own section and nowhere else. `withdrawn` maps each
+    withdrawn metric to its record, already blanked from `table` and `results`.
     """
     names = sorted(trials)
     arms = sorted({arm_of(name) for name in names})
@@ -787,6 +837,10 @@ def write_report(root, trials, table, results, seed, agreement, escalation,
     else:
         lines.append("| Arm B's file | no generation record beside it |")
     lines.append("")
+
+    if withdrawn:
+        lines.extend(withdrawn_section(withdrawn))
+        lines.append("")
 
     lines.append("## Primary dimensions")
     lines.append("")
@@ -954,6 +1008,26 @@ def posthoc_section(table, results):
     lines.extend(contrast_table(table, results,
                                 [key for key, _, _, _ in POSTHOC],
                                 verdicts=False))
+    return lines
+
+
+def withdrawn_section(withdrawn):
+    """The report's lines on each metric withdrawn from this run, and why."""
+    labels = {key: label for key, label, _, _ in METRICS}
+    lines = ["## Withdrawn measurements",
+             "",
+             "Each metric below was found, after grading, to measure something "
+             "other than what it names on the grader revision given. It prints "
+             "no number, interval or verdict anywhere in this report.",
+             "",
+             "| Metric | Grader revision | Decided | Why |",
+             "|---|---|---|---|"]
+    for key, record in sorted(withdrawn.items()):
+        lines.append("| %s | `%s` | %s | %s |"
+                     % (labels.get(key, key), record["suite_revision"][:12],
+                        record.get("decided") or "—",
+                        " ".join((record.get("reason") or "—").split())
+                        .replace("|", "/")))
     return lines
 
 
@@ -1313,9 +1387,118 @@ def posthoc_checks(seed):
     return checks
 
 
+def planted_change_run(revision):
+    """K = 3 change tasks graded at `revision`, arm B ahead on every row."""
+    rates = {"A": 0.25, "B": 0.75, "C": 0.5}
+    lines = {"A": 300, "B": 200, "C": 250}
+
+    def change(arm, index):
+        return {"suite_revision": revision,
+                "change_suite": {"value": rates[arm] + index / 100.0,
+                                 "missing": None},
+                "churn": {"value": {"files": 10, "lines": lines[arm] - index},
+                          "missing": None}}
+
+    return {"%s%d" % (arm, index): {"scores": {}, "judge": None,
+                                    "security": None,
+                                    "change": change(arm, index)}
+            for arm in rates for index in range(1, K_PRIMARY + 1)}
+
+
+def rendered(trials, seed, withdrawn):
+    """The report a planted run renders, withdrawn metrics blanked first."""
+    table = collect(trials)
+    results = contrasts(table, seed)
+    before = results["change_success"]["B-A"]["verdict"]
+    withdraw(withdrawn, table, results)
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-report-withdrawal-render")
+    shutil.rmtree(scratch, ignore_errors=True)
+    os.makedirs(scratch)
+    target = write_report(scratch, trials, table, results, seed,
+                          {"status": "planted"},
+                          assess_escalation(trials, results, seed, withdrawn),
+                          out_dir=scratch, withdrawn=withdrawn)
+    with io.open(target, encoding="utf-8") as handle:
+        text = handle.read()
+    shutil.rmtree(scratch, ignore_errors=True)
+    return before, table, text
+
+
+def section_rows(text, heading, label):
+    """The rows of one report section that start with a metric's label."""
+    section = text.split(heading)[1].split("\n## ")[0] if heading in text \
+        else ""
+    return [line for line in section.splitlines()
+            if line.startswith("| %s |" % label)]
+
+
+def withdrawal_checks(seed):
+    """A withdrawn metric prints only its withdrawal, and only on runs graded
+    by the revision it was withdrawn for."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-report-withdrawal-self-test")
+    shutil.rmtree(scratch, ignore_errors=True)
+    os.makedirs(scratch)
+    record = os.path.join(scratch, "withdrawn.json")
+    with io.open(record, "w", encoding="utf-8") as handle:
+        json.dump([{"metric": "change_success",
+                    "suite_revision": "planted-revision",
+                    "decided": "2026-09-17", "reason": "planted reason"}],
+                  handle)
+
+    graded = planted_change_run("planted-revision")
+    withdrawn = withdrawals(graded, record)
+    other = planted_change_run("other-revision")
+    spared = withdrawals(other, record)
+    shutil.rmtree(scratch, ignore_errors=True)
+
+    label = "Change task, acceptance pass rate"
+    before, table, text = rendered(graded, seed, withdrawn)
+    values = [value for row in table["change_success"]["values"].values()
+              for value in row.values()]
+    change = section_rows(text, "## The change task", label)
+    raw = section_rows(text, "## Raw numbers, per trial", label)
+    vector = section_rows(text, "## Verdict vector", label)
+    listed = section_rows(text, "## Withdrawn measurements", label)
+    churn = section_rows(text, "## The change task",
+                         "Change task, lines changed")
+
+    checks = [
+        ("a record on the grading revision is read",
+         sorted(withdrawn) == ["change_success"], sorted(withdrawn)),
+        ("the planted row read better before withdrawal", before == "better",
+         before),
+        ("withdrawal blanks every value of the row",
+         len(values) == 3 * K_PRIMARY
+         and all(value is None for value in values), values),
+        ("its change-task row prints no number or verdict",
+         len(change) == 1 and "withdrawn" in change[0] and not any(
+             word in change[0] for word in ("0.", "better", "worse")), change),
+        ("its raw row prints no value",
+         len(raw) == 1 and not any(char.isdigit() for char in raw[0]), raw),
+        ("its verdict vector row reads withdrawn",
+         vector == ["| %s | withdrawn | withdrawn | withdrawn |" % label],
+         vector),
+        ("the withdrawal section names it and why",
+         len(listed) == 1 and "planted reason" in listed[0], listed),
+        ("a metric not withdrawn keeps its verdict",
+         len(churn) == 1 and "better" in churn[0], churn),
+        ("a run graded by another revision withdraws nothing", spared == {},
+         sorted(spared)),
+    ]
+
+    _, _, text = rendered(other, seed, spared)
+    kept = section_rows(text, "## Verdict vector", label)
+    checks.append(("that run's row keeps its verdict",
+                   kept == ["| %s | better | better | better |" % label]
+                   and "## Withdrawn measurements" not in text, kept))
+    return checks
+
+
 def self_test(seed):
-    """Check the verdict rule, the relative margin, the escalation rule and
-    the reach section."""
+    """Check the verdict rule, the relative margin, the escalation rule, the
+    withdrawal of a metric and the reach section."""
     checks = []
     for label, differences, direction, expected in WORKED:
         interval = bca_interval(list(differences), seed)
@@ -1360,6 +1543,7 @@ def self_test(seed):
     checks.append(("a nested count is taken per KLOC", got == 2.0, got))
     checks.extend(escalation_checks(seed))
     checks.extend(posthoc_checks(seed))
+    checks.extend(withdrawal_checks(seed))
     checks.extend((label, ok, ok) for label, ok in reach_checks())
     checks.extend((label, ok, ok) for label, ok in rescan_checks())
     for label, ok, got in checks:
@@ -1394,19 +1578,23 @@ def main(argv):
         return 2
     table = collect(trials)
     results = contrasts(table, options.seed)
-    escalation = assess_escalation(trials, results, options.seed)
+    withdrawn = withdrawals(trials)
+    withdraw(withdrawn, table, results)
+    escalation = assess_escalation(trials, results, options.seed, withdrawn)
     agreement = judge_agreement(options.root, trials)
     posthoc = None
     if any(trial["security"] for trial in trials.values()):
         posthoc_table = collect(trials, POSTHOC)
         posthoc = (posthoc_table, contrasts(posthoc_table, options.seed))
     target = write_report(options.root, trials, table, results, options.seed,
-                          agreement, escalation, options.out_dir, posthoc)
+                          agreement, escalation, options.out_dir, posthoc,
+                          withdrawn)
 
     with io.open(os.path.join(scoring_area(options.root), "aggregate.json"),
                  "w", encoding="utf-8") as handle:
         json.dump({"seed": options.seed, "table": table, "results": results,
                    "agreement": agreement, "escalation": escalation,
+                   "withdrawn": withdrawn,
                    "posthoc": {"table": posthoc[0], "results": posthoc[1]}
                    if posthoc else None},
                   handle, indent=2, sort_keys=True)

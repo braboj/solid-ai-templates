@@ -292,6 +292,12 @@ their own, with means and intervals and no verdict, and keeps them out of the
 verdict vector and the escalation. A check chosen after the results were seen
 can describe a run but not decide it.
 
+A metric whose grader turns out to measure something other than the metric is
+withdrawn in `withdrawn.json`, keyed by the grader's revision. The report
+blanks its values, intervals and verdicts, and lists it under "Withdrawn
+measurements" with the reason. A run graded by any other revision keeps the
+metric. The self test plants a run on each side.
+
 `--holdout` also writes `judge/holdout-sheet.md` in the scoring area, a table
 for the owner's blind scores. Once every cell holds one, `--record-holdout`
 writes the

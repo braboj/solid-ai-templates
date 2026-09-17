@@ -414,6 +414,23 @@ The first such checks read round one for security, declared by the owner on
 2026-09-16 after that round's pre-registered security checks passed on every
 trial.
 
+### Measurements withdrawn after grading
+
+A metric whose grader is found, after grading, to measure something other
+than what the metric names is withdrawn rather than reported. The withdrawal
+is recorded in `tests/efficacy/withdrawn.json` against the grader's revision,
+so every run that revision graded loses the metric and a run graded by a
+corrected revision keeps it. The report prints the metric as withdrawn with
+its reason, and no number, interval or verdict. A grader corrected after the
+results were seen is never run on the same trials: the correction is
+pre-registered for the next run.
+
+The first withdrawal is round one's change-task acceptance pass rate, decided
+by the owner on 2026-09-17 (#1772). Its modules construct the threshold rule
+and the capped rate through names the change prompt never gave, so the rate
+recorded which trials guessed them. Churn and the build suite after the change
+construct nothing by name, and they stand.
+
 ### In plain terms
 
 The agent is run three times without templates and three times with.
