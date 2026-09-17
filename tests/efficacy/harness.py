@@ -341,6 +341,32 @@ def prepare_workspace(arm, trial, root):
 CREDENTIALS = os.path.join(".claude", ".credentials.json")
 
 
+def refresh_credentials(home):
+    """Give the scratch home the account's live credentials; say how.
+
+    A hard link to the real file rather than a copy. Another client of the
+    account — a parallel session starting on this machine — rotates the
+    tokens, and a snapshot taken before that holds a revoked token: one
+    ended a trial eighteen minutes in. Through the link a rotation written
+    in place reaches the trial's CLI as it happens. Where no link can be
+    made the file is copied, and the copy is taken again before every
+    trial and every probe, so at worst a trial starts fresh.
+    """
+    source = os.path.join(os.path.expanduser("~"), CREDENTIALS)
+    target = os.path.join(home, CREDENTIALS)
+    if not os.path.exists(source):
+        return None
+    os.makedirs(os.path.dirname(target), exist_ok=True)
+    if os.path.lexists(target):
+        os.remove(target)
+    try:
+        os.link(source, target)
+        return "linked"
+    except OSError:
+        shutil.copyfile(source, target)
+        return "copied"
+
+
 def prepare_home(root):
     """Create the scratch home every trial runs under, and return it.
 
@@ -349,7 +375,7 @@ def prepare_home(root):
 
     Everything the design's isolation names is absent by construction —
     no global `CLAUDE.md`, no hooks, no auto-memory, no MCP — because the
-    directory is new. The credential file is copied in, and nothing else
+    directory is new. The credential file is linked in, and nothing else
     is: it carries no context, and without it there is no run at all.
     """
     home = os.path.join(root, "home")
@@ -357,11 +383,7 @@ def prepare_home(root):
     settings = os.path.join(home, "settings.json")
     with io.open(settings, "w", encoding="utf-8") as handle:
         json.dump(ISOLATED_SETTINGS, handle)
-
-    real = os.path.expanduser("~")
-    source = os.path.join(real, CREDENTIALS)
-    if os.path.exists(source):
-        shutil.copyfile(source, os.path.join(home, CREDENTIALS))
+    refresh_credentials(home)
     return home
 
 
@@ -1688,6 +1710,29 @@ def naming_checks():
     return checks
 
 
+def credential_link_checks():
+    """The scratch home reads the account's live credentials, and gets them
+    back before a trial where they went missing."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-credential-link-self-test")
+    remove_tree(scratch)
+    real = os.path.join(os.path.expanduser("~"), CREDENTIALS)
+    if not os.path.exists(real):
+        return [("no credentials on this machine, so nothing to link", True)]
+    home = prepare_home(scratch)
+    target = os.path.join(home, CREDENTIALS)
+    checks = [("the scratch home's credentials are the live file itself",
+               os.path.exists(target) and os.path.samefile(real, target))]
+    os.remove(target)
+    how = refresh_credentials(home)
+    checks.append(("a refresh before a trial restores them, live",
+                   how == "linked" and os.path.samefile(real, target)))
+    remove_tree(scratch)
+    checks.append(("removing the scratch home leaves the live file",
+                   os.path.exists(real)))
+    return checks
+
+
 def vendor_checks():
     """The hybrid arm's workspace carries the templates at the release, out
     of its index, and the reach scan reads that tree as the arm's own."""
@@ -1733,9 +1778,9 @@ def self_test():
     """Prove the naming, isolation, outcome, resume, change and vendoring
     rules before a trial."""
     checks = (naming_checks() + environment_checks() + credential_checks()
-              + outcome_checks() + resume_checks() + change_checks()
-              + process_checks() + leftover_checks() + reach_checks()
-              + outside_checks() + vendor_checks())
+              + credential_link_checks() + outcome_checks() + resume_checks()
+              + change_checks() + process_checks() + leftover_checks()
+              + reach_checks() + outside_checks() + vendor_checks())
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     passed = sum(1 for _, ok in checks if ok)
@@ -1858,6 +1903,7 @@ def main(argv):
     records = []
 
     def runner(arm, trial):
+        refresh_credentials(home)
         if options.task == "build":
             return run_trial(arm, trial, options.root, home, options)
         name = trial_name(arm, trial)
@@ -1871,6 +1917,7 @@ def main(argv):
         write_run(run_file, started_at, records, options.task, prompt)
 
     def probe():
+        refresh_credentials(home)
         return assert_authenticated(home, agent_environment,
                                     agent_executable())
 

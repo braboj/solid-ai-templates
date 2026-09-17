@@ -135,6 +135,13 @@ isolated home. The CLI answers an unauthenticated run with a result object
 rather than a crash, so without it a whole run can complete having never
 reached a model.
 
+The isolated home's credential file is a hard link to the account's live
+one, made again before every trial and every probe, never a copy taken
+once: another client of the account — a parallel session starting on this
+machine — rotates the tokens, and a snapshot taken before that is a
+revoked token, which ended a trial eighteen minutes in. Where no link can
+be made the file is copied, fresh each time.
+
 A trial inherits this machine's environment, not the launching process's.
 A shell inside an agent session or an editor carries that session's
 variables, an activated virtual environment on `PATH` and credentials, and
