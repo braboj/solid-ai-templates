@@ -197,6 +197,14 @@ repository, and fails if any of them is handled otherwise.
 | `blocked` | any other error: a usage limit, a rate limit, a crash, a run that returned no result | no |
 | `refused` | the harness would not start it, such as a workspace that already exists | no |
 
+The CLI's output is watched for its result line. A CLI that prints one and
+then does not exit — a shell it left running keeps its pipes open, and on
+Windows a plain timeout would kill only the `.CMD` shim it runs behind,
+leaving it an orphan — is ended with everything under it two minutes
+after the result, and the trial is read from that result as if it had
+exited. At the timeout the whole tree is ended the same way, and whatever
+was printed is kept. The record says how the CLI ended.
+
 A blocked trial is the provider's cut, not the agent's work. Its workspace
 and tarball move under `void/`, and the run stops unless it was started with
 `--resume-after-block`. That flag probes the generator every `--probe-every`

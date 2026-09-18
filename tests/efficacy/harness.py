@@ -22,6 +22,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import threading
 import time
 
 # This module sits a level below the other runners, so the shared library
@@ -999,6 +1000,98 @@ def scorable_trials(root, run=None, task="build"):
     return found
 
 
+# How long the CLI gets to exit after printing its result. It usually exits
+# at once; a shell it left running keeps its pipes open, and on Windows the
+# `.CMD` shim it runs behind is the process a plain timeout kills, leaving
+# the CLI an orphan that holds the pipes for good — which is how round 2's
+# `none-3` sat finished for six hours. So the output is watched for the
+# result line, and after the grace the whole tree is ended.
+RESULT_GRACE_S = 120
+
+
+def kill_tree(proc):
+    """End a process and everything running under it."""
+    if os.name == "nt":
+        subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+                       capture_output=True, timeout=60)
+    else:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except OSError:
+            proc.kill()
+
+
+def result_of(stdout):
+    """The CLI's result object in its output, or None."""
+    try:
+        payload = json.loads(stdout)
+    except ValueError:
+        payload = None
+    if isinstance(payload, dict):
+        return payload
+    for line in stdout.splitlines():
+        if line.startswith("{") and '"result"' in line:
+            try:
+                payload = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(payload, dict) and payload.get("type") == "result":
+                return payload
+    return None
+
+
+def run_cli(argv, prompt, cwd, env, timeout, grace=RESULT_GRACE_S,
+            clock=time.monotonic):
+    """Run the CLI on a prompt; return its status, output, errors and how it
+    ended: `exited` on its own, `hung` with its result printed and the tree
+    ended after the grace, or `timeout` with the tree ended at the bound and
+    whatever it printed kept."""
+    extra = {} if os.name == "nt" else {"start_new_session": True}
+    proc = subprocess.Popen(argv, stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            cwd=cwd, env=env, text=True, encoding="utf-8",
+                            errors="replace", **extra)
+    out, err, seen = [], [], []
+
+    def read(stream, sink, watch):
+        for line in stream:
+            sink.append(line)
+            if watch and not seen and line.startswith("{") \
+                    and result_of(line) is not None:
+                seen.append(clock())
+
+    readers = [threading.Thread(target=read, args=(proc.stdout, out, True),
+                                daemon=True),
+               threading.Thread(target=read, args=(proc.stderr, err, False),
+                                daemon=True)]
+    for reader in readers:
+        reader.start()
+    try:
+        proc.stdin.write(prompt)
+        proc.stdin.close()
+    except OSError:
+        pass
+
+    started, ended = clock(), "exited"
+    while proc.poll() is None:
+        now = clock()
+        if now - started > timeout:
+            ended = "timeout"
+            kill_tree(proc)
+            break
+        if seen and now - seen[0] > grace:
+            ended = "hung"
+            kill_tree(proc)
+            break
+        time.sleep(0.5)
+    proc.wait()
+
+    # The pipes close once every holder is gone, which the tree kill sees to.
+    for reader in readers:
+        reader.join(timeout=120)
+    return proc.returncode, "".join(out), "".join(err), ended
+
+
 def run_agent(workspace, name, prompt, record, root, home, options):
     """Run the agent in a prepared workspace and complete its record.
 
@@ -1038,23 +1131,22 @@ def run_agent(workspace, name, prompt, record, root, home, options):
 
     # On standard input, not as an argument: on Windows the CLI is a `.CMD`
     # shim, and `cmd.exe` expands a `%NAME%` pair inside an argument.
-    try:
-        proc = subprocess.run(argv, input=prompt, cwd=workspace,
-                              env=agent_environment(home, temp=temp),
-                              capture_output=True, text=True,
-                              encoding="utf-8", timeout=options.timeout)
-        record["exit_status"] = proc.returncode
-        record["stdout"] = proc.stdout
-        record["stderr"] = proc.stderr[-4000:]
-        try:
-            record["result"] = json.loads(proc.stdout)
-        except ValueError:
-            record["result"] = None
-        record["outcome"], record["reason"] = classify(proc.returncode,
-                                                       record["result"])
-    except subprocess.TimeoutExpired:
+    status, stdout, stderr, ended = run_cli(
+        argv, prompt, workspace, agent_environment(home, temp=temp),
+        options.timeout)
+    record["exit_status"] = status
+    record["stdout"] = stdout
+    record["stderr"] = stderr[-4000:]
+    record["ended"] = ended
+    record["result"] = result_of(stdout)
+    if ended == "timeout" and record["result"] is None:
         record["outcome"], record["reason"] = "timeout", None
-        record["exit_status"] = None
+    else:
+
+        # A CLI that printed its result and then had to be ended finished
+        # the trial; the status the kill left is not the trial's ending.
+        record["outcome"], record["reason"] = classify(
+            status if ended == "exited" else 0, record["result"])
 
     record["elapsed_s"] = round(time.monotonic() - started, 1)
     record.update(contain(workspace, temp, home, shared, since,
@@ -1710,6 +1802,71 @@ def naming_checks():
     return checks
 
 
+# A stand-in for the CLI: prints a result, or not, and then lingers with a
+# child that inherits its pipes — the shape of a shell left running.
+LINGERING_CLI = """\
+import json, os, subprocess, sys, time
+mode = sys.argv[1]
+child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(90)"])
+open(sys.argv[2], "w").write(str(child.pid))
+if mode != "silent":
+    print(json.dumps({"type": "result", "subtype": "success",
+                      "is_error": False, "result": "done"}), flush=True)
+if mode == "exits":
+    child.kill()
+    sys.exit(0)
+time.sleep(90)
+"""
+
+
+def alive(pid):
+    """Whether a process exists, without signalling it."""
+    if os.name == "nt":
+        proc = subprocess.run(["tasklist", "/FI", "PID eq %d" % pid],
+                              capture_output=True, text=True, timeout=60)
+        return str(pid) in proc.stdout
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
+def hang_checks():
+    """A CLI that lingers after its result, or never answers, is ended with
+    everything under it, and what it printed is kept."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-hang-self-test")
+    remove_tree(scratch)
+    os.makedirs(scratch)
+    script = os.path.join(scratch, "cli.py")
+    with io.open(script, "w", encoding="utf-8") as handle:
+        handle.write(LINGERING_CLI)
+    checks = []
+    for label, mode, timeout, grace, expected, has_result in (
+            ("a CLI that exits after its result is read as exited",
+             "exits", 30, 30, "exited", True),
+            ("one that lingers after its result is ended after the grace",
+             "lingers", 60, 2, "hung", True),
+            ("one that never answers is ended at the timeout",
+             "silent", 3, 30, "timeout", False)):
+        pid_file = os.path.join(scratch, "%s.pid" % mode)
+        started = time.monotonic()
+        status, stdout, _, ended = run_cli(
+            [sys.executable, script, mode, pid_file], "", scratch,
+            dict(os.environ), timeout, grace)
+        elapsed = time.monotonic() - started
+        with io.open(pid_file, encoding="utf-8") as handle:
+            child = int(handle.read())
+        time.sleep(1)
+        checks.append((label, ended == expected and elapsed < 40
+                       and (result_of(stdout) is not None) == has_result
+                       and (status == 0 if expected == "exited" else True)
+                       and not alive(child)))
+    remove_tree(scratch)
+    return checks
+
+
 def credential_link_checks():
     """The scratch home reads the account's live credentials, and gets them
     back before a trial where they went missing."""
@@ -1778,9 +1935,10 @@ def self_test():
     """Prove the naming, isolation, outcome, resume, change and vendoring
     rules before a trial."""
     checks = (naming_checks() + environment_checks() + credential_checks()
-              + credential_link_checks() + outcome_checks() + resume_checks()
-              + change_checks() + process_checks() + leftover_checks()
-              + reach_checks() + outside_checks() + vendor_checks())
+              + credential_link_checks() + outcome_checks() + hang_checks()
+              + resume_checks() + change_checks() + process_checks()
+              + leftover_checks() + reach_checks() + outside_checks()
+              + vendor_checks())
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     passed = sum(1 for _, ok in checks if ok)
