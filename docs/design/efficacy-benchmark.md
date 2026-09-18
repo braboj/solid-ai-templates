@@ -392,22 +392,26 @@ complexity, tokens, turns, wall time, cost, files, lines, artifacts nobody
 asked for, change-task churn, axe violations, HTML invalidity. Neutral,
 reported without a verdict: maintainability index, instability.
 
-The report opens with a summary table generated from its own verdicts: per
-contrast, a score from 1 to 10 and the number of metrics won and failed. A
-win or a fail is a metric read better or worse; one showing no improvement
-counts neither way. The score is 1 + 9 × wins ÷ (wins + fails), each metric
-counting once, and a pair no metric separated has none. One line of caveats
-follows: the escalation, withdrawn metrics, lost trials, reaches past a
-workspace and the judge's evidence check.
+The report opened, from 2026-09-17, with a summary table generated from its
+own verdicts: per contrast, a score from 1 to 10 and the number of metrics
+won and failed. A win or a fail is a metric read better or worse; one
+showing no improvement counts neither way. The score is 1 + 9 × wins ÷
+(wins + fails), each metric counting once, and a pair no metric separated
+has none. One line of caveats follows: the escalation, withdrawn metrics,
+lost trials, reaches past a workspace and the judge's evidence check.
 
 The owner asked for the score on 2026-09-17, after round one's results were
 seen (#1786). It replaces §1.2's earlier "no single headline number". Like a
 check declared after a run, it describes the vector and decides nothing: no
-verdict, escalation or non-inferiority claim reads it.
+verdict, escalation or non-inferiority claim reads it. On 2026-09-18, on
+reading round two's report, the owner found the table redundant beside the
+finding table (#1820): the score stays only for the contrasts between two
+files, which the table has no column for, in one line under it, and the
+caveats line follows.
 
-A finding table precedes it, asked for the same day after the score table
-was read (#1789, distilled in #1791). One column per context file against no
-file, headed by the file's line count. Rows: whether it improves the code —
+The finding table opens the report, asked for the same day after the score
+table was read (#1789, distilled in #1791). One column per context file
+against no file, headed by the file's line count. Rows: whether it improves the code —
 Yes where a primary dimension or task success is better and none worse,
 Worse where any is worse, No where none is better — the primary dimensions
 that moved, the hidden-suite pass rate against the bare arm naming any run
