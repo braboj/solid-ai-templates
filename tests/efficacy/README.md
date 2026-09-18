@@ -448,11 +448,10 @@ Each run writes a dated report to `docs/audits/`. It opens with a finding
 table generated from its own verdicts: one column per context file against
 none, with whether it improves the code, what moved, hidden tests passed,
 size, cost and a one-phrase reading, then a line per file on why it scored
-so and a line reading the columns together. A summary table follows: per
-contrast, a score from 1 to 10 and the
-number of metrics won and failed, then one line of caveats. The score is 1 +
-9 × wins ÷ (wins + fails) and decides nothing, and neither does the finding
-table. The report goes on to name the
-model ids, the template revision, K, every trial's raw numbers, the judge's
-evidence check and the verdict vector. No person scores the judge: the
-evidence check is the only check on it.
+so and a line reading the columns together. Under it, one line scores the
+contrasts between two files, 1 to 10 with the metrics won and failed, and
+one line of caveats follows. The score is 1 + 9 × wins ÷ (wins + fails) and
+decides nothing, and neither does the finding table. The report goes on to
+name the model ids, the template revision, K, every trial's raw numbers,
+the judge's evidence check and the verdict vector. No person scores the
+judge: the evidence check is the only check on it.
