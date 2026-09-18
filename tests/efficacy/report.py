@@ -891,10 +891,8 @@ def write_report(root, trials, table, results, seed, escalation,
     lost = lost_trials(root)
     scans = reaches(root)
     active = active_contrasts(trials)
-    lines.extend(executive_section(trials, table, results))
-    lines.append("")
-    lines.extend(summary_section(trials, results, escalation,
-                                 withdrawn or {}, lost, scans, active))
+    lines.extend(executive_section(trials, table, results, escalation,
+                                   withdrawn or {}, lost, scans))
     lines.append("")
 
     lines.append("## What produced these numbers")
@@ -1132,18 +1130,6 @@ def posthoc_section(table, results, active=None):
                                 [key for key, _, _, _ in POSTHOC],
                                 verdicts=False, active=active))
     return lines
-
-
-# How the summary names each contrast.
-COMPARISONS = {
-    "full-none": "Templates' file (full) vs no context file (none)",
-    "short-none": "Templates' short file (short) vs no context file (none)",
-    "hybrid-none": "Templates' hybrid file (hybrid) vs no context file (none)",
-    "hand-none": "Hand-written file (hand) vs no context file (none)",
-    "full-hand": "Templates' file (full) vs hand-written file (hand)",
-    "short-hand": "Templates' short file (short) vs hand-written file (hand)",
-    "hybrid-full": "Templates' hybrid file (hybrid) vs templates' file (full)",
-}
 
 
 def spoken(names):
@@ -1413,16 +1399,31 @@ def why_line(trials, results, arm, name, answered, length):
     return "**%s, %s.** %s" % (FILES[arm], answered, text)
 
 
-def executive_section(trials, table, results):
+def executive_section(trials, table, results, escalation=None,
+                      withdrawn=None, lost=(), scans=()):
     """The report's first section: one column per context file against no
-    file, each cell read off a verdict or a mean below it, then one line
-    per file on why it scored so.
+    file, each cell read off a verdict or a mean below it, one line per
+    file on why it scored so, the reading, the contrasts between files
+    scored, and the caveats.
 
     The owner asked for it on 2026-09-17, after round 1's summary table, and
-    for this table the same day. Like the score, it digests the verdict
-    vector and decides nothing.
+    for this table the same day; the summary's score and caveats were folded
+    under it on 2026-09-18. Like the score, it digests the verdict vector and
+    decides nothing.
     """
     active = active_contrasts(trials)
+    lines = finding_lines(trials, table, results, active)
+    scored = between_files(results, active)
+    if scored:
+        lines.extend(["", scored])
+    if escalation is not None:
+        lines.extend(["", caveats_line(trials, escalation, withdrawn or {},
+                                       lost, scans)])
+    return lines
+
+
+def finding_lines(trials, table, results, active):
+    """The finding table, its why-lines and its reading."""
     names = ["%s-%s" % (treatment, baseline)
              for treatment, baseline in active if baseline == BARE]
     if not names:
@@ -1486,41 +1487,42 @@ def executive_section(trials, table, results):
     return lines
 
 
-def summary_section(trials, results, escalation, withdrawn, lost, scans,
-                    active=None):
-    """The report's opening table: a score, the wins and the fails per
-    contrast the run holds, each read off a verdict below it.
+def between_files(results, active):
+    """One line scoring the contrasts between two files, 1 to 10 with the
+    wins and the fails, or None where the run holds none.
 
-    The score was declared after round 1's results were seen. It digests the
-    verdict vector and decides nothing: no verdict, escalation or
-    non-inferiority claim reads it.
+    The score was declared after round 1's results were seen (#1786) and
+    the finding table took over its work the same day; it stays for the
+    pairings the table has no column for, folded under it on 2026-09-18
+    (#1820). It digests the verdict vector and decides nothing.
     """
-    labels = {key: label for key, label, _, _ in METRICS}
-    lines = ["## Summary",
-             "",
-             "| Comparison | Score, 1-10 | Wins | Fails |",
-             "|---|---|---|---|"]
-    for treatment, baseline in (active if active is not None
-                                else active_contrasts(trials)):
+    parts = []
+    for treatment, baseline in active:
+        if baseline == BARE:
+            continue
         name = "%s-%s" % (treatment, baseline)
-        wins = [labels[key] for key, _, _, _ in METRICS
-                if results[key][name]["verdict"] == "better"]
-        fails = [labels[key] for key, _, _, _ in METRICS
-                 if results[key][name]["verdict"] == "worse"]
-        value = score(len(wins), len(fails))
-        lines.append("| %s | %s | %d | %d |"
-                     % (COMPARISONS[name],
-                        "—" if value is None else "%.1f" % value,
-                        len(wins), len(fails)))
-    lines.append("")
-    lines.append("The score is 1 + 9 × wins ÷ (wins + fails). A win or a fail "
-                 "is a metric whose interval separated the pair in its "
-                 "declared direction, each metric counting once; one showing "
-                 "no improvement counts neither way. The verdict vector at "
-                 "the end names them. The score digests it and decides "
-                 "nothing.")
-    lines.append("")
+        wins = sum(1 for key, _, _, _ in METRICS
+                   if results[key][name]["verdict"] == "better")
+        fails = sum(1 for key, _, _, _ in METRICS
+                    if results[key][name]["verdict"] == "worse")
+        value = score(wins, fails)
+        parts.append("%s − %s %s (%d won, %d failed)"
+                     % (treatment, baseline,
+                        "unscored" if value is None else "%.1f" % value,
+                        wins, fails))
+    if not parts:
+        return None
+    return ("Between the files, 1 to 10: %s. A win or a fail is a metric "
+            "whose interval separated the pair in its declared direction, "
+            "each counting once; the score is 1 + 9 × wins ÷ (wins + fails), "
+            "digests the verdict vector at the end, and decides nothing."
+            % "; ".join(parts))
 
+
+def caveats_line(trials, escalation, withdrawn, lost, scans):
+    """One line of what qualifies the run: the escalation, withdrawals,
+    lost trials, reaches and the judge's check."""
+    labels = {key: label for key, label, _, _ in METRICS}
     judged = [trial["judge"] for trial in trials.values() if trial["judge"]]
     reached = []
     for scan in scans:
@@ -1542,8 +1544,7 @@ def summary_section(trials, results, escalation, withdrawn, lost, scans,
     if reused:
         caveats.insert(1, "reused from an earlier round: %s"
                        % spoken([arm for arm, _ in reused]))
-    lines.append("Caveats: %s." % "; ".join(caveats))
-    return lines
+    return "Caveats: %s." % "; ".join(caveats)
 
 
 def escalation_phrase(escalation):
@@ -2105,16 +2106,16 @@ def withdrawal_checks(seed):
          sorted(spared)),
     ]
 
-    summary = summary_of(text)
+    finding = finding_of(text)
     checks.extend([
-        ("the summary opens the report",
-         0 <= text.find("## Summary") < text.find("## What produced"), None),
-        ("its row scores the verdicts, the withdrawn metric not among them",
-         section_rows(text, "## Summary", COMPARISONS["full-none"])
-         == ["| %s | 10.0 | 1 | 0 |" % COMPARISONS["full-none"]],
-         section_rows(text, "## Summary", COMPARISONS["full-none"])),
+        ("the finding table opens the report, and no summary follows it",
+         0 <= text.find("## Executive summary") < text.find("## What produced")
+         and "## Summary" not in text, None),
+        ("the line between files scores the verdicts, the withdrawn metric "
+         "not among them",
+         "full − hand 10.0 (1 won, 0 failed)" in finding, finding),
         ("it names the withdrawal among the caveats",
-         "withdrawn: %s;" % label in summary, None),
+         "withdrawn: %s;" % label in finding, None),
     ])
 
     _, _, text = rendered(other, seed, spared)
@@ -2122,11 +2123,10 @@ def withdrawal_checks(seed):
     checks.append(("that run's row keeps its verdict",
                    kept == ["| %s | better | better | better |" % label]
                    and "## Withdrawn measurements" not in text, kept))
-    summary = summary_of(text)
-    row = section_rows(text, "## Summary", COMPARISONS["full-none"])
-    checks.append(("that run's summary counts the row a win",
-                   row == ["| %s | 10.0 | 2 | 0 |" % COMPARISONS["full-none"]]
-                   and "withdrawn: nothing;" in summary, row))
+    finding = finding_of(text)
+    checks.append(("that run's line between files counts the row a win",
+                   "full − hand 10.0 (2 won, 0 failed)" in finding
+                   and "withdrawn: nothing;" in finding, finding))
 
     # The rule at its ends and in the middle: round 1's templates against no
     # context file won 8 and failed 11.
@@ -2146,9 +2146,9 @@ def prose_of(text, heading):
     return " ".join(section.split())
 
 
-def summary_of(text):
-    """The report's Summary section with its wrapping undone."""
-    return prose_of(text, "## Summary")
+def finding_of(text):
+    """The report's opening section with its wrapping undone."""
+    return prose_of(text, "## Executive summary")
 
 
 def executive_checks(seed):
@@ -2280,8 +2280,8 @@ def executive_checks(seed):
         for arm in ("full", "hand"))
     checks.extend([
         ("the finding table opens the report",
-         0 <= text.find("## Executive summary") < text.find("## Summary"),
-         None),
+         0 <= text.find("## Executive summary")
+         < text.find("## What produced"), None),
         ("its columns are the arm files with their line counts",
          header in text and context_lines("full") > context_lines("hand"),
          header),
@@ -2313,21 +2313,21 @@ def executive_checks(seed):
     header = "| | %s |" % " | ".join(
         "%s, %s lines" % (FILES[arm], context_lines(arm))
         for arm in ("full", "short", "hybrid", "hand"))
-    summary = text.split("## Summary")[1].split("\n## ")[0]
     checks.extend([
         ("a five-arm run prints one column per file arm",
          header in text, header),
         ("it prints every declared contrast",
-         all(COMPARISONS[name] in summary for name in COMPARISONS)
+         all("%s − %s" % pair in finding for pair in CONTRASTS
+             if pair[1] != BARE)
          and len(section_rows(text, "## Verdict vector",
                               "Design (SOLID and patterns), 1-5")[0]
-                 .split(" | ")) == len(CONTRASTS) + 1, summary),
+                 .split(" | ")) == len(CONTRASTS) + 1, finding),
         ("the reused arms and the contrasts crossing rounds are named",
          "Reused from an earlier round: full (3 trials) and hand (3 "
          "trials). Pairing them with this round's trials, across days: "
          "full − none, hand − none, short − hand and hybrid − full."
          in finding and "reused from an earlier round: full and hand"
-         in summary_of(text), finding),
+         in finding, finding),
         ("the reading sets the longest measured file against the shortest",
          "Together: length is not quality" in finding
          and "| Improves the code? | **No** | **Yes** | **No** | **Yes** |"
