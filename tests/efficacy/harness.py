@@ -731,9 +731,11 @@ def outside_pattern(workspace, temp):
 
     # A sentence can end on the trial's own path, as in "the repo at
     # ...\A1. I need", so punctuation before the path ends still leaves it
-    # the trial's own. A suffix is not punctuation: `A1.tar` stays another
-    # entry of the root.
-    not_own = "(?!(?:%s)[.:!?)\\]]*%s)" % ("|".join(own), PATH_END)
+    # the trial's own, and so does a pip extra, as in `pip install
+    # "...\hybrid-2[dev]"`. A suffix is not punctuation: `A1.tar` stays
+    # another entry of the root.
+    not_own = "(?!(?:%s)(?:\\[[^\\]/\\s\"';,]*\\])?[.:!?)\\]]*%s)" % (
+        "|".join(own), PATH_END)
     forms = "|".join(re.escape(form) for form in path_forms([root]))
 
     # The root itself, whose listing names every other trial, and any entry
@@ -1742,7 +1744,7 @@ def outside_checks():
     if bash_root[1:2] == ":":
         bash_root = "/%s%s" % (bash_root[0].lower(), bash_root[2:])
 
-    # The first four stay inside the trial; each of the last four reaches out.
+    # The first five stay inside the trial; each of the last four reaches out.
     calls = [
         ("Write", {"file_path": os.path.join(workspace, "tariff", "rules.py")}),
         ("Bash", {"command": 'cd "%s" && ls' % workspace}),
@@ -1750,6 +1752,7 @@ def outside_checks():
                              % os.path.join(temp, "pip")}),
         ("Agent", {"prompt": "The repo is at %s. Map its modules."
                              % workspace}),
+        ("PowerShell", {"command": 'pip install "%s[dev]"' % workspace}),
         ("Bash", {"command": "cat ../short-1/src/tariff/pricing.py"}),
         ("PowerShell", {"command": "Get-Item %s"
                                    % os.path.join(root, "short-1.tar")}),
@@ -1770,10 +1773,10 @@ def outside_checks():
     return [("the planted run holds another trial", landed),
             ("the scoring area lies outside the run root",
              not scoring_area(root).startswith(root + os.sep)),
-            ("the trial's own paths are not flagged",
-             not [index for index in flagged if index < 4]),
+            ("the trial's own paths are not flagged, a pip extra included",
+             not [index for index in flagged if index < 5]),
             ("every call reaching past the trial is flagged",
-             flagged == [4, 5, 6, 7])]
+             flagged == [5, 6, 7, 8])]
 
 
 def naming_checks():
