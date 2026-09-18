@@ -8329,3 +8329,109 @@ repository's own tooling.
   conditioned on a verdict, never a hand edit to the committed report
 - Round 1 compared a long generated file with a short hand-written one, so
   it cannot separate generated from long. The next round holds length fixed
+
+## 2026-09-18 — Round 2 run and reported: length held fixed, the hybrid model added
+
+**Tool:** Claude Code (Fable 5.1 1M, then Opus 5 1M)
+
+**Key changes:**
+- Epic #1795 ran end to end in one session, one pull request per task. The
+  arms are words and a trial is `<arm>-<block>`: `none`, `full`, `short`,
+  `hybrid`, `hand`. Round 1's letters are read as their words wherever a
+  record, tarball, score, judging or voided directory names a trial, so
+  round 1's root and scoring area were never rewritten on disk (#1801)
+- Design §12 pre-registers the round before any trial: the five arms, the
+  40-line and 88-character budget for `short` and the generator's refusal
+  over either, the hybrid arm's vendored templates and what the reach and
+  leak scans make of them, the four contrasts, the reading rule for
+  short − hand, which contrasts cross rounds, and that the change task is
+  not run this round (#1803)
+- `generate_arm_b.py` became `generate_arm.py --arm`: per-arm output
+  directory and record, an output-model clause in the instruction, and the
+  budget refusal. Arm `short` is 40 lines, widest 75, one call of 85
+  seconds; arm `hybrid` is 418 lines and refers to the vendored chain in
+  forty places, one call of 228 seconds. Both leak scans clean on each
+  (#1805, #1807)
+- The hybrid arm's workspace carries this repository's `templates/` at
+  `v2.90.0` under `docs/solid-ai-templates/`, where a submodule would put
+  it, kept out of the index through `.git/info/exclude` so it counts in no
+  size or scope metric. For that arm the repository is reached only under
+  its owner's name, which every clone names and no path into the copy does;
+  the judge strips the copy with the context file (#1807)
+- `reuse.py` brings an earlier round's trials into a run root with their
+  scores, judgings, security readings, transcripts and tool lock, under the
+  arms' words. The scorer, judge and security reader skip a trial whose
+  result is already there, each with a flag to do it anyway; the judge
+  numbers new blind labels past every one the area holds, and the scorer
+  refuses a root whose scores were graded at another suite revision (#1809)
+- The report declares every contrast, round 1's three and round 2's four,
+  and prints only those whose arms the run holds. The finding table takes
+  one column per file arm, and a line under it names the arms reused from
+  an earlier round and the contrasts pairing them with this round's trials
+  (#1811)
+- The owner read the report and found the Summary redundant beside the
+  finding table. Both digested the verdict vector; the score now lives in
+  one line under the table, for the contrasts between two files that the
+  table has no column for, with the caveats line after it (#1820). The two
+  inline columns name their model: "Templates' inline file" and "Templates'
+  short inline file" (#1822)
+
+**The result (`docs/audits/2026-09-18-efficacy.md`):** against no context
+file the 406-line inline file reads Worse and the 40-line one reads Worse,
+both on readability at −0.7; the hybrid and the hand-written files do not
+move it. Every file arm adds files or cost. short − hand reads worse on
+readability, which §12 fixed in advance as the content being the defect
+rather than the length. hybrid − full scores 7.4 with no primary dimension
+separating them. Round 2's bare arm scored readability 4 on all three
+trials where round 1's scored 3, so hand − none, which read better in round
+1, reads "did not move" here: the cross-round day confound §12 names.
+
+**Two harness defects, each found by a trial it cost:**
+- The scratch home held a credential copy taken at launch. A parallel
+  session on this machine rotated the account's tokens, and the copy read
+  as revoked: the 19:02 launch refused before any trial, and the relaunch's
+  `none-1` died eighteen minutes and 56 turns in. The home now holds a hard
+  link to the live file, re-made before every trial and every probe (#1813)
+- `none-3` committed its work and printed its result at 26 minutes, and the
+  run sat on it for six hours. A shell the agent left running held the
+  CLI's pipes; on Windows the CLI runs behind a `.CMD` shim, so the
+  two-hour timeout killed `cmd.exe` and left `claude.exe` an orphan holding
+  them for good. The runner now reads the output as it comes, ends the
+  whole tree two minutes after the result line or at the timeout, keeps
+  what was printed, and records how the CLI ended (#1815)
+
+**Pull requests merged:** 12 — #1802, #1804, #1806, #1808, #1810, #1812,
+#1814, #1816, #1818, #1819, #1821 and #1822.
+
+**Issues closed:** #1795 and its seven tasks #1801, #1803, #1805, #1807,
+#1809, #1811 and #1820, plus the three defects #1813, #1815 and #1817.
+
+**Issues filed:** #1801, #1803, #1805, #1807, #1809, #1811, #1813, #1815,
+#1817 and #1820.
+
+**ADRs:** none owed. Every change was the benchmark's own tooling, its two
+generated arm files, or the design's own pre-registration; none moved the
+composition model.
+
+**Gaps flagged:**
+- Round 3 (#1767) planned to run on round 2's winning arm against `none`,
+  and no file arm won. Its task list also still names arms B and C, from
+  before the word arms. The choice is the owner's
+- The P3 bugs #1768 and #1770 stay open. #1768 is why the judge's
+  usage-limit failures read as "wrote no final message"
+- Live e2e did not run; this session cut no release
+- The run roots hold 3.6 GB under `C:\efficacy`
+
+**Lessons:**
+- A credential copied into an isolated home is a snapshot of something
+  another client can rotate. The link is what keeps a long run's
+  authentication live, and the fix is cheap only before the run, not after
+  a trial has died eighteen minutes in
+- A timeout that kills the process it launched is not a timeout on the
+  process doing the work, wherever a shim sits between. The harness had
+  proved this once already for launching the CLI, and paid for it again on
+  ending one
+- Two of the round's three interruptions were the harness's own, and both
+  looked like the provider cutting the run. The record said otherwise each
+  time: a 401 at the minute the real credential file was rewritten, and a
+  result printed six hours before the harness noticed
