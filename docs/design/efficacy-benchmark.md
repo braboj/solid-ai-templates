@@ -782,6 +782,17 @@ or 16, and so do the finding table's `full` and `hand` columns. The model
 is pinned by exact ID, so the day is the residual confound; the report
 states it beside those rows rather than in a footnote.
 
+**A crossing contrast carries no verdict.** Adopted 2026-09-18, after round
+2's report was first rendered, committed and posted on #1184. A contrast
+pairing an arm judged in one round with an arm judged in another keeps its
+mean and its interval and is given no verdict, and counts as neither a win
+nor a fail. Stating the day beside a verdict does not stop the verdict from
+being read; `full` did not change between the rounds — its judgings are
+round 1's records, reused — so the −0.667 that read as Worse was `none`
+moving, not the file. The amendment withholds a reading, changes no metric,
+no direction and no interval, and is why round 2's `full` and `hand` columns
+read not measured where they read Worse and No.
+
 **What is not run.** The change task is not part of round 2. Its
 acceptance grader was withdrawn (§6) and its corrected prompt is
 pre-registered for round 3 (#1767), so every change-task row reads not

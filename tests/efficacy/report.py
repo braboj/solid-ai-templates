@@ -404,6 +404,12 @@ def bca_interval(differences, seed):
                                                    int(100 * CONFIDENCE))}
 
 
+# What a contrast reads as when its two arms were judged in different rounds.
+# It is not a verdict, and every reader of a verdict below tests for "better"
+# or "worse", so this value counts nowhere.
+CROSSING_VERDICT = "no verdict: the arms were judged in different rounds"
+
+
 def verdict(interval, direction):
     """Better, worse, or no improvement shown — read against the direction."""
     low, high = interval.get("low"), interval.get("high")
@@ -531,6 +537,13 @@ def crossing(active, reused):
             if len(set(pair) & earlier) == 1]
 
 
+def crossed_labels(trials):
+    """Every contrast label pairing a reused arm with one run in this round."""
+    return {"%s-%s" % pair
+            for pair in crossing(active_contrasts(trials),
+                                 reused_arms(trials))}
+
+
 def collect(trials, metrics=METRICS):
     """Metric values by metric, arm and trial index."""
     table = {}
@@ -546,8 +559,15 @@ def collect(trials, metrics=METRICS):
     return table
 
 
-def contrasts(table, seed):
-    """The paired differences, their intervals and their verdicts."""
+def contrasts(table, seed, crossed=()):
+    """The paired differences, their intervals and their verdicts.
+
+    A contrast in `crossed` pairs an arm judged in an earlier round with one
+    judged in this one, so its difference carries the day as well as the arm.
+    Such a contrast keeps its mean and interval and is given no verdict: a
+    reader can see the number and what produced it, and nothing downstream
+    counts it as a win, a fail or a finding.
+    """
     results = {}
     for key, entry in table.items():
         per_contrast = {}
@@ -569,12 +589,14 @@ def contrasts(table, seed):
                 continue
             interval = bca_interval(pairs, seed)
             observed = [value for value in right.values() if value is not None]
+            across = label in crossed
             per_contrast[label] = {
                 "pairs": pairs,
                 "mean": round(statistics.fmean(pairs), 4),
                 "interval": interval,
-                "verdict": verdict(interval, entry["direction"]),
-                "non_inferior": non_inferior(
+                "verdict": (CROSSING_VERDICT if across
+                            else verdict(interval, entry["direction"])),
+                "non_inferior": None if across else non_inferior(
                     key, interval, entry["direction"],
                     statistics.fmean(observed) if observed else None),
             }
@@ -1184,7 +1206,8 @@ def answer(verdicts):
         return "Worse"
     if "better" in verdicts:
         return "Yes"
-    if all(verdict == "not computed" for verdict in verdicts):
+    if all(verdict in ("not computed", CROSSING_VERDICT)
+           for verdict in verdicts):
         return "Not measured"
     return "No"
 
@@ -2028,7 +2051,7 @@ def planted_change_run(revision):
 def rendered(trials, seed, withdrawn):
     """The report a planted run renders, withdrawn metrics blanked first."""
     table = collect(trials)
-    results = contrasts(table, seed)
+    results = contrasts(table, seed, crossed_labels(trials))
     before = results["change_success"]["full-none"]["verdict"]
     withdraw(withdrawn, table, results)
     scratch = os.path.join(os.environ.get("TEMP", "."),
@@ -2331,8 +2354,12 @@ def executive_checks(seed):
          in finding, finding),
         ("the reading sets the longest measured file against the shortest",
          "Together: length is not quality" in finding
-         and "| Improves the code? | **No** | **Yes** | **No** | **Yes** |"
-         in text, finding),
+         and "| Improves the code? | **Not measured** | **Yes** | **No** | "
+             "**Not measured** |" in text, finding),
+        ("a contrast crossing rounds carries no verdict and counts nowhere",
+         CROSSING_VERDICT in text
+         and "short − hand unscored (0 won, 0 failed)" in finding
+         and "hybrid − full unscored (0 won, 0 failed)" in finding, finding),
         ("a three-arm run prints only its own contrasts",
          "| Metric | full−none | hand−none | full−hand |"
          in rendered(planted_change_run("r"), seed, {})[2], None),
@@ -2423,14 +2450,15 @@ def main(argv):
               "K = %d" % (k, K_CEILING))
         return 2
     table = collect(trials)
-    results = contrasts(table, options.seed)
+    results = contrasts(table, options.seed, crossed_labels(trials))
     withdrawn = withdrawals(trials)
     withdraw(withdrawn, table, results)
     escalation = assess_escalation(trials, results, options.seed, withdrawn)
     posthoc = None
     if any(trial["security"] for trial in trials.values()):
         posthoc_table = collect(trials, POSTHOC)
-        posthoc = (posthoc_table, contrasts(posthoc_table, options.seed))
+        posthoc = (posthoc_table, contrasts(posthoc_table, options.seed,
+                                            crossed_labels(trials)))
     target = write_report(options.root, trials, table, results, options.seed,
                           escalation, options.out_dir, posthoc,
                           withdrawn)
