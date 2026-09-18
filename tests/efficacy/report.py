@@ -1150,7 +1150,8 @@ def score(wins, fails):
 ANSWERED = PRIMARY + ("task_success",)
 SHORT = {"judge_design": "design", "judge_readability": "readability",
          "judge_maintainability": "maintainability"}
-FILES = {"full": "Templates' file", "short": "Templates' short file",
+FILES = {"full": "Templates' inline file",
+         "short": "Templates' short inline file",
          "hybrid": "Templates' hybrid file", "hand": "Hand-written file"}
 
 # The arm every file arm is read against: the bare agent.
@@ -2236,7 +2237,7 @@ def executive_checks(seed):
     planted["adherence"]["full-none"]["verdict"] = "better"
     got = why_line(trials, planted, "full", "full-none", "No", 400)
     checks.append(("the why-line says what the records and verdicts hold",
-                   got == "**Templates' file, No.** One run of two left the "
+                   got == "**Templates' inline file, No.** One run of two left the "
                    "app unable to boot (`planted error`). It built more than "
                    "the task asked for: more files, and took more turns to "
                    "do it; the follow-up change had to move through that "
@@ -2250,7 +2251,7 @@ def executive_checks(seed):
     checks.append(("a module missing after a clean install is a declared "
                    "dependency, and a win the judge did not give is a tool "
                    "count",
-                   got.startswith("**Templates' file, No.** One run of two "
+                   got.startswith("**Templates' inline file, No.** One run of two "
                                   "declared its dependencies so that a clean "
                                   "install left the app unable to boot.")
                    and got.endswith("The judge saw none of it as better "
@@ -2291,7 +2292,7 @@ def executive_checks(seed):
          prose_of(text, "## Executive summary")),
         ("each file's why-line sits between the table and the reading",
          "| Reads as |" in text and 0 < text.find("| Reads as |")
-         < text.find("**Templates' file, Not measured.** Every win is "
+         < text.find("**Templates' inline file, Not measured.** Every win is "
                      "something a tool counts.")
          < text.find("**Hand-written file, Not measured.**")
          < text.find("Together:"), prose_of(text, "## Executive summary")),
