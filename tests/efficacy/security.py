@@ -755,6 +755,7 @@ def main(argv):
 
 def read_trials(options, area, scored, wanted):
     """Read each wanted trial not read yet; return the exit code."""
+
     # A trial already read keeps its reading, as a reused trial from an
     # earlier round does; the checks were declared after that round.
     target = os.path.join(area, "security-scores")

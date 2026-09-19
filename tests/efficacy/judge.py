@@ -636,6 +636,7 @@ def main(argv):
 
 def judge_trials(options, available, wanted):
     """Judge each wanted trial up to `--repeat` times; return the exit code."""
+
     # A trial is judged up to `--repeat` times and no further. The rounds
     # before this one judged once, and a single call is not reproducible: six
     # calls on one unchanged tree returned readability 4, 4, 4, 3, 4, 4. The
