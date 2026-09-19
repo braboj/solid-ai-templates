@@ -33,6 +33,7 @@ import time
 from lib import (ROOT, PASS, FAIL, SKIP, ERR, read, parse_args,
                  load_dotenv, print_verdict)
 from cases import ALL_TESTS, CANARY_TESTS
+from providers import StoppedEarly
 
 # Import shared resolver from tools/
 sys.path.insert(0, os.path.join(ROOT, "tools"))
@@ -165,6 +166,12 @@ def run_test(test, dry_run=False):
     t0 = time.time()
     try:
         output, usage = provider_fn(prompt)
+    except StoppedEarly as e:
+        # A stopped answer is not graded, but what it produced and spent is
+        # the only evidence of why it stopped, so the report keeps both.
+        elapsed = time.time() - t0
+        return (ERR, f"{provider_name} error: {e}", elapsed, e.text, prompt,
+                e.usage)
     except Exception as e:
         return ERR, f"{provider_name} error: {e}", None, None, None, None
     elapsed = time.time() - t0
@@ -189,6 +196,16 @@ def _render_prompt(r, lines):
         lines.append("```")
         lines.append("")
         lines.append("</details>")
+        lines.append("")
+
+
+def _render_output(r, lines):
+    if r.get("output"):
+        lines.append("**Output**:")
+        lines.append("")
+        lines.append("```")
+        lines.append(r["output"].replace("```", "~~~"))
+        lines.append("```")
         lines.append("")
 
 
@@ -226,7 +243,14 @@ def render_fail(r):
 
 
 def render_err(r):
-    return [f"### {r['status']}  {r['id']}", "", f"**Error**: {r['detail']}", ""]
+    elapsed_str = f"  ({r['elapsed']:.1f}s)" if r["elapsed"] else ""
+    lines = [f"### {r['status']}  {r['id']}{elapsed_str}", ""]
+    _render_usage(r, lines)
+    lines.append(f"**Error**: {r['detail']}")
+    lines.append("")
+    _render_output(r, lines)
+    _render_prompt(r, lines)
+    return lines
 
 
 def render_skip(r):
@@ -237,13 +261,7 @@ def render_pass(r):
     elapsed_str = f"  ({r['detail']})" if r["detail"] else ""
     lines = [f"### {r['status']}  {r['id']}{elapsed_str}", ""]
     _render_usage(r, lines)
-    if r.get("output"):
-        lines.append("**Output**:")
-        lines.append("")
-        lines.append("```")
-        lines.append(r["output"].replace("```", "~~~"))
-        lines.append("```")
-        lines.append("")
+    _render_output(r, lines)
     _render_prompt(r, lines)
     return lines
 

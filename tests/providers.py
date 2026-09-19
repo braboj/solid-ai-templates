@@ -33,6 +33,19 @@ def model_for(name):
     return os.environ.get(variable, default)
 
 
+class StoppedEarly(RuntimeError):
+    """A response the model ended before finishing its answer.
+
+    Carries the text it produced and its usage, in the shape a completed
+    call returns them.
+    """
+
+    def __init__(self, reason, text, usage):
+        super().__init__(reason)
+        self.text = text
+        self.usage = usage
+
+
 def _anthropic(prompt):
     """Call Anthropic Messages API. Requires ANTHROPIC_API_KEY."""
     import anthropic
@@ -49,15 +62,18 @@ def _anthropic(prompt):
     ) as stream:
         message = stream.get_final_message()
 
-    # A refusal or a truncated answer is not an output to grade, and
-    # asserting against it would report a template defect that is not there.
-    if message.stop_reason != "end_turn":
-        raise RuntimeError(f"stopped on {message.stop_reason}, not end_turn")
     text = "".join(b.text for b in message.content if b.type == "text")
 
     # This SDK version reports no separate thinking-token count; extended
     # thinking is not broken out of output_tokens here.
-    return text, {"output": message.usage.output_tokens, "thinking": None}
+    usage = {"output": message.usage.output_tokens, "thinking": None}
+
+    # A refusal or a truncated answer is not an output to grade, and
+    # asserting against it would report a template defect that is not there.
+    if message.stop_reason != "end_turn":
+        raise StoppedEarly(
+            f"stopped on {message.stop_reason}, not end_turn", text, usage)
+    return text, usage
 
 
 def _gemini(prompt):
@@ -81,14 +97,31 @@ def _gemini(prompt):
         },
     )
 
+    metadata = response.usage_metadata
+    usage = {
+        "output": metadata.candidates_token_count,
+        "thinking": metadata.thoughts_token_count,
+    }
     finish = response.candidates[0].finish_reason
     if finish != "STOP":
-        raise RuntimeError(f"stopped on {finish}, not STOP")
-    usage = response.usage_metadata
-    return response.text, {
-        "output": usage.candidates_token_count,
-        "thinking": usage.thoughts_token_count,
+        raise StoppedEarly(
+            f"stopped on {finish}, not STOP", response.text, usage)
+    return response.text, usage
+
+
+def _chat_completion(response):
+    """Return the text and usage of an OpenAI-compatible chat response."""
+    choice = response.choices[0]
+    details = response.usage.completion_tokens_details
+    usage = {
+        "output": response.usage.completion_tokens,
+        "thinking": details.reasoning_tokens if details else None,
     }
+    if choice.finish_reason != "stop":
+        raise StoppedEarly(
+            f"stopped on {choice.finish_reason}, not stop",
+            choice.message.content, usage)
+    return choice.message.content, usage
 
 
 def _deepseek(prompt):
@@ -105,14 +138,7 @@ def _deepseek(prompt):
         temperature=0,
         messages=[{"role": "user", "content": prompt}],
     )
-    choice = response.choices[0]
-    if choice.finish_reason != "stop":
-        raise RuntimeError(f"stopped on {choice.finish_reason}, not stop")
-    details = response.usage.completion_tokens_details
-    return choice.message.content, {
-        "output": response.usage.completion_tokens,
-        "thinking": details.reasoning_tokens if details else None,
-    }
+    return _chat_completion(response)
 
 
 def _groq(prompt):
@@ -126,14 +152,7 @@ def _groq(prompt):
         temperature=0,
         messages=[{"role": "user", "content": prompt}],
     )
-    choice = response.choices[0]
-    if choice.finish_reason != "stop":
-        raise RuntimeError(f"stopped on {choice.finish_reason}, not stop")
-    details = response.usage.completion_tokens_details
-    return choice.message.content, {
-        "output": response.usage.completion_tokens,
-        "thinking": details.reasoning_tokens if details else None,
-    }
+    return _chat_completion(response)
 
 
 def _claude_cli(prompt):
