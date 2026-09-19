@@ -362,6 +362,21 @@ list: it costs quota, takes hours, and answers a different question from
 whether this repository is sound. `tests/efficacy/README.md` owns its
 procedure, and `docs/design/efficacy-benchmark.md` owns the method.
 
+Its judge has a control of its own, which builds a damaged and an improved
+copy of one pinned application and scores all three. Run it whenever the
+judge model, its effort or the rubric prompt changes, because each of those
+invalidates every reading the benchmark has taken:
+
+```bash
+py tests/efficacy/control/control.py --root C:/efficacy/control-<date>
+py tests/efficacy/judge.py --root C:/efficacy/control-<date>
+```
+
+A row that does not fall on the damaged tree cannot detect damage; one that
+does not rise on the improved tree cannot detect improvement, so no arm can
+win on it. `tests/efficacy/control/README.md` carries the reading rule and
+what the control found when it was first run.
+
 See `tests/CODIFICATION.md` for the ID scheme and `tests/INDEX.md` for the
 full list of specs. Requires `py -m pip install pyyaml` for the manifest
 check.
