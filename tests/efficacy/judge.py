@@ -441,15 +441,25 @@ def judge_bundle(bundle, options, schema_path):
                         stdin=PROMPT)
     if not os.path.exists(last):
         return {"argv": argv, "error": "the judge wrote no final message: %s"
-                % (outcome["stderr"] or outcome["stdout"])[-400:]}
+                % cli_said(outcome)}
     with io.open(last, encoding="utf-8") as handle:
         text = handle.read().strip()
     try:
         payload = json.loads(text)
     except ValueError:
-        return {"argv": argv, "error": "the final message was not JSON: %s"
-                % text[:400]}
+
+        # The CLI creates the file before it calls the model, so a refusal
+        # leaves it empty and states its cause only in what the CLI printed.
+        return {"argv": argv, "error": "the final message was %s; the CLI "
+                "said: %s" % ("not JSON: %s" % text[:400] if text else "empty",
+                              cli_said(outcome))}
     return {"argv": argv, "payload": payload}
+
+
+def cli_said(outcome):
+    """The last of what the judge CLI printed, where a failure names its
+    cause."""
+    return (outcome["stderr"] or outcome["stdout"] or "").strip()[-400:]
 
 
 def judge_through_claude(bundle, options, schema_path):
@@ -846,9 +856,13 @@ def bundle_checks(scratch):
 
 # A stand-in for the judge CLI: it reports a version, and otherwise records
 # the arguments and standard input it received where the real CLI writes its
-# final message.
+# final message. Told to refuse, it fails the way the real one does when the
+# model is refused: the message file created and left empty, the cause on
+# standard error.
+REFUSAL = "ERROR: the model requires a newer version of Codex"
 FAKE_CLI = """\
 import json
+import os
 import sys
 
 args = sys.argv[1:]
@@ -856,6 +870,10 @@ if args == ["--version"]:
     print("codex-cli self-test")
     raise SystemExit(0)
 last = args[args.index("--output-last-message") + 1]
+if os.environ.get("FAKE_CODEX_REFUSES"):
+    open(last, "w").close()
+    sys.stderr.write(os.environ["FAKE_CODEX_REFUSES"] + "\\n")
+    raise SystemExit(1)
 with open(last, "w", encoding="utf-8") as handle:
     json.dump({"argv": args,
                "stdin": sys.stdin.buffer.read().decode("utf-8")}, handle)
@@ -917,8 +935,15 @@ def launch_checks(scratch):
                                      effort="high", dry_run=False,
                                      cli=DEFAULT_CLI, timeout=120)
         answer = judge_bundle(bundle, options, os.path.join(scratch, "s.json"))
+
+        # The refusal leaves the message file empty, so the failure is read
+        # from the branch that finds a file and no JSON in it.
+        os.environ["FAKE_CODEX_REFUSES"] = REFUSAL
+        refused = judge_bundle(bundle, options,
+                               os.path.join(scratch, "s.json"))
     finally:
         os.environ["PATH"] = saved
+        os.environ.pop("FAKE_CODEX_REFUSES", None)
 
     received = answer.get("payload") or {}
     stdin = (received.get("stdin") or "").replace("\r\n", "\n")
@@ -926,6 +951,11 @@ def launch_checks(scratch):
                    stdin == PROMPT and PROMPT not in answer["argv"]))
     checks.append(("every argument reaches the CLI intact",
                    received.get("argv") == answer["argv"][1:]))
+    message = bundle + "-message.json"
+    checks.append(("an empty final message carries the CLI's cause",
+                   os.path.isfile(message) and os.path.getsize(message) == 0
+                   and "was empty" in refused.get("error", "")
+                   and REFUSAL in refused["error"]))
     return checks
 
 
