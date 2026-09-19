@@ -85,8 +85,8 @@ The repair is tracked in #1827.
 
 ## Why the base is a pinned archive
 
-`base.zip` holds one trial's output — 33 files, the application the three trees
-are built from. It is an input to this control, not an artifact of it:
+`base.zip` holds one trial's output: the application the three trees are built
+from. It is an input to this control, not an artifact of it:
 regenerating it would compare a later run against a different application, and
 every number above would silently stop meaning what it says.
 
