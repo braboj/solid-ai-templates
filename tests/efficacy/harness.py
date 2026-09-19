@@ -1800,15 +1800,21 @@ def claim_refusal_check(tool, main, root, *extra):
         before = claimed_pid(path)
         listed = running_as(live.pid, tool)
         printed = io.StringIO()
+
+        # A run that got past the claim may fail anywhere after it, and that
+        # is the check failing, not the self-test.
         with contextlib.redirect_stdout(printed):
-            code = main(["--root", root] + list(extra))
+            try:
+                code = main(["--root", root] + list(extra))
+            except Exception:
+                code = None
         after = claimed_pid(path)
     finally:
         live.kill()
         live.wait()
     return ("a live %s run refuses a second" % tool,
             listed and before == live.pid and after == before
-            and code != 0 and "is live" in printed.getvalue())
+            and bool(code) and "is live" in printed.getvalue())
 
 
 def leftover_checks():
