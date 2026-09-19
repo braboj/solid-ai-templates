@@ -239,9 +239,9 @@ holding a different lock is refused as another run. The earlier root is
 never touched.
 
 Nothing copied is measured again. `score.py` skips a trial whose score is
-already written, `judge.py` one already judged, and `security.py` one
-already read, each saying so and each with a flag (`--rescore`,
-`--rejudge`, `--reread`) to do it anyway; the judge numbers new blind
+already written, `judge.py` one already judged as often as asked, and
+`security.py` one already read, each saying so and each with a flag
+(`--rescore`, `--rejudge`, `--reread`) to do it anyway; the judge numbers new blind
 labels past any the area holds. `score.py` also refuses a root whose
 existing scores were graded at another hidden-suite revision than the one
 it cloned: a corrected grader is never run on the same trials, so a run at
@@ -276,14 +276,24 @@ happens to hold no such pair.
 ```bash
 py tests/efficacy/score.py --self-test
 py tests/efficacy/score.py --root <the run root>
-py tests/efficacy/judge.py --root <the run root> --dry-run
-py tests/efficacy/judge.py --root <the run root>
+py tests/efficacy/judge.py --root <the run root> --repeat 3 --dry-run
+py tests/efficacy/judge.py --root <the run root> --repeat 3
 py tests/efficacy/judge.py --self-test
 py tests/efficacy/report.py --self-test
 py tests/efficacy/report.py --root <the run root>
 py tests/efficacy/security.py --self-test
 py tests/efficacy/security.py --root <the run root>
 ```
+
+The judge reads each trial three times, and the report means the three. One
+reading of a tree is not reproducible — six calls on one unchanged bundle
+returned readability 4, 4, 4, 3, 4, 4 — and section 12 of the design fixes
+three before the round. `--repeat` tops a trial up to that count rather than
+adding to it, so a run cut short by the judge's usage limit resumes by being
+started again, and a trial already holding three is left alone. Rounds 1 and
+2 were judged once each and read as they did. Never start a second judge run
+against a root while one is live: both take the same next label, and the
+second deletes the bundle the first is reading.
 
 Scoring reads every run record in the root, so a run stopped and resumed
 `--from` a later trial scores whole; a trial two records both offer is
