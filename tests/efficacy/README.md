@@ -385,6 +385,11 @@ also ends an argument at its first newline, so a prompt passed as one arrives
 cut short. The self test installs a stand-in CLI behind a shim and checks that
 the prompt and every argument arrive whole.
 
+A CLI refused by the model creates its final-message file and leaves it empty,
+with the cause only in what it printed. A failed judging records the tail of
+that output beside the empty or unreadable message, and the self test has the
+stand-in refuse to prove it.
+
 `security.py` reads scored trials with security checks declared after a run:
 hard-coded secret keys, debug left on, SQL built from strings, known
 vulnerabilities in the installed dependencies, session cookie flags, security
