@@ -38,6 +38,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPT = os.path.basename(__file__)
 SPEC = os.path.join(HERE, "SPEC.md")
 
+# Every specification a round has built against, by the sha256 of its text
+# with line endings normalised. A tree is judged against the one it carries,
+# which is the copy the harness gave its agent, and never against a later one:
+# that would score it on features it was never asked for. The current file is
+# accepted as well, so a round's specification is listed here once a later one
+# replaces it.
+SPECS = {
+    "ebecfff1951ce0f4f2d5a0d95564be7e6eda15283905116e83805020e7cb85f5":
+        "rounds 1 and 2",
+}
+
 # A different vendor from the generator, which is the stronger form of the
 # design's control: a different family of the same vendor shares a training
 # pipeline with the thing it grades.
@@ -277,12 +288,42 @@ def build_bundle(tree, target):
                          newline="") as handle:
                 handle.write(text)
 
-    # The judge needs the task to score against it, and the specification is
-    # identical for every arm, so it carries no condition.
-    shutil.copyfile(SPEC, os.path.join(target, "SPEC.md"))
-    return {"removed": removed, "markers_masked": masked,
+    # The judge needs the task to score against it, and the tree carries the
+    # one its agent was given. Written unmasked: a specification a round ran
+    # is identical for every arm, so it carries no condition.
+    spec = tree_spec(tree)
+    if spec:
+        with io.open(os.path.join(target, "SPEC.md"), "wb") as handle:
+            handle.write(spec.pop("text"))
+    return {"removed": removed, "markers_masked": masked, "spec": spec,
             "leaks": surviving_markers(target, os.path.basename(tree)),
             "digest": digest(target)}
+
+
+def spec_text(path):
+    """A specification's bytes with line endings normalised, or None."""
+    if not os.path.isfile(path):
+        return None
+    with io.open(path, "rb") as handle:
+        return handle.read().replace(b"\r\n", b"\n")
+
+
+def tree_spec(tree):
+    """The specification a tree carries, if it is one a round ran.
+
+    Returns its text, sha256 and round, or None. An agent can edit its copy,
+    so the copy is checked against the specifications rounds ran, not trusted.
+    """
+    text = spec_text(os.path.join(tree, "SPEC.md"))
+    if text is None:
+        return None
+    known = dict(SPECS)
+    current = hashlib.sha256(spec_text(SPEC)).hexdigest()
+    known.setdefault(current, "the current specification")
+    found = hashlib.sha256(text).hexdigest()
+    if found not in known:
+        return None
+    return {"text": text, "sha256": found, "round": known[found]}
 
 
 def surviving_markers(bundle, trial):
@@ -545,6 +586,23 @@ def validate(payload):
     return problems
 
 
+def refusal(stripped):
+    """Why a built bundle may not be judged, or None where it may."""
+
+    # A bundle that still names its condition is not judged at all. A score
+    # taken from a tree that says which arm it is cannot be un-taken, and the
+    # design's blinding would read as held.
+    if stripped["leaks"]:
+        return "the bundle still names its condition: %s" % stripped["leaks"][:5]
+
+    # Nor is one with no specification a round ran: judged against another,
+    # the tree would be scored on work it was never asked for.
+    if not stripped["spec"]:
+        return ("the tree carries no specification a round ran, so there is "
+                "nothing to judge it against")
+    return None
+
+
 def trees(root):
     """Every scored trial's extracted tree, by canonical trial name.
 
@@ -710,13 +768,9 @@ def judge_trials(options, available, wanted):
         print("%s  as %s" % (name, label))
         bundle = os.path.join(bundles, label)
         stripped = build_bundle(available[name], bundle)
-
-        # A bundle that still names its condition is not judged at all. A
-        # score taken from a tree that says which arm it is cannot be
-        # un-taken, and the design's blinding would read as held.
-        if stripped["leaks"]:
-            answer = {"argv": None, "error": "the bundle still names its "
-                      "condition: %s" % stripped["leaks"][:5]}
+        refused = refusal(stripped)
+        if refused:
+            answer = {"argv": None, "error": refused}
         else:
             answer = judge_bundle(bundle, options, schema_path)
 
@@ -852,6 +906,66 @@ def bundle_checks(scratch):
                    [hidden, "full-2", "as a path segment"]
                    in surviving_markers(bundle, "full-2")))
     return checks
+
+
+def spec_checks(scratch):
+    """Prove a tree is judged against the specification it carries.
+
+    Each planted tree carries the current specification, an earlier one, an
+    edited one or none, and the bundle is read back for the bytes it holds.
+    """
+    current = spec_text(SPEC)
+    earlier = b"# tariff, as an earlier round specified it\n"
+    planted = {"current": current,
+               "crlf": current.replace(b"\n", b"\r\n"),
+               "earlier": earlier,
+               "edited": current + b"\nAlso build a blog.\n",
+               "missing": None}
+    saved = dict(SPECS)
+    SPECS[hashlib.sha256(earlier).hexdigest()] = "an earlier round"
+    built = {}
+    try:
+        for label, text in planted.items():
+            tree = os.path.join(scratch, "specs", label, label)
+            plant(tree, {os.path.join("src", "app.py"): "X = 1\n"})
+            if text is not None:
+                with io.open(os.path.join(tree, "SPEC.md"), "wb") as handle:
+                    handle.write(text)
+            bundle = os.path.join(scratch, "specs", label, "bundle")
+            stripped = build_bundle(tree, bundle)
+            held_path, held = os.path.join(bundle, "SPEC.md"), None
+            if os.path.isfile(held_path):
+                with io.open(held_path, "rb") as handle:
+                    held = handle.read()
+            built[label] = (stripped, held)
+    finally:
+        SPECS.clear()
+        SPECS.update(saved)
+
+    def judged_against(label, text):
+        stripped, held = built[label]
+        return (stripped["spec"] is not None and refusal(stripped) is None
+                and held == text)
+
+    def refused(label):
+        stripped, _ = built[label]
+        return stripped["spec"] is None and "specification" in (
+            refusal(stripped) or "")
+
+    return [
+        ("a tree carrying the current spec is judged against it",
+         judged_against("current", current)),
+        ("a CRLF copy of it is recognised and bundled as LF",
+         judged_against("crlf", current)),
+
+        # The property the check exists for: an earlier round's tree keeps
+        # its own specification rather than taking the current one.
+        ("an earlier round's tree is judged against its own spec",
+         judged_against("earlier", earlier)
+         and built["earlier"][0]["spec"]["round"] == "an earlier round"),
+        ("a tree whose spec was edited is refused", refused("edited")),
+        ("a tree carrying no spec is refused", refused("missing")),
+    ]
 
 
 # A stand-in for the judge CLI: it reports a version, and otherwise records
@@ -1032,13 +1146,14 @@ def claim_checks(scratch):
 
 
 def self_test():
-    """Prove a bundle is blind, labels continue, the judge launches, and a
-    live run refuses a second."""
+    """Prove a bundle is blind and carries its tree's own specification,
+    labels continue, the judge launches, and a live run refuses a second."""
     scratch = os.path.join(os.environ.get("TEMP", "."),
                            "efficacy-judge-self-test")
     shutil.rmtree(scratch, ignore_errors=True)
     os.makedirs(scratch)
     checks = bundle_checks(scratch)
+    checks.extend(spec_checks(scratch))
     checks.extend(label_checks(scratch))
     checks.extend(launch_checks(scratch))
     checks.extend(backend_checks(scratch))
