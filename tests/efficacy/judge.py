@@ -138,12 +138,15 @@ readability
      no expression needs a second reading
 
 maintainability
-  1  changing one discount kind means edits in modules that never name it,
-     and nothing says where a kind's behaviour lives
-  3  the domain is quick to find, but one kind's behaviour is spread across
-     the algorithm, the persistence layer and the templates
-  5  every fact about a discount kind sits in one place, and the modules
-     that use it name no kind
+  1  the modules do not divide the work: one of them holds the domain and
+     the layers around it together, so a reader has no boundary to start
+     from and the pricing rules sit beside the web framework they import
+  3  the modules divide along lines a reader can name and the domain is
+     quick to find, but one discount kind's behaviour is still spread
+     across the algorithm, the persistence layer and the templates
+  5  each module's responsibility is evident from where it sits, the
+     domain depends on nothing layered above it, and every fact about a
+     discount kind sits in one place
 
 A submission that removes what a lower anchor describes scores above it, even
 where the result is ordinary: these are descriptions of the code, not of how
