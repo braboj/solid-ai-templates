@@ -31,9 +31,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
 import score  # noqa: E402
-from harness import TrialError, canonical  # noqa: E402
+from harness import (LiveRunError, TrialError, canonical,  # noqa: E402
+                     claim_area, claim_refusal_check, release_area)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+SCRIPT = os.path.basename(__file__)
 SPEC = os.path.join(HERE, "SPEC.md")
 
 # A different vendor from the generator, which is the stronger form of the
@@ -618,6 +620,23 @@ def main(argv):
         print("no tree for %s" % ", ".join(missing))
         return 2
 
+    # A second run against the area takes the same next label as a live one,
+    # and clears the bundle that run's judge is reading.
+    try:
+        claim = claim_area(score.scoring_area(options.root), SCRIPT)
+    except LiveRunError as error:
+        print("refused: %s" % error)
+        lib.print_verdict(False, "no trial judged")
+        return 2
+    try:
+        return judge_trials(options, available, wanted)
+    finally:
+        release_area(claim)
+
+
+def judge_trials(options, available, wanted):
+    """Judge each wanted trial up to `--repeat` times; return the exit code."""
+
     # A trial is judged up to `--repeat` times and no further. The rounds
     # before this one judged once, and a single call is not reproducible: six
     # calls on one unchanged tree returned readability 4, 4, 4, 3, 4, 4. The
@@ -967,8 +986,24 @@ def backend_checks(scratch):
     ]
 
 
+def claim_checks(scratch):
+    """A judge run refuses while another holds the area, and builds nothing.
+
+    The planted tree gets the run past every earlier refusal, so the one it
+    meets is the claim's. A dry run, so that a claim that stopped refusing
+    builds a bundle and calls no model.
+    """
+    root = os.path.join(scratch, "claimed")
+    area = score.scoring_area(root)
+    os.makedirs(os.path.join(area, "scoring", "none-1", "tree", "none-1"))
+    label, refused = claim_refusal_check(SCRIPT, main, root, "--dry-run")
+    return [(label, refused
+             and not os.path.exists(os.path.join(area, "judge")))]
+
+
 def self_test():
-    """Prove a bundle is blind, labels continue, and the judge launches."""
+    """Prove a bundle is blind, labels continue, the judge launches, and a
+    live run refuses a second."""
     scratch = os.path.join(os.environ.get("TEMP", "."),
                            "efficacy-judge-self-test")
     shutil.rmtree(scratch, ignore_errors=True)
@@ -977,6 +1012,7 @@ def self_test():
     checks.extend(label_checks(scratch))
     checks.extend(launch_checks(scratch))
     checks.extend(backend_checks(scratch))
+    checks.extend(claim_checks(scratch))
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     shutil.rmtree(scratch, ignore_errors=True)

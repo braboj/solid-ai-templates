@@ -33,11 +33,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
 import probes  # noqa: E402
-from harness import (SCORABLE, TrialError, arm_name, canonical,  # noqa: E402
-                     frozen_top, name_of, remove_tree, scorable_trials,
-                     scoring_area, spellings)
+from harness import (SCORABLE, LiveRunError, TrialError,  # noqa: E402
+                     arm_name, canonical, claim_area, claim_refusal_check,
+                     frozen_top, name_of, release_area, remove_tree,
+                     scorable_trials, scoring_area, spellings)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+SCRIPT = os.path.basename(__file__)
 REQUIREMENTS = os.path.join(HERE, "scoring-requirements.txt")
 TOOLCONFIG = os.path.join(HERE, "toolconfig")
 RUFF_CONFIG = os.path.join(TOOLCONFIG, "ruff.toml")
@@ -1391,6 +1393,15 @@ def lock_source_checks(scratch):
              written is not None and "Flask-WTF" not in written)]
 
 
+def claim_checks(scratch):
+    """A scoring run refuses while another holds the area, and clears
+    nothing: the hidden suite is never cloned."""
+    root = os.path.join(scratch, "claimed")
+    label, refused = claim_refusal_check(SCRIPT, main, root)
+    return [(label, refused and not os.path.exists(
+        os.path.join(scoring_area(root), "hidden-suite")))]
+
+
 def self_test():
     """Prove the missing-vs-zero rule fires before any score is believed.
 
@@ -1412,7 +1423,8 @@ def self_test():
     os.makedirs(scratch)
     checks = (run_record_checks(scratch) + churn_checks(scratch)
               + lock_checks() + html_checks() + readonly_checks(scratch)
-              + lock_source_checks(scratch) + unrun_checks(scratch))
+              + lock_source_checks(scratch) + unrun_checks(scratch)
+              + claim_checks(scratch))
     venv = create_venv(os.path.join(scratch, "venv"))
 
     empty = os.path.join(scratch, "empty")
@@ -1531,6 +1543,23 @@ def main(argv):
         print("--root is required unless --self-test is given")
         return 2
 
+    # A run clears the hidden suite's clone, and each trial's tree and
+    # environment, before rebuilding them, so a second run against the area
+    # deletes what a live one is reading.
+    try:
+        claim = claim_area(scoring_area(options.root), SCRIPT)
+    except LiveRunError as error:
+        print("refused: %s" % error)
+        lib.print_verdict(False, "0 scored, 1 refused")
+        return 1
+    try:
+        return score_trials(options)
+    finally:
+        release_area(claim)
+
+
+def score_trials(options):
+    """Score every trial the run records offer; return the exit code."""
     try:
         offered = scorable_trials(options.root, options.run, options.task)
         if not offered:

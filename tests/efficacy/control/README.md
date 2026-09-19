@@ -44,9 +44,9 @@ generator by design, so this backend reads the control only, and its readings
 are never meaned with the other judge's; a separate root keeps them apart on
 disk as well as in the report.
 
-Never start a second run against a root while one is live. Both take the same
-next label, and the second deletes the bundle the first is reading: the
-evidence check then finds nothing, and that judging has to be voided.
+A second judge run against a root while one is live is refused: both would
+take the same next label, and the second would delete the bundle the first is
+reading. A root left claimed by a run that crashed is taken over by the next.
 
 ## What each tree does
 
