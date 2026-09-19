@@ -989,12 +989,13 @@ def claim_checks(scratch):
     """A judge run refuses while another holds the area, and builds nothing.
 
     The planted tree gets the run past every earlier refusal, so the one it
-    meets is the claim's.
+    meets is the claim's. A dry run, so that a claim that stopped refusing
+    builds a bundle and calls no model.
     """
     root = os.path.join(scratch, "claimed")
     area = score.scoring_area(root)
     os.makedirs(os.path.join(area, "scoring", "none-1", "tree", "none-1"))
-    label, refused = claim_refusal_check(SCRIPT, main, root)
+    label, refused = claim_refusal_check(SCRIPT, main, root, "--dry-run")
     return [(label, refused
              and not os.path.exists(os.path.join(area, "judge")))]
 

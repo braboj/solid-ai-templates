@@ -291,9 +291,16 @@ returned readability 4, 4, 4, 3, 4, 4 — and section 12 of the design fixes
 three before the round. `--repeat` tops a trial up to that count rather than
 adding to it, so a run cut short by the judge's usage limit resumes by being
 started again, and a trial already holding three is left alone. Rounds 1 and
-2 were judged once each and read as they did. Never start a second judge run
-against a root while one is live: both take the same next label, and the
-second deletes the bundle the first is reading.
+2 were judged once each and read as they did.
+
+One run of each tool at a time works on a scoring area. `score.py`,
+`judge.py` and `security.py` each clear a trial's directory before rebuilding
+it, so a second run would delete what a live one is reading: two judge runs
+also take the same next label. A run writes `<tool>.running` in the scoring
+area, naming its process, and removes it on exit. A run that finds one naming
+a live run of the same tool is refused. One naming a process that has ended,
+or a pid now held by something else, is taken over and said so, so a run that
+crashed does not hold the area.
 
 Scoring reads every run record in the root, so a run stopped and resumed
 `--from` a later trial scores whole; a trial two records both offer is

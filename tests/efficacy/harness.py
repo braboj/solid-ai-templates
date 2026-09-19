@@ -1790,9 +1790,10 @@ def claim_checks():
             ("a marker naming no run refuses", unreadable)]
 
 
-def claim_refusal_check(tool, main, root):
-    """Whether `main` on `root` refuses while a live run of `tool` holds the
-    scoring area, and leaves that run's marker as it was."""
+def claim_refusal_check(tool, main, root, *extra):
+    """Whether `main` on `root`, given `extra` arguments, refuses while a live
+    run of `tool` holds the scoring area, and leaves that run's marker as it
+    was."""
     live = planted_run(tool)
     try:
         path = plant_claim(scoring_area(root), tool, live.pid)
@@ -1800,7 +1801,7 @@ def claim_refusal_check(tool, main, root):
         listed = running_as(live.pid, tool)
         printed = io.StringIO()
         with contextlib.redirect_stdout(printed):
-            code = main(["--root", root])
+            code = main(["--root", root] + list(extra))
         after = claimed_pid(path)
     finally:
         live.kill()
