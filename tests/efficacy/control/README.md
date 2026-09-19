@@ -5,7 +5,7 @@ not change when the code changes measures nothing, and nothing in a normal run
 would show that: an arm that moves no row looks like an arm that changed
 nothing.
 
-This control settles it. Five trees are built from one pinned application and
+This control settles it. Six trees are built from one pinned application and
 the judge scores each. Every tree passes the application's whole suite, so what
 separates them is structure alone, and each damages or improves one thing, so a
 row that moves says which.
@@ -32,6 +32,22 @@ py -m pytest -q          # in each built tree; every tree passes
 `py tests/efficacy/control/control.py --self-test` builds into a temporary
 directory, checks every mutation landed and throws it away. It runs in CI.
 
+A second judge reads the same trees through the `claude` CLI:
+
+```bash
+py tests/efficacy/control/control.py --root C:/efficacy/control-<date>-claude
+py tests/efficacy/judge.py --root C:/efficacy/control-<date>-claude --cli claude --model <model>
+```
+
+Give it a root of its own. The rounds' judge is a different vendor from the
+generator by design, so this backend reads the control only, and its readings
+are never meaned with the other judge's; a separate root keeps them apart on
+disk as well as in the report.
+
+Never start a second run against a root while one is live. Both take the same
+next label, and the second deletes the bundle the first is reading: the
+evidence check then finds nothing, and that judging has to be voided.
+
 ## What each tree does
 
 | Tree | What it is |
@@ -41,6 +57,7 @@ directory, checks every mutation landed and throws it away. It runs in CI.
 | `obscured-1` | the pricing algorithm inlined into one long function with abbreviated names, and nothing else: the module boundaries, the error hierarchy and the dispatch are the base's |
 | `improved-1` | a rule contract and self-registering kind registry, dispatch on concrete type removed from pricing and persistence, the hardcoded kinds tuple replaced by the registry, a `__class__.__name__` ladder removed from a template, and two stray error classes folded into the package hierarchy |
 | `improved-2` | `improved-1`, and the store maps a rule's own terms onto its columns with a codec per column, so no module dispatches on a kind |
+| `improved-3` | `improved-2`, and each kind declares the fields it asks a form for, so the form-building code and the template are derived from the registry and no layer names a kind |
 
 ## Reading a result
 
@@ -95,38 +112,71 @@ and means them.
 
 ### After anchoring, 2026-09-19
 
-Same judge and effort, five trees, one run, evidence 100 % throughout.
+Six trees, one judging each unless stated, evidence 100 % on every judging
+counted. A bold cell differs from `base-1` in the same run.
 
-| Dimension | base-1 | degraded-1 | obscured-1 | improved-1 | improved-2 |
-|---|---|---|---|---|---|
-| design | 3 | **2** | 3 | **4** | 3 |
-| readability | 3 | 3 | **1** | 3 | 3 |
-| maintainability | 3 | **2** | 3 | 3 | 3 |
-| dip | 5 | **1** | 5 | 5 | 5 |
-| srp | 3 | **2** | 3 | 3 | 3 |
-| error_design | 2 | 2 | 2 | **3** | **3** |
-| ocp | 2 | 2 | 2 | **3** | **3** |
-| lsp | 2 | **3** | 2 | **3** | **3** |
-| isp | 4 | 4 | 4 | 4 | 4 |
-| naming_and_abstraction | 3 | 3 | **2** | **4** | **4** |
-| test_quality | 4 | 3 | 4 | 4 | 4 |
+#### gpt-6-astra at effort `high`, the judge the rounds use
 
-`design` falls to 2 and rises to 4, and `improved-1` returned 4 in three
-separate anchored runs. `readability` falls two points on the tree that
-actually damages it, having been flat against a degradation that changes no
-function body.
+| Dimension | base-1 | degraded-1 | obscured-1 | improved-1 | improved-2 | improved-3 |
+|---|---|---|---|---|---|---|
+| **design** | 3 | **2** | 3 | 3 | **3.5** | **4** |
+| **readability** | 3 | 3 | **1** | 3 | 3 | 3 |
+| **maintainability** | 3 | 3 | 3 | 3 | 3 | **4** |
+| dip | 5 | **1** | 5 | 5 | 5 | 5 |
+| srp | 3 | **2** | 3 | 3 | 3 | 3 |
+| error_design | 2 | **1** | 2 | **3** | **3** | **3** |
+| ocp | 2 | 2 | 2 | **3** | **3** | **3** |
+| lsp | 3 | **2** | **2** | 3 | 3 | 3 |
+| isp | 4 | 4 | 4 | 4 | 4 | 4 |
+| naming_and_abstraction | 4 | **3** | **2** | 4 | 4 | 4 |
+| test_quality | 3 | 3 | **4** | **4** | **4** | **4** |
 
-`maintainability` still only falls. `improved-2` was built to clear its
-anchor — no module dispatches on a kind — and the judge answered 3, quoting
-`<label for="percent">Percent (percentage / coupon)</label>`: the rules form
-template names kinds, and neither improved tree rebuilds the form. The anchor
-is being applied as written; the fixture cannot reach its 5. **That row's
-upward range is untested, not disproved.**
+`improved-2` holds two judgings, meaned. The top-up to three per tree stopped
+on the judge plan's usage limit after one call; a later `--repeat 3` on the
+same root attempts only what is still owed.
 
-`improved-2` also scored `design` 3 where `improved-1` scored 4. It buys its
-decoupling with reflection over dataclass fields and a codec table, which a
-reader may fairly call worse design than an explicit mapping. Take it as a
-reading of the code, not as a fault in the row.
+#### Opus 5 through the claude backend, a cross-check on the rubric
+
+| Dimension | base-1 | degraded-1 | obscured-1 | improved-1 | improved-2 | improved-3 |
+|---|---|---|---|---|---|---|
+| **design** | 3 | **2** | 3 | **4** | **4** | **4** |
+| **readability** | 4 | **3** | **2** | 4 | 4 | 4 |
+| **maintainability** | 3 | **2** | 3 | **4** | **4** | **4** |
+| dip | 4 | **1** | **5** | **5** | **5** | **5** |
+| srp | 3 | 3 | 3 | **4** | **4** | **4** |
+| error_design | 3 | **1** | 3 | **4** | 3 | **4** |
+| ocp | 2 | 2 | 2 | **3** | **3** | **4** |
+| lsp | 3 | **2** | 3 | **4** | **4** | **4** |
+| isp | 4 | 4 | 4 | **3** | 4 | **3** |
+| naming_and_abstraction | 4 | **3** | **2** | 4 | 4 | 4 |
+| test_quality | 4 | **3** | 4 | 4 | 4 | 4 |
+
+Opus 5 shares a vendor with the generator, so it cannot judge a round. It is
+here to ask whether the rubric's behaviour belongs to the rubric or to one
+model.
+
+#### What the two say together
+
+Under both judges, every primary falls on the tree built to damage it and
+rises on a tree built to improve it:
+
+- `design` falls to 2 on `degraded-1` and reaches 4 on the improved trees
+- `readability` falls on `obscured-1`, to 1 under gpt-6-astra and to 2 under
+  Opus 5
+- `maintainability` reaches 4 once no layer names a kind, which is the tree
+  `improved-3` was built to be
+
+The judges differ in threshold, not in direction. Opus 5 credits the
+improvement already at `improved-1`; gpt-6-astra waits for `improved-3`. An
+arm has to improve more to register under the rounds' judge than under this
+one.
+
+Single judgings vary between runs of the same prompt. `design` on
+`improved-1` read 4 in three earlier anchored runs and 3 in this one, and
+`maintainability` on `degraded-1` read 2 in two earlier runs and 3 in this
+one. Those are the flips repeat judging exists to average out, and why a row
+is read against its target tree across more than one run before it is
+trusted.
 
 The repair is tracked in #1827.
 

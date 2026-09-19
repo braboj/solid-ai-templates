@@ -41,6 +41,10 @@ SPEC = os.path.join(HERE, "SPEC.md")
 # pipeline with the thing it grades.
 JUDGE_MODEL = "gpt-6-astra"
 
+# The CLI that drives the judge. The second backend exists for the control,
+# where the question is whether the rubric moves at all, and not for a round.
+DEFAULT_CLI = "codex"
+
 # The local default is low, and the rubric is a reasoning task over long
 # code, so the effort is set on the command and recorded rather than
 # inherited from this machine's configuration.
@@ -376,16 +380,16 @@ class JudgeError(Exception):
     """The judge cannot be launched as the design requires."""
 
 
-def judge_executable():
+def judge_executable(cli=DEFAULT_CLI):
     """The judge CLI's absolute path.
 
-    A bare "codex" in an argv list is not launchable on Windows, where the
+    A bare name in an argv list is not launchable on Windows, where the
     command is a `.CMD` shim and `CreateProcess` resolves no extension.
     """
-    found = shutil.which("codex")
+    found = shutil.which(cli)
     if found is None:
-        raise JudgeError("the `codex` CLI is not on PATH, so no trial can be "
-                         "judged")
+        raise JudgeError("the `%s` CLI is not on PATH, so no trial can be "
+                         "judged" % cli)
     return found
 
 
@@ -412,6 +416,9 @@ def judge_bundle(bundle, options, schema_path):
     """
     last = os.path.join(os.path.dirname(bundle),
                         os.path.basename(bundle) + "-message.json")
+
+    if options.cli == "claude":
+        return judge_through_claude(bundle, options, schema_path)
 
     # The prompt goes on standard input, named by `-`, never as an argument:
     # the Windows shim runs through `cmd.exe`, which ends a command at a
@@ -440,6 +447,68 @@ def judge_bundle(bundle, options, schema_path):
     except ValueError:
         return {"argv": argv, "error": "the final message was not JSON: %s"
                 % text[:400]}
+    return {"argv": argv, "payload": payload}
+
+
+def judge_through_claude(bundle, options, schema_path):
+    """Run the judge through the `claude` CLI instead of `codex`.
+
+    The design fixes the judge as a different vendor from the generator, and
+    this backend is not that judge: it reads the control, where the question is
+    whether the rubric itself falls and rises, not what any one round scored.
+    A reading taken here is recorded under its own CLI and model and is never
+    meaned with another judge's -- a different judge is a different
+    instrument, not another sample of the same one.
+
+    There is no schema flag here as there is on `codex`, so the shape is asked
+    for in the prompt and enforced afterwards by `validate`, which every answer
+    passes through whichever backend produced it.
+    """
+
+    # Read-only by tool list rather than by plan mode: plan mode answers with
+    # a written plan and a summary, so the rubric never reaches standard
+    # output. These three tools read and nothing writes.
+    argv = [options.executable, "--print",
+            "--model", options.model,
+            "--allowed-tools", "Read", "Glob", "Grep",
+            "--add-dir", bundle]
+    if options.dry_run:
+        return {"argv": argv, "dry_run": True}
+
+    # The contract leads and closes. This backend has no schema flag, and a
+    # CLI built for conversation answers a review prompt with a review unless
+    # the shape is the first thing it reads and the last.
+    with io.open(schema_path, encoding="utf-8") as handle:
+        shape = handle.read()
+    prompt = ("Your entire reply must be one JSON object and nothing else: no "
+              "prose before or after it, no code fence, no summary. It must "
+              "match this schema exactly:\n\n%s\n\n%s\n\nThe submission is the "
+              "tree at %s. Read it, then reply with the JSON object alone."
+              % (shape, PROMPT, bundle))
+
+    # On standard input, as the other backend does: the schema carries the
+    # prompt past the command-line length this platform allows.
+    outcome = score.run(argv, cwd=bundle, timeout=options.timeout,
+                        stdin=prompt)
+    text = (outcome["stdout"] or "").strip()
+    if not text:
+        return {"argv": argv, "error": "the judge wrote nothing: %s"
+                % (outcome["stderr"] or "")[-400:]}
+
+    # A fenced block is the one shape the prompt asks against that still
+    # arrives, so it is unwrapped rather than failed.
+    if text.startswith("```"):
+        text = text.split("\n", 1)[-1]
+        text = text.rsplit("```", 1)[0]
+    opened, closed = text.find("{"), text.rfind("}")
+    if opened < 0 or closed < opened:
+        return {"argv": argv, "error": "the answer carried no JSON object: %s"
+                % text[:400]}
+    try:
+        payload = json.loads(text[opened:closed + 1])
+    except ValueError:
+        return {"argv": argv, "error": "the answer was not JSON: %s"
+                % text[opened:opened + 400]}
     return {"argv": argv, "payload": payload}
 
 
@@ -576,8 +645,9 @@ def main(argv):
     wanted = [name for name in wanted if name in owed]
 
     try:
-        options.executable = judge_executable()
-        version = codex_version(options.executable)
+        options.executable = judge_executable(options.cli)
+        version = (codex_version(options.executable)
+                   if options.cli == "codex" else options.cli)
     except JudgeError as error:
         print("refused: %s" % error)
         lib.print_verdict(False, "no trial judged")
@@ -826,7 +896,7 @@ def launch_checks(scratch):
         plant(bundle, {"SPEC.md": "# spec\n"})
         options = argparse.Namespace(executable=executable, model="m",
                                      effort="high", dry_run=False,
-                                     timeout=120)
+                                     cli=DEFAULT_CLI, timeout=120)
         answer = judge_bundle(bundle, options, os.path.join(scratch, "s.json"))
     finally:
         os.environ["PATH"] = saved
@@ -870,6 +940,33 @@ def label_checks(scratch):
     ]
 
 
+def backend_checks(scratch):
+    """The claude backend reads and writes nothing, and answers on stdout.
+
+    Both failures below happened on the way to a working backend: plan mode
+    wrote a plan file and answered with a summary, so no rubric reached
+    standard output; and a prompt carrying the schema, passed as an argument,
+    ran past the command-line length the platform allows.
+    """
+    bundle = os.path.join(scratch, "backend", "T1")
+    plant(bundle, {"SPEC.md": "# spec\n"})
+    options = argparse.Namespace(executable="claude", model="m", cli="claude",
+                                 effort="high", dry_run=True, timeout=120)
+    argv = judge_bundle(bundle, options,
+                        os.path.join(scratch, "s.json"))["argv"]
+    tools = argv[argv.index("--allowed-tools") + 1:] if (
+        "--allowed-tools" in argv) else []
+    return [
+        ("the claude backend is not in plan mode",
+         "plan" not in argv),
+        ("it may read and nothing else",
+         tools[:3] == ["Read", "Glob", "Grep"]
+         and not any(tool in argv for tool in ("Write", "Edit", "Bash"))),
+        ("its prompt goes on stdin, not the command line",
+         not any("SPEC.md" in arg or "Score each" in arg for arg in argv)),
+    ]
+
+
 def self_test():
     """Prove a bundle is blind, labels continue, and the judge launches."""
     scratch = os.path.join(os.environ.get("TEMP", "."),
@@ -879,6 +976,7 @@ def self_test():
     checks = bundle_checks(scratch)
     checks.extend(label_checks(scratch))
     checks.extend(launch_checks(scratch))
+    checks.extend(backend_checks(scratch))
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     shutil.rmtree(scratch, ignore_errors=True)
@@ -899,6 +997,12 @@ def parse_args(argv):
                              "judge nothing")
     parser.add_argument("--trial", action="append", default=[],
                         help="judge only this trial, as none-1; repeatable")
+    parser.add_argument("--cli", default=DEFAULT_CLI,
+                        choices=("codex", "claude"),
+                        help="which CLI drives the judge. `codex` is the "
+                             "design's judge, a different vendor from the "
+                             "generator; `claude` reads the control only, and "
+                             "its readings are never meaned with the other's.")
     parser.add_argument("--repeat", type=int, default=1,
                         help="judgings per trial; the report means them. A "
                              "trial already holding this many is left alone, "
