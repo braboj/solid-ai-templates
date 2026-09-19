@@ -101,7 +101,10 @@ py tests/efficacy/harness.py --root <a directory outside this repository> \
 ```
 
 A dry run prepares every workspace and records the command without calling
-a model. Drop `--dry-run` to run the trials. `--arms` is required, because
+a model. It works in `<root>-dry-run` beside the root, cleared first, and
+leaves the root as it found it, so the run that follows uses the same root:
+a workspace is never reused, and one a dry run left there would refuse the
+trial. Drop `--dry-run` to run the trials. `--arms` is required, because
 two of the arms are reused from an earlier round and never re-run. Trials
 are interleaved — none-1, short-1, hybrid-1, none-2 and so on — so a
 model-side change part-way through lands across the arms rather than on
