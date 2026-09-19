@@ -119,12 +119,16 @@ Offline, deterministic, ~1,500–2,000 LOC.
 | HTTP | routes named in the spec so the hidden suite can drive them with the Flask test client; JSON export endpoint; form posts with server-side validation and CSRF |
 | Persistence | SQLite, single file, schema owned by the app; seed fixture in the spec |
 | Constraints | no network, Python 3.12, Flask + Jinja + one HTMX script tag; HTML must validate; forms usable without JavaScript |
+| Sign-in and customers, from round 3 | one seeded administrator whose password the environment supplies, and every route behind sign-in; customers with a name, email and address, billed on invoices; erasure on request; a JSON export of one customer's data |
 
 The spec names the API, the routes and the rule semantics so the hidden
 suite can drive them. It does not name a layout, linter, type checker,
 error hierarchy shape, logging policy, test convention, template
 organisation or accessibility bar — those are what the templates add, so
-they stay out of the spec.
+they stay out of the spec. Round 3's additions keep the same line: the spec
+names what sign-in, erasure and export do, and never how a password is
+stored, what a failed sign-in says, where a redirect may lead, or whether an
+erased customer's data leaves the database file.
 
 ## 3. Arms
 
