@@ -10,6 +10,7 @@ hidden suite and the graders read them afterwards.
 """
 
 import argparse
+import contextlib
 import datetime
 import glob
 import io
@@ -805,6 +806,93 @@ def stop_processes(paths, table=None):
                 pass
         stopped.append({"pid": pid, "command": (command or executable)[:300]})
     return stopped
+
+
+class LiveRunError(Exception):
+    """Another run of the same tool is live against the same scoring area."""
+
+
+def claim_path(area, tool):
+    """Where a run of `tool` marks `area` as in use."""
+    return os.path.join(area, "%s.running" % os.path.splitext(tool)[0])
+
+
+def read_claim(path):
+    """The run a marker names, or None when it holds no readable record."""
+    try:
+        with io.open(path, encoding="utf-8") as handle:
+            record = json.load(handle)
+    except (OSError, ValueError):
+        return None
+    return record if isinstance(record.get("pid"), int) else None
+
+
+def running_as(pid, tool):
+    """Whether process `pid` is running and its command line names `tool`.
+
+    The command line is read as well as the pid, because an ended run's pid
+    is soon reused by some other process, and that process holds nothing.
+    """
+    table = process_table()
+
+    # A listing that cannot see this process cannot see any other either, and
+    # read as empty it would call every live run ended.
+    if not any(listed == os.getpid() for listed, _, _ in table):
+        raise LiveRunError("the process listing does not show this run, so "
+                           "whether another is live cannot be told")
+    named = re.compile(r"(?:^|[\\/\s\"'])%s(?:$|[\s\"'])" % re.escape(tool),
+                       re.IGNORECASE)
+    return any(listed == pid and named.search(command or "")
+               for listed, _, command in table)
+
+
+def claim_area(area, tool):
+    """Mark `area` as in use by this run of `tool`; return the marker's path.
+
+    Every tool clears a trial's working directory before rebuilding it, so a
+    second run against the same area deletes what the first is reading. A
+    marker naming a live run of `tool` refuses this one. A marker whose
+    process has ended, or whose pid now belongs to something else, is taken
+    over, so a run that crashed does not hold the area for good.
+    """
+    os.makedirs(area, exist_ok=True)
+    path = claim_path(area, tool)
+    record = {"pid": os.getpid(), "tool": tool, "argv": sys.argv,
+              "started": datetime.datetime.now().isoformat(timespec="seconds")}
+
+    # Two attempts: the second follows a takeover, and failing it means
+    # another run took the area over in between.
+    for _ in range(2):
+        try:
+            handle = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            holder = read_claim(path)
+            if holder is None:
+                raise LiveRunError("%s names no run; remove it if no %s run "
+                                   "is live" % (path, tool))
+            if running_as(holder["pid"], tool):
+                raise LiveRunError("a %s run is live against %s: pid %d, "
+                                   "started %s" % (tool, area, holder["pid"],
+                                                   holder.get("started")))
+            print("taking over %s: pid %d, started %s, is no longer a %s run"
+                  % (path, holder["pid"], holder.get("started"), tool))
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                pass
+            continue
+        with io.open(handle, "w", encoding="utf-8") as out:
+            json.dump(record, out)
+        return path
+    raise LiveRunError("another %s run claimed %s during the takeover"
+                       % (tool, area))
+
+
+def release_area(path):
+    """Remove this run's marker, and leave one another run holds."""
+    holder = read_claim(path)
+    if holder is not None and holder["pid"] == os.getpid():
+        os.remove(path)
 
 
 def created_at(path):
@@ -1623,6 +1711,105 @@ def process_checks():
     return checks
 
 
+def planted_run(tool):
+    """Start a process that reads as a live run of `tool`: a sleeping
+    interpreter whose command line names it."""
+    return subprocess.Popen([sys.executable, "-c",
+                             "import time; time.sleep(120)", tool])
+
+
+def plant_claim(area, tool, pid):
+    """Write a marker naming `pid` as a run of `tool`; return its path."""
+    path = claim_path(area, tool)
+    os.makedirs(area, exist_ok=True)
+    with io.open(path, "w", encoding="utf-8") as handle:
+        json.dump({"pid": pid, "tool": tool, "started": "planted"}, handle)
+    return path
+
+
+def refuses_claim(area, tool):
+    """Whether claiming `area` for `tool` is refused."""
+    try:
+        claim_area(area, tool)
+    except LiveRunError:
+        return True
+    return False
+
+
+def claimed_pid(path):
+    """The pid a marker names, or None."""
+    return (read_claim(path) or {}).get("pid")
+
+
+def claim_checks():
+    """A live run refuses a second; an ended or reused one is taken over."""
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-claim-self-test")
+    remove_tree(scratch)
+    live = planted_run("judge.py")
+    try:
+
+        # Listed first, so a takeover below is the rule's rather than a
+        # stand-in that had not started.
+        listed = running_as(live.pid, "judge.py")
+        judge = plant_claim(scratch, "judge.py", live.pid)
+        planted = claimed_pid(judge) == live.pid
+        refused = refuses_claim(scratch, "judge.py")
+        kept = claimed_pid(judge) == live.pid
+
+        # The same live pid under another tool's marker is a reused pid: in
+        # use, and not by that tool.
+        score_path = plant_claim(scratch, "score.py", live.pid)
+        reused_before = claimed_pid(score_path) == live.pid
+        reused = (claim_area(scratch, "score.py") == score_path
+                  and claimed_pid(score_path) == os.getpid())
+    finally:
+        live.kill()
+        live.wait()
+    ended = not running_as(live.pid, "judge.py")
+    taken = (claim_area(scratch, "judge.py") == judge
+             and claimed_pid(judge) == os.getpid())
+    release_area(judge)
+    released = not os.path.exists(judge)
+
+    plant_claim(scratch, "judge.py", live.pid)
+    release_area(judge)
+    left = claimed_pid(judge) == live.pid
+    with io.open(judge, "w", encoding="utf-8") as handle:
+        handle.write("")
+    unreadable = refuses_claim(scratch, "judge.py")
+    remove_tree(scratch)
+    return [("a planted live run is listed as that tool",
+             listed and planted and reused_before),
+            ("a live run refuses a second, and keeps its marker",
+             refused and kept),
+            ("a live pid that is not the tool is taken over", reused),
+            ("an ended run is taken over", ended and taken),
+            ("a run removes its own marker, and no other",
+             released and left),
+            ("a marker naming no run refuses", unreadable)]
+
+
+def claim_refusal_check(tool, main, root):
+    """Whether `main` on `root` refuses while a live run of `tool` holds the
+    scoring area, and leaves that run's marker as it was."""
+    live = planted_run(tool)
+    try:
+        path = plant_claim(scoring_area(root), tool, live.pid)
+        before = claimed_pid(path)
+        listed = running_as(live.pid, tool)
+        printed = io.StringIO()
+        with contextlib.redirect_stdout(printed):
+            code = main(["--root", root])
+        after = claimed_pid(path)
+    finally:
+        live.kill()
+        live.wait()
+    return ("a live %s run refuses a second" % tool,
+            listed and before == live.pid and after == before
+            and code != 0 and "is live" in printed.getvalue())
+
+
 def leftover_checks():
     """A temp entry a trial made and named moves to its own; nothing else."""
     scratch = os.path.join(os.environ.get("TEMP", "."),
@@ -1940,7 +2127,7 @@ def self_test():
     checks = (naming_checks() + environment_checks() + credential_checks()
               + credential_link_checks() + outcome_checks() + hang_checks()
               + resume_checks() + change_checks() + process_checks()
-              + leftover_checks() + reach_checks() + outside_checks()
+              + claim_checks() + leftover_checks() + reach_checks() + outside_checks()
               + vendor_checks())
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))

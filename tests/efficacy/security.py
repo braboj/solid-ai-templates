@@ -23,11 +23,13 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import lib  # noqa: E402
-from harness import (canonical, remove_tree, scoring_area,  # noqa: E402
-                     spellings)
+from harness import (LiveRunError, canonical, claim_area,  # noqa: E402
+                     claim_refusal_check, release_area, remove_tree,
+                     scoring_area, spellings)
 from score import (absent, create_venv, lock_lines, measured, pip,  # noqa: E402
                    python_in, run, script_in)
 
+SCRIPT = os.path.basename(__file__)
 PACKAGE = "tariff"
 
 # The auditor's version, pinned so a later reading of the same trial asks the
@@ -653,13 +655,32 @@ def audit_self_checks():
     ]
 
 
+def claim_self_checks(scratch):
+    """A reading run refuses while another holds the area, and installs
+    nothing.
+
+    The planted build score gets the run past the refusal for a root with
+    none, so the one it meets is the claim's.
+    """
+    root = os.path.join(scratch, "claimed")
+    area = scoring_area(root)
+    os.makedirs(os.path.join(area, "scores"))
+    with io.open(os.path.join(area, "scores", "none-1.json"), "w",
+                 encoding="utf-8") as handle:
+        handle.write("{}")
+    label, refused = claim_refusal_check(SCRIPT, main, root)
+    return [(label, refused
+             and not os.path.exists(os.path.join(area, "security")))]
+
+
 def self_test():
-    """Prove each check counts what it names, and records missing as missing."""
+    """Prove each check counts what it names, records missing as missing,
+    and that a live run refuses a second."""
     scratch = os.path.join(tempfile.gettempdir(), "efficacy-security-self-test")
     remove_tree(scratch)
     os.makedirs(scratch)
     checks = (static_self_checks(scratch) + runtime_self_checks(scratch)
-              + audit_self_checks())
+              + audit_self_checks() + claim_self_checks(scratch))
     for label, ok in checks:
         print("  %-52s %s" % (label, "ok" if ok else "FAILED"))
     remove_tree(scratch)
@@ -719,6 +740,21 @@ def main(argv):
               % (", ".join(missing) or "any trial", area))
         return 2
 
+    # A run clears each trial's environment before rebuilding it, so a second
+    # run against the area deletes the one a live run is installing into.
+    try:
+        claim = claim_area(area, SCRIPT)
+    except LiveRunError as error:
+        print("refused: %s" % error)
+        return 2
+    try:
+        return read_trials(options, area, scored, wanted)
+    finally:
+        release_area(claim)
+
+
+def read_trials(options, area, scored, wanted):
+    """Read each wanted trial not read yet; return the exit code."""
     # A trial already read keeps its reading, as a reused trial from an
     # earlier round does; the checks were declared after that round.
     target = os.path.join(area, "security-scores")
