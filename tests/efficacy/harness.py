@@ -221,6 +221,11 @@ def scoring_area(root):
     return os.path.abspath(root).rstrip("\\/") + "-scoring"
 
 
+def dry_run_area(root):
+    """The directory beside a run root that a dry run prepares in."""
+    return os.path.abspath(root).rstrip("\\/") + "-dry-run"
+
+
 def assert_no_ambient_context(workspace, home):
     """Refuse a run that a context file outside the arm would reach.
 
@@ -1639,6 +1644,91 @@ def change_checks():
     return checks
 
 
+def listing(path):
+    """Every path under `path`, relative to it, sorted."""
+    return sorted(os.path.relpath(os.path.join(base, name), path)
+                  for base, dirs, files in os.walk(path)
+                  for name in dirs + files)
+
+
+def dry_run_checks():
+    """A dry run leaves the root as it found it, so the run that follows in
+    the same root prepares every trial the dry run did.
+
+    The root holds what a change task starts from: a frozen build trial and
+    the run record offering it. The generator is a stand-in on `PATH` and the
+    home a scratch one, so no real CLI or credential is reached.
+    """
+    scratch = os.path.join(os.environ.get("TEMP", "."),
+                           "efficacy-dry-run-self-test")
+    remove_tree(scratch)
+    root = os.path.join(scratch, "root")
+    build = os.path.join(scratch, "built", "none-1")
+    os.makedirs(build)
+    os.makedirs(root)
+    git(build, "init", "-q")
+    with io.open(os.path.join(build, "app.py"), "w",
+                 encoding="utf-8") as handle:
+        handle.write("built = True\n")
+    git(build, "add", "-A")
+    git(build, "-c", "user.name=efficacy",
+        "-c", "user.email=efficacy@example.invalid",
+        "commit", "-q", "-m", "build")
+    frozen = freeze(build, root, "none-1")
+    write_run(os.path.join(root, "run-planted.json"), datetime.datetime.now(),
+              [{"arm": "none", "trial": 1, "task": "build",
+                "outcome": "completed", "frozen": frozen}])
+
+    stand_in = os.path.join(scratch, "bin")
+    os.makedirs(stand_in)
+    claude = os.path.join(stand_in,
+                          "claude.cmd" if os.name == "nt" else "claude")
+    with io.open(claude, "w", encoding="utf-8") as handle:
+        handle.write("@echo off\r\n" if os.name == "nt" else "#!/bin/sh\n")
+    os.chmod(claude, 0o755)
+    saved = {key: os.environ.get(key) for key in ("PATH", "HOME", "USERPROFILE")}
+    os.environ["PATH"] = stand_in + os.pathsep + saved["PATH"]
+    os.environ["HOME"] = os.environ["USERPROFILE"] = os.path.join(scratch, "me")
+
+    dry = dry_run_area(root)
+    before = listing(root)
+    outcomes = []
+    try:
+        for task, prepared in (("change", "change-none-1"), ("build", "none-1")):
+            with contextlib.redirect_stdout(io.StringIO()):
+                code = main(["--root", root, "--arms", "none", "--k", "1",
+                             "--task", task, "--dry-run"])
+            outcomes.append((task, code == 0
+                             and os.path.isdir(os.path.join(dry, prepared)),
+                             listing(root) == before))
+    finally:
+        for key, value in saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+    # The run proper prepares in the root, where a workspace a dry run left
+    # would refuse it.
+    try:
+        prepare_change_workspace("none", 1, root, {"frozen": frozen})
+        prepare_workspace("none", 1, root)
+        followed = True
+    except TrialError:
+        followed = False
+    remove_tree(scratch)
+    checks = [("the root holds a frozen build and its run record",
+               "none-1.tar" in before and "run-planted.json" in before)]
+    for task, prepared, untouched in outcomes:
+        checks.append(("a %s dry run prepares beside the root" % task,
+                       prepared))
+        checks.append(("a %s dry run leaves the root as it was" % task,
+                       untouched))
+    checks.append(("the run that follows prepares in the same root",
+                   followed))
+    return checks
+
+
 def credential_checks():
     """A trial's Git cannot borrow a credential the machine stores."""
     scratch = os.path.join(os.environ.get("TEMP", "."),
@@ -2133,7 +2223,8 @@ def self_test():
     rules before a trial."""
     checks = (naming_checks() + environment_checks() + credential_checks()
               + credential_link_checks() + outcome_checks() + hang_checks()
-              + resume_checks() + change_checks() + process_checks()
+              + resume_checks() + change_checks() + dry_run_checks()
+              + process_checks()
               + claim_checks() + leftover_checks() + reach_checks() + outside_checks()
               + vendor_checks())
     for label, ok in checks:
@@ -2210,8 +2301,15 @@ def main(argv):
         lib.print_verdict(False, "0 trial(s), 0 done, 1 refused")
         return 1
 
-    os.makedirs(options.root, exist_ok=True)
-    home = prepare_home(options.root)
+    # A dry run prepares its workspaces, home and record beside the root
+    # rather than in it. A workspace is never reused, so one a dry run left
+    # in the root would refuse the same trial when the run proper follows.
+    work = options.root
+    if options.dry_run:
+        work = dry_run_area(options.root)
+        remove_tree(work)
+    os.makedirs(work, exist_ok=True)
+    home = prepare_home(work)
 
     arms = [arm.strip() for arm in (options.arms or "").split(",")
             if arm.strip()]
@@ -2254,18 +2352,18 @@ def main(argv):
 
     started_at = datetime.datetime.now()
     run_file = os.path.join(
-        options.root, "run-%s.json" % started_at.strftime("%Y-%m-%dT%H-%M-%S"))
+        work, "run-%s.json" % started_at.strftime("%Y-%m-%dT%H-%M-%S"))
     records = []
 
     def runner(arm, trial):
         refresh_credentials(home)
         if options.task == "build":
-            return run_trial(arm, trial, options.root, home, options)
+            return run_trial(arm, trial, work, home, options)
         name = trial_name(arm, trial)
         if name not in builds:
             raise TrialError("build trial %s has no scorable outcome, so it "
                              "has no change task" % name)
-        return run_change_trial(arm, trial, options.root, home, options,
+        return run_change_trial(arm, trial, work, home, options,
                                 builds[name])
 
     def write():
