@@ -8435,3 +8435,82 @@ composition model.
   looked like the provider cutting the run. The record said otherwise each
   time: a 401 at the minute the real credential file was rewritten, and a
   result printed six hours before the harness noticed
+
+## 2026-09-19 — The rubric put under a control, anchored, and read by a second judge
+
+**Tool:** Claude Code (Opus 5 1M)
+
+**Key changes:**
+- Round 2's primaries turned out to carry two constants. `design` and
+  `maintainability` returned 3 on all 24 judgings of rounds 1 and 2, `dip` 5
+  and `ocp` 2. The prompt anchored no point on its scale — "1 is poor and 5
+  is excellent" — and asked for `design` as SOLID "taken together" (#1825)
+- A control settled which: a trial's tree, a damaged copy and an improved
+  copy, all passing the same 47 tests, judged side by side. Unanchored,
+  `design` and `maintainability` fell a point on damage and never rose, and
+  on the improved tree the judge quoted `class Rule(ABC):` as its evidence
+  for a 3. Six judgings of one byte-identical bundle returned readability 4,
+  4, 4, 3, 4, 4 — the one primary that had moved in either round was the
+  unstable one (#1825)
+- Round 2's lead verdict, the templates' inline file **Worse**, was the
+  control arm moving: `full`'s judgings were round 1's records, reused, and
+  `none` was re-run a point higher. The same contrast read +0.333 inside
+  round 1. A contrast pairing arms judged in different rounds now keeps its
+  mean and interval and carries no verdict; `full` and `hand` read not
+  measured, and the correction is posted on #1184 (#1826)
+- The control became a fixture under `tests/efficacy/control/`: the base as
+  an archive pinned by sha256, every mutation an exact-text swap that refuses
+  when its target is absent, each mutated entity read back off every tree,
+  and `--self-test` in CI. It is an archive because the repository's comment
+  check read the committed application as its own source (#1827)
+- The three primaries are anchored — 1, 3 and 5 described in the domain's
+  terms — and each trial is judged three times and meaned. `--repeat` tops a
+  trial up rather than adding to it, so a run cut short resumes by being
+  started again. Section 12 pre-registers both before round 3 (#1827)
+- Six control trees under the anchored rubric: `design` 2, 3, 4 on damage,
+  base and improvement; `readability` 1 on the tree that inlines and
+  abbreviates the algorithm; `maintainability` 4 only on the tree where no
+  layer names a discount kind. Each row needed a tree built to move it (#1827)
+- `judge.py --cli claude` reads the control through a second judge. Opus 5
+  agrees with gpt-6-astra on every direction and differs on threshold: it
+  credits the improvement one tree earlier (#1827)
+
+**Pull requests merged:** #1828, #1829, #1830. #1831 is open and green.
+
+**Issues closed:** #1825, #1826.
+
+**Issues filed:** #1825, #1826, #1827, #1832.
+
+**ADRs:** none owed. Everything changed is the benchmark's own tooling; the
+method changes are pre-registered in the design's section 12.
+
+**Gaps flagged:**
+- #1831 awaits merge, and #1827 closes with it
+- The gpt-6-astra control readings are one judging per tree, and single
+  judgings flip between runs. The top-up to three stopped on the judge
+  plan's usage limit with eleven owed; the same command resumes it
+- Fable was not run: the installed Claude Code, 2.1.153, does not support
+  it, so the second judge's readings are Opus 5
+- #1832, a lock against two judge runs on one root, is open; `score.py`,
+  `security.py` and `harness.py` are not yet checked for the same shape
+- Round 3 (#1767) waits on the arm choice. The anchored prompt makes its
+  primaries incomparable to rounds 1 and 2 unless their trees are re-judged
+- Disposable control roots sit under `C:\efficacy`; `control-six` and
+  `control-fable` hold the readings the control README cites
+
+**Lessons:**
+- A score that never varies is the first thing to validate, not the last.
+  Twenty-four identical readings looked like a finding about the arms and
+  were a property of the prompt
+- A control that can only show damage validates half an instrument: an arm
+  can never win on a row that only falls. Each row has to fall on the tree
+  built to damage it and rise on the tree built to improve it — the first
+  degradation changed no function body, so a flat `readability` there said
+  nothing, and the first `maintainability` anchor described an axis that
+  degradation never touched
+- A verdict across two rounds reads the day as well as the arm, and stating
+  the confound beside the verdict does not stop the verdict being read
+- A background job outlives the session that started it. Resuming work that
+  looked interrupted, without checking for a live process, put a second run
+  on the same root; its cleanup emptied the first run's bundle mid-judging.
+  The evidence share caught it, and the outcome field still said `judged`
