@@ -8514,3 +8514,60 @@ method changes are pre-registered in the design's section 12.
   looked interrupted, without checking for a live process, put a second run
   on the same root; its cleanup emptied the first run's bundle mid-judging.
   The evidence share caught it, and the outcome field still said `judged`
+
+## 2026-09-19 — Three harness bugs fixed, and the rubric issue closed
+
+**Tool:** Claude Code (Opus 5 1M)
+
+**Key changes:**
+- #1831's body read "Part of #1827", so its merge left #1827 open. The item
+  still open on it, `ocp` and `dip` sitting at their extremes, was answered
+  from the control's judgings: `ocp` rises from 2 to 3 on every improved tree
+  under both judges, and `dip` falls from 5 to 1 on the degraded tree. Their
+  extremes in rounds 1 and 2 describe the code, so neither row is anchored or
+  withdrawn. Posted on #1827, which closes
+- A live run of `judge.py`, `score.py` or `security.py` refuses a second run
+  of the same tool against its scoring area. A run claims the area with
+  `<tool>.running`, naming its pid. A marker whose process still runs that
+  tool refuses, and one whose process ended or whose pid was reused is taken
+  over. `score.py` re-clones the hidden suite at every start, so two scoring
+  runs collided even on different trials; `harness.py` already refuses a
+  reused workspace (#1832)
+- A judge CLI refused by the model leaves its final-message file empty. The
+  failure now carries the tail of what the CLI printed, where the cause is
+  (#1768)
+- A dry run prepares its workspaces, home and record in `<root>-dry-run` and
+  leaves the root as it found it, so the run that follows uses the same
+  root. The build task had the same defect as the change task the issue
+  named (#1770)
+- Cleanup: 2,457 test reports removed, and the shakedown roots `run-v290`
+  and `rescore-1741` deleted, 1.4 GB. No run home under `C:\efficacy` holds
+  a credentials file
+
+**Pull requests merged:** #1831, #1833, #1834, #1835, #1836.
+
+**Issues closed:** #1768, #1770, #1827, #1832.
+
+**Issues filed:** none.
+
+**ADRs:** none owed. Everything changed is the benchmark's own tooling.
+
+**Gaps flagged:**
+- The eleven gpt-6-astra control judgings are still owed; the judge plan's
+  limit resets on 2026-09-25 at 09:52
+- Fable needs `claude update`; round 3 (#1767) waits on the arm choice
+- #1707, the one open bug in the milestone, needs a paid canary run
+- The claim is per tool: `score.py --rescore` can still clear a tree a live
+  judge run is reading. Not filed
+
+**Lessons:**
+- "Closes with" is a claim about a pull request's body. The previous
+  entry's gap said #1827 closes with #1831; the body said "Part of", and
+  only reading it showed the issue would stay open
+- A control reproduces the behaviour the fix replaced, and no more. The
+  first control for #1770 pointed the dry run at the root but kept the
+  fix's clearing step, so it deleted the root. Every check then failed for a
+  reason none of them names, which still looks like a working control
+- A check that drives `main` past a guard has to make what follows the
+  guard harmless. With the claim removed, the judge's refusal check ran on
+  into the real CLI. It now runs dry, so a regression spends nothing
