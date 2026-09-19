@@ -1727,13 +1727,13 @@ def plant_claim(area, tool, pid):
     return path
 
 
-def refuses_claim(area, tool):
-    """Whether claiming `area` for `tool` is refused."""
+def claimed(area, tool):
+    """The marker's path when claiming `area` for `tool` succeeds, or None
+    when it is refused."""
     try:
-        claim_area(area, tool)
+        return claim_area(area, tool)
     except LiveRunError:
-        return True
-    return False
+        return None
 
 
 def claimed_pid(path):
@@ -1754,20 +1754,20 @@ def claim_checks():
         listed = running_as(live.pid, "judge.py")
         judge = plant_claim(scratch, "judge.py", live.pid)
         planted = claimed_pid(judge) == live.pid
-        refused = refuses_claim(scratch, "judge.py")
+        refused = claimed(scratch, "judge.py") is None
         kept = claimed_pid(judge) == live.pid
 
         # The same live pid under another tool's marker is a reused pid: in
         # use, and not by that tool.
         score_path = plant_claim(scratch, "score.py", live.pid)
         reused_before = claimed_pid(score_path) == live.pid
-        reused = (claim_area(scratch, "score.py") == score_path
+        reused = (claimed(scratch, "score.py") == score_path
                   and claimed_pid(score_path) == os.getpid())
     finally:
         live.kill()
         live.wait()
     ended = not running_as(live.pid, "judge.py")
-    taken = (claim_area(scratch, "judge.py") == judge
+    taken = (claimed(scratch, "judge.py") == judge
              and claimed_pid(judge) == os.getpid())
     release_area(judge)
     released = not os.path.exists(judge)
@@ -1777,7 +1777,7 @@ def claim_checks():
     left = claimed_pid(judge) == live.pid
     with io.open(judge, "w", encoding="utf-8") as handle:
         handle.write("")
-    unreadable = refuses_claim(scratch, "judge.py")
+    unreadable = claimed(scratch, "judge.py") is None
     remove_tree(scratch)
     return [("a planted live run is listed as that tool",
              listed and planted and reused_before),
