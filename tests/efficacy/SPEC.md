@@ -2,7 +2,8 @@
 
 Build `tariff`: a Python package that prices invoices against a catalogue of
 products, a set of discount rules and a tax jurisdiction, plus a
-server-rendered web application for editing that data and building invoices.
+server-rendered web application for editing that data, keeping the customers
+invoices are billed to, and building invoices.
 
 This document fixes the domain semantics, the public Python API, the HTTP
 routes and the export formats, because other software depends on them. Every
@@ -82,6 +83,19 @@ coupon codes. A line carries a product and an integer quantity of at least
 one. A line may check that on construction, but `price` refuses a bad
 quantity either way, per section 4.4 — a caller that assembles lines
 elsewhere must still be refused.
+
+### 3.5 Customer
+
+A saved invoice may be billed to one customer. Customers belong to the web
+application, not to pricing: section 5's API does not include them, and how
+they are modelled is yours.
+
+| Field | Type | Notes |
+|---|---|---|
+| `customer_id` | `int` | assigned by the application |
+| `name` | `str` | non-empty |
+| `email` | `str` | non-empty, containing exactly one `@`; unique across customers |
+| `address` | `str` | non-empty; may span several lines |
 
 ## 4. Pricing
 
@@ -200,6 +214,9 @@ given.
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/` | dashboard linking to the pages below |
+| GET | `/sign-in` | the sign-in form |
+| POST | `/sign-in` | sign in |
+| POST | `/sign-out` | sign out |
 | GET | `/products` | product list and a creation form |
 | POST | `/products` | create a product |
 | POST | `/products/<sku>/delete` | delete a product |
@@ -209,6 +226,11 @@ given.
 | GET | `/jurisdictions` | jurisdiction list and a creation form |
 | POST | `/jurisdictions` | create a jurisdiction |
 | POST | `/jurisdictions/<code>/delete` | delete a jurisdiction |
+| GET | `/customers` | customer list and a creation form |
+| POST | `/customers` | create a customer |
+| GET | `/customers/<customer_id>` | a customer, and the invoices billed to them |
+| POST | `/customers/<customer_id>/erase` | erase a customer |
+| GET | `/customers/<customer_id>/export.json` | everything the application holds about one customer |
 | GET | `/invoices/new` | the invoice builder |
 | POST | `/invoices/preview` | re-price the builder's current state, returning the priced-invoice fragment |
 | POST | `/invoices` | save the invoice and redirect to its page |
@@ -227,7 +249,9 @@ not named here is yours.
 | POST `/products` | `sku`, `name`, `unit_price`, `tax_category` |
 | POST `/rules` | `rule_id`, `kind` (one of `percentage`, `bulk`, `tiered`, `coupon`), `sku` (empty means invoice scope), and the fields its kind needs: `percent`, `buy`, `pay`, `tiers`, `code`, `amount` |
 | POST `/jurisdictions` | `code`, `name`, `default_rate`, `rates` |
-| POST `/invoices/preview`, POST `/invoices` | `jurisdiction`, `currency`, `sku` and `quantity` repeated once per line and read pairwise in order, `coupon_codes` |
+| POST `/sign-in` | `username`, `password`, `next` |
+| POST `/customers` | `name`, `email`, `address` |
+| POST `/invoices/preview`, POST `/invoices` | `jurisdiction`, `currency`, `customer` (a `customer_id`, and empty for none), `sku` and `quantity` repeated once per line and read pairwise in order, `coupon_codes` |
 
 Three fields carry more than one value in one control:
 
@@ -250,9 +274,10 @@ Behaviour:
   `HX-Request` header, which is what HTMX sends. Without that header it
   renders the whole page, which is the JavaScript-disabled path, and both
   show the same figures.
-- `POST /invoices/preview` refuses a body naming an unknown sku or an
-  unknown jurisdiction code, or carrying a quantity below one, with 400.
-  That is bad input rather than a missing page, so it is not a 404.
+- `POST /invoices/preview` refuses a body naming an unknown sku, an
+  unknown jurisdiction code or an unknown customer, or carrying a quantity
+  below one, with 400. That is bad input rather than a missing page, so it
+  is not a 404.
 - The priced fragment shows, per line, the sku, name, quantity, unit price,
   gross, line discount, net, allocated invoice discount, taxable, tax and
   total, and shows the invoice's subtotal, discount total, taxable total,
@@ -268,8 +293,55 @@ Behaviour:
   fragment with a message and answers 200; saving one is a 400.
 - Every POST form carries a CSRF token, and a POST without a valid token is
   refused with 400 or 403.
-- Unknown sku, unknown invoice id, and unknown jurisdiction code return
-  404.
+- Unknown sku, unknown invoice id, unknown jurisdiction code and unknown
+  customer id return 404.
+
+### 6.2 Signing in
+
+- The application has one user: the administrator the seed creates
+  (section 8). There is no registration and no second account.
+- Every route in section 6 except `GET /sign-in` and `POST /sign-in`
+  requires the administrator to be signed in. A request that is not signed
+  in changes nothing and is answered with a redirect to `/sign-in`; a GET
+  carries the path it asked for in the query parameter `next`.
+- The sign-in form sends `next` back. A successful sign-in redirects to the
+  page the administrator asked for before signing in, or to `/` when they
+  asked for none.
+- A failed sign-in signs nobody in and re-renders the sign-in form with a
+  message, answering 200. It is the one form section 6.1's field-naming
+  rule does not reach: what its message says is yours.
+- `POST /sign-out` ends the session and redirects to `/sign-in`.
+
+### 6.3 Customers
+
+- The customer list shows each customer's name and email and links to the
+  customer's page, which shows the name, email and address and links to
+  every invoice billed to them.
+- An email already on record is bad input to `POST /customers`, answered
+  like any other: the form re-rendered with a message naming `email`.
+- An invoice billed to a customer shows the customer's name and address on
+  its page and its printable page. The exports of section 7 carry no
+  customer data.
+- `POST /customers/<customer_id>/erase` erases the customer and redirects
+  to `/customers`. Erasure cannot be undone. Afterwards the customer's page
+  and export answer 404, no page lists them, and no page or export the
+  application serves shows their name, email or address. The invoices that
+  were billed to them remain, every figure unchanged, and say that their
+  customer was erased.
+- `GET /customers/<customer_id>/export.json` answers with
+  `Content-Type: application/json`, byte-stable for the same customer, with
+  these keys in this order — `invoices` lists the ids of the invoices billed
+  to the customer, ascending:
+
+```json
+{
+  "customer_id": 1,
+  "name": "Ada Example",
+  "email": "ada@example.com",
+  "address": "1 Sample Street\n10115 Berlin",
+  "invoices": [1, 3]
+}
+```
 
 ## 7. Export formats
 
@@ -359,6 +431,12 @@ Rules:
 | c-welcome | coupon | invoice | code WELCOME, percent 10 |
 | c-tenoff | coupon | invoice | code TENOFF, amount 10.00 |
 
+The administrator: username `admin`, and as password the value of the
+environment variable `TARIFF_ADMIN_PASSWORD` when the database is seeded.
+Seeding refuses when that variable is unset or empty.
+
+No customers.
+
 ## 9. Worked example
 
 Jurisdiction DE, currency EUR, coupon codes `WELCOME`, and the lines
@@ -390,8 +468,8 @@ SEE-5 — leaving BOK-3 at 3.13.
 
 - `pip install .` succeeds in a clean virtual environment, and
   `python -c "import tariff"` works.
-- The application starts, serves `/`, and every route in section 6 works
-  against the seed fixture.
+- The application starts, serves `/` to the signed-in administrator, and
+  every route in section 6 works against the seed fixture.
 - Your own tests pass.
-- A reader can install it, seed it, run it and price an invoice from the
-  documentation you ship.
+- A reader can install it, seed it, run it, sign in and price an invoice
+  from the documentation you ship.
