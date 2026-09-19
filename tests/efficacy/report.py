@@ -155,15 +155,36 @@ def structure_count(trial, key):
     return None if value is None else len(value)
 
 
+def readings(trial):
+    """Every completed judging of a trial, or its single judging."""
+    several = trial.get("judgings")
+    if several:
+        return several
+    return [trial["judge"]] if trial.get("judge") else []
+
+
 def judge_score(trial, dimension):
-    return path(trial, "judge", "answer", "rubric", dimension, "score")
+    """The dimension's score, meaned over every judging of the trial.
+
+    One call is not reproducible: six calls on one unchanged tree returned
+    readability 4, 4, 4, 3, 4, 4. A round judges each trial several times and
+    the mean is what a contrast is computed from. A trial judged once means
+    itself, which is how the rounds before repeats were introduced read.
+    """
+    scores = [path(judging, "answer", "rubric", dimension, "score")
+              for judging in readings(trial)]
+    scores = [score for score in scores if score is not None]
+    return statistics.fmean(scores) if scores else None
 
 
 def pattern_count(trial, verdict):
-    patterns = path(trial, "judge", "answer", "patterns")
-    if not isinstance(patterns, list):
-        return None
-    return sum(1 for entry in patterns if entry.get("verdict") == verdict)
+    counts = []
+    for judging in readings(trial):
+        patterns = path(judging, "answer", "patterns")
+        if isinstance(patterns, list):
+            counts.append(sum(1 for entry in patterns
+                              if entry.get("verdict") == verdict))
+    return statistics.fmean(counts) if counts else None
 
 
 # Every metric, its direction and where its number comes from. The direction
@@ -459,16 +480,24 @@ def load(root):
         with io.open(file, encoding="utf-8") as handle:
             scores = json.load(handle)
         trials[canonical(scores["name"])] = {
-            "scores": scores, "judge": None, "change": None, "security": None}
+            "scores": scores, "judge": None, "judgings": [], "change": None,
+            "security": None}
 
     # A completed judging stands over any other record of the same trial,
-    # such as a dry run's or a failed attempt's left beside it.
+    # such as a dry run's or a failed attempt's left beside it. A trial judged
+    # more than once keeps all of them: each is a separate reading of the same
+    # tree, and every score the report computes is their mean.
     for file in sorted(glob.glob(os.path.join(area, "judge", "T*.json"))):
         with io.open(file, encoding="utf-8") as handle:
             judging = json.load(handle)
         name = canonical(judging.get("trial") or "")
-        if name in trials and (trials[name]["judge"] is None
-                               or judging.get("outcome") == "judged"):
+        if name not in trials:
+            continue
+        if judging.get("outcome") == "judged":
+            trials[name]["judgings"].append(judging)
+            if path(trials[name], "judge", "outcome") != "judged":
+                trials[name]["judge"] = judging
+        elif trials[name]["judge"] is None:
             trials[name]["judge"] = judging
 
     # A change task sits beside its own build trial, so one whose build trial
@@ -931,6 +960,16 @@ def write_report(root, trials, table, results, seed, escalation,
                         judgings[0].get("cli")))
         lines.append("| Blinding | condition markers stripped, order shuffled "
                      "at seed %s |" % judgings[0].get("seed"))
+
+        # One judging of a tree is not reproducible, so a contrast is computed
+        # from the mean of several and the report says how many it had. A
+        # round that judged unevenly says so rather than averaging the fact
+        # away.
+        counts = sorted({len(readings(trial)) for trial in trials.values()
+                         if readings(trial)})
+        lines.append("| Judgings per trial | %s, meaned |"
+                     % (counts[0] if len(counts) == 1
+                        else "%d to %d, uneven" % (counts[0], counts[-1])))
     else:
         lines.append("| Judge | not run |")
     for label, key in (("Templates revision", "templates_tree"),
@@ -2356,6 +2395,15 @@ def executive_checks(seed):
          "Together: length is not quality" in finding
          and "| Improves the code? | **Not measured** | **Yes** | **No** | "
              "**Not measured** |" in text, finding),
+        ("a trial's repeats are meaned, and one judging means itself",
+         judge_score({"judgings": [
+             {"answer": {"rubric": {"design": {"score": 4}}}},
+             {"answer": {"rubric": {"design": {"score": 3}}}},
+             {"answer": {"rubric": {"design": {"score": 3}}}}]},
+             "design") == 10 / 3.0
+         and judge_score(
+             {"judge": {"answer": {"rubric": {"design": {"score": 3}}}}},
+             "design") == 3, None),
         ("a contrast crossing rounds carries no verdict and counts nowhere",
          CROSSING_VERDICT in text
          and "short − hand unscored (0 won, 0 failed)" in finding

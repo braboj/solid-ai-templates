@@ -793,6 +793,33 @@ moving, not the file. The amendment withholds a reading, changes no metric,
 no direction and no interval, and is why round 2's `full` and `hand` columns
 read not measured where they read Worse and No.
 
+**Each trial is judged three times and the scores are meaned.** Adopted
+2026-09-19, before round 3. One judging of a tree is not reproducible: six
+calls on one byte-identical bundle returned readability 4, 4, 4, 3, 4, 4 —
+mean 3.83, sample SD 0.41, roughly 0.33 standard error on a difference of
+two arm means at K = 3. Readability is the only primary that moved in
+either round, so every verdict both reports carry rests on the row that is
+not reproducible, and round 2's −0.667 is about two standard errors of the
+judge resampling itself. Three judgings cut that standard error by about
+40 % for three times the judge quota and no extra trials. Eight of the
+eleven rows returned the same integer on all six calls, so this buys
+precision on the three that do not: `readability`, `lsp` and
+`test_quality`. N is fixed at three here, before the round, and the report
+states the count it actually had per trial — a round that judged unevenly
+says so rather than averaging the fact away.
+
+**The three primary dimensions are anchored.** Adopted 2026-09-19, before
+round 3, and validated by the control rather than argued. Each of `design`,
+`readability` and `maintainability` describes its 1, 3 and 5 in terms of
+the domain the submissions implement, because a scale saying only that 1 is
+poor and 5 is excellent put 3 wherever ordinary work landed: `design` and
+`maintainability` returned 3 on all 24 trials of rounds 1 and 2, fell a
+point when the control damaged the code, and did not move when it improved
+it. A prompt change means round 3's scores are not comparable to the
+rounds before it on these rows; what carries forward is the form, so an
+earlier round's trees can be re-judged into the anchored scale if that
+comparison is wanted.
+
 **What is not run.** The change task is not part of round 2. Its
 acceptance grader was withdrawn (§6) and its corrected prompt is
 pre-registered for round 3 (#1767), so every change-task row reads not

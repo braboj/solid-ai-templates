@@ -476,8 +476,12 @@ def trees(root):
 
 
 def judged(judging):
-    """Every trial with a completed judging under `judging`, by canonical
-    name, with its blind label."""
+    """Every trial's completed judgings under `judging`, by canonical name.
+
+    A trial may hold several: the rubric's readability row is not reproducible
+    between calls on one unchanged tree, so a round judges each trial more than
+    once and the report reads the mean. The labels come back in file order.
+    """
     found = {}
     for file in sorted(glob.glob(os.path.join(judging, "T*.json"))):
         with io.open(file, encoding="utf-8") as handle:
@@ -485,8 +489,8 @@ def judged(judging):
         if record.get("outcome") != "judged":
             continue
         try:
-            found[canonical(record.get("trial") or "")] = record.get(
-                "blind_id")
+            found.setdefault(canonical(record.get("trial") or ""), []).append(
+                record.get("blind_id"))
         except TrialError:
             continue
     return found
@@ -542,19 +546,31 @@ def main(argv):
         print("no tree for %s" % ", ".join(missing))
         return 2
 
-    # A trial already judged is left as it is, because a second judging of
-    # the same tree would replace a result with a resample of the judge.
+    # A trial is judged up to `--repeat` times and no further. The rounds
+    # before this one judged once, and a single call is not reproducible: six
+    # calls on one unchanged tree returned readability 4, 4, 4, 3, 4, 4. The
+    # mean of several is what the report reads, so what is owed here is the
+    # shortfall, which also makes an interrupted run resumable.
     judging = os.path.join(score.scoring_area(options.root), "judge")
     done = judged(judging)
-    if not options.rejudge:
-        for name in [name for name in wanted if name in done]:
-            print("%s  already judged as %s; --rejudge to judge it again"
-                  % (name, done[name]))
-        wanted = [name for name in wanted if name not in done]
-    if not wanted:
+    if options.repeat < 1:
+        print("refused: --repeat is a count of judgings per trial, at least 1")
+        return 2
+    owed = {}
+    for name in wanted:
+        held = len(done.get(name, ()))
+        short = options.repeat if options.rejudge else options.repeat - held
+        if short <= 0:
+            print("%s  already judged %d time(s) as %s; --repeat higher, or "
+                  "--rejudge, to judge it again"
+                  % (name, held, ", ".join(done[name])))
+            continue
+        owed[name] = short
+    if not owed:
         lib.print_verdict(True, "0 judged, 0 failed, %d already judged"
                           % len(done))
         return 0
+    wanted = [name for name in wanted if name in owed]
 
     try:
         options.executable = judge_executable()
@@ -570,18 +586,25 @@ def main(argv):
     # Shuffled with a recorded seed, so the order is reproducible and is not
     # the arm order. The map is written for the report and never passed to the
     # judge. Labels continue past any an earlier round left in this area.
+    #
+    # A trial owed several judgings is entered once per judging and the whole
+    # list is shuffled together, so its repeats are spread through the run
+    # rather than made back to back. Each repeat is a separate blind label: it
+    # is a separate reading of the same tree, and the report means them.
     shuffler = random.Random(options.seed)
-    order = list(wanted)
+    order = [name for name in wanted for _ in range(owed[name])]
     shuffler.shuffle(order)
-    blind = blind_labels(order, highest_label(judging))
+    labels = blind_labels(range(len(order)), highest_label(judging))
+    repeats = {}
 
     schema_path = os.path.join(judging, "rubric-schema.json")
     with io.open(schema_path, "w", encoding="utf-8") as handle:
         json.dump(schema(), handle, indent=2)
 
     results, failures = [], 0
-    for name in order:
-        label = blind[name]
+    for position, name in enumerate(order):
+        label = labels[position]
+        repeats.setdefault(name, []).append(label)
         print("%s  as %s" % (name, label))
         bundle = os.path.join(bundles, label)
         stripped = build_bundle(available[name], bundle)
@@ -596,6 +619,7 @@ def main(argv):
             answer = judge_bundle(bundle, options, schema_path)
 
         record = {"trial": name, "blind_id": label, "model": options.model,
+                  "repeat": len(repeats[name]),
                   "effort": options.effort, "cli": version,
                   "seed": options.seed, "bundle": stripped,
                   "judged_at": datetime.datetime.now().isoformat(
@@ -631,11 +655,20 @@ def main(argv):
     # The unblinding map, written last and kept out of the bundles directory
     # the judge was pointed at. An earlier round's entries stay in it.
     path = os.path.join(judging, "map.json")
-    mapping = {"seed": options.seed, "blind": {}}
+    mapping = {"seed": options.seed, "blind": {}, "repeats": {}}
     if os.path.isfile(path):
         with io.open(path, encoding="utf-8") as handle:
-            mapping["blind"] = json.load(handle).get("blind", {})
-    mapping["blind"].update(blind)
+            existing = json.load(handle)
+        mapping["blind"] = existing.get("blind", {})
+        mapping["repeats"] = existing.get("repeats", {})
+
+    # `blind` keeps its one label per trial, which is what every earlier round
+    # and `reuse.py` read. `repeats` carries the rest, so a reader wanting
+    # every reading of a trial has them without the old shape changing.
+    for name, labels_used in repeats.items():
+        mapping["blind"].setdefault(name, labels_used[0])
+        mapping["repeats"][name] = (mapping["repeats"].get(name, [])
+                                    + labels_used)
     with io.open(path, "w", encoding="utf-8") as handle:
         json.dump(mapping, handle, indent=2, sort_keys=True)
 
@@ -818,12 +851,19 @@ def label_checks(scratch):
     })
     return [
         ("a judged trial is known under its word, a failed one is not",
-         judged(judging) == {"full-1": "T3"}),
+         judged(judging) == {"full-1": ["T3"]}),
         ("the highest label counts every file and the map",
          highest_label(judging) == 12),
         ("new labels continue past it",
          blind_labels(["short-1", "none-1"], 12)
          == {"short-1": "T13", "none-1": "T14"}),
+
+        # Every repeat of a trial is its own reading and its own label, so a
+        # trial judged three times comes back with three, not one counted
+        # thrice.
+        ("a trial's repeats each carry their own label",
+         list(blind_labels(range(3), 12).values())
+         == ["T13", "T14", "T15"]),
     ]
 
 
@@ -856,6 +896,10 @@ def parse_args(argv):
                              "judge nothing")
     parser.add_argument("--trial", action="append", default=[],
                         help="judge only this trial, as none-1; repeatable")
+    parser.add_argument("--repeat", type=int, default=1,
+                        help="judgings per trial; the report means them. A "
+                             "trial already holding this many is left alone, "
+                             "so an interrupted run resumes.")
     parser.add_argument("--rejudge", action="store_true",
                         help="judge a trial already judged; by default such "
                              "a trial is skipped")
