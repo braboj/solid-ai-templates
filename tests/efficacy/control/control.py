@@ -48,7 +48,7 @@ BASE_SHA256 = "38b9a1f262ebae7b5c858178468ff53257c3308b6a57a7caa81db6fbe4671f0c"
 MERGED = ("errors", "models", "rules", "pricing")
 
 TRIALS = ("base-1", "degraded-1", "improved-1", "improved-2",
-          "obscured-1")
+          "improved-3", "obscured-1")
 
 
 class ControlError(Exception):
@@ -78,6 +78,22 @@ def swap(text, old, new, where):
                            "base has moved and this control no longer "
                            "describes it" % where)
     return text.replace(old, new, 1)
+
+
+def swap_span(text, start, end, new, where):
+    """Replace everything from `start` through `end`, refusing either absent.
+
+    A span, where `swap` would need the whole passage quoted: the form-building
+    ladder is sixty lines whose middle carries no meaning for the control. Both
+    markers are asserted, so a base that moved still stops the build.
+    """
+    opened = text.find(start)
+    closed = text.find(end, opened + 1) if opened >= 0 else -1
+    if opened < 0 or closed < 0:
+        raise ControlError("%s: the span to replace is not in the tree; the "
+                           "base has moved and this control no longer "
+                           "describes it" % where)
+    return text[:opened] + new + text[closed + len(end):]
 
 
 def degrade(tree):
@@ -238,6 +254,47 @@ def improve_further(tree):
     write(tree, "tariff/web/db.py", db)
 
 
+def improve_form(tree):
+    """Take the improvement into the form, so no layer names a kind.
+
+    `improved-2` still leaves the web form naming each kind: a ladder that
+    builds one, and a template with a labelled input per kind's fields. Here a
+    kind declares the fields it asks for and both are derived from the
+    registry, which is what the maintainability anchor's 5 describes.
+    """
+    improve_further(tree)
+
+    rules = read(tree, "tariff/rules.py")
+    for kind, declaration in FORM_DECLARATIONS:
+        rules = swap(rules, kind, kind + declaration,
+                     "%s's form fields" % kind.split('"')[1])
+    rules = swap(rules, FIELDS_ANCHOR, FIELDS_ANCHOR + FORM_FIELDS,
+                 "the registry's form fields")
+    write(tree, "tariff/rules.py", rules)
+
+    view = read(tree, "tariff/web/views/rules.py")
+    view = swap_span(view, "def _build_rule(kind, rule_id, form, errors):",
+                     '    errors.append({"field": "kind", "message": '
+                     'f"unknown kind {kind!r}"})\n    return None\n',
+                     GENERIC_BUILD, "the form-building ladder")
+    view = swap(view, "from ...rules import BulkRule, CouponRule, "
+                "PercentageRule, TieredRule, kinds",
+                "from ...rules import form_fields, kinds, rule_class",
+                "the rules view's imports")
+    view = swap(view, "            kinds=KINDS,",
+                "            kinds=KINDS,\n            fields=form_fields(),",
+                "the template's fields")
+    write(tree, "tariff/web/views/rules.py", view)
+
+    template = read(tree, "tariff/web/templates/rules.html")
+    template = swap_span(template,
+                         '  <label for="sku">',
+                         '  <input id="amount" name="amount" '
+                         'value="{{ form_data.get(\'amount\', \'\') }}">\n',
+                         FIELD_LOOP, "the form's per-kind inputs")
+    write(tree, "tariff/web/templates/rules.html", template)
+
+
 def obscure(tree):
     """Damage what a reader has to hold in their head, and nothing else.
 
@@ -258,34 +315,34 @@ def obscure(tree):
 LANDINGS = (
     ("tariff/core.py exists", lambda t: os.path.isfile(
         os.path.join(t, "tariff", "core.py")),
-     {"base-1": False, "degraded-1": True, "improved-1": False, "improved-2": False, "obscured-1": False}),
+     {"base-1": False, "degraded-1": True, "improved-1": False, "improved-2": False, "obscured-1": False, "improved-3": False}),
 
     # Read against the domain alone: the web package imports flask in every
     # tree, so a whole-tree probe would answer yes whatever was done.
     ("the domain imports flask", lambda t: "from flask import current_app"
      in domain(t), {"base-1": False, "degraded-1": True,
-                    "improved-1": False, "improved-2": False, "obscured-1": False}),
+                    "improved-1": False, "improved-2": False, "obscured-1": False, "improved-3": False}),
     ("ValidationError derives from TariffError",
      lambda t: "class ValidationError(TariffError):" in whole(t),
-     {"base-1": True, "degraded-1": False, "improved-1": True, "improved-2": True, "obscured-1": True}),
+     {"base-1": True, "degraded-1": False, "improved-1": True, "improved-2": True, "obscured-1": True, "improved-3": True}),
 
     # The damaged tree keeps the ladder: merging the modules moves it into
     # core.py rather than removing it. Only the improved tree loses it.
     ("pricing dispatches on concrete type",
      lambda t: "isinstance(r, TieredRule)" in whole(t),
-     {"base-1": True, "degraded-1": True, "improved-1": False, "improved-2": False, "obscured-1": True}),
+     {"base-1": True, "degraded-1": True, "improved-1": False, "improved-2": False, "obscured-1": True, "improved-3": False}),
     ("the rules declare a contract", lambda t: "class Rule(ABC):" in whole(t),
-     {"base-1": False, "degraded-1": False, "improved-1": True, "improved-2": True, "obscured-1": False}),
+     {"base-1": False, "degraded-1": False, "improved-1": True, "improved-2": True, "obscured-1": False, "improved-3": True}),
     ("the kinds are hardcoded",
      lambda t: 'KINDS = ("percentage", "bulk", "tiered", "coupon")'
      in whole(t), {"base-1": True, "degraded-1": True,
-                   "improved-1": False, "improved-2": False, "obscured-1": True}),
+                   "improved-1": False, "improved-2": False, "obscured-1": True, "improved-3": False}),
     ("an error class sits outside the hierarchy",
      lambda t: "class _BadRequest(Exception):" in whole(t),
-     {"base-1": True, "degraded-1": True, "improved-1": False, "improved-2": False, "obscured-1": True}),
+     {"base-1": True, "degraded-1": True, "improved-1": False, "improved-2": False, "obscured-1": True, "improved-3": False}),
     ("the template branches on a class name",
      lambda t: "__class__.__name__" in whole(t),
-     {"base-1": True, "degraded-1": True, "improved-1": False, "improved-2": False, "obscured-1": True}),
+     {"base-1": True, "degraded-1": True, "improved-1": False, "improved-2": False, "obscured-1": True, "improved-3": False}),
 
     # The seed fixture names a kind per sample row in every tree, and has to:
     # that is data. What this reads is whether the store DISPATCHES on kind,
@@ -295,12 +352,18 @@ LANDINGS = (
                 or "isinstance(rule, TieredRule)" in store(t)
                 or "_TO_ROW = {" in store(t)),
      {"base-1": True, "degraded-1": True, "improved-1": True,
-      "improved-2": False, "obscured-1": True}),
+      "improved-2": False, "obscured-1": True, "improved-3": False}),
 
     ("the pricing algorithm is broken into named steps",
      lambda t: "def _price_line(" in whole(t),
      {"base-1": True, "degraded-1": True, "improved-1": True,
-      "improved-2": True, "obscured-1": False}),
+      "improved-2": True, "obscured-1": False, "improved-3": True}),
+
+    ("the form names a rule kind",
+     lambda t: ('kind == "percentage"' in form(t)
+                or "Buy (bulk)" in form(t)),
+     {"base-1": True, "degraded-1": True, "improved-1": True,
+      "improved-2": True, "improved-3": False, "obscured-1": True}),
 )
 
 _CACHE = {}
@@ -316,6 +379,18 @@ def domain(tree):
                      encoding="utf-8") as handle:
             chunks.append(handle.read())
     return "\n".join(chunks)
+
+
+def form(tree):
+    """The rules form: the view that builds one, and the template that shows
+    it. Both name a kind until the registry supplies the fields."""
+    parts = []
+    for rel in ("tariff/web/views/rules.py",
+                "tariff/web/templates/rules.html"):
+        with io.open(os.path.join(tree, *rel.split("/")),
+                     encoding="utf-8") as handle:
+            parts.append(handle.read())
+    return "\n".join(parts)
 
 
 def store(tree):
@@ -370,6 +445,7 @@ def build(root):
     degrade(made["degraded-1"])
     improve(made["improved-1"])
     improve_further(made["improved-2"])
+    improve_form(made["improved-3"])
     obscure(made["obscured-1"])
     _CACHE.clear()
     return made
@@ -670,6 +746,93 @@ def _rule_to_row(rule):
     terms = dict(rule.terms(), kind=rule.kind)
     return tuple(_encode(column, terms.get(column)) for column in _COLUMNS)
 '''
+
+
+# What each kind asks a form for: the field, how to read it, and whether it is
+# required. The form and its template are built from these, so a kind's fields
+# are stated once, by the kind.
+FORM_DECLARATIONS = (
+    ('    kind = "percentage"\n    stage = 2\n',
+     '    FORM = (("percent", "decimal", True), ("sku", "text", False))\n'),
+    ('    kind = "bulk"\n    stage = 1\n',
+     '    FORM = (("sku", "text", True), ("buy", "int", True),\n'
+     '            ("pay", "int", True))\n'),
+    ('    kind = "tiered"\n    stage = 0\n',
+     '    FORM = (("sku", "text", True), ("tiers", "tiers", True))\n'),
+    ('    kind = "coupon"\n    stage = 3\n',
+     '    FORM = (("code", "text", True), ("percent", "decimal", False),\n'
+     '            ("amount", "decimal", False))\n'),
+)
+
+FIELDS_ANCHOR = '''def kinds() -> tuple:
+    """Every registered rule kind."""
+    return tuple(REGISTRY)
+'''
+
+FORM_FIELDS = '''
+
+def form_fields() -> list:
+    """Every field the registered kinds ask for, with the kinds that use it.
+
+    A form is built from this rather than from a list of inputs someone kept
+    in step by hand: a kind added to the registry brings its fields with it.
+    """
+    used = {}
+    for name, cls in REGISTRY.items():
+        for field, _, _ in cls.FORM:
+            used.setdefault(field, []).append(name)
+    return [{"name": field,
+             "label": "%s (%s)" % (field.capitalize(), ", ".join(kinds_using))}
+            for field, kinds_using in used.items()]
+'''
+
+GENERIC_BUILD = '''def _parse_text_field(form, field, errors, required=True):
+    raw = (form.get(field) or "").strip()
+    if not raw:
+        if required:
+            errors.append({"field": field, "message": f"{field} is required"})
+        return None
+    return raw
+
+
+def _parse_tiers_field(form, field, errors, required=True):
+    raw = (form.get(field) or "").strip()
+    if not raw:
+        if required:
+            errors.append({"field": field, "message": f"{field} is required"})
+        return None
+    try:
+        return parse_tiers(raw)
+    except FieldError as exc:
+        errors.append({"field": field, "message": str(exc)})
+        return None
+
+
+_PARSERS = {"decimal": _parse_decimal_field, "int": _parse_int_field,
+            "text": _parse_text_field, "tiers": _parse_tiers_field}
+
+
+def _build_rule(kind, rule_id, form, errors):
+    """The rule the form describes, read as the kind says to read it."""
+    cls = rule_class(kind)
+    terms = {"rule_id": rule_id}
+    for field, how, required in cls.FORM:
+        terms[field] = _PARSERS[how](form, field, errors, required)
+    if errors:
+        return None
+    try:
+        return cls.from_terms(terms)
+    except ValidationError as exc:
+        errors.append({"field": cls.FORM[0][0], "message": str(exc)})
+        return None
+'''
+
+FIELD_LOOP = """  {% for field in fields %}
+  <label for="{{ field.name }}">{{ field.label }}</label>
+  <input id="{{ field.name }}" name="{{ field.name }}"
+         value="{{ form_data.get(field.name, '') }}">
+  {% endfor %}
+"""
 
 
 if __name__ == "__main__":
