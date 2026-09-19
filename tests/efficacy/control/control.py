@@ -47,7 +47,8 @@ BASE_SHA256 = "38b9a1f262ebae7b5c858178468ff53257c3308b6a57a7caa81db6fbe4671f0c"
 # algorithm that applies them.
 MERGED = ("errors", "models", "rules", "pricing")
 
-TRIALS = ("base-1", "degraded-1", "improved-1")
+TRIALS = ("base-1", "degraded-1", "improved-1", "improved-2",
+          "obscured-1")
 
 
 class ControlError(Exception):
@@ -212,6 +213,44 @@ def improve(tree):
     write(tree, "tariff/web/templates/rules.html", template)
 
 
+def improve_further(tree):
+    """Take the improvement into persistence, so no module names a kind.
+
+    `improved-1` leaves the store mapping each kind by hand, which is what
+    the maintainability anchor's 5 rules out. Here a rule states its own
+    terms, the store maps term names onto its columns, and a codec belongs
+    to a column rather than to a kind.
+    """
+    improve(tree)
+
+    rules = read(tree, "tariff/rules.py")
+    rules = swap(rules, "from abc import ABC, abstractmethod",
+                 "import dataclasses\nfrom abc import ABC, abstractmethod",
+                 "the rules module's imports")
+    rules = swap(rules, TERMS_ANCHOR, TERMS_NEW, "the rule contract's terms")
+    write(tree, "tariff/rules.py", rules)
+
+    db = read(tree, "tariff/web/db.py")
+    db = swap(db, ROW_TABLES, ROW_TERMS, "the persistence tables")
+    db = swap(db, "from ..rules import BulkRule, CouponRule, PercentageRule, "
+              "TieredRule", "from ..rules import rule_class",
+              "the db module's rule imports")
+    write(tree, "tariff/web/db.py", db)
+
+
+def obscure(tree):
+    """Damage what a reader has to hold in their head, and nothing else.
+
+    The module boundaries, the error hierarchy and the dispatch are left
+    exactly as the base has them: only the pricing algorithm is inlined into
+    one long function with abbreviated names. A rubric row that reads
+    function length, nesting and names then has something to move on, and
+    every other row has nothing.
+    """
+    shutil.copy2(os.path.join(OVERLAY, "pricing_obscured.py"),
+                 os.path.join(tree, "tariff", "pricing.py"))
+
+
 # Every entity a variant is supposed to change, with what each tree must read
 # after the build. A control whose mutation silently did nothing reports the
 # tree it never touched as clean, so the build refuses rather than hand that
@@ -219,34 +258,49 @@ def improve(tree):
 LANDINGS = (
     ("tariff/core.py exists", lambda t: os.path.isfile(
         os.path.join(t, "tariff", "core.py")),
-     {"base-1": False, "degraded-1": True, "improved-1": False}),
+     {"base-1": False, "degraded-1": True, "improved-1": False, "improved-2": False, "obscured-1": False}),
 
     # Read against the domain alone: the web package imports flask in every
     # tree, so a whole-tree probe would answer yes whatever was done.
     ("the domain imports flask", lambda t: "from flask import current_app"
      in domain(t), {"base-1": False, "degraded-1": True,
-                    "improved-1": False}),
+                    "improved-1": False, "improved-2": False, "obscured-1": False}),
     ("ValidationError derives from TariffError",
      lambda t: "class ValidationError(TariffError):" in whole(t),
-     {"base-1": True, "degraded-1": False, "improved-1": True}),
+     {"base-1": True, "degraded-1": False, "improved-1": True, "improved-2": True, "obscured-1": True}),
 
     # The damaged tree keeps the ladder: merging the modules moves it into
     # core.py rather than removing it. Only the improved tree loses it.
     ("pricing dispatches on concrete type",
      lambda t: "isinstance(r, TieredRule)" in whole(t),
-     {"base-1": True, "degraded-1": True, "improved-1": False}),
+     {"base-1": True, "degraded-1": True, "improved-1": False, "improved-2": False, "obscured-1": True}),
     ("the rules declare a contract", lambda t: "class Rule(ABC):" in whole(t),
-     {"base-1": False, "degraded-1": False, "improved-1": True}),
+     {"base-1": False, "degraded-1": False, "improved-1": True, "improved-2": True, "obscured-1": False}),
     ("the kinds are hardcoded",
      lambda t: 'KINDS = ("percentage", "bulk", "tiered", "coupon")'
      in whole(t), {"base-1": True, "degraded-1": True,
-                   "improved-1": False}),
+                   "improved-1": False, "improved-2": False, "obscured-1": True}),
     ("an error class sits outside the hierarchy",
      lambda t: "class _BadRequest(Exception):" in whole(t),
-     {"base-1": True, "degraded-1": True, "improved-1": False}),
+     {"base-1": True, "degraded-1": True, "improved-1": False, "improved-2": False, "obscured-1": True}),
     ("the template branches on a class name",
      lambda t: "__class__.__name__" in whole(t),
-     {"base-1": True, "degraded-1": True, "improved-1": False}),
+     {"base-1": True, "degraded-1": True, "improved-1": False, "improved-2": False, "obscured-1": True}),
+
+    # The seed fixture names a kind per sample row in every tree, and has to:
+    # that is data. What this reads is whether the store DISPATCHES on kind,
+    # by a ladder or by a table of its own.
+    ("the store dispatches on a rule kind",
+     lambda t: ('kind == "tiered"' in store(t)
+                or "isinstance(rule, TieredRule)" in store(t)
+                or "_TO_ROW = {" in store(t)),
+     {"base-1": True, "degraded-1": True, "improved-1": True,
+      "improved-2": False, "obscured-1": True}),
+
+    ("the pricing algorithm is broken into named steps",
+     lambda t: "def _price_line(" in whole(t),
+     {"base-1": True, "degraded-1": True, "improved-1": True,
+      "improved-2": True, "obscured-1": False}),
 )
 
 _CACHE = {}
@@ -262,6 +316,13 @@ def domain(tree):
                      encoding="utf-8") as handle:
             chunks.append(handle.read())
     return "\n".join(chunks)
+
+
+def store(tree):
+    """The persistence module, which is where a kind is named or is not."""
+    with io.open(os.path.join(tree, "tariff", "web", "db.py"),
+                 encoding="utf-8") as handle:
+        return handle.read()
 
 
 def whole(tree):
@@ -308,6 +369,8 @@ def build(root):
         made[trial] = tree
     degrade(made["degraded-1"])
     improve(made["improved-1"])
+    improve_further(made["improved-2"])
+    obscure(made["obscured-1"])
     _CACHE.clear()
     return made
 
@@ -548,6 +611,65 @@ KIND_CELLS = """      <td>{{ rule.kind }}</td>
       <td>{{ rule.scope_label }}</td>
       <td>{{ rule.detail() }}</td>
 """
+
+TERMS_ANCHOR = '''        """The rule\'s terms, for display."""
+        return ""'''
+
+TERMS_NEW = TERMS_ANCHOR + '''
+
+    def terms(self) -> dict:
+        """The rule\'s own fields as plain values, for a store to map.
+
+        A store maps these names onto its own columns: the rule names no
+        column, and the store names no kind.
+        """
+        return {field.name: getattr(self, field.name)
+                for field in dataclasses.fields(self)}
+
+    @classmethod
+    def from_terms(cls, terms):
+        """The rule these terms describe, less any it does not carry."""
+        return cls(**{field.name: terms[field.name]
+                      for field in dataclasses.fields(cls)
+                      if terms.get(field.name) is not None})'''
+
+ROW_TERMS = '''# The columns a rule is stored in, and the codec for each column that is
+# not stored as it is held. Both are keyed by column: a new rule kind
+# reusing a column reuses its codec, and nothing below names a kind.
+_COLUMNS = ("rule_id", "kind", "sku", "percent", "buy", "pay", "tiers",
+            "code", "amount")
+
+_CODECS = {
+    "tiers": (format_tiers, parse_tiers),
+    "percent": (str, Decimal),
+    "amount": (str, Decimal),
+}
+
+
+def _encode(column, value):
+    if value is None:
+        return None
+    write_value, _ = _CODECS.get(column, (lambda v: v, None))
+    return write_value(value)
+
+
+def _decode(column, value):
+    if value is None:
+        return None
+    _, read_value = _CODECS.get(column, (None, lambda v: v))
+    return read_value(value)
+
+
+def _row_to_rule(row):
+    terms = {column: _decode(column, row[column]) for column in _COLUMNS
+             if column != "kind"}
+    return rule_class(row["kind"]).from_terms(terms)
+
+
+def _rule_to_row(rule):
+    terms = dict(rule.terms(), kind=rule.kind)
+    return tuple(_encode(column, terms.get(column)) for column in _COLUMNS)
+'''
 
 
 if __name__ == "__main__":
