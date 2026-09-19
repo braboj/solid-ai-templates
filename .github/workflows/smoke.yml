@@ -29,6 +29,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python tests/run_conformance.py
+      # The rubric control's mutations are exact-text edits against a pinned
+      # application. Nothing else would notice if one stopped landing, and a
+      # mutation that does nothing reads as the judge holding.
+      - name: Check the rubric control still builds its trees
+        run: python tests/efficacy/control/control.py --self-test
       - name: Check generated docs are up to date
         run: python tools/sync.py --check
       - name: Check generated/ files are up to date
