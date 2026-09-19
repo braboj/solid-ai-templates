@@ -116,6 +116,39 @@ Score each dimension from 1 to 5, where 1 is poor and 5 is excellent:
 - maintainability: how quickly a reader finds where a change goes
 - test_quality: what the tests assert, not how many there are
 
+Three of those carry the report and are anchored, so that 3 is a described
+place on the scale rather than wherever ordinary work lands. Score against
+the description nearest what you read, and use 2 and 4 for the gaps between.
+
+design
+  1  one module holds the rules, the pricing and the web layer; adding a
+     discount kind means editing the algorithm, the form and the template
+  3  the domain is separated from the web layer, but the algorithm reaches
+     for concrete rule classes, so a new kind reopens more than one function
+  5  a discount kind is added by writing one class: the algorithm, the
+     persistence mapping, the form and the template read a contract or a
+     registry and name no kind of their own
+
+readability
+  1  functions run past a screen with nested conditionals, names abbreviate,
+     and the algorithm has to be held in the head to be followed
+  3  followable, with dense expressions or accumulators whose shape has to be
+     reconstructed before the surrounding code reads
+  5  each function does one thing at one level, names carry the intent, and
+     no expression needs a second reading
+
+maintainability
+  1  changing one discount kind means edits in modules that never name it,
+     and nothing says where a kind's behaviour lives
+  3  the domain is quick to find, but one kind's behaviour is spread across
+     the algorithm, the persistence layer and the templates
+  5  every fact about a discount kind sits in one place, and the modules
+     that use it name no kind
+
+A submission that removes what a lower anchor describes scores above it, even
+where the result is ordinary: these are descriptions of the code, not of how
+impressive it is.
+
 For each score, `evidence` must be a short verbatim line copied from a file in
 the tree, and `file` the path it came from. Do not paraphrase the line.
 
