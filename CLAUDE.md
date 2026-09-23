@@ -10,7 +10,7 @@ project type.
 
 - **Name**: solid-ai-templates
 - **Owner**: Imbra Ltd — Branimir Georgiev
-- **Repo**: github.com/braboj/solid-ai-templates
+- **Repo**: github.com/solid-ai-dev/solid-ai-templates
 - **Stack**: plain Markdown — no build step, no runtime dependencies
 - **Output**: context files for Claude Code, Cursor, GitHub Copilot,
   Codex CLI
@@ -38,7 +38,7 @@ generated/          # Pre-resolved template chains (one file per stack)
 
 ```bash
 # No build step — all templates are plain Markdown
-git clone https://github.com/braboj/solid-ai-templates.git
+git clone https://github.com/solid-ai-dev/solid-ai-templates.git
 
 # Sync generated sections after editing templates/manifest.yaml
 py tools/sync.py            # update SPEC.md, README.md, INTERVIEW.md, generated/

@@ -3,7 +3,7 @@
 ## Disclosure route
 
 Report a vulnerability privately through GitHub's
-[private vulnerability reporting](https://github.com/braboj/solid-ai-templates/security/advisories/new)
+[private vulnerability reporting](https://github.com/solid-ai-dev/solid-ai-templates/security/advisories/new)
 for this repository. The report is visible only to the maintainers until an
 advisory is published.
 
@@ -18,7 +18,7 @@ only a request for a private channel, with no detail about the finding.
 
 The most recent released version receives fixes. It is the version the
 `main` branch is tagged at, listed on the
-[releases page](https://github.com/braboj/solid-ai-templates/releases).
+[releases page](https://github.com/solid-ai-dev/solid-ai-templates/releases).
 
 Older versions do not receive fixes. This project ships text — templates
 resolved into a context file — so upgrading is replacing files, and there is

@@ -89,7 +89,7 @@ Generate the output file using the format rules in
 All rules are inlined — the output file is self-contained.
 The user should review and adjust the output before adopting it.
 End the file with: `<!-- Generated with solid-ai-templates
-(github.com/braboj/solid-ai-templates) -->`
+(github.com/solid-ai-dev/solid-ai-templates) -->`
 
 Also generate `docs/ONBOARDING.md` and `docs/PLAYBOOK.md` following the
 required structures in `templates/base/core/docs.md`.
@@ -107,11 +107,11 @@ inlining them. The output file:
 4. Contains only project-specific overrides and additions inline
 
 End the file with: `<!-- Generated with solid-ai-templates
-(github.com/braboj/solid-ai-templates) -->`
+(github.com/solid-ai-dev/solid-ai-templates) -->`
 
 Tell the user to add the submodule:
 ```
-git submodule add https://github.com/braboj/solid-ai-templates.git docs/solid-ai-templates
+git submodule add https://github.com/solid-ai-dev/solid-ai-templates.git docs/solid-ai-templates
 ```
 
 Also generate `docs/ONBOARDING.md` and `docs/PLAYBOOK.md` following the
@@ -134,11 +134,11 @@ templates for the rest. Follow the hybrid model structure in
    summarize") — never paraphrased into bullets (see `agents.md` §6.3)
 
 End the file with: `<!-- Generated with solid-ai-templates
-(github.com/braboj/solid-ai-templates) -->`
+(github.com/solid-ai-dev/solid-ai-templates) -->`
 
 Tell the user to add the submodule:
 ```
-git submodule add https://github.com/braboj/solid-ai-templates.git docs/solid-ai-templates
+git submodule add https://github.com/solid-ai-dev/solid-ai-templates.git docs/solid-ai-templates
 ```
 
 Also generate `docs/ONBOARDING.md` and `docs/PLAYBOOK.md` following the

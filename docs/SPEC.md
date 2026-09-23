@@ -690,4 +690,4 @@ docs/SPEC.md                     # this file
 
 ## Roadmap
 
-See [GitHub milestones](https://github.com/braboj/solid-ai-templates/milestones).
+See [GitHub milestones](https://github.com/solid-ai-dev/solid-ai-templates/milestones).

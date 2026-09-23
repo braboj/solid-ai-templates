@@ -50,7 +50,7 @@ input from you, most variance in output.*
 Clone the repo and tell the agent to generate from it:
 
 ```bash
-git clone https://github.com/braboj/solid-ai-templates.git
+git clone https://github.com/solid-ai-dev/solid-ai-templates.git
 ```
 
 1. Open your agent in your project directory
@@ -78,7 +78,7 @@ slower, but tighter fit to your context.*
 Clone the templates and let the agent guide you through setup:
 
 ```bash
-git clone https://github.com/braboj/solid-ai-templates.git
+git clone https://github.com/solid-ai-dev/solid-ai-templates.git
 ```
 
 1. Open your agent in your project directory
@@ -100,7 +100,7 @@ For teams that want version-pinned templates inside their repo:
 
 ```bash
 cd my-project
-git submodule add https://github.com/braboj/solid-ai-templates.git docs/solid-ai-templates
+git submodule add https://github.com/solid-ai-dev/solid-ai-templates.git docs/solid-ai-templates
 ```
 
 1. Open your agent in your project directory
@@ -252,14 +252,14 @@ See `templates/base/core/agents.md` for structure, models, and formatting rules.
 
 - [System design and composition rules](docs/SPEC.md)
 - [Changelog](CHANGELOG.md)
-- [Project status and roadmap](https://github.com/braboj/solid-ai-templates/milestones)
+- [Project status and roadmap](https://github.com/solid-ai-dev/solid-ai-templates/milestones)
 - [Example generated context files](examples/)
 - [Onboarding guide](docs/ONBOARDING.md)
 - [Operational playbook](docs/PLAYBOOK.md)
 - [Architecture decision records](docs/decisions/)
 - [How to contribute](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
-- [Report an issue](https://github.com/braboj/solid-ai-templates/issues)
+- [Report an issue](https://github.com/solid-ai-dev/solid-ai-templates/issues)
 
 ## License
 

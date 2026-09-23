@@ -159,9 +159,12 @@ REACH_TERMS = ("solid-ai-templates", "hidden-suite")
 
 # The hybrid arm's workspace carries the templates by design, so a call
 # naming that tree is the arm reading its own file. For it the repository is
-# reached only under its owner's name, which no path into the vendored copy
-# carries and every clone or fetch of the repository does.
-REPOSITORY_TERM = "braboj/solid-ai-templates"
+# reached only under an owner's name, which no path into the vendored copy
+# carries and every clone or fetch of the repository does. The repository
+# moved organisation and the host redirects the old name, so a fetch under
+# either owner reaches it and both are terms.
+REPOSITORY_TERMS = ("solid-ai-dev/solid-ai-templates",
+                    "braboj/solid-ai-templates")
 
 # No user, project or local settings, and no MCP server the harness did not
 # pass -- which is none. Both flags are isolation, not preference.
@@ -676,8 +679,9 @@ def reach(files, calls, workspace=None, temp=None, vendored=None):
         return {"transcripts": [], "hits": None}
     terms, outside = list(REACH_TERMS), None
     if vendored:
-        terms = [REPOSITORY_TERM if term == "solid-ai-templates" else term
-                 for term in terms]
+        terms = [owned for term in terms
+                 for owned in (REPOSITORY_TERMS
+                               if term == "solid-ai-templates" else (term,))]
     if workspace:
         root = os.path.dirname(os.path.abspath(workspace))
         terms.append(os.path.basename(scoring_area(root)).lower())
@@ -1962,8 +1966,8 @@ def reach_checks():
     os.makedirs(os.path.join(home, ".claude", "projects", folder))
     transcript = os.path.join(home, ".claude", "projects", folder,
                               "planted.jsonl")
-    fetch = ("curl -sL https://github.com/braboj/solid-ai-templates/archive/"
-             "main.zip -o t.zip")
+    fetch = ("curl -sL https://github.com/solid-ai-dev/solid-ai-templates/"
+             "archive/main.zip -o t.zip")
     entries = [
         {"type": "assistant", "message": {"content": [
             {"type": "tool_use", "name": "Bash",
@@ -2201,19 +2205,23 @@ def vendor_checks():
          and git(workspace, "status", "--porcelain") == ""),
     ]
 
-    # The first call reads the vendored tree; the second fetches the
-    # repository. Both name it, and only the second reaches for it.
+    # The first call reads the vendored tree; the second and third fetch the
+    # repository, under its owner and under the owner the host redirects
+    # from. All three name it, and only the fetches reach for it.
     calls = [("Read", json.dumps({"file_path": planted})),
+             ("Bash", json.dumps({"command": "git clone https://github.com/"
+                                             "solid-ai-dev/solid-ai-templates"})),
              ("Bash", json.dumps({"command": "git clone https://github.com/"
                                              "braboj/solid-ai-templates"}))]
     own = reach(["planted.jsonl"], calls, workspace, None, vendored)["hits"]
     bare = reach(["planted.jsonl"], calls, workspace, None)["hits"]
     checks.append(("a read of the vendored tree is not a reach for the arm "
                    "carrying it, and a fetch of the repository is",
-                   [hit["call"] for hit in own] == [calls[1][1]]))
+                   [hit["call"] for hit in own]
+                   == [calls[1][1], calls[2][1]]))
     checks.append(("the same read is a reach for an arm carrying no copy",
                    [hit["call"] for hit in bare]
-                   == [calls[0][1][:300], calls[1][1]]))
+                   == [calls[0][1][:300], calls[1][1], calls[2][1]]))
     remove_tree(scratch)
     return checks
 
