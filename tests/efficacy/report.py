@@ -1808,7 +1808,7 @@ def reach_checks():
     shutil.rmtree(scratch, ignore_errors=True)
     os.makedirs(scratch)
     hit = {"tool": "Bash", "term": "solid-ai-templates",
-           "call": "curl https://github.com/braboj/solid-ai-templates"}
+           "call": "curl https://github.com/solid-ai-dev/solid-ai-templates"}
     planted = [
         {"arm": "B", "trial": 1, "outcome": "completed",
          "reach": {"transcripts": ["planted"], "hits": [hit]}},
