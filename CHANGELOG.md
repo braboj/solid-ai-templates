@@ -6,7 +6,7 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Versions up to and including `v2.63.0` predate this file. They are recorded
 in the project's
-[GitHub Releases](https://github.com/braboj/solid-ai-templates/releases) —
+[GitHub Releases](https://github.com/solid-ai-dev/solid-ai-templates/releases) —
 62 published versions from `v2.1.0` to `v2.63.0`. That set is closed and
 does not grow; every version released after `v2.63.0` has its own section
 below.
@@ -20,6 +20,12 @@ project receives. A change to this repository's own tooling or tests that
 alters no template carries no entry.
 
 ## [Unreleased]
+
+### Changed
+
+- The repository moved to the `solid-ai-dev` organisation. Generated files
+  and submodule commands now name `solid-ai-dev/solid-ai-templates`; the old
+  `braboj/` URL redirects, so existing submodules keep working until updated.
 
 ## [2.90.0] - 2026-09-12
 
