@@ -3,16 +3,16 @@
 ## Abstract
 
 A team working through agents keeps a growing set of AI assets (prompt
-templates, agent skills, convention files), and every change to one is defended with the same
-sentence, that it delivers better results. That sentence is asserted, not
-shown, so the change is unfalsifiable. This spike defines a repeatable
-method to measure whether a change to a template or skill actually
-improves the output. The method fixes a representative task set, runs the
-old and new asset as the only difference, repeats each run to separate the
-asset's effect from the model's run-to-run noise, and scores the outputs
-with a layered judge that stays honest by calibrating against human
-readings. The conclusion is a checklist any asset change can run, plus a
-hand-off to this library's own measurement, `efficacy-benchmark.md`.
+templates, agent skills, convention files), and every change to one is
+defended with the same sentence, that it delivers better results. That
+sentence is asserted, not shown, so the change is unfalsifiable. This document
+defines a repeatable method to measure whether a change to a template or
+skill actually improves the output. The method fixes a representative task
+set, runs the old and new asset as the only difference, repeats each run to
+separate the asset's effect from the model's run-to-run noise, and scores
+the outputs with a layered judge that stays honest by calibrating against
+human readings. The conclusion is a checklist any asset change can run, plus
+a hand-off to this library's own measurement, `efficacy-benchmark.md`.
 
 
 ## Question
@@ -302,7 +302,7 @@ produces it.
    against each other.
 8. Iterate on the dev set, report on the sealed test set.
 
-This spike defines the method, not any one measurement. Its output is the
+This document defines the method, not any one measurement. Its output is the
 checklist above and the calibration rules that keep it honest.
 
 
