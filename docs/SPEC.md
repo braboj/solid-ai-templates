@@ -344,6 +344,9 @@ Current design documents:
 - `efficacy-benchmark.md` — the pre-registered experiment that
   measures whether a generated context file improves an agent's
   output, and the harness a template change is measured with
+- `testing-ai-assets.md` — the generic method the benchmark applies:
+  paired old-versus-new runs, a layered and calibrated judge, and a
+  sealed test set, for measuring any template, skill or prompt change
 
 ---
 

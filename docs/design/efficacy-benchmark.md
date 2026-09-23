@@ -5,7 +5,7 @@
 no round 2 trial has run.
 **Date:** 2026-09-12; §12 added 2026-09-17
 **Owning issue:** #1184, applying the generic method in
-`Imbra-Ltd/imbra-explore`, `cross-cutting/SPIKE-TESTING-AI-ASSETS.md`.
+`testing-ai-assets.md`.
 **Artifacts to follow:** the spec and runner under `tests/efficacy/`; the
 hidden suite in a private repository (§10); each report as a dated file
 under `docs/audits/`.
