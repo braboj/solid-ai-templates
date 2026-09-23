@@ -129,8 +129,9 @@ copy is the arm's reading matter, not its output, so it is kept out of the
 workspace's index through `.git/info/exclude` and counts in no size or
 scope metric; the trial record names the release and the tree it was taken
 from. For that arm the reach scan counts the repository as reached only
-under its owner's name, `braboj/solid-ai-templates`, which every clone or
-fetch names and no path into the vendored copy does; the judge strips the
+under an owner's name, `solid-ai-dev/solid-ai-templates` or the redirected
+`braboj/solid-ai-templates`, which every clone or fetch names and no path
+into the vendored copy does; the judge strips the
 copy from the bundle with the context file.
 
 One preflight runs before the first trial: a trivial prompt through the
