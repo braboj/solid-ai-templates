@@ -1590,6 +1590,7 @@ def change_checks():
         ("the change prompt is read whole from its file",
          prompt == whole
          and prompt.startswith("Add a **spend-threshold** discount")),
+
         # Round 1's grader drove names the prompt never gave, and its pass
         # rate measured which trials guessed them.
         ("the change prompt names the API and fields the grader drives",
