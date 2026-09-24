@@ -1,9 +1,9 @@
 """Generate one arm's context file, once, without anybody answering anything.
 
-The design's section 11 fixes what the interview is told and requires the
-generation to be one non-interactive invocation; section 12 adds the
-40-line budget arm `short` is generated under and the hybrid model arm
-`hybrid` asks for. This module is that invocation. It resolves the chain at
+The design's section 3.3 fixes what the interview is told, requires the
+generation to be one non-interactive invocation, and sets the 40-line
+budget arm `short` is generated under and the hybrid model arm `hybrid`
+asks for. This module is that invocation. It resolves the chain at
 the recorded release, builds the prompt from `INTERVIEW.md`, that chain,
 the pinned brief and the arm's model and budget, calls the generator,
 writes `arms/<arm>/CLAUDE.md`, and refuses to keep a result the
@@ -43,7 +43,7 @@ BRIEF = os.path.join(HERE, "brief.txt")
 
 # The arms the interview generates, each with the directory under `arms/`
 # its file and record live in, the interview's output model it is asked for,
-# and its budget as (lines, width) where the design's section 12 sets one.
+# and its budget as (lines, width) where the design's section 3.3 sets one.
 # Each directory is named after its arm. A record written before the rename
 # still gives the path the file was generated to, as a record should.
 GENERATED = {
@@ -160,7 +160,7 @@ MODELS = {
                % (VENDORED["into"], VENDORED["path"], VENDORED["path"])),
 }
 
-# The budget clause, stated in the instruction as the design's section 12
+# The budget clause, stated in the instruction as the design's section 3.3
 # requires. The width keeps a line from carrying a paragraph.
 BUDGET = """\
 The finished `CLAUDE.md` MUST be at most %d lines, blank lines counted, and
