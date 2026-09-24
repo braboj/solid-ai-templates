@@ -309,7 +309,7 @@ checklist above and the calibration rules that keep it honest.
 ## Hand-off - the solid-ai-templates measurement
 
 The concrete application of this method to the template library itself is
-`efficacy-benchmark.md` in this directory, the pre-registered experiment
+`efficacy-benchmark.md` in this directory, the experiment
 that was blocked until this generic method concluded. This document hands
 it the design, and the benchmark supplies the parts this one leaves
 generic.

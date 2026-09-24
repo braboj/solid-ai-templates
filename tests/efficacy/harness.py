@@ -1,6 +1,6 @@
 """Set up and run one efficacy-benchmark trial.
 
-The design, the pre-registered question and the verdict rule live in
+The design, its question and its verdict rule live in
 `docs/design/efficacy-benchmark.md`. This module owns section 4 of it: the
 workspace an arm starts from, the isolated configuration it runs under, the
 one prompt every arm receives, and the freeze that ends a trial.
@@ -55,7 +55,7 @@ PROMPT = (
 BUDGET_USD = 100.0
 TIMEOUT_S = 7200
 
-# The pre-registered K, and the ceiling of the design's one escalation. No run
+# K as the design fixes it, and the ceiling of the design's one escalation. No run
 # goes past the ceiling, because sampling until an interval clears zero is the
 # failure the bound exists to prevent.
 K_PRIMARY = 3
@@ -2245,12 +2245,12 @@ def parse_args(argv):
                              "each scorable build trial")
     parser.add_argument("--arms",
                         help="which arms to run, as words separated by "
-                             "commas: none,short,hybrid. Required for a run, "
-                             "because two of the arms are reused from an "
-                             "earlier round and never re-run")
+                             "commas: none,full,short,hybrid,hand. Required "
+                             "for a run, so a run names the arms it "
+                             "holds")
     parser.add_argument("--k", type=int, default=K_PRIMARY,
-                        help="trials per arm (default %d, the pre-registered "
-                             "K; at most %d, the escalation's ceiling)"
+                        help="trials per arm (default %d, the K the design "
+                             "fixes; at most %d, the escalation's ceiling)"
                              % (K_PRIMARY, K_CEILING))
     parser.add_argument("--model", default="claude-sonnet-5",
                         help="exact generator model id, recorded in the report")
