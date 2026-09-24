@@ -79,13 +79,13 @@ VENDORED = {"ref": RELEASE, "path": "templates",
 ARMS = {
     "none": {"label": "no context file", "context": None},
     "full": {"label": "the templates' file, inline",
-             "context": "B-candidate/CLAUDE.md"},
+             "context": "full/CLAUDE.md"},
     "short": {"label": "the templates' file, 40 lines",
               "context": "short/CLAUDE.md"},
     "hybrid": {"label": "the templates' file, hybrid",
                "context": "hybrid/CLAUDE.md", "vendor": VENDORED},
     "hand": {"label": "the hand-written file",
-             "context": "C-reference/CLAUDE.md"},
+             "context": "hand/CLAUDE.md"},
 }
 
 # Round 1 named its arms by letter and its trials `A1`, `B2`, `C3`. Its run

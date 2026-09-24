@@ -44,10 +44,10 @@ BRIEF = os.path.join(HERE, "brief.txt")
 # The arms the interview generates, each with the directory under `arms/`
 # its file and record live in, the interview's output model it is asked for,
 # and its budget as (lines, width) where the design's section 12 sets one.
-# Arm `full` keeps the directory round 1 generated it into, which its record
-# names.
+# Each directory is named after its arm. A record written before the rename
+# still gives the path the file was generated to, as a record should.
 GENERATED = {
-    "full": {"dir": "B-candidate", "model": "inline", "budget": None},
+    "full": {"dir": "full", "model": "inline", "budget": None},
     "short": {"dir": "short", "model": "inline", "budget": (40, 88)},
     "hybrid": {"dir": "hybrid", "model": "hybrid", "budget": None},
 }

@@ -11,8 +11,8 @@ run.
 | `harness.py` | sets up a workspace, runs one trial under an isolated configuration, freezes the result |
 | `brief.txt` | the project brief the generated arms' interview reads, the only copy |
 | `change-prompt.txt` | the change task's prompt, the only copy |
-| `arms/C-reference/CLAUDE.md` | arm `hand`: the hand-written reference context file, the arm that asks whether the effect is the templates or merely having a file |
-| `arms/B-candidate/CLAUDE.md` | arm `full`: the generated context file, produced once by `generate_arm.py` and never hand-edited |
+| `arms/hand/CLAUDE.md` | arm `hand`: the hand-written reference context file, the arm that asks whether the effect is the templates or merely having a file |
+| `arms/full/CLAUDE.md` | arm `full`: the generated context file, produced once by `generate_arm.py` and never hand-edited |
 | `arms/short/CLAUDE.md` | arm `short`: the same generation under a 40-line budget |
 | `arms/hybrid/CLAUDE.md` | arm `hybrid`: the same generation in the interview's hybrid model, read beside the templates the harness vendors into the workspace |
 | `generate_arm.py` | produces each generated arm's file: resolves the chain at the recorded release, builds the prompt from the interview, the pinned brief and the arm's output model and budget, scans for a specification leak, refuses a file over its budget |
