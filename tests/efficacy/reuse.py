@@ -2,7 +2,7 @@
 they were.
 
 Round 2 reuses round 1's `full` and `hand` trials rather than running them
-again, as the design's section 12 fixes. This module copies what the report
+again, as the design's decision log records. This module copies what the report
 reads for a trial — its run record, frozen tarball, transcripts, score,
 judging and security reading — from the earlier root and scoring area into
 the new ones, under the arm's word, and marks each copy with where it came

@@ -47,8 +47,8 @@ WITHDRAWN = os.path.join(HERE, "withdrawn.json")
 RESAMPLES = 10000
 CONFIDENCE = 0.95
 
-# Every contrast the design declares, each a treatment arm against a
-# baseline: round 1's three, then round 2's four (design, section 12). A run
+# Every contrast the design declares in section 6.1, each a treatment arm
+# against a baseline. A run
 # prints the contrasts whose arms it holds; the rest are computed as not
 # computed and left out of every table. full - hand is the one an adopter
 # asks: a large full - none beside an equally large hand - none is not a
@@ -691,7 +691,7 @@ def escalation_triggers(results):
             if low is None or high is None or not contrast["pairs"]:
                 continue
 
-            # Read by size in either direction, as the design's section 1.1
+            # Read by size in either direction, as the design's section 1.3
             # fixes: an escalation owed only to a favourable effect would lean
             # the stopping rule toward "better".
             effect = statistics.fmean(contrast["pairs"])
@@ -1530,7 +1530,7 @@ def finding_lines(trials, table, results, active):
         lines.append("")
 
     # A column or a contrast pairing a reused trial with one run in this
-    # round crosses rounds, which the design's section 12 has the report say
+    # round crosses rounds, which the design's section 6.1 has the report say
     # here rather than in a footnote.
     reused = reused_arms(trials)
     if reused:
