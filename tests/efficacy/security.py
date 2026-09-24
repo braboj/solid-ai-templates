@@ -1,7 +1,7 @@
 """Read frozen efficacy trials for security, with checks declared after a run.
 
-A run's pre-registered security checks can pass on every trial and separate
-nothing. The checks here were declared in writing after such a run and before
+A run's security checks, fixed before it, can pass on every trial and
+separate nothing. The checks here were declared in writing after such a run and before
 any trial was read for them, so they can describe a run but never decide it:
 the report prints them apart from the verdict vector.
 
