@@ -52,11 +52,11 @@ CONFIDENCE = 0.95
 # prints the contrasts whose arms it holds; the rest are computed as not
 # computed and left out of every table. full - hand is the one an adopter
 # asks: a large full - none beside an equally large hand - none is not a
-# result for the templates. short - hand holds length fixed, and
-# hybrid - full the content.
+# result for the templates. short - hand holds length fixed, hybrid - full
+# the content, and short - full asks whether length matters at all.
 CONTRASTS = (("full", "none"), ("short", "none"), ("hybrid", "none"),
              ("hand", "none"), ("full", "hand"), ("short", "hand"),
-             ("hybrid", "full"))
+             ("hybrid", "full"), ("short", "full"))
 
 # Declared in the design before the run. "up" improves upward, "down"
 # improves downward, "neutral" is reported without a verdict.
@@ -2388,7 +2388,8 @@ def executive_checks(seed):
         ("the reused arms and the contrasts crossing rounds are named",
          "Reused from an earlier round: full (3 trials) and hand (3 "
          "trials). Pairing them with this round's trials, across days: "
-         "full − none, hand − none, short − hand and hybrid − full."
+         "full − none, hand − none, short − hand, hybrid − full and "
+         "short − full."
          in finding and "reused from an earlier round: full and hand"
          in finding, finding),
         ("the reading sets the longest measured file against the shortest",
