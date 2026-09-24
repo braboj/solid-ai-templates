@@ -85,6 +85,8 @@ PROMPT_TOKENS = [
     "PricedInvoice", "TariffError",
     "/invoices/preview", "/invoices/new", "export.csv", "export.json",
     "228.35", "227.07", "195.24", "0.135",
+    "TARIFF_ADMIN_PASSWORD", "/sign-in", "/sign-out",
+    "Ada Example", "ada@example.com",
 ]
 
 # The OUTPUT scan asks something narrower, and the prompt scan is what
@@ -97,13 +99,15 @@ NON_INVENTABLE = [
     "r-tier-wid", "r-bulk-see", "r-pct-bok", "r-pct-all",
     "c-welcome", "c-tenoff",
     "228.35", "227.07", "195.24",
+    "Ada Example", "ada@example.com",
 ]
 
 # Two tokens taught this the hard way.
 #
 # `HX-Request` came off the prompt list: the templates document the header
 # themselves, as any HTMX guidance would, so the scan fired on a clean
-# prompt. Every other token was then checked the same way against the chain
+# prompt. `/customers/` came off it the same way, from the templates' REST
+# rule, whose example nests `/customers/{id}/orders`. Every other token was then checked the same way against the chain
 # at the release and appears nowhere in it.
 #
 # `TariffError` came off the *output* list on the first real generation. The
