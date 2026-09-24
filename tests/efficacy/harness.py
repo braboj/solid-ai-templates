@@ -1581,11 +1581,22 @@ def remove_tree(path):
 
 
 def change_checks():
-    """The change prompt is the design's, and its workspace starts committed."""
+    """The change prompt is its file's, whole, and names what the grader
+    drives; its workspace starts committed."""
     prompt = read_change_prompt()
-    checks = [("the change prompt is read from the design",
-               prompt.startswith("Add a **spend-threshold** discount")
-               and prompt.endswith("your tests passing."))]
+    with io.open(CHANGE_PROMPT, encoding="utf-8") as handle:
+        whole = handle.read().strip()
+    checks = [
+        ("the change prompt is read whole from its file",
+         prompt == whole
+         and prompt.startswith("Add a **spend-threshold** discount")),
+        # Round 1's grader drove names the prompt never gave, and its pass
+        # rate measured which trials guessed them.
+        ("the change prompt names the API and fields the grader drives",
+         all(name in prompt for name in (
+             "tariff.ThresholdRule", "caps=", "`threshold`", "`minimum`",
+             "`caps`", "/invoices/preview"))),
+    ]
 
     scratch = os.path.join(os.environ.get("TEMP", "."),
                            "efficacy-change-self-test")

@@ -512,14 +512,27 @@ Neither is reachable by configuration:
 - The capped rate is the first tax that is not one rate times one amount,
   so it changes the shape of the tax step, not its inputs.
 
-**Measured:** files touched, lines changed, whether the build suite is
-still green, whether the change-task acceptance module passes, and whether
-the new rule and rate show in the same API and UI. A new rule class plus a
-registry entry scores low churn. Editing the pricing function, the tax
-step, three routes and two templates scores high.
+**Measured:**
 
-**The acceptance module is written before any change-task run.** It tests
-the two new behaviours against worked figures.
+- files touched and lines changed
+- whether the build suite is still green
+- whether the change-task acceptance modules pass, through the API
+- from round 3, whether the new rule and cap work through the forms and
+  the invoice preview
+
+A new rule class plus a registry entry scores low churn. Editing the
+pricing function, the tax step, three routes and two templates scores high.
+
+**The prompt states everything the grader drives.** It names the new
+class, the cap's keyword, the form fields and the rules the acceptance
+modules check.
+
+Why: round 1's grader constructed the new behaviours through names the
+prompt never gave, so it graded which trials guessed them, and its pass
+rate was withdrawn (§6.5).
+
+**The acceptance modules are written before any change-task run.** They
+test the two new behaviours against worked figures.
 
 Why: churn means something only beside a pass. An arm that touched four
 lines and broke the extension has not scored well.
@@ -839,6 +852,7 @@ Two limits:
 | 2026-09-24 | Round 3 starts anew with all five arms and reuses no trial | The spec gained sign-in and customers, and the judge changed | #1767 |
 | 2026-09-24 | Eight contrasts, adding `short − full` | Does length matter | #1767 |
 | 2026-09-24 | The brief and the change prompt live in files of their own | The design's restructure would have broken the code that read them by heading | #1843 |
+| 2026-09-24 | The change prompt states the API, the form fields and the rules its acceptance modules check; the UI is graded by HTTP cases from round 3 | A grader driving names the prompt never gave grades guessing; the UI was asked for but never graded | #1767 |
 | 2026-09-24 | Security and data protection: an anchored judge row and a probe pass rate each, all primary; probe margins mean no probe lost | A judge row alone is an opinion; the probes are deterministic. Security regressions get no tolerance | #1767 |
 
 ¹ This agrees with Anthropic's guidance on context engineering, which asks
