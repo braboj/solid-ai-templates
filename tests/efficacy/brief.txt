@@ -1,0 +1,12 @@
+`tariff` — Imbra Ltd — a pricing and invoicing web application:
+a product catalog, discount rules of several kinds, tax jurisdictions,
+and invoices assembled from them — Python 3.12 / Flask 3 / Jinja /
+HTMX / SQLite — uv, ruff, mypy strict, pytest — runs locally, no
+deployment target
+
+Boundaries and actors: two actors, a person working in a browser and
+another program; the pricing engine is a library the program imports
+without the web application present, and the web application is one
+caller of it. The store is a local file. Nothing reaches the network.
+The program's interfaces are the library's own API and the invoice
+exports.

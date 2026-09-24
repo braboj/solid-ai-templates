@@ -33,10 +33,13 @@ import lib  # noqa: E402
 from harness import (RELEASE, VENDORED, TrialError,  # noqa: E402
                      agent_environment, agent_executable,
                      assert_authenticated, assert_outside_repository,
-                     prepare_home, quoted_passage)
+                     prepare_home, read_input)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DESIGN = os.path.join(lib.ROOT, "docs", "design", "efficacy-benchmark.md")
+
+# The generated arms' project brief lives in a file of its own, the one copy
+# the design links to, for the reason `harness.CHANGE_PROMPT` gives.
+BRIEF = os.path.join(HERE, "brief.txt")
 
 # The arms the interview generates, each with the directory under `arms/`
 # its file and record live in, the interview's output model it is asked for,
@@ -110,8 +113,6 @@ NON_INVENTABLE = [
 # specification chose the same name for the same reason. `PricedInvoice`,
 # the routes, the coupon codes and `half-even` are all derivable the same
 # way and stay out of the output list for the same reason.
-
-BRIEF_HEADING = "## 11. Arm B's project brief"
 
 INSTRUCTION = """\
 You are running the interview in `INTERVIEW.md` for one project, without a
@@ -194,14 +195,14 @@ def over_budget(document, budget):
     return findings
 
 
-def read_brief(path=DESIGN):
-    """Extract the pinned brief from the design, which is its only copy.
+def read_brief(path=BRIEF):
+    """The pinned brief, read from its only copy.
 
     Reading it here rather than restating it keeps one source of truth: a
-    brief duplicated in code drifts from the one the design pre-registered,
-    and the arm would then be generated from something nobody agreed.
+    brief duplicated in code drifts from the one the design fixed, and the
+    arm would then be generated from something nobody agreed.
     """
-    brief = quoted_passage(path, BRIEF_HEADING)
+    brief = read_input(path)
     if len(brief) < 100:
         raise TrialError("the brief read from %s is implausibly short: %r"
                          % (path, brief))
