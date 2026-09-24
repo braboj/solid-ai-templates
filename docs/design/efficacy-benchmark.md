@@ -287,16 +287,10 @@ jurisdiction's existing `rates` table. Every arm would have scored zero
 churn by typing two rows into a form, and the measure would have reported
 that all three designs were equally extensible.
 
-The task, fixed here:
-
-> Add a **spend-threshold** discount: 5 % off the invoice once the
-> subtotal before any invoice-scoped discount reaches 200.00, applied
-> before coupons and never alongside another invoice percentage. And add a
-> **capped reduced rate**: in a new jurisdiction, one tax category is taxed
-> at the reduced rate on the first 50.00 of each line's taxable amount and
-> at the standard rate on the excess. Both must appear on the rules and
-> jurisdictions pages and take effect in the invoice builder. Keep the
-> existing behaviour and your tests passing.
+The task adds a **spend-threshold** discount and a **capped reduced
+rate**. Its prompt is fixed in
+[`tests/efficacy/change-prompt.txt`](../../tests/efficacy/change-prompt.txt),
+the only copy, which the harness hands every change trial as it stands.
 
 Neither is reachable by configuration. The threshold rule is the first
 invoice-scoped rule whose application depends on a *predicate over the
@@ -638,21 +632,11 @@ rules and tax jurisdictions, because that is what the application is.
 A brief withholding them would measure a version of the product nobody
 uses.
 
-Pinned here rather than written on the day, because a brief composed
-after the spec is fresh in mind drifts toward it:
-
-> `tariff` — Imbra Ltd — a pricing and invoicing web application:
-> a product catalog, discount rules of several kinds, tax jurisdictions,
-> and invoices assembled from them — Python 3.12 / Flask 3 / Jinja /
-> HTMX / SQLite — uv, ruff, mypy strict, pytest — runs locally, no
-> deployment target
->
-> Boundaries and actors: two actors, a person working in a browser and
-> another program; the pricing engine is a library the program imports
-> without the web application present, and the web application is one
-> caller of it. The store is a local file. Nothing reaches the network.
-> The program's interfaces are the library's own API and the invoice
-> exports.
+Pinned in advance rather than written on the day, because a brief composed
+after the spec is fresh in mind drifts toward it. The brief is
+[`tests/efficacy/brief.txt`](../../tests/efficacy/brief.txt), the only
+copy, which the generator reads as it stands. It gives the domain in one
+line, the stack, and a paragraph on the system's boundaries and actors.
 
 The stack is named because the spec fixes it for every arm; an interview
 left to choose might pick FastAPI, and arm B would then build a different
@@ -669,7 +653,7 @@ of which arms A and C read in `SPEC.md` and arm B's interview does not.
 ### The generation is scripted, not conducted
 
 Arm B's file is produced by one non-interactive invocation that supplies
-`INTERVIEW.md`, the resolved chain at `v2.90.0` and the brief above, and
+`INTERVIEW.md`, the resolved chain at `v2.90.0` and the brief, and
 by nothing else. Nobody answers questions as they arrive.
 
 That is what keeps the arm reproducible: a conversation would put the

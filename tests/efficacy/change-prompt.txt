@@ -1,0 +1,8 @@
+Add a **spend-threshold** discount: 5 % off the invoice once the
+subtotal before any invoice-scoped discount reaches 200.00, applied
+before coupons and never alongside another invoice percentage. And add a
+**capped reduced rate**: in a new jurisdiction, one tax category is taxed
+at the reduced rate on the first 50.00 of each line's taxable amount and
+at the standard rate on the excess. Both must appear on the rules and
+jurisdictions pages and take effect in the invoice builder. Keep the
+existing behaviour and your tests passing.

@@ -9,6 +9,8 @@ run.
 |---|---|
 | `SPEC.md` | the application every arm is asked to build; the harness copies it into each workspace under this name |
 | `harness.py` | sets up a workspace, runs one trial under an isolated configuration, freezes the result |
+| `brief.txt` | the project brief the generated arms' interview reads, the only copy |
+| `change-prompt.txt` | the change task's prompt, the only copy |
 | `arms/C-reference/CLAUDE.md` | arm `hand`: the hand-written reference context file, the arm that asks whether the effect is the templates or merely having a file |
 | `arms/B-candidate/CLAUDE.md` | arm `full`: the generated context file, produced once by `generate_arm.py` and never hand-edited |
 | `arms/short/CLAUDE.md` | arm `short`: the same generation under a 40-line budget |
@@ -67,7 +69,7 @@ py tests/efficacy/generate_arm.py --arm short --root <outside this repository>
 
 One non-interactive invocation per generated arm (`full`, `short`,
 `hybrid`), per the design's sections 11 and 12. Nobody answers questions:
-the brief is read out of the design and treated as the client's answers,
+the brief is read from `brief.txt` and treated as the client's answers,
 so the arm is reproducible and re-running it would produce a different one.
 It refuses to overwrite an existing file without `--replace`.
 
@@ -260,8 +262,8 @@ py tests/efficacy/score.py --root <the run root> --task change
 ```
 
 The change task measures how far each design has to be disturbed to take a
-change it was not built for. Its prompt is read from the design, never
-restated here. Each change task starts from a copy of its build trial's
+change it was not built for. Its prompt is read from `change-prompt.txt`,
+never restated here. Each change task starts from a copy of its build trial's
 frozen workspace and runs under the same isolation, bounds and outcome
 rules, in the same order. The copy's state is committed first, so churn
 counts only what the agent changed. Scoring re-runs the build suite, runs

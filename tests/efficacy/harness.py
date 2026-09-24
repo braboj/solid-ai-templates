@@ -35,11 +35,11 @@ import lib  # noqa: E402
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPEC = os.path.join(HERE, "SPEC.md")
 ARMS_DIR = os.path.join(HERE, "arms")
-DESIGN = os.path.join(lib.ROOT, "docs", "design", "efficacy-benchmark.md")
 
-# The change task's prompt is pinned in the design under this heading and
-# read from there, because a copy here could drift from the one registered.
-CHANGE_HEADING = "### Design (change task) — the OCP measure"
+# The change task's prompt lives in a file of its own, the one copy the
+# design links to. A copy restated in code could drift from it, and a prompt
+# found by a heading in the design breaks when the design is restructured.
+CHANGE_PROMPT = os.path.join(HERE, "change-prompt.txt")
 
 # Identical for every arm, per the design's section 4. Changing it changes
 # what the benchmark measures, so it is a constant and not an option.
@@ -969,35 +969,21 @@ def contain(workspace, temp, home, shared, since, vendored=None):
     return result
 
 
-def quoted_passage(path, heading):
-    """The first block quote under `heading` in a Markdown file."""
-    with io.open(path, encoding="utf-8") as handle:
-        text = handle.read()
-    start = text.find(heading)
-    if start < 0:
-        raise TrialError("no %r section in %s" % (heading, path))
-
-    # Up to the first line that is neither quoted nor blank; a later quote
-    # is a different passage.
-    lines, seen = [], False
-    for raw in text[start:].splitlines():
-        if raw.startswith(">"):
-            seen = True
-            lines.append(raw[1:].lstrip() if raw[1:2] == " " else raw[1:])
-        elif seen and not raw.strip():
-            lines.append("")
-        elif seen:
-            break
-    passage = "\n".join(lines).strip()
-    if not passage:
-        raise TrialError("the %r section of %s carries no block quote"
-                         % (heading, path))
-    return passage
+def read_input(path):
+    """A pinned input's text, stripped; refused where the file is empty."""
+    try:
+        with io.open(path, encoding="utf-8") as handle:
+            text = handle.read().strip()
+    except OSError as error:
+        raise TrialError("cannot read %s: %s" % (path, error))
+    if not text:
+        raise TrialError("%s is empty" % path)
+    return text
 
 
-def read_change_prompt(path=DESIGN):
+def read_change_prompt(path=CHANGE_PROMPT):
     """The change task's prompt, as the design pins it."""
-    return quoted_passage(path, CHANGE_HEADING)
+    return read_input(path)
 
 
 def prepare_change_workspace(arm, trial, root, build):
