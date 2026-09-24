@@ -264,12 +264,16 @@ carries this repository's `templates/` directory at `v2.90.0` under
 
 The brief is what an adopter would type:
 
-- the domain in one line, naming discount rules and tax jurisdictions
+- the domain in one line, naming discount rules, tax jurisdictions and
+  customers
 - the stack: Python 3.12, Flask 3, Jinja, HTMX, SQLite, uv, ruff, mypy
   strict, pytest
-- the system's boundaries and actors: a person in a browser and another
-  program; the pricing engine importable without the web app; a local
-  store; no network
+- personal data: customers are people with a name, email and address; the
+  GDPR applies, so a customer may ask for erasure or a copy of their data;
+  one administrator signs in
+- the system's boundaries and actors: the administrator in a browser and
+  another program; the pricing engine importable without the web app; a
+  local store; no network
 
 Why each part is there:
 
@@ -277,11 +281,10 @@ Why each part is there:
   would name them. A brief withholding them measures a product nobody uses.
 - The stack is named because the spec fixes it for every arm. An interview
   left to choose might pick FastAPI and build a different app.
+- Personal data is named because an adopter storing customers would say
+  so, and it is what lets the interview reach for data-protection rules.
 - The boundaries are there because establishing a system's boundaries and
   its interfaces is the interview's job.
-
-Before round 3 the brief also states that customers carry personal data
-(#1767).
 
 **What naming the axes affects.** The report states this beside the rows it
 touches:
@@ -853,6 +856,7 @@ Two limits:
 | 2026-09-24 | Eight contrasts, adding `short − full` | Does length matter | #1767 |
 | 2026-09-24 | The brief and the change prompt live in files of their own | The design's restructure would have broken the code that read them by heading | #1843 |
 | 2026-09-24 | The change prompt states the API, the form fields and the rules its acceptance modules check; the UI is graded by HTTP cases from round 3 | A grader driving names the prompt never gave grades guessing; the UI was asked for but never graded | #1767 |
+| 2026-09-24 | The brief names customers as personal data under the GDPR and one signing-in administrator; `hand` gains two generic lines (OWASP ASVS level 1, GDPR) | An adopter storing customers would say so. `hand`'s lines stay generic: lines mirroring the probes would hand it the answer key | #1767 |
 | 2026-09-24 | Security and data protection: an anchored judge row and a probe pass rate each, all primary; probe margins mean no probe lost | A judge row alone is an opinion; the probes are deterministic. Security regressions get no tolerance | #1767 |
 
 ¹ This agrees with Anthropic's guidance on context engineering, which asks
