@@ -416,15 +416,19 @@ The rest of the backbone:
 
 - **Install:** `pip install .` in a clean virtualenv, `import tariff`, and
   the app boots and serves `/`.
-- **Web quality:** axe-core WCAG 2.1 AA violations; HTML validity less
-  errors on HTMX's `hx-*` attributes, which the spec requires and the HTML
-  standard lacks; an XSS probe; a CSRF probe; the invoice builder's
-  response size and request count.
-- **Adherence:** the fraction of a fixed checklist passed — `ruff` clean,
-  `mypy --strict` clean, coverage ≥ 80 %, cognitive complexity ≤ 15, a
-  `src/` layout, an error-contract test, a `NullHandler`, no `print` in
-  library code, no citations, complete package metadata, a README with
-  install and usage, discoverable tests.
+- **Web quality:**
+  - accessibility: axe-core WCAG 2.1 AA violations
+  - HTML validity, less errors on HTMX's `hx-*` attributes, which the spec
+    requires and the HTML standard lacks
+  - an XSS probe and a CSRF probe
+  - the invoice builder's response size and request count
+- **Adherence:** the share of a fixed checklist passed.
+  - Tools: `ruff` clean, `mypy --strict` clean, coverage ≥ 80 %, cognitive
+    complexity ≤ 15.
+  - Structure: a `src/` layout, an error-contract test, a `NullHandler`.
+  - Hygiene: no `print` in library code, no citations.
+  - Packaging: complete metadata, a README with install and usage,
+    discoverable tests.
 - **Cost:** tokens, turns, wall time, API-equivalent dollars.
 - **Scope:** files and lines, and artifacts nobody asked for (ADR, journal,
   CHANGELOG, PLAYBOOK).
@@ -449,9 +453,10 @@ assume `src/`.
 Why: a tool pointed at an empty `src/` reports zero findings, and "zero
 findings" must never mean "nothing scanned".
 
-**A tool that scanned nothing, failed or timed out records the metric as
-missing, never zero.** The report shows how many files and lines each tool
-saw, so a clean arm can be told from an unmeasured one.
+**A tool that scanned nothing records the metric as missing, never zero.**
+The same holds for a tool that failed or timed out. The report shows how
+many files and lines each tool saw. A clean arm can then be told from an
+unmeasured one.
 
 | Tool | Measures |
 |---|---|
@@ -667,10 +672,15 @@ Under the table:
 The table and the score describe the verdicts and decide nothing. Every cell
 rests on a verdict or record below it.
 
-**Then the record:** model ids, CLI versions, the template revision, each
-generated arm's brief and token scan, K, the bootstrap seed, every trial's
-raw numbers, every trial that failed or was re-run and why, the judge's
-evidence check, and the verdict vector.
+**Then the record:**
+
+- model ids, CLI versions and the template revision
+- each generated arm's brief and token scan
+- K and the bootstrap seed
+- every trial's raw numbers
+- every trial that failed or was re-run, and why
+- the judge's evidence check
+- the verdict vector
 
 ### 6.4 Checks declared after a run
 
@@ -709,7 +719,7 @@ result cannot say which produced it. A control is what rules it out.
 | Confound | Control |
 |---|---|
 | Your global `CLAUDE.md` or hooks reach the bare arm | A scratch home per trial; the harness refuses a run when a `CLAUDE.md` exists in that home or any parent directory |
-| The agent reads the templates, the hidden suite or the web | Nothing mounted; web tools off; Git credentials cleared; every transcript scanned for a tool call naming them, and the report names each trial with one |
+| The agent reads the templates, the hidden suite or the web | Nothing mounted; web tools off; Git credentials cleared; transcripts scanned, and each hit named in the report |
 | `hybrid` legitimately carries the templates | Its reads of its own vendored copy are not a reach; naming the repository by URL or owner still is |
 | The model changes between trials | Exact id pinned; trials interleaved |
 | The agent sees the acceptance tests | The hidden suite stays outside the workspace until scoring |
@@ -788,7 +798,7 @@ Two limits:
 | 2026-09-17 | The finding table opens the report | Asked for after reading the score table | #1789, #1791, #1796, #1798 |
 | 2026-09-17 | Round 1's change-task pass rate is withdrawn | Its grader built the new rule and rate through names the prompt never gave | #1772 |
 | 2026-09-17 | No human holdout | Scoring many implementations by hand cannot be sustained, and a person in the loop breaks §4.3 | #1774 |
-| 2026-09-17 | Round 2 holds length fixed and adds the hybrid model | The owner read round 1 as: the generated file is too long to add quality, and a short one can. This agrees with Anthropic's [context engineering guidance](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) | #1795 |
+| 2026-09-17 | Round 2 holds length fixed and adds the hybrid model | Owner's reading of round 1: the generated file is too long to add quality, and a short one can¹ | #1795 |
 | 2026-09-18 | The score table stays only for contrasts between two files | Beside the finding table it repeated itself | #1820 |
 | 2026-09-18 | A contrast crossing rounds gets no verdict | Round 2's `full` read Worse because `none` moved between rounds, not the file | #1826 |
 | 2026-09-19 | The primaries are anchored and checked by the control fixture | Unanchored, `design` and `maintainability` scored 3 on all 24 trials of rounds 1–2 | #1827, #1829, #1830 |
@@ -798,19 +808,28 @@ Two limits:
 | 2026-09-24 | Eight contrasts, adding `short − full` | Does length matter | #1767 |
 | 2026-09-24 | The brief and the change prompt live in files of their own | The design's restructure would have broken the code that read them by heading | #1843 |
 
+¹ This agrees with Anthropic's guidance on context engineering, which asks
+for the smallest set of high-signal tokens:
+[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents).
+
 ## 11. Appendix — the numbers behind the rules
 
 **Why three trials cannot reach significance.** Three paired differences
 give a bootstrap 27 distinct resamples and an exact sign test a minimum
 two-sided p of 0.25.
 
-**Why the judge reads each tree three times.** Six judgings of one unchanged
-bundle returned readability 4, 4, 4, 3, 4, 4: mean 3.83, sample SD 0.41,
-about 0.33 standard error on a difference of two arm means at K = 3.
-Readability was the only primary that moved in rounds 1 and 2, so every
-verdict rested on the row that was not reproducible. Three judgings cut
-that standard error by about 40 %. Eight of the eleven rows returned the
-same score on all six calls.
+**Why the judge reads each tree three times.**
+
+- **Measured:** six judgings of one unchanged bundle returned readability
+  4, 4, 4, 3, 4, 4. Mean 3.83, sample SD 0.41.
+- **Effect:** about 0.33 standard error on a difference of two arm means at
+  K = 3.
+- **Why it mattered:** readability was the only primary that moved in
+  rounds 1 and 2, so every verdict rested on the row that was not
+  reproducible.
+- **The fix:** three judgings cut that standard error by about 40 %.
+- **Rows that did not need it:** eight of the eleven returned the same
+  score on all six calls.
 
 **Why the budget is $100 and the timeout two hours.** The CLI prices
 `claude-sonnet-5` at $5 per million input tokens and $25 per million output.
