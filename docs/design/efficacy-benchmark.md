@@ -72,6 +72,8 @@ below. "No improvement shown" does not mean "no worse".
 | Primary judge scores, 1–5 | scale points | 0.3 | 0.5 |
 | Static-analysis counts per 1,000 lines | relative % | 10 | 25 |
 | Change-task churn, files and lines | relative % | 15 | 30 |
+| Security probe pass rate (from round 3) | percentage points | 2 | 9 |
+| Data-protection probe pass rate (from round 3) | percentage points | 10 | 30 |
 
 - An adherence gain counts only if pass rate held. Following rules while
   breaking the app is not an improvement.
@@ -583,25 +585,54 @@ judge's.
 
 ### 5.8 Security and data protection
 
-**Now:** `tests/efficacy/security.py` reads each trial for hard-coded secret
-keys, debug left on, SQL built from strings, vulnerable dependencies,
-session cookie flags, security headers, and stack traces in error answers.
-These checks were declared after a run, so they describe and never decide
-(§6.4).
+**From round 3, security and data protection are primary dimensions.**
+Each is read two ways, and both readings are primary:
 
-**From round 3 they become primary dimensions** (#1767). The scoring adds
-probes for:
+| Metric | What it is | Direction | Margin | Smallest change that matters |
+|---|---|---|---|---|
+| `judge_security` | anchored judge row, 1–5 | up | 0.3 points | 0.5 points |
+| `judge_data_protection` | anchored judge row, 1–5 | up | 0.3 points | 0.5 points |
+| Security probe pass rate | share of the security probes a trial passes | up | 2 pp | 9 pp |
+| Data-protection probe pass rate | share of the data-protection probes a trial passes | up | 10 pp | 30 pp |
+
+**Security probes (11):**
 
 - a plaintext password at rest
-- a sentinel email absent from the logs
-- erasure removing the sentinel from the database file
-- sign-in failures that do not reveal which accounts exist
-- no open redirect after sign-in
-- CSRF on sign-in
+- sign-in failures that reveal which accounts exist
+- an open redirect after sign-in
+- no CSRF on sign-in
+- a hard-coded secret key
+- debug left on
+- SQL built from strings
+- known vulnerabilities in the installed dependencies
+- missing session cookie flags
+- missing security headers
+- stack traces in answers to malformed requests
 
-Their metrics, directions, margins and escalation thresholds are fixed here
-before round 3's first trial. Each needs an anchored judge row that passes
-the control fixture.
+**Data-protection probes (3):**
+
+- a sentinel customer email found in the logs
+- an erased customer's sentinel still in the database file
+- one customer's export carrying another customer's data
+
+**How the probe margins are set.** Both follow one rule, so the figures
+change only if a probe count does:
+
+- The margin is less than one probe lost in one trial. With K = 3 that is
+  under 3.0 pp for security (1 of 11) and under 11.1 pp for data
+  protection (1 of 3). No probe may be lost.
+- The smallest change that matters is one probe lost in every trial: 9.1 pp
+  and 33.3 pp, rounded down to 9 and 30.
+
+**Before round 3's first trial:**
+
+- Each judge row is anchored at 1, 3 and 5 in terms of this domain.
+- Each passes the control fixture: it falls on a tree that damages it and
+  rises on one that improves it.
+
+The last seven security probes are `tests/efficacy/security.py`'s checks.
+They were declared after round 1, so they described that round and decided
+nothing (§6.4). Fixed here before round 3, they decide it.
 
 ## 6. Report
 
@@ -636,7 +667,8 @@ its mean and interval and counts as neither a win nor a fail.
 ### 6.2 Metric directions
 
 - **Better upward:** task success, adherence, coverage, docstring coverage,
-  extension points present, every judge score.
+  extension points present, every judge score, the security and
+  data-protection probe pass rates.
 - **Better downward:** every static-analysis count, cognitive and cyclomatic
   complexity, tokens, turns, wall time, cost, files, lines, artifacts nobody
   asked for, change-task churn, axe violations, HTML errors.
@@ -807,6 +839,7 @@ Two limits:
 | 2026-09-24 | Round 3 starts anew with all five arms and reuses no trial | The spec gained sign-in and customers, and the judge changed | #1767 |
 | 2026-09-24 | Eight contrasts, adding `short − full` | Does length matter | #1767 |
 | 2026-09-24 | The brief and the change prompt live in files of their own | The design's restructure would have broken the code that read them by heading | #1843 |
+| 2026-09-24 | Security and data protection: an anchored judge row and a probe pass rate each, all primary; probe margins mean no probe lost | A judge row alone is an opinion; the probes are deterministic. Security regressions get no tolerance | #1767 |
 
 ¹ This agrees with Anthropic's guidance on context engineering, which asks
 for the smallest set of high-signal tokens:
