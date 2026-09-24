@@ -6,3 +6,27 @@ at the reduced rate on the first 50.00 of each line's taxable amount and
 at the standard rate on the excess. Both must appear on the rules and
 jurisdictions pages and take effect in the invoice builder. Keep the
 existing behaviour and your tests passing.
+
+The Python API other software will call:
+
+- `tariff.ThresholdRule(rule_id, percent=..., minimum=...)`, an
+  invoice-scoped rule. It is eligible when the subtotal is at least
+  `minimum`; a rule that is not eligible does not apply and is not
+  reported in `applied`. It and the invoice percentage rule share one
+  slot: at most one of them applies, chosen as rules of one kind are.
+  Constructing it raises when `percent` is outside the range a
+  percentage rule accepts, or when `minimum` is negative.
+- `tariff.Jurisdiction(..., caps={category: amount})`. The cap applies to
+  each line separately: `tax = round(min(taxable, cap) * reduced +
+  max(0, taxable - cap) * standard)`. An amount exactly at the cap is
+  wholly at the reduced rate. A category without a cap is taxed as
+  before.
+
+Through the web application:
+
+- POST `/rules` accepts `kind` `threshold`, with `percent` and `minimum`,
+  and the rule is listed on `/rules`.
+- POST `/jurisdictions` accepts `caps`, written like `rates`:
+  `category=amount` pairs separated by commas. The cap is shown on
+  `/jurisdictions`.
+- POST `/invoices/preview` prices with both.
