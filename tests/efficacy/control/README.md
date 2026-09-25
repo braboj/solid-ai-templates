@@ -132,8 +132,7 @@ counted. A bold cell differs from `base-1` in the same run.
 | test_quality | 3 | 3 | **4** | **4** | **4** | **4** |
 
 `improved-2` holds two judgings, meaned. The top-up to three per tree stopped
-on the judge plan's usage limit after one call; a later `--repeat 3` on the
-same root attempts only what is still owed.
+on the judge plan's usage limit after one call; the next section completes it.
 
 #### Opus 5 through the claude backend, a cross-check on the rubric
 
@@ -179,6 +178,25 @@ is read against its target tree across more than one run before it is
 trusted.
 
 The repair is tracked in #1827.
+
+### Three judgings per tree, 2026-09-25
+
+gpt-6-astra at effort `high`, the same root as the single judgings above,
+topped up with `--repeat 3`. Evidence found 100 % on every judging. Each
+cell is the mean, followed by the three scores; a bold cell differs from
+`base-1`.
+
+| Dimension | base-1 | degraded-1 | obscured-1 | improved-1 | improved-2 | improved-3 |
+|---|---|---|---|---|---|---|
+| **design** | 3.00 (333) | **2.00** (222) | 3.00 (333) | **3.67** (344) | **3.67** (434) | **4.00** (444) |
+| **readability** | 3.00 (333) | 3.00 (333) | **1.00** (111) | 3.00 (333) | 3.00 (333) | **3.33** (343) |
+| **maintainability** | 3.00 (333) | **2.33** (223) | 3.00 (333) | 3.00 (333) | 3.00 (333) | **4.00** (444) |
+
+Averaged over three, every primary falls on the tree built to damage it and
+rises on a tree built to improve it. `design` and `maintainability` fall on
+`degraded-1`, `readability` falls on `obscured-1`, and all three rise on
+`improved-3`. The one-point flips of single judgings remain inside each
+triple, which is what the mean is there to absorb.
 
 ## Why the base is a pinned archive
 
