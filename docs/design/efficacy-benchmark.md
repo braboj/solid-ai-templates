@@ -644,6 +644,26 @@ Each is read two ways, and both readings are primary:
 - an erased customer's sentinel still in the database file
 - one customer's export carrying another customer's data
 
+**How a probe reads the application.** It seeds and signs in the way the
+hidden suite does: the administrator's password from the environment, then
+the sign-in form's own fields. Where a probe needs a judgement, it takes the
+narrow one:
+
+- the cookie flags pass on `HttpOnly` and `SameSite`; `Secure` cannot be
+  observed over plain HTTP, so it is not asked
+- the headers pass on `nosniff` and framing protection; a content security
+  policy is not asked, because the specification requires HTMX
+- a sentinel in the logs counts at every level, since a call that logs
+  personal data does so whatever the level is set to
+- an erased sentinel counts anywhere in the files beside the database,
+  free pages included, since that is where erasure leaves it
+
+**A probe the trial keeps from running is lost.** An application that will
+not boot, install or sign in its administrator fails every probe that needs
+it, with the reason recorded. Counted as missing instead, those probes would
+drop out of the rate, and a trial would score higher for not reaching them.
+A probe the harness itself could not run leaves the rate missing.
+
 **How the probe margins are set.** Both follow one rule, so the figures
 change only if a probe count does:
 
@@ -873,6 +893,7 @@ Two limits:
 | 2026-09-24 | The brief names customers as personal data under the GDPR and one signing-in administrator; `hand` gains two generic lines (OWASP ASVS level 1, GDPR) | An adopter storing customers would say so. `hand`'s lines stay generic: lines mirroring the probes would hand it the answer key | #1767 |
 | 2026-09-24 | Security and data protection: an anchored judge row and a probe pass rate each, all primary; probe margins mean no probe lost | A judge row alone is an opinion; the probes are deterministic. Security regressions get no tolerance | #1767 |
 | 2026-09-24 | The control's application for the security and data-protection rows is one uncounted calibration trial on the extended spec | The first application has no sign-in or customers; the reference implementation is a worked answer and stays private | #1767 |
+| 2026-09-25 | A probe the trial keeps from running is lost, not missing | Missing would drop it from the rate, so a trial would score higher for not signing in | #1767 |
 
 ¹ This agrees with Anthropic's guidance on context engineering, which asks
 for the smallest set of high-signal tokens:

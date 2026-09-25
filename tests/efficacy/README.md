@@ -383,20 +383,17 @@ are never averaged with the rounds' judge.
 
 ### Security
 
-`security.py` reads each scored trial for:
-
-- hard-coded secret keys and debug left on
-- SQL built from strings
-- known vulnerabilities in the installed dependencies
-- session cookie flags and security headers
-- stack traces in answers to malformed requests
+`security.py` reads each scored trial with the eleven security and three
+data-protection probes of the design's §5.8. Each passes or fails, and the
+two pass rates are what a round reads. It seeds the application and signs in
+its administrator first; a trial that cannot sign in loses every probe that
+needs it.
 
 Each trial is installed into a fresh environment under `security/` in the
 scoring area. The results go to `security-scores/`.
 
-These checks were declared after round 1, so the report prints them apart,
-with means and intervals and no verdict. From round 3, security and data
-protection become primary dimensions (the design's §5.8).
+Seven of the probes were declared after round 1, so for rounds 1 and 2 the
+report prints their counts apart, with means and intervals and no verdict.
 
 ### Reporting
 
