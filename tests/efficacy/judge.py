@@ -144,10 +144,13 @@ place on the scale rather than wherever ordinary work lands. Score against
 the description nearest what you read, and use 2 and 4 for the gaps between.
 
 design
-  1  one module holds the rules, the pricing and the web layer; adding a
-     discount kind means editing the algorithm, the form and the template
-  3  the domain is separated from the web layer, but the algorithm reaches
-     for concrete rule classes, so a new kind reopens more than one function
+  1  the layers are not kept apart: the domain's modules are merged into
+     one, or the domain imports the web framework, and adding a discount
+     kind means editing the algorithm, the form and the template
+  3  the domain is a set of modules of its own that imports nothing from
+     the web layer, and the algorithm dispatches on concrete rule classes,
+     so a new kind reopens more than one function; that dispatch alone, with
+     the layers kept apart, is a 3 and not lower
   5  a discount kind is added by writing one class: the algorithm, the
      persistence mapping, the form and the template read a contract or a
      registry and name no kind of their own
