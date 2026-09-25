@@ -5,10 +5,16 @@ not change when the code changes measures nothing, and nothing in a normal run
 would show that: an arm that moves no row looks like an arm that changed
 nothing.
 
-This control settles it. Six trees are built from one pinned application and
-the judge scores each. Every tree passes the application's whole suite, so what
-separates them is structure alone, and each damages or improves one thing, so a
-row that moves says which.
+This control settles it. Trees are built from two pinned applications and the
+judge scores each. Every tree passes its application's whole suite, so what
+separates it from its base is the one thing it damages or improves, and a row
+that moves says which.
+
+The first application, from round 1, carries the six trees for `design`,
+`readability` and `maintainability`. It predates sign-in and customers, so the
+`security` and `data_protection` rows cannot move on it; their five trees are
+built from the second, one uncounted calibration trial on the extended
+specification (design §5.7).
 
 ## Running it
 
@@ -58,6 +64,21 @@ reading. A root left claimed by a run that crashed is taken over by the next.
 | `improved-1` | a rule contract and self-registering kind registry, dispatch on concrete type removed from pricing and persistence, the hardcoded kinds tuple replaced by the registry, a `__class__.__name__` ladder removed from a template, and two stray error classes folded into the package hierarchy |
 | `improved-2` | `improved-1`, and the store maps a rule's own terms onto its columns with a codec per column, so no module dispatches on a kind |
 | `improved-3` | `improved-2`, and each kind declares the fields it asks a form for, so the form-building code and the template are derived from the registry and no layer names a kind |
+
+The second application's trees:
+
+| Tree | What it is |
+|---|---|
+| `base-2` | the calibration trial's application, unaltered: one guard before every route but sign-in, a CSRF token on every form, a salted password hash, `next` followed only to a local path, a secret key generated into a file; erasure clears the customer's fields, and nothing is logged |
+| `insecure-1` | the secret key a literal, the password stored and compared as typed, the user lookup built from a string, and `next` followed wherever it points |
+| `secured-1` | the secret key read from the environment first, the session cookie marked `HttpOnly` and `SameSite`, three security headers on every answer, and the check on `next` a named function that also refuses a backslash |
+| `leaky-1` | the customer's name, email and address written to the log on creation and erasure, and erasure only raising the flag, leaving every field in the database |
+| `protected-1` | one tuple names the personal fields, which erasure clears and the export returns; one lookup answers None for an erased customer, so no view or template reads the flag for itself; SQLite overwrites what it deletes |
+
+The damage in `insecure-1` and `leaky-1` sits where the hidden suite does not
+look: it states that password storage, cookie flags and an off-site `next` are
+not graded, and it reads erasure through the pages. Each tree's hidden-suite
+result is identical, test by test, to `base-2`'s.
 
 ## Reading a result
 
@@ -198,14 +219,15 @@ rises on a tree built to improve it. `design` and `maintainability` fall on
 `improved-3`. The one-point flips of single judgings remain inside each
 triple, which is what the mean is there to absorb.
 
-## Why the base is a pinned archive
+## Why the bases are pinned archives
 
-`base.zip` holds one trial's output: the application every tree is built
-from. It is an input to this control, not an artifact of it:
+`base.zip` and `base-2.zip` each hold one trial's output: the application its
+trees are built from. `base-2.zip` is `git archive` of the calibration trial's
+commit `f74c0cc`, which reproduces it byte for byte. It is an input to this control, not an artifact of it:
 regenerating it would compare a later run against a different application, and
 every number above would silently stop meaning what it says.
 
-Two things hold it still. The builder refuses any archive whose sha256 is not
+Two things hold them still. The builder refuses any archive whose sha256 is not
 the one recorded in `control.py`, so a changed base stops the control instead
 of quietly shifting what it measures. And every edit the builder makes is an
 exact-text swap that refuses when its target is absent, so a base that drifts

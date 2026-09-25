@@ -1,11 +1,11 @@
 """Build the rubric control's trees, so the judge can be validated.
 
 The benchmark's primary dimensions are a model's opinion, and an opinion that
-never changes measures nothing. This builds three trees from one pinned
-application and leaves them where `judge.py` finds them: the application
-unaltered, a deliberately damaged copy, and a deliberately improved one. All
-three pass the same test suite, so what the judge sees between them is
-structure and nothing else.
+never changes measures nothing. This builds trees from two pinned
+applications and leaves them where `judge.py` finds them: each application
+unaltered, and copies deliberately damaged or improved in one respect. Every
+tree of one application passes that application's test suite, so what the
+judge sees between them is what was changed and nothing else.
 
 Reading the result is in README.md. What matters here is that a run whose
 damaged tree scores no worse, or whose improved tree scores no better, has
@@ -14,8 +14,8 @@ found something about the rubric rather than about the arms.
     py tests/efficacy/control/control.py --root C:/efficacy/control-2026-09-20
     py tests/efficacy/judge.py --root C:/efficacy/control-2026-09-20
 
-`base/` is an input, not an artifact: it is one trial's output, pinned, and it
-is never regenerated. Regenerating it would compare a later run against a
+Each base archive is an input, not an artifact: it is one trial's output,
+pinned, and it is never regenerated. Regenerating it would compare a later run against a
 different application, and the before-and-after numbers would mean nothing.
 Every edit below is an exact-text swap that refuses when its target is absent,
 so a base that drifts stops the control instead of silently mutating less.
@@ -42,6 +42,12 @@ OVERLAY = os.path.join(HERE, "overlay")
 # as source to be brought into line.
 BASE_SHA256 = "38b9a1f262ebae7b5c858178468ff53257c3308b6a57a7caa81db6fbe4671f0c"
 
+# The second application, for the rows the first cannot move: it has sign-in
+# and customers, which the round-1 application predates. It is one uncounted
+# calibration trial on the extended specification, pinned the same way.
+BASE_2 = os.path.join(HERE, "base-2.zip")
+BASE_2_SHA256 = "a07d606c035078cff718de7cf9ed02131ea06b6bcf09ee8ecf0f296638425b74"
+
 # The domain modules the damaged tree merges into one, in the order they are
 # concatenated: errors before the objects that raise them, rules before the
 # algorithm that applies them.
@@ -49,6 +55,10 @@ MERGED = ("errors", "models", "rules", "pricing")
 
 TRIALS = ("base-1", "degraded-1", "improved-1", "improved-2",
           "improved-3", "obscured-1")
+
+# The second application's trees: its security and its handling of personal
+# data, each damaged in one tree and improved in another.
+TRIALS_2 = ("base-2", "insecure-1", "secured-1", "leaky-1", "protected-1")
 
 
 class ControlError(Exception):
@@ -308,6 +318,164 @@ def obscure(tree):
                  os.path.join(tree, "tariff", "pricing.py"))
 
 
+def edit(tree, rel, *swaps):
+    """Apply `(old, new, where)` swaps to one file of the tree, in order."""
+    text = read(tree, rel)
+    for old, new, where in swaps:
+        text = swap(text, old, new, where)
+    write(tree, rel, text)
+
+
+def insecure(tree):
+    """Damage how sign-in and its secrets are defended, and nothing else.
+
+    The secret key becomes a literal, the password is stored and compared as
+    typed, the user lookup is built from a string, and `next` is followed
+    wherever it points. The suite grades none of those, so every tree still
+    answers it alike and the security row is what has something to move on.
+    """
+    edit(tree, "tariff/web/__init__.py",
+         (SECRET_FROM_FILE, "", "the generated secret key"),
+         ("    app.secret_key = _get_or_create_secret_key(db_path)\n",
+          '    app.secret_key = "tariff-secret-key"\n', "the key's source"))
+    edit(tree, "tariff/web/views_auth.py",
+         ("from werkzeug.security import check_password_hash\n", "",
+          "the hash import"),
+         ('not check_password_hash(user["password_hash"], password)',
+          'user["password"] != password', "the password comparison"),
+         ('        if not next_url.startswith("/") or '
+          'next_url.startswith("//"):\n',
+          "        if not next_url:\n", "the local-path check on next"))
+    edit(tree, "tariff/db.py",
+         ("    password_hash TEXT NOT NULL\n", "    password TEXT NOT NULL\n",
+          "the password column"),
+         ('        "SELECT * FROM users WHERE username = ?", (username,)\n',
+          "        f\"SELECT * FROM users WHERE username = '{username}'\"\n",
+          "the user lookup"),
+         ("def set_user_password(conn, username, password_hash):",
+          "def set_user_password(conn, username, password):",
+          "the password setter"),
+         ('        "INSERT INTO users (username, password_hash) VALUES (?, ?) "\n'
+          '        "ON CONFLICT(username) DO UPDATE SET password_hash = '
+          'excluded.password_hash",\n'
+          "        (username, password_hash),\n",
+          '        "INSERT INTO users (username, password) VALUES (?, ?) "\n'
+          '        "ON CONFLICT(username) DO UPDATE SET password = '
+          'excluded.password",\n'
+          "        (username, password),\n", "the password write"),
+         ("    from werkzeug.security import generate_password_hash\n\n", "",
+          "the seed's hash import"),
+         ('    set_user_password(conn, "admin", '
+          "generate_password_hash(admin_password))",
+          '    set_user_password(conn, "admin", admin_password)',
+          "the seeded password"))
+
+
+def secure(tree):
+    """Close what the base leaves open around sign-in, and nothing else.
+
+    The secret key is read from the environment before the generated file,
+    the session cookie is marked, every answer carries the headers a browser
+    reads, and the check on `next` becomes one named function. The base
+    already has one guard, a CSRF token on every form and a salted hash, so
+    this is the step from there to the security row's top description.
+    """
+    edit(tree, "tariff/web/__init__.py",
+         ("    app.secret_key = _get_or_create_secret_key(db_path)\n",
+          SECURED_CONFIG, "the key's source and the cookie flags"),
+         ("    @app.teardown_appcontext\n",
+          SECURITY_HEADERS + "    @app.teardown_appcontext\n",
+          "the security headers"))
+    edit(tree, "tariff/web/views_auth.py",
+         ("def register(app):\n", LOCAL_PATH + "def register(app):\n",
+          "the named next check"),
+         ('        if not next_url.startswith("/") or '
+          'next_url.startswith("//"):\n'
+          '            next_url = url_for("dashboard")\n'
+          "        return redirect(next_url)\n",
+          '        return redirect(next_url if _is_local_path(next_url) '
+          'else url_for("dashboard"))\n', "the redirect after sign-in"))
+
+
+def leak(tree):
+    """Let customer data escape where the suite does not look.
+
+    Creating and erasing a customer writes their name, email and address to
+    the log, and erasure only raises the flag, leaving every field in the
+    database. The pages read the flag, so what the suite sees is unchanged.
+    """
+    edit(tree, "tariff/web/views_customers.py",
+         ("import json\n", "import json\nimport logging\n", "the log import"),
+         ("from .helpers import require\n",
+          "from .helpers import require\n\nlog = logging.getLogger(__name__)\n",
+          "the module logger"),
+         ("        customer_id = db_module.add_customer(conn, name, email, "
+          "address)\n",
+          "        customer_id = db_module.add_customer(conn, name, email, "
+          "address)\n"
+          '        log.info("created customer %s: %s <%s>, %s", customer_id, '
+          "name, email, address)\n", "the creation log line"),
+         ("        db_module.erase_customer(conn, customer_id)\n",
+          '        log.info("erasing customer %s: %s <%s>", customer_id, '
+          'customer["name"], customer["email"])\n'
+          "        db_module.erase_customer(conn, customer_id)\n",
+          "the erasure log line"))
+    edit(tree, "tariff/db.py",
+         ('        "UPDATE customers SET erased = 1, name = NULL, email = NULL, '
+          'address = NULL "\n',
+          '        "UPDATE customers SET erased = 1 "\n',
+          "the erasure's cleared fields"))
+
+
+def protect(tree):
+    """Give the customers' personal data one place, read by everything.
+
+    One tuple names the personal fields; erasure clears exactly those and the
+    export returns exactly those. One lookup answers None for an erased
+    customer, so no view or template checks the flag for itself, and SQLite
+    overwrites what it deletes instead of leaving it in free pages.
+    """
+    edit(tree, "tariff/db.py",
+         ('    conn.execute("PRAGMA foreign_keys = ON")\n',
+          '    conn.execute("PRAGMA foreign_keys = ON")\n'
+          '    conn.execute("PRAGMA secure_delete = ON")\n',
+          "the overwrite on delete"),
+         ("def list_customers(conn):\n", PERSONAL_FIELDS + "def list_customers(conn):\n",
+          "the personal fields"),
+         ("def email_taken(conn, email):\n",
+          LIVE_CUSTOMER + "def email_taken(conn, email):\n",
+          "the one erased check"),
+         ('        "UPDATE customers SET erased = 1, name = NULL, email = NULL, '
+          'address = NULL "\n'
+          '        "WHERE customer_id = ? AND erased = 0",\n',
+          "        _ERASE,\n", "the erasure's cleared fields"))
+    edit(tree, "tariff/web/views_customers.py", *[
+        ("        customer = db_module.get_customer(conn, customer_id)\n"
+         '        if customer is None or customer["erased"]:\n',
+         "        customer = db_module.get_live_customer(conn, customer_id)\n"
+         "        if customer is None:\n", "view %d's erased check" % n)
+        for n in (1, 2, 3)] + [
+        ('            "name": customer["name"],\n'
+         '            "email": customer["email"],\n'
+         '            "address": customer["address"],\n',
+         "            **db_module.personal_data(customer),\n",
+         "the export's fields")])
+    edit(tree, "tariff/web/views_invoices.py",
+         ("    customer = db_module.get_customer(conn, customer_id)\n"
+          '    if customer is None or customer["erased"]:\n',
+          "    customer = db_module.get_live_customer(conn, customer_id)\n"
+          "    if customer is None:\n", "the invoice form's erased check"),
+         *[("            customer = db_module.get_customer(conn, "
+            'invoice_row["customer_id"])\n',
+            "            customer = db_module.get_live_customer(conn, "
+            'invoice_row["customer_id"])\n', "invoice page %d's lookup" % n)
+           for n in (1, 2)])
+    for page in ("invoice_detail", "invoice_print"):
+        edit(tree, "tariff/web/templates/%s.html" % page,
+             ("  {% if customer and not customer.erased %}\n",
+              "  {% if customer %}\n", "%s's erased check" % page))
+
+
 # Every entity a variant is supposed to change, with what each tree must read
 # after the build. A control whose mutation silently did nothing reports the
 # tree it never touched as clean, so the build refuses rather than hand that
@@ -366,7 +534,82 @@ LANDINGS = (
       "improved-2": True, "improved-3": False, "obscured-1": True}),
 )
 
+
+def is_in(rel, *needles):
+    """A probe: whether any of `needles` is in one file of the tree."""
+    return lambda t: any(needle in read(t, rel) for needle in needles)
+
+
+# The same, for the second application: each row names what one tree was
+# built to change, and every other tree of that application must read as the
+# base does.
+LANDINGS_2 = (
+    ("the secret key is a literal",
+     is_in("tariff/web/__init__.py", 'app.secret_key = "'),
+     {"base-2": False, "insecure-1": True, "secured-1": False,
+      "leaky-1": False, "protected-1": False}),
+    ("the password is stored hashed",
+     is_in("tariff/db.py", "generate_password_hash(admin_password)"),
+     {"base-2": True, "insecure-1": False, "secured-1": True,
+      "leaky-1": True, "protected-1": True}),
+    ("the user lookup is built from a string",
+     is_in("tariff/db.py", "username = '{username}'"),
+     {"base-2": False, "insecure-1": True, "secured-1": False,
+      "leaky-1": False, "protected-1": False}),
+    ("next is checked for a local path",
+     is_in("tariff/web/views_auth.py", 'next_url.startswith("//")',
+           "_is_local_path(next_url)"),
+     {"base-2": True, "insecure-1": False, "secured-1": True,
+      "leaky-1": True, "protected-1": True}),
+    ("the secret key is read from the environment",
+     is_in("tariff/web/__init__.py", "TARIFF_SECRET_KEY"),
+     {"base-2": False, "insecure-1": False, "secured-1": True,
+      "leaky-1": False, "protected-1": False}),
+    ("the session cookie is marked",
+     is_in("tariff/web/__init__.py", "SESSION_COOKIE_SAMESITE"),
+     {"base-2": False, "insecure-1": False, "secured-1": True,
+      "leaky-1": False, "protected-1": False}),
+    ("every answer carries security headers",
+     is_in("tariff/web/__init__.py", "X-Content-Type-Options"),
+     {"base-2": False, "insecure-1": False, "secured-1": True,
+      "leaky-1": False, "protected-1": False}),
+    ("customer data is written to the log",
+     is_in("tariff/web/views_customers.py", "log.info("),
+     {"base-2": False, "insecure-1": False, "secured-1": False,
+      "leaky-1": True, "protected-1": False}),
+    ("erasure clears the personal fields",
+     is_in("tariff/db.py", "name = NULL, email = NULL",
+           '"%s = NULL" % column'),
+     {"base-2": True, "insecure-1": True, "secured-1": True,
+      "leaky-1": False, "protected-1": True}),
+    ("one tuple names the personal fields",
+     is_in("tariff/db.py", "PERSONAL_FIELDS = ("),
+     {"base-2": False, "insecure-1": False, "secured-1": False,
+      "leaky-1": False, "protected-1": True}),
+    ("a view or template reads the erased flag for itself",
+     lambda t: ('customer["erased"]' in web(t)
+                or "customer.erased" in web(t)),
+     {"base-2": True, "insecure-1": True, "secured-1": True,
+      "leaky-1": True, "protected-1": False}),
+    ("deleted data is overwritten in the file",
+     is_in("tariff/db.py", "secure_delete"),
+     {"base-2": False, "insecure-1": False, "secured-1": False,
+      "leaky-1": False, "protected-1": True}),
+)
+
 _CACHE = {}
+
+
+def web(tree):
+    """The web package's modules and templates, without the store beneath."""
+    chunks = []
+    for dirpath, dirs, files in os.walk(os.path.join(tree, "tariff", "web")):
+        dirs[:] = [d for d in dirs if d != "__pycache__"]
+        for name in sorted(files):
+            if os.path.splitext(name)[1] in (".py", ".html"):
+                chunks.append(read(tree, os.path.relpath(
+                    os.path.join(dirpath, name), tree)))
+    return "\n".join(chunks)
 
 
 def domain(tree):
@@ -417,24 +660,23 @@ def whole(tree):
     return _CACHE[tree]
 
 
-def pinned():
-    """The base archive, refusing any content but the one pinned above."""
-    with io.open(BASE, "rb") as handle:
+def pinned(archive=BASE, expected=BASE_SHA256):
+    """A base archive, refusing any content but the one pinned above."""
+    with io.open(archive, "rb") as handle:
         data = handle.read()
     digest = hashlib.sha256(data).hexdigest()
-    if digest != BASE_SHA256:
-        raise ControlError("base.zip is %s, not the pinned %s; the control's "
+    if digest != expected:
+        raise ControlError("%s is %s, not the pinned %s; the control's "
                            "application has changed and its recorded readings "
-                           "no longer describe it" % (digest, BASE_SHA256))
+                           "no longer describe it"
+                           % (os.path.basename(archive), digest, expected))
     return data
 
 
-def build(root):
-    """Write the three trees where `judge.py` reads them."""
-    data = pinned()
-    scoring = os.path.abspath(root).rstrip("\\/") + "-scoring"
+def extract(data, scoring, trials):
+    """Write one fresh copy of an archive per trial, where the judge reads."""
     made = {}
-    for trial in TRIALS:
+    for trial in trials:
         tree = os.path.join(scoring, "scoring", trial, "tree", trial)
         if os.path.isdir(tree):
             shutil.rmtree(tree)
@@ -442,21 +684,37 @@ def build(root):
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
             archive.extractall(tree)
         made[trial] = tree
+    return made
+
+
+def build(root):
+    """Write every tree of both applications where `judge.py` reads them."""
+    scoring = os.path.abspath(root).rstrip("\\/") + "-scoring"
+    made = extract(pinned(), scoring, TRIALS)
     degrade(made["degraded-1"])
     improve(made["improved-1"])
     improve_further(made["improved-2"])
     improve_form(made["improved-3"])
     obscure(made["obscured-1"])
+
+    second = extract(pinned(BASE_2, BASE_2_SHA256), scoring, TRIALS_2)
+    insecure(second["insecure-1"])
+    secure(second["secured-1"])
+    leak(second["leaky-1"])
+    protect(second["protected-1"])
+    made.update(second)
     _CACHE.clear()
     return made
 
 
 def landings(made):
-    """Each entity a variant claims to change, read back off the trees."""
+    """Each entity a variant claims to change, read back off the trees of the
+    application it was built from."""
     rows = []
-    for label, probe, expected in LANDINGS:
-        actual = {trial: probe(tree) for trial, tree in sorted(made.items())}
-        rows.append((label, actual, actual == expected))
+    for table, trials in ((LANDINGS, TRIALS), (LANDINGS_2, TRIALS_2)):
+        for label, probe, expected in table:
+            actual = {trial: probe(made[trial]) for trial in sorted(trials)}
+            rows.append((label, actual, actual == expected))
     return rows
 
 
@@ -496,7 +754,7 @@ def main(argv):
               "differ as this control claims" % failed)
         return 1
     if not options.self_test:
-        print("built %s under %s" % (", ".join(TRIALS),
+        print("built %s under %s" % (", ".join(TRIALS + TRIALS_2),
                                      os.path.abspath(options.root).rstrip(
                                          "\\/") + "-scoring"))
         print("next: py tests/efficacy/judge.py --root %s" % options.root)
@@ -833,6 +1091,76 @@ FIELD_LOOP = """  {% for field in fields %}
          value="{{ form_data.get(field.name, '') }}">
   {% endfor %}
 """
+
+SECRET_FROM_FILE = '''def _get_or_create_secret_key(db_path):
+    key_path = f"{db_path}.secretkey"
+    if os.path.exists(key_path):
+        with open(key_path, "rb") as handle:
+            return handle.read()
+    key = secrets.token_bytes(32)
+    with open(key_path, "wb") as handle:
+        handle.write(key)
+    return key
+
+
+'''
+
+SECURED_CONFIG = '''    # The deployment's own key wins; the generated file keeps a bare install
+    # working without one.
+    app.secret_key = (os.environ.get("TARIFF_SECRET_KEY")
+                      or _get_or_create_secret_key(db_path))
+
+    # `Secure` is opt-in because the development server speaks plain HTTP, and
+    # a browser drops a secure cookie there, which would sign everyone out.
+    app.config.update(
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=os.environ.get("TARIFF_SECURE_COOKIES") == "1",
+    )
+'''
+
+SECURITY_HEADERS = '''    @app.after_request
+    def _security_headers(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "same-origin")
+        return response
+
+'''
+
+LOCAL_PATH = '''def _is_local_path(target):
+    """True when `target` names a path on this site: a protocol-relative
+    `//host` or a backslash a browser reads as one would leave it."""
+    return (target.startswith("/") and not target.startswith("//")
+            and "\\\\" not in target)
+
+
+'''
+
+PERSONAL_FIELDS = '''# Every column that identifies a customer. Erasure clears exactly these and
+# the export returns exactly these, so a field added here is covered by both.
+PERSONAL_FIELDS = ("name", "email", "address")
+
+_ERASE = ("UPDATE customers SET erased = 1, "
+          + ", ".join("%s = NULL" % column for column in PERSONAL_FIELDS)
+          + " WHERE customer_id = ? AND erased = 0")
+
+
+def personal_data(customer):
+    """The personal fields of one customer row, in declaration order."""
+    return {column: customer[column] for column in PERSONAL_FIELDS}
+
+
+'''
+
+LIVE_CUSTOMER = '''def get_live_customer(conn, customer_id):
+    """The customer, or None when there is none or they were erased; the one
+    place the erased flag is read for a single customer."""
+    customer = get_customer(conn, customer_id)
+    return None if customer is None or customer["erased"] else customer
+
+
+'''
 
 
 if __name__ == "__main__":

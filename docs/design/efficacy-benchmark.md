@@ -589,11 +589,11 @@ No person scores the judge. Two automated checks do:
   bundle it was quoted from, and the report prints the share found per
   trial. A judge that never opened the code still returns plausible
   numbers; this is what tells the two apart.
-- **The control fixture:** six trees built from one pinned application
-  (`tests/efficacy/control/`). Every tree passes the same tests, so only
-  structure separates them. Some are damaged, some improved. A primary
-  dimension counts only if it falls on the damaged trees and rises on the
-  improved ones.
+- **The control fixture:** eleven trees built from two pinned applications
+  (`tests/efficacy/control/`). Every tree passes the same tests as its
+  application, so only what was changed separates them. Some are damaged,
+  some improved. A primary dimension counts only if it falls on the damaged
+  trees and rises on the improved ones.
 
 **Where the control's application comes from.** A row can only fall or
 rise on code that has what it measures. The first pinned application is a
