@@ -69,10 +69,12 @@ JUDGE_EFFORT = "high"
 DIMENSIONS = (
     "design", "srp", "ocp", "lsp", "isp", "dip", "naming_and_abstraction",
     "error_design", "readability", "maintainability", "test_quality",
+    "security", "data_protection",
 )
 
 # What the report leads with, owner-declared in the design.
-PRIMARY = ("design", "readability", "maintainability")
+PRIMARY = ("design", "readability", "maintainability", "security",
+           "data_protection")
 
 # Never shown to the judge. A context file names the condition, and so does a
 # README that thanks one: both are stripped from the bundle, and what was
@@ -132,8 +134,11 @@ Score each dimension from 1 to 5, where 1 is poor and 5 is excellent:
 - readability: function length, nesting, names a reader can follow
 - maintainability: how quickly a reader finds where a change goes
 - test_quality: what the tests assert, not how many there are
+- security: how sign-in, sessions, secrets and queries are defended
+- data_protection: how the customers' personal data is held, logged,
+  exported and erased
 
-Three of those carry the report and are anchored, so that 3 is a described
+Five of those carry the report and are anchored, so that 3 is a described
 place on the scale rather than wherever ordinary work lands. Score against
 the description nearest what you read, and use 2 and 4 for the gaps between.
 
@@ -164,6 +169,27 @@ maintainability
   5  each module's responsibility is evident from where it sits, the
      domain depends on nothing layered above it, and every fact about a
      discount kind sits in one place
+
+security
+  1  the password is stored or compared as plain text, the secret key is a
+     literal in the source, SQL is built from strings, and each route checks
+     sign-in for itself, so a route can be missed
+  3  the password is hashed with a library call and every query is
+     parameterised, but sign-in is still checked route by route, and the
+     `next` target is followed without checking where it points
+  5  one guard covers every route but sign-in, the password is hashed with
+     a salted slow hash, the secret key comes from the environment, every
+     form carries a CSRF token, and `next` is accepted only as a local path
+
+data_protection
+  1  customer fields reach the logs, erasure leaves copies of the customer
+     behind, and the export's query is not limited to one customer
+  3  erasure and export are correct, but every place that stores or shows
+     a customer's data handles it for itself, so the next place to hold
+     one is a place to forget
+  5  the personal data sits in one place that erasure and export both read,
+     nothing logs a customer field, and the export is built from the
+     customer's id alone
 
 A submission that removes what a lower anchor describes scores above it, even
 where the result is ordinary: these are descriptions of the code, not of how
