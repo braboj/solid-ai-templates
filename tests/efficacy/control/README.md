@@ -77,13 +77,17 @@ The second application's trees:
 
 The damage in `insecure-1` and `leaky-1` sits where the hidden suite does not
 look: it states that password storage, cookie flags and an off-site `next` are
-not graded, and it reads erasure through the pages. Each tree's hidden-suite
-result is identical, test by test, to `base-2`'s: 293 of 534 pass. The
+not graded, and it reads erasure through the pages.
+
+<!-- measured: 2026-09-25 -->
+Each tree's hidden-suite result is identical, test by test, to `base-2`'s,
+at suite revision `65bfb9a`: 293 of 534 pass. The
 calibration trial seeds only through its command, not when the application
 opens an empty database as the specification asks, so the suite's
 administrator does not exist and 240 checks behind sign-in fail on every tree
 alike. That comparison therefore covers the 293 that pass, the pricing and API
 checks among them.
+<!-- /measured -->
 
 ## Reading a result
 
