@@ -595,6 +595,19 @@ No person scores the judge. Two automated checks do:
   dimension counts only if it falls on the damaged trees and rises on the
   improved ones.
 
+**Where the control's application comes from.** A row can only fall or
+rise on code that has what it measures. The first pinned application is a
+round-1 tree with no sign-in and no customers, so the security and
+data-protection rows can be neither damaged nor improved on it. Those rows
+get a second pinned application: the output of one calibration trial, an
+ordinary build of the extended specification by the rounds' generator. The
+trial is uncounted, so no report reads it; it exists only to be the base
+the new rows' trees are built from.
+
+The reference implementation cannot serve instead. It is a worked answer to
+the hidden suite and stays private, and a trial keeps the base
+agent-written, like everything else the judge scores.
+
 A second judge, Claude through the `claude` CLI, reads the control fixture
 only, never a round, and its scores are never averaged with the first
 judge's.
@@ -644,7 +657,8 @@ change only if a probe count does:
 
 - Each judge row is anchored at 1, 3 and 5 in terms of this domain.
 - Each passes the control fixture: it falls on a tree that damages it and
-  rises on one that improves it.
+  rises on one that improves it, both built from the calibration trial's
+  application (§5.7).
 
 The last seven security probes are `tests/efficacy/security.py`'s checks.
 They were declared after round 1, so they described that round and decided
@@ -858,6 +872,7 @@ Two limits:
 | 2026-09-24 | The change prompt states the API, the form fields and the rules its acceptance modules check; the UI is graded by HTTP cases from round 3 | A grader driving names the prompt never gave grades guessing; the UI was asked for but never graded | #1767 |
 | 2026-09-24 | The brief names customers as personal data under the GDPR and one signing-in administrator; `hand` gains two generic lines (OWASP ASVS level 1, GDPR) | An adopter storing customers would say so. `hand`'s lines stay generic: lines mirroring the probes would hand it the answer key | #1767 |
 | 2026-09-24 | Security and data protection: an anchored judge row and a probe pass rate each, all primary; probe margins mean no probe lost | A judge row alone is an opinion; the probes are deterministic. Security regressions get no tolerance | #1767 |
+| 2026-09-24 | The control's application for the security and data-protection rows is one uncounted calibration trial on the extended spec | The first application has no sign-in or customers; the reference implementation is a worked answer and stays private | #1767 |
 
 ¹ This agrees with Anthropic's guidance on context engineering, which asks
 for the smallest set of high-signal tokens:
