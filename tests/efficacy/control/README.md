@@ -38,17 +38,16 @@ py -m pytest -q          # in each built tree; every tree passes
 `py tests/efficacy/control/control.py --self-test` builds into a temporary
 directory, checks every mutation landed and throws it away. It runs in CI.
 
-A second judge reads the same trees through the `claude` CLI:
+The rounds' judge is `claude-opus-5-5`, the default. The other vendor's
+judge, the cross-check, reads the same trees in a root of its own:
 
 ```bash
-py tests/efficacy/control/control.py --root C:/efficacy/control-<date>-claude
-py tests/efficacy/judge.py --root C:/efficacy/control-<date>-claude --cli claude --model <model>
+py tests/efficacy/control/control.py --root C:/efficacy/control-<date>-codex
+py tests/efficacy/judge.py --root C:/efficacy/control-<date>-codex --cli codex
 ```
 
-Give it a root of its own. The rounds' judge is a different vendor from the
-generator by design, so this backend reads the control only, and its readings
-are never meaned with the other judge's; a separate root keeps them apart on
-disk as well as in the report.
+Its readings are never meaned with the rounds' judge's; a separate root keeps
+them apart on disk as well as in the report.
 
 A second judge run against a root while one is live is refused: both would
 take the same next label, and the second would delete the bundle the first is
@@ -227,6 +226,76 @@ rises on a tree built to improve it. `design` and `maintainability` fall on
 `degraded-1`, `readability` falls on `obscured-1`, and all three rise on
 `improved-3`. The one-point flips of single judgings remain inside each
 triple, which is what the mean is there to absorb.
+
+### Five primaries, and a new judge, 2026-09-25
+
+Every run below judges each tree three times; a cell is the mean. Evidence
+was found 100 % on every judging.
+
+#### gpt-6-astra, security and data protection as first anchored
+
+The second application's trees, the only ones built to move these two rows:
+
+| Dimension | base-2 | insecure-1 | secured-1 | leaky-1 | protected-1 |
+|---|---|---|---|---|---|
+| security | 4.00 | **2.00** | 4.00 | 4.00 | 4.00 |
+| data_protection | 5.00 | 5.00 | 5.00 | **2.00** | 5.00 |
+
+Both rows fell on the tree that damages them and rose on neither. `base-2`
+already met most of what the 5s described, so no improvement had room to
+register. The 3s were rewritten to describe the common defences and nothing
+more, and the 5s to ask for what only the improved trees have.
+
+The re-run under those anchors stopped on the judge plan's weekly limit
+after 16 of 33 judgings, with `secured-1` not yet judged. What it had read
+put `base-2` at 3 on both rows, `insecure-1` and `leaky-1` at 1 on theirs,
+and `protected-1` at 5. The plan allows about thirty judgings a week and a
+round needs three times as many, so the rounds' judge became
+`claude-opus-5-5` (the design's §5.6).
+
+A first run through the claude backend recorded effort `high` but never
+passed it, so the CLI ran at its own default. Its readings are not counted;
+the backend now passes the effort, and a self-test check fails without it.
+
+#### claude-opus-5-5 at effort `high`
+
+| Dimension | base-1 | degraded-1 | obscured-1 | improved-1 | improved-2 | improved-3 |
+|---|---|---|---|---|---|---|
+| design | 2.00 | 2.00 | 2.33 | 3.00 | 3.00 | **4.00** |
+| readability | 3.00 | 2.67 | **1.67** | 3.33 | 3.33 | **3.67** |
+| maintainability | 3.00 | **2.00** | 3.00 | 3.00 | 3.00 | **4.00** |
+
+| Dimension | base-2 | insecure-1 | secured-1 | leaky-1 | protected-1 |
+|---|---|---|---|---|---|
+| security | 3.00 | **1.00** | **4.67** | 3.00 | 3.00 |
+| data_protection | 3.00 | 3.00 | 3.00 | **1.00** | **4.00** |
+
+Four rows fall and rise. `design` rises but does not fall: the judge quoted
+the same concrete-class dispatch for `base-1` and `degraded-1` and scored
+both 2, reading the 3's description of that dispatch as a fault below it.
+The damage `degraded-1` adds, the domain merged and importing Flask, moved
+`maintainability` instead. The 1 now names that damage, and the 3 says the
+dispatch alone, with the layers kept apart, is not lower.
+
+#### claude-opus-5-5 at effort `high`, design re-anchored
+
+The rounds' judge and rubric as they stand.
+
+| Dimension | base-1 | degraded-1 | obscured-1 | improved-1 | improved-2 | improved-3 |
+|---|---|---|---|---|---|---|
+| design | 2.67 | **1.00** | 3.00 | **3.67** | **4.00** | **4.00** |
+| readability | 3.00 | 2.00 | **1.67** | 3.33 | 3.00 | 3.33 |
+| maintainability | 3.00 | **2.00** | 3.00 | 3.00 | 3.00 | **4.00** |
+
+| Dimension | base-2 | insecure-1 | secured-1 | leaky-1 | protected-1 |
+|---|---|---|---|---|---|
+| security | 3.00 | **1.00** | **5.00** | 3.00 | 3.00 |
+| data_protection | 3.00 | 3.00 | 3.00 | **1.00** | **4.00** |
+
+Every primary falls on the tree built to damage it and rises on one built to
+improve it, and each row of the second application holds still on the trees
+built to move another. The 33 judgings used about 1 % of the owner's weekly
+plan.
 
 ## Why the bases are pinned archives
 
