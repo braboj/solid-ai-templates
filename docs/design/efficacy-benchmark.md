@@ -891,15 +891,16 @@ two-hour trial stays under the cap.
 
 **How the hidden suite was validated.**
 
-<!-- measured: 2026-09-12 -->
-377 checks across 16 modules in `braboj/tariff-hidden-suite`, validated two
-ways before any arm existed.
+<!-- measured: 2026-09-24 -->
+534 build checks across 18 modules and 74 change checks in
+`braboj/tariff-hidden-suite`, validated before round 3's first trial.
 <!-- /measured -->
 
 - A reference implementation written from the spec alone passes every
-  check, so a correct implementation is not marked wrong.
-- A mutation control plants five spec violations one at a time, and the
-  suite catches all five.
-
-Round 3 extends the suite to sign-in and customers, and both validations
-run again before its first trial (#1767).
+  build check, so a correct implementation is not marked wrong.
+- A second agent made the change task on that reference from the change
+  prompt alone. It passes every change check, and the build suite still.
+- A mutation control plants twelve spec violations one at a time, and the
+  suite catches all twelve.
+- The pre-round-3 reference, which has no sign-in, fails the sign-in
+  module, so its checks cannot pass without a gate.
