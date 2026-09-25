@@ -171,25 +171,31 @@ maintainability
      discount kind sits in one place
 
 security
-  1  the password is stored or compared as plain text, the secret key is a
-     literal in the source, SQL is built from strings, and each route checks
-     sign-in for itself, so a route can be missed
-  3  the password is hashed with a library call and every query is
-     parameterised, but sign-in is still checked route by route, and the
-     `next` target is followed without checking where it points
-  5  one guard covers every route but sign-in, the password is hashed with
-     a salted slow hash, the secret key comes from the environment, every
-     form carries a CSRF token, and `next` is accepted only as a local path
+  1  a secret sits in plain sight or input reaches a query or a redirect
+     unchecked: the password stored or compared as typed, the secret key a
+     literal in the source, SQL built from strings, `next` followed wherever
+     it points
+  3  the common defences are all present - a hashed password, parameterised
+     queries, one sign-in guard, a CSRF token on every form, `next` checked
+     for a local path - and the application stops there: the secret key
+     comes from a default or a file the deployment cannot set, and the
+     session cookie and the responses carry only the framework's defaults
+  5  everything in 3, and the deployment is configured on purpose: the
+     secret key is read from the environment, the session cookie's flags
+     are set, every response carries security headers, and each check a
+     reviewer audits, such as the redirect target, is one named function
 
 data_protection
-  1  customer fields reach the logs, erasure leaves copies of the customer
-     behind, and the export's query is not limited to one customer
-  3  erasure and export are correct, but every place that stores or shows
-     a customer's data handles it for itself, so the next place to hold
-     one is a place to forget
-  5  the personal data sits in one place that erasure and export both read,
-     nothing logs a customer field, and the export is built from the
-     customer's id alone
+  1  personal data escapes: customer fields are written to the logs, erasure
+     leaves the data behind, or an export reaches past one customer
+  3  erasure and export do what the specification asks, but nothing names
+     what is personal: each query, view and template lists the fields or
+     checks the erased flag for itself, so the next field or page added is
+     one to forget
+  5  one declaration names the personal fields, and erasure, export and
+     every read of a single customer go through it; an erased customer
+     cannot be read by accident, and erased data does not linger in the
+     database file
 
 A submission that removes what a lower anchor describes scores above it, even
 where the result is ordinary: these are descriptions of the code, not of how
