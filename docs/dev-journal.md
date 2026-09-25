@@ -8571,3 +8571,80 @@ method changes are pre-registered in the design's section 12.
 - A check that drives `main` past a guard has to make what follows the
   guard harmless. With the claim removed, the judge's refusal check ran on
   into the real CLI. It now runs dry, so a regression spends nothing
+
+## 2026-09-24 — The efficacy design read by its owner, and round 3's grader built
+
+**Tool:** Claude Code (Opus 5.5 1M)
+
+**Key changes:**
+- The v3.0 groom's upstream actions were applied to the milestone:
+  - #330 closed as won't do and #562 closed as decided
+  - #717, #1050 and #1006 moved to the backlog
+  - #1504 raised to P1, #1292 retitled as the migration guide
+  - the milestone's description set to the fork model
+
+  Recreating the fork-homed issues waits on where the fork lives.
+- The owner read the efficacy design section by section. The review
+  produced 20 fixes, shipped as four PRs:
+  - the brief and change prompt moved out of the design into files, so
+    the restructure could not break the code that read them by heading
+    (#1843)
+  - arm directories named after their arms, and `short − full` added as
+    the eighth contrast (#1844)
+  - the design rewritten for its reader, with plain words, tables, bullets,
+    diagrams, numbered sections, a decision log and an appendix (#1845)
+  - the operator README rewritten the same way (#1846)
+- Round 3 decisions, recorded on #1767:
+  - start anew with all five arms, reusing no earlier trial
+  - eight contrasts
+  - security and data protection each read two ways, by an anchored judge
+    row and a probe pass rate, all primary. The probe margins mean "no
+    probe lost" (#1847)
+  - the new judge rows' control base comes from one uncounted calibration
+    trial
+- The change prompt now names the API, form fields and rules its grader
+  drives. Round 1's pass rate was withdrawn because the grader drove names
+  the prompt never gave (#1848)
+- The brief names customers as personal data under the GDPR. `hand`
+  gains two generic lines, chosen over lines that mirror the probes (#1849)
+- The private suite was extended by three agents, none of which saw the
+  others' work: 534 build checks, 74 change checks, and 12 of 12
+  mutations caught (`braboj/tariff-hidden-suite` 65bfb9a)
+- solid-ai-dirigent got the label scheme, and #7 and #8 were filed: tests
+  must fail before the feature exists, and an opt-in adversarial tester
+
+**Pull requests merged:** #1843, #1844, #1845, #1846, #1847, #1848, #1849.
+
+**Issues closed:** #330, #562.
+
+**Issues filed:** solid-ai-dirigent #7 and #8.
+
+**ADRs:** none owed. Everything changed is the benchmark's own tooling,
+inputs and design document.
+
+**Gaps flagged:**
+- #1850 (design §11's measured suite count) is open, awaiting merge
+- #1767 still owes:
+  - the probes in scoring
+  - the anchored security rows and the calibration trial
+  - `PRIMARY`, `MARGINS` and `PRACTICAL`
+  - regenerating `full`, `short` and `hybrid`
+  - the run itself
+- Where the fork lives is unanswered, which blocks recreating the
+  fork-homed issues and D1
+- The gpt control top-up waits on the judge plan's reset, 2026-09-25 09:52
+
+**Lessons:**
+- A first-run full pass needs a control that must fail. The new suite
+  passed the new reference 534/534. The earlier reference, which has no
+  sign-in, then showed 19 sign-in checks passing vacuously: a token taken
+  from a page that did not exist, and "signed in" read as "`/` answered
+  200"
+- A gate chained with `;` lets the commit through when the gate fails. The
+  change-prompt PR's first push failed CI on comment layout for exactly
+  that reason. Chain gates with `&&`
+- Drafting lines for a hand-written arm while knowing the probes writes the
+  answer key into the arm. The owner chose generic lines instead
+- An earlier finding of mine was wrong: the second judge reads only the
+  control fixture, never a round. Check a claim against the component's
+  own README before building on it
