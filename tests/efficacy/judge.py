@@ -1,11 +1,11 @@
-"""Judge one frozen efficacy trial, blind, through a different vendor.
+"""Judge one frozen efficacy trial, blind.
 
 The design's section 5 fixes what this asks for: a 1-5 rubric with a quoted
 evidence line per score, a pattern census that says what each pattern removes
 or opens, and the three primary dimensions the report leads with. Section 7
-fixes the controls: a different vendor from the generator, blind to arm,
-order shuffled, condition markers stripped, model id and reasoning effort
-recorded.
+fixes the controls: blind to arm, order shuffled, condition markers
+stripped, model id and reasoning effort recorded, and a judge from another
+vendor reading a sample as a cross-check.
 
 Two properties make the result readable as evidence rather than as an
 opinion. The rubric is a JSON Schema the CLI enforces on the final message,
@@ -49,14 +49,15 @@ SPECS = {
         "rounds 1 and 2",
 }
 
-# A different vendor from the generator, which is the stronger form of the
-# design's control: a different family of the same vendor shares a training
-# pipeline with the thing it grades.
-JUDGE_MODEL = "gpt-6-astra"
+# The model each CLI judges with. The rounds' judge is Claude: it shares a
+# vendor with the generator, which a judge from another vendor would not, but
+# that one's plan allows about thirty judgings a week and a round needs three
+# times as many. The other vendor's model reads a sample of each round as a
+# cross-check, and its readings are never meaned with the rounds' judge's.
+JUDGE_MODELS = {"claude": "claude-opus-5-5", "codex": "gpt-6-astra"}
 
-# The CLI that drives the judge. The second backend exists for the control,
-# where the question is whether the rubric moves at all, and not for a round.
-DEFAULT_CLI = "codex"
+# The CLI that drives the rounds' judge.
+DEFAULT_CLI = "claude"
 
 # The local default is low, and the rubric is a reasoning task over long
 # code, so the effort is set on the command and recorded rather than
@@ -536,14 +537,11 @@ def cli_said(outcome):
 
 
 def judge_through_claude(bundle, options, schema_path):
-    """Run the judge through the `claude` CLI instead of `codex`.
+    """Run the judge through the `claude` CLI, the rounds' judge.
 
-    The design fixes the judge as a different vendor from the generator, and
-    this backend is not that judge: it reads the control, where the question is
-    whether the rubric itself falls and rises, not what any one round scored.
-    A reading taken here is recorded under its own CLI and model and is never
-    meaned with another judge's -- a different judge is a different
-    instrument, not another sample of the same one.
+    A reading is recorded under its own CLI and model and is never meaned
+    with another judge's -- a different judge is a different instrument, not
+    another sample of the same one.
 
     There is no schema flag here as there is on `codex`, so the shape is asked
     for in the prompt and enforced afterwards by `validate`, which every answer
@@ -555,6 +553,7 @@ def judge_through_claude(bundle, options, schema_path):
     # output. These three tools read and nothing writes.
     argv = [options.executable, "--print",
             "--model", options.model,
+            "--effort", options.effort,
             "--allowed-tools", "Read", "Glob", "Grep",
             "--add-dir", bundle]
     if options.dry_run:
@@ -1065,10 +1064,10 @@ def launch_checks(scratch):
 
         os.environ["PATH"] = broken_dir
         checks.append(("a CLI that reports no version refuses the run",
-                       refuses(lambda: codex_version(judge_executable()))))
+                       refuses(lambda: codex_version(judge_executable("codex")))))
 
         os.environ["PATH"] = bin_dir
-        executable = judge_executable()
+        executable = judge_executable("codex")
         checks.append(("the CLI resolves to an absolute path",
                        os.path.isabs(executable)
                        and os.path.isfile(executable)))
@@ -1079,7 +1078,7 @@ def launch_checks(scratch):
         plant(bundle, {"SPEC.md": "# spec\n"})
         options = argparse.Namespace(executable=executable, model="m",
                                      effort="high", dry_run=False,
-                                     cli=DEFAULT_CLI, timeout=120)
+                                     cli="codex", timeout=120)
         answer = judge_bundle(bundle, options, os.path.join(scratch, "s.json"))
 
         # The refusal leaves the message file empty, so the failure is read
@@ -1159,6 +1158,12 @@ def backend_checks(scratch):
          and not any(tool in argv for tool in ("Write", "Edit", "Bash"))),
         ("its prompt goes on stdin, not the command line",
          not any("SPEC.md" in arg or "Score each" in arg for arg in argv)),
+
+        # The effort is recorded with every reading, so it has to be the one
+        # the CLI ran at: without the flag the CLI uses its own default.
+        ("the recorded effort is the one passed",
+         argv[argv.index("--effort") + 1:][:1] == ["high"]
+         if "--effort" in argv else False),
     ]
 
 
@@ -1212,10 +1217,10 @@ def parse_args(argv):
                         help="judge only this trial, as none-1; repeatable")
     parser.add_argument("--cli", default=DEFAULT_CLI,
                         choices=("codex", "claude"),
-                        help="which CLI drives the judge. `codex` is the "
-                             "design's judge, a different vendor from the "
-                             "generator; `claude` reads the control only, and "
-                             "its readings are never meaned with the other's.")
+                        help="which CLI drives the judge. `claude` is the "
+                             "rounds' judge; `codex` is the other vendor's, "
+                             "reading a sample as a cross-check, and its "
+                             "readings are never meaned with the other's.")
     parser.add_argument("--repeat", type=int, default=1,
                         help="judgings per trial; the report means them. A "
                              "trial already holding this many is left alone, "
@@ -1223,8 +1228,9 @@ def parse_args(argv):
     parser.add_argument("--rejudge", action="store_true",
                         help="judge a trial already judged; by default such "
                              "a trial is skipped")
-    parser.add_argument("--model", default=JUDGE_MODEL,
-                        help="judge model id, recorded in the report")
+    parser.add_argument("--model",
+                        help="judge model id, recorded in the report; "
+                             "defaults to the CLI's own judge model")
     parser.add_argument("--effort", default=JUDGE_EFFORT,
                         help="reasoning effort, set explicitly because the "
                              "local default is low")
@@ -1234,7 +1240,9 @@ def parse_args(argv):
     parser.add_argument("--dry-run", action="store_true",
                         help="build the bundles and print the command; call "
                              "no model")
-    return parser.parse_args(argv)
+    options = parser.parse_args(argv)
+    options.model = options.model or JUDGE_MODELS[options.cli]
+    return options
 
 
 if __name__ == "__main__":
