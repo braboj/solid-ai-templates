@@ -78,7 +78,12 @@ The second application's trees:
 The damage in `insecure-1` and `leaky-1` sits where the hidden suite does not
 look: it states that password storage, cookie flags and an off-site `next` are
 not graded, and it reads erasure through the pages. Each tree's hidden-suite
-result is identical, test by test, to `base-2`'s.
+result is identical, test by test, to `base-2`'s: 293 of 534 pass. The
+calibration trial seeds only through its command, not when the application
+opens an empty database as the specification asks, so the suite's
+administrator does not exist and 240 checks behind sign-in fail on every tree
+alike. That comparison therefore covers the 293 that pass, the pricing and API
+checks among them.
 
 ## Reading a result
 
@@ -223,9 +228,10 @@ triple, which is what the mean is there to absorb.
 
 `base.zip` and `base-2.zip` each hold one trial's output: the application its
 trees are built from. `base-2.zip` is `git archive` of the calibration trial's
-commit `f74c0cc`, which reproduces it byte for byte. It is an input to this control, not an artifact of it:
-regenerating it would compare a later run against a different application, and
-every number above would silently stop meaning what it says.
+commit `f74c0cc`, which reproduces it byte for byte. Each is an input to this
+control, not an artifact of it: regenerating one would compare a later run
+against a different application, and every number above would silently stop
+meaning what it says.
 
 Two things hold them still. The builder refuses any archive whose sha256 is not
 the one recorded in `control.py`, so a changed base stops the control instead
