@@ -63,7 +63,8 @@ CONTRASTS = (("full", "none"), ("short", "none"), ("hybrid", "none"),
 UP, DOWN, NEUTRAL = "up", "down", "neutral"
 
 # The primary dimensions the report leads with, owner-declared.
-PRIMARY = ("judge_design", "judge_readability", "judge_maintainability")
+PRIMARY = ("judge_design", "judge_readability", "judge_maintainability",
+           "judge_security", "judge_data_protection")
 
 # How a margin is measured: in the metric's own units, or as a share of the
 # baseline arm's mean, so that it scales with the metric.
@@ -83,6 +84,8 @@ MARGINS = {
     "judge_design": ("0.3 points", 0.3, ABSOLUTE),
     "judge_readability": ("0.3 points", 0.3, ABSOLUTE),
     "judge_maintainability": ("0.3 points", 0.3, ABSOLUTE),
+    "judge_security": ("0.3 points", 0.3, ABSOLUTE),
+    "judge_data_protection": ("0.3 points", 0.3, ABSOLUTE),
     "churn_files": ("15 % relative", 0.15, RELATIVE),
     "churn_lines": ("15 % relative", 0.15, RELATIVE),
 }
@@ -197,6 +200,10 @@ METRICS = (
      lambda t: judge_score(t, "readability")),
     ("judge_maintainability", "Maintainability, 1-5", UP,
      lambda t: judge_score(t, "maintainability")),
+    ("judge_security", "Security, 1-5", UP,
+     lambda t: judge_score(t, "security")),
+    ("judge_data_protection", "Data protection, 1-5", UP,
+     lambda t: judge_score(t, "data_protection")),
 
     ("task_success", "Task success, hidden suite pass rate", UP, task_success),
     ("install", "Installs in a clean environment", UP,
@@ -1210,7 +1217,9 @@ def score(wins, fails):
 # The metrics the finding table answers from, and the words it uses.
 ANSWERED = PRIMARY + ("task_success",)
 SHORT = {"judge_design": "design", "judge_readability": "readability",
-         "judge_maintainability": "maintainability"}
+         "judge_maintainability": "maintainability",
+         "judge_security": "security",
+         "judge_data_protection": "data protection"}
 FILES = {"full": "Templates' inline file",
          "short": "Templates' short inline file",
          "hybrid": "Templates' hybrid file", "hand": "Hand-written file"}
@@ -1365,6 +1374,8 @@ CHURN = ("churn_files", "churn_lines", "change_cost_usd")
 READS = (("judge_readability", "more readable"),
          ("judge_design", "better designed"),
          ("judge_maintainability", "more maintainable"),
+         ("judge_security", "more secure"),
+         ("judge_data_protection", "more careful with personal data"),
          ("judge_tests", "better tested"))
 
 # A context file of at most this many lines is one the why-line calls a few
@@ -1448,8 +1459,8 @@ def why_line(trials, results, arm, name, answered, length):
             if effort:
                 lead += " — for more %s" % spoken(effort)
     elif computed:
-        lead = ("the judge saw none of it as better design, readability or "
-                "maintainability")
+        lead = ("the judge saw none of it as better design, readability, "
+                "maintainability, security or data protection")
     elif not built and effort:
         lead = "it took more %s than without a file" % spoken(effort)
     else:
@@ -2317,7 +2328,8 @@ def executive_checks(seed):
                                   "declared its dependencies so that a clean "
                                   "install left the app unable to boot.")
                    and got.endswith("The judge saw none of it as better "
-                                    "design, readability or maintainability; "
+                                    "design, readability, maintainability, "
+                                    "security or data protection; "
                                     "every win is something a tool counts "
                                     "and it missed more of the patterns the "
                                     "domain called for."), got))
@@ -2454,6 +2466,23 @@ def self_test(seed):
     checks.append(("every per-KLOC row carries the static margin",
                    covered and per_kloc_rows == set(STATIC_PER_KLOC),
                    sorted(per_kloc_rows)))
+
+    # A primary the judge asks for and the report does not lead with, or one
+    # without its margin, its threshold or its words, would be read nowhere
+    # or crash the finding table; a row added to one side only fails here.
+    import judge
+    judged = {"judge_" + name for name in judge.PRIMARY}
+    metric_keys = {key for key, _, _, _ in METRICS}
+    worded = {key for key, _ in READS}
+    lacking = sorted(key for key in PRIMARY
+                     if not (key in MARGINS and key in PRACTICAL
+                             and key in SHORT and key in worded
+                             and key in metric_keys))
+    unmatched = sorted(judged.symmetric_difference(PRIMARY))
+    checks.append(("every primary the judge asks for is led with, worded "
+                   "and given its margins",
+                   not lacking and not unmatched,
+                   {"lacking": lacking, "unmatched": unmatched}))
 
     # A nested count divides by the lines its own tool saw.
     planted = {"scores": {"complexity": {"value": {"over_15": 3},
