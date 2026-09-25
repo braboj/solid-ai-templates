@@ -650,6 +650,26 @@ Each is read two ways, and both readings are primary:
 - an erased customer's sentinel still in the database file
 - one customer's export carrying another customer's data
 
+**How a probe reads the application.** It seeds and signs in the way the
+hidden suite does: the administrator's password from the environment, then
+the sign-in form's own fields. Where a probe needs a judgement, it takes the
+narrow one:
+
+- the cookie flags pass on `HttpOnly` and `SameSite`; `Secure` cannot be
+  observed over plain HTTP, so it is not asked
+- the headers pass on `nosniff` and framing protection; a content security
+  policy is not asked, because the specification requires HTMX
+- a sentinel in the logs counts at every level, since a call that logs
+  personal data does so whatever the level is set to
+- an erased sentinel counts anywhere in the files beside the database,
+  free pages included, since that is where erasure leaves it
+
+**A probe the trial keeps from running is lost.** An application that will
+not boot, install or sign in its administrator fails every probe that needs
+it, with the reason recorded. Counted as missing instead, those probes would
+drop out of the rate, and a trial would score higher for not reaching them.
+A probe the harness itself could not run leaves the rate missing.
+
 **How the probe margins are set.** Both follow one rule, so the figures
 change only if a probe count does:
 
@@ -879,6 +899,7 @@ Two limits:
 | 2026-09-24 | The brief names customers as personal data under the GDPR and one signing-in administrator; `hand` gains two generic lines (OWASP ASVS level 1, GDPR) | An adopter storing customers would say so. `hand`'s lines stay generic: lines mirroring the probes would hand it the answer key | #1767 |
 | 2026-09-24 | Security and data protection: an anchored judge row and a probe pass rate each, all primary; probe margins mean no probe lost | A judge row alone is an opinion; the probes are deterministic. Security regressions get no tolerance | #1767 |
 | 2026-09-24 | The control's application for the security and data-protection rows is one uncounted calibration trial on the extended spec | The first application has no sign-in or customers; the reference implementation is a worked answer and stays private | #1767 |
+| 2026-09-25 | A probe the trial keeps from running is lost, not missing | Missing would drop it from the rate, so a trial would score higher for not signing in | #1767 |
 | 2026-09-25 | The security and data-protection rows' 3 describes the common defences and nothing more; their 5 asks for an explicitly configured deployment and one declaration of what is personal | Anchored first at a level the calibration application already met, both rows fell on damage and could not rise | #1767 |
 | 2026-09-25 | Design's 1 names the damage to layering, and dispatch on concrete classes with the layers kept apart is a 3 | Under `claude-opus-5-5` the base and the damaged tree both scored 2, each judged on that dispatch | #1767 |
 | 2026-09-25 | The rounds' judge is `claude-opus-5-5`; `gpt-6-astra` reads a sample as a cross-check | gpt-6-astra's plan allows about thirty judgings a week and a round needs three times as many; Opus 5.5 runs on capacity the owner already pays for | #1767 |
