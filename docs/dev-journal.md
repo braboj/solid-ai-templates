@@ -8715,3 +8715,48 @@ benchmark's own; they are rows in the design's decisions table.
 - A validation script's missing flag looks like a hang: the hidden suite
   ran 13 minutes without `--suite build` against 2 with it. Copy the
   caller's arguments when calling a tool by hand
+
+## 2026-09-26 — The probes join scoring and the report, and the arms are regenerated
+
+**Tool:** Claude Code (Opus 5.5 1M)
+
+**Key changes:**
+- The calibration trial's missing seed was traced to its own code: it
+  seeds only through `tariff seed`, while SPEC §8 says the application
+  seeds an empty database. §8 now says it does so when it starts, and
+  `judge.py` registers the previous spec's hash so the control's second
+  application is still judged against its own (#1860, #1861)
+- `score.py` files a security reading for each build trial it scores, and
+  `report.py` leads with the security and data-protection probe pass rates
+  as primaries: margins 2 and 10 pp, thresholds 9 and 30 pp. A run whose
+  readings carry probes prints no post-hoc security section (#1862)
+- `full`, `short` and `hybrid` were regenerated from the brief that names
+  personal data. `short` was refused twice for width, so its instruction
+  now asks the model to measure every line before answering; the third
+  generation fits. Conformance's width and figure checks leave the arm
+  files out, as generator output (#1863)
+
+**Pull requests merged:** #1859, #1861, #1862, #1863.
+
+**Issues closed:** #1860.
+
+**ADRs:** none owed. The seed timing, the probe primaries and the width
+instruction are the benchmark's own; the last is a row in the design's
+decisions table.
+
+**Gaps flagged:**
+- #1767 still owes round 3 itself: 15 build and 15 change trials, about
+  90 judgings, and the report
+- Whether to patch `base-2.zip` to seed on start is undecided. Unpatched,
+  its hidden-suite comparison covers only what it passes and its sign-in
+  probes are lost
+- The gpt-6-astra cross-check waits on its plan's reset, 2026-10-02 11:34
+
+**Lessons:**
+- A spec edit changes the hash a judge recognises a tree's spec by.
+  Register the old hash before any tree carrying it is judged, or the
+  control's trees stop resolving
+- A generator refused for a bound twice in a row is a cause, not bad
+  luck: nine lines over is not one sample away from passing
+- Regenerated fixtures fall under every check that reads the whole tree.
+  Run conformance on them before calling a regeneration done
