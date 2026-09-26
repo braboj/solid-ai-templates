@@ -362,10 +362,10 @@ list: it costs quota, takes hours, and answers a different question from
 whether this repository is sound. `tests/efficacy/README.md` owns its
 procedure, and `docs/design/efficacy-benchmark.md` owns the method.
 
-Its judge has a control of its own, which builds a damaged and an improved
-copy of one pinned application and scores all three. Run it whenever the
-judge model, its effort or the rubric prompt changes, because each of those
-invalidates every reading the benchmark has taken:
+Its judge has a control of its own, which builds damaged and improved
+copies of two pinned applications and scores every tree. Run it whenever
+the judge model, its effort or the rubric prompt changes, because each of
+those invalidates every reading the benchmark has taken:
 
 ```bash
 py tests/efficacy/control/control.py --root C:/efficacy/control-<date>
