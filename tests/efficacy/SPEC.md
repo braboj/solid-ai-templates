@@ -400,8 +400,8 @@ subtotal. Its `net` is that subtotal, and its `invoice_discount`, `taxable`,
 
 ## 8. Seed fixture
 
-The application seeds an empty database with exactly this data, and a
-documented command re-seeds it.
+When it starts on an empty database, the application seeds it with exactly
+this data, and a documented command re-seeds it.
 
 Products, priced in EUR:
 
