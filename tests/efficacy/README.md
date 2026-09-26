@@ -393,8 +393,15 @@ needs it.
 Each trial is installed into a fresh environment under `security/` in the
 scoring area. The results go to `security-scores/`.
 
+A build scoring runs it too, on each trial it scored and on any trial with
+no reading yet, so the two primary rates never wait on a second command.
+Run it alone only to read again with `--reread`.
+
 Seven of the probes were declared after round 1, so for rounds 1 and 2 the
 report prints their counts apart, with means and intervals and no verdict.
+A round whose readings carry the probes gets no such section: from round 3
+the two pass rates are primary dimensions, with the margins and thresholds
+of the design's §5.8.
 
 ### Reporting
 

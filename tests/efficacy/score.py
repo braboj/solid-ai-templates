@@ -1402,6 +1402,20 @@ def claim_checks(scratch):
         os.path.join(scoring_area(root), "hidden-suite")))]
 
 
+def security_checks(scratch):
+    """A build scoring reads security for what it scored and what lacks a
+    reading, and leaves a skipped trial's reading alone."""
+    target = os.path.join(scratch, "security-scores")
+    os.makedirs(target)
+    for name in ("full-1", "none-1"):
+        with io.open(os.path.join(target, "%s.json" % name), "w",
+                     encoding="utf-8") as handle:
+            handle.write("{}")
+    owed = security_owed(target, ["full-1", "hand-1", "none-1"], ["none-1"])
+    return [("a rescored trial is read again, a skipped one only if unread",
+             owed == ["hand-1", "none-1"])]
+
+
 def self_test():
     """Prove the missing-vs-zero rule fires before any score is believed.
 
@@ -1424,7 +1438,7 @@ def self_test():
     checks = (run_record_checks(scratch) + churn_checks(scratch)
               + lock_checks() + html_checks() + readonly_checks(scratch)
               + lock_source_checks(scratch) + unrun_checks(scratch)
-              + claim_checks(scratch))
+              + claim_checks(scratch) + security_checks(scratch))
     venv = create_venv(os.path.join(scratch, "venv"))
 
     empty = os.path.join(scratch, "empty")
@@ -1626,11 +1640,32 @@ def score_trials(options):
         print("  %s" % summary(scores))
         scored.append(name)
 
+    # The probe pass rates are primary, so a build scoring files them rather
+    # than leaving them to a second command someone must remember.
+    owed = []
+    if options.task == "build":
+        owed = security_owed(os.path.join(area, "security-scores"),
+                             scored + skipped, scored)
+    if owed:
+        # Imported here, because security.py imports this module.
+        import security
+        security.file_readings(area, {name: existing_score(target, name)
+                                      for name in owed}, owed)
+
     done = bool(scored or skipped)
     lib.print_verdict(refused == 0 and done,
-                      "%d scored, %d already scored, %d refused"
-                      % (len(scored), len(skipped), refused))
+                      "%d scored, %d already scored, %d refused, %d read for "
+                      "security" % (len(scored), len(skipped), refused,
+                                    len(owed)))
     return 0 if refused == 0 and done else 1
+
+
+def security_owed(target, names, fresh):
+    """The trials owed a security reading: each one scored in this run, whose
+    reading must describe the tree its new score does, and any other that
+    has none."""
+    return sorted(name for name in names
+                  if name in fresh or existing_score(target, name) is None)
 
 
 if __name__ == "__main__":

@@ -62,9 +62,11 @@ CONTRASTS = (("full", "none"), ("short", "none"), ("hybrid", "none"),
 # improves downward, "neutral" is reported without a verdict.
 UP, DOWN, NEUTRAL = "up", "down", "neutral"
 
-# The primary dimensions the report leads with, owner-declared.
+# The primary dimensions the report leads with, owner-declared. Security and
+# data protection are each read twice, by the judge and by the probes.
+PROBE_RATES = ("security_probe_pass_rate", "data_protection_probe_pass_rate")
 PRIMARY = ("judge_design", "judge_readability", "judge_maintainability",
-           "judge_security", "judge_data_protection")
+           "judge_security", "judge_data_protection") + PROBE_RATES
 
 # How a margin is measured: in the metric's own units, or as a share of the
 # baseline arm's mean, so that it scales with the metric.
@@ -86,6 +88,8 @@ MARGINS = {
     "judge_maintainability": ("0.3 points", 0.3, ABSOLUTE),
     "judge_security": ("0.3 points", 0.3, ABSOLUTE),
     "judge_data_protection": ("0.3 points", 0.3, ABSOLUTE),
+    "security_probe_pass_rate": ("2 pp", 0.02, ABSOLUTE),
+    "data_protection_probe_pass_rate": ("10 pp", 0.10, ABSOLUTE),
     "churn_files": ("15 % relative", 0.15, RELATIVE),
     "churn_lines": ("15 % relative", 0.15, RELATIVE),
 }
@@ -95,7 +99,10 @@ MARGINS.update((key, ("10 % relative", 0.10, RELATIVE))
 # The practical thresholds of the design's section 1.2 that can owe the one
 # escalation to K = 5. Only a primary dimension triggers it, so no other
 # metric's threshold is carried here, where something could come to read it.
-PRACTICAL = {key: ("0.5 points", 0.5) for key in PRIMARY}
+PRACTICAL = {key: ("0.5 points", 0.5) for key in PRIMARY
+             if key not in PROBE_RATES}
+PRACTICAL.update(security_probe_pass_rate=("9 pp", 0.09),
+                 data_protection_probe_pass_rate=("30 pp", 0.30))
 
 
 def path(payload, *keys):
@@ -204,6 +211,11 @@ METRICS = (
      lambda t: judge_score(t, "security")),
     ("judge_data_protection", "Data protection, 1-5", UP,
      lambda t: judge_score(t, "data_protection")),
+    ("security_probe_pass_rate", "Security probe pass rate, of eleven", UP,
+     lambda t: security_value(t, "security_probe_pass_rate")),
+    ("data_protection_probe_pass_rate",
+     "Data-protection probe pass rate, of three", UP,
+     lambda t: security_value(t, "data_protection_probe_pass_rate")),
 
     ("task_success", "Task success, hidden suite pass rate", UP, task_success),
     ("install", "Installs in a clean environment", UP,
@@ -1009,8 +1021,10 @@ def write_report(root, trials, table, results, seed, escalation,
 
     lines.append("## Primary dimensions")
     lines.append("")
-    lines.append("The report leads with these three, owner-declared in the "
-                 "design. Task success and cost follow.")
+    lines.append("The report leads with these, owner-declared in the design: "
+                 "%s judge rows and %s probe pass rates. Task success and cost "
+                 "follow." % (counted(len(PRIMARY) - len(PROBE_RATES)),
+                              counted(len(PROBE_RATES))))
     lines.append("")
     lines.extend(contrast_table(table, results, PRIMARY, active=active))
     lines.append("")
@@ -1184,6 +1198,19 @@ def wrap_prose(lines, width):
     return wrapped
 
 
+def posthoc_owed(trials):
+    """Whether the run's security readings are the post-hoc checks.
+
+    From round 3 the same checks are probes, fixed before the run and read
+    through the two pass rates, so a run whose readings carry probes has no
+    post-hoc section: printed, it would call them declared after the run.
+    """
+    readings = [trial["security"] for trial in trials.values()
+                if trial["security"]]
+    return bool(readings) and not any("probes" in reading
+                                      for reading in readings)
+
+
 def posthoc_section(table, results, active=None):
     """The report's lines on the security checks declared after the run."""
     lines = ["## Security, read with checks declared after the results",
@@ -1219,7 +1246,9 @@ ANSWERED = PRIMARY + ("task_success",)
 SHORT = {"judge_design": "design", "judge_readability": "readability",
          "judge_maintainability": "maintainability",
          "judge_security": "security",
-         "judge_data_protection": "data protection"}
+         "judge_data_protection": "data protection",
+         "security_probe_pass_rate": "security probes",
+         "data_protection_probe_pass_rate": "data-protection probes"}
 FILES = {"full": "Templates' inline file",
          "short": "Templates' short inline file",
          "hybrid": "Templates' hybrid file", "hand": "Hand-written file"}
@@ -1281,7 +1310,10 @@ def moved_cell(results, name):
     for key in PRIMARY:
         entry = results[key][name]
         computed = computed or entry["verdict"] != "not computed"
-        if entry["verdict"] in ("better", "worse"):
+        if entry["verdict"] in ("better", "worse") and key in PROBE_RATES:
+            cells.append("%s %s pp" % (SHORT[key],
+                                       signed(100 * entry["mean"])))
+        elif entry["verdict"] in ("better", "worse"):
             cells.append("%s %s" % (SHORT[key], signed(entry["mean"])))
     if not computed:
         return NOT_MEASURED
@@ -1657,6 +1689,20 @@ def withdrawn_section(withdrawn):
     return lines
 
 
+def thresholds():
+    """Each primary's practical threshold in words, a shared one said once."""
+    worded = []
+    for key in PRIMARY:
+        label = PRACTICAL[key][0]
+        if key in PROBE_RATES:
+            label = "%s for the %s" % (label, SHORT[key])
+        if label not in worded:
+            worded.append(label)
+    if len(worded) == 1:
+        return worded[0]
+    return "%s or %s" % (", ".join(worded[:-1]), worded[-1])
+
+
 def escalation_section(escalation):
     """The report's lines on the one escalation to K = 5 the design permits."""
     k = escalation["k"]
@@ -1664,8 +1710,8 @@ def escalation_section(escalation):
              "",
              "Fixed before the run: one escalation is owed where a primary "
              "dimension's interval contains zero while its mean paired "
-             "difference exceeds 0.5 points in either direction, on any "
-             "contrast. K never exceeds %d." % K_CEILING,
+             "difference exceeds %s in either direction, on any contrast. "
+             "K never exceeds %d." % (thresholds(), K_CEILING),
              ""]
     state, owed = escalation["state"], escalation["owed"]
     if state == "not assessed":
@@ -2051,6 +2097,14 @@ def posthoc_checks(seed):
     checks.append(("the planted row would read better",
                    posthoc[1]["security_headers"]["full-none"]["verdict"]
                    == "better", posthoc[1]["security_headers"]["full-none"]))
+
+    # A round-3 reading carries its probes, and its checks were fixed before
+    # the run, so the section that calls them post-hoc is not printed for it.
+    probed = {name: dict(trial, security=dict(trial["security"], probes={}))
+              for name, trial in trials.items()}
+    checks.append(("a run whose readings carry probes has no post-hoc section",
+                   posthoc_owed(trials) and not posthoc_owed(probed),
+                   (posthoc_owed(trials), posthoc_owed(probed))))
 
     scratch = os.path.join(os.environ.get("TEMP", "."),
                            "efficacy-report-posthoc-self-test")
@@ -2476,13 +2530,30 @@ def self_test(seed):
     worded = {key for key, _ in READS}
     lacking = sorted(key for key in PRIMARY
                      if not (key in MARGINS and key in PRACTICAL
-                             and key in SHORT and key in worded
-                             and key in metric_keys))
-    unmatched = sorted(judged.symmetric_difference(PRIMARY))
+                             and key in SHORT and key in metric_keys
+                             and (key in worded or key in PROBE_RATES)))
+    unmatched = sorted(judged.symmetric_difference(
+        key for key in PRIMARY if key not in PROBE_RATES))
     checks.append(("every primary the judge asks for is led with, worded "
                    "and given its margins",
                    not lacking and not unmatched,
                    {"lacking": lacking, "unmatched": unmatched}))
+
+    # A probe rate is read from the reading security.py files under the same
+    # name; a row pointed at a name it never files would read missing for
+    # every trial, and the primary would decide nothing without failing.
+    import security
+    filed = {name: {"value": 0, "missing": None}
+             for name in security.STATIC_PROBES + ("debug",)}
+    security.add_probes(filed, None, "the planted trial did not boot",
+                        lost=True)
+    rows = {key: getter for key, _, _, getter in METRICS}
+    unread = sorted(key for key in PROBE_RATES
+                    if rows[key]({"security": filed}) is None
+                    or rows[key]({"security": filed})
+                    != filed[key]["value"])
+    checks.append(("every probe rate reads the rate security.py files",
+                   not unread, unread))
 
     # A nested count divides by the lines its own tool saw.
     planted = {"scores": {"complexity": {"value": {"over_15": 3},
@@ -2533,7 +2604,7 @@ def main(argv):
     withdraw(withdrawn, table, results)
     escalation = assess_escalation(trials, results, options.seed, withdrawn)
     posthoc = None
-    if any(trial["security"] for trial in trials.values()):
+    if posthoc_owed(trials):
         posthoc_table = collect(trials, POSTHOC)
         posthoc = (posthoc_table, contrasts(posthoc_table, options.seed,
                                             crossed_labels(trials)))
