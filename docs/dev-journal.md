@@ -8648,3 +8648,70 @@ inputs and design document.
 - An earlier finding of mine was wrong: the second judge reads only the
   control fixture, never a round. Check a claim against the component's
   own README before building on it
+
+## 2026-09-25 — Round 3's judge rows pass the control, under a new judge
+
+**Tool:** Claude Code (Opus 5.5 1M)
+
+**Key changes:**
+- The gpt-6-astra control top-up finished. At three judgings per tree,
+  every primary falls on its damaged tree and rises on an improved one
+  (#1853)
+- `security` and `data_protection` joined the judge's rubric as anchored
+  primaries, and a self-test check now fails when the judge and the report
+  disagree on the primaries (#1854)
+- The control gained a second pinned application: one uncounted
+  calibration trial on the extended spec, `claude-sonnet-5`, arm `none`.
+  Four trees were built from it to move the new rows. Every tree fails the
+  same hidden-suite checks as its base (#1852, #1855)
+- The control showed both new rows falling on damage and never rising:
+  the calibration application already met their 5s. Both were re-anchored
+  (#1858)
+- gpt-6-astra hit its plan's weekly limit 16 judgings into the re-run.
+  The owner made `claude-opus-5-5` the rounds' judge, with gpt-6-astra as
+  a cross-check on a sample (#1858)
+- The claude backend had recorded effort `high` and never passed it. It
+  now does, and a self-test check fails without it (#1858)
+- Under Opus 5.5 at `high`, design did not fall: the base and the damaged
+  tree both scored 2 on the same dispatch. Design's 1 and 3 were
+  rewritten, and the final control passes all five primaries (#1858)
+- The 14 security and data-protection probes were built in `security.py`.
+  A probe the trial keeps from running is lost, not missing, on the
+  owner's decision (#1857)
+- The PLAYBOOK's account of the control now describes two applications
+
+**Pull requests merged:** #1850, #1851, #1852, #1853, #1854, #1855,
+#1857, #1858.
+
+**Pull requests closed unmerged:** #1856, replaced by #1857 because its
+first commit carried a value gitleaks reads as a secret.
+
+**Issues closed:** none.
+
+**ADRs:** none owed. The judge, the anchors and the probe rule are the
+benchmark's own; they are rows in the design's decisions table.
+
+**Gaps flagged:**
+- #1767 still owes:
+  - the probes run by `score.py` and read as primaries by `report.py`,
+    with their margins and thresholds
+  - regenerating `full`, `short` and `hybrid` from the new brief
+  - the run itself
+- The gpt-6-astra cross-check waits on its plan's reset, 2026-10-02 11:34
+- The calibration trial does not seed an empty database. So its
+  hidden-suite comparison covers only the checks it passes, and its
+  sign-in probes are lost
+
+**Lessons:**
+- A control built on a base that already meets the top anchor can show a
+  fall and never a rise. Read where the base lands before trusting a row
+  that only falls
+- A reading's recorded setting must be the one the tool ran with: the
+  effort field said `high` for every claude judging while the CLI used its
+  own default
+- gitleaks scans every branch's history. A test sentinel named like a
+  secret cannot be fixed by a later commit, only by a fresh branch and
+  deleting the old one
+- A validation script's missing flag looks like a hang: the hidden suite
+  ran 13 minutes without `--suite build` against 2 with it. Copy the
+  caller's arguments when calling a tool by hand
