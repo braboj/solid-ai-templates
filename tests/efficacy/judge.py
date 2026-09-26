@@ -47,6 +47,8 @@ SPEC = os.path.join(HERE, "SPEC.md")
 SPECS = {
     "ebecfff1951ce0f4f2d5a0d95564be7e6eda15283905116e83805020e7cb85f5":
         "rounds 1 and 2",
+    "c9e24a3850d1b7033ad8f2261f6e7a2b18c62d490020d1d2d8e5ad5b144da7b2":
+        "the calibration trial",
 }
 
 # The model each CLI judges with. The rounds' judge is Claude: it shares a
