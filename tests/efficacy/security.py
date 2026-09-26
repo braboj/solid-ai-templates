@@ -1210,10 +1210,20 @@ def read_trials(options, area, scored, wanted):
                           % len(done))
         return 0
 
+    file_readings(area, scored, wanted)
+    lib.print_verdict(True, "%d trial(s) read, %d already read"
+                      % (len(wanted), len(done)))
+    return 0
+
+
+def file_readings(area, scored, names):
+    """Read each named trial from its score file and file the reading under
+    `security-scores/`, overwriting any earlier one."""
+    target = os.path.join(area, "security-scores")
     auditor, reason = install_auditor(os.path.join(area, "security", "tools"))
     os.makedirs(target, exist_ok=True)
-    for name in wanted:
-        print("%s  reading" % name)
+    for name in names:
+        print("%s  reading for security" % name)
         result = read_trial(area, name, scored[name], auditor, reason)
         with io.open(os.path.join(target, "%s.json" % name), "w",
                      encoding="utf-8") as handle:
@@ -1226,9 +1236,6 @@ def read_trials(options, area, scored, wanted):
                         "security_headers", "error_leakage",
                         "security_probe_pass_rate",
                         "data_protection_probe_pass_rate")))
-    lib.print_verdict(True, "%d trial(s) read, %d already read"
-                      % (len(wanted), len(done)))
-    return 0
 
 
 if __name__ == "__main__":
