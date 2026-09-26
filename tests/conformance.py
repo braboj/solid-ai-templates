@@ -81,13 +81,23 @@ CHECKS = [
      "title": "Development journal entry form", "do": RUN,
      "expect": ["nonzero"]},
 
+    # The efficacy benchmark's arm files are a generator's verbatim output,
+    # which its design forbids editing; `short`'s is held to its own budget
+    # and the others to none. They are source material the benchmark
+    # measures, not documentation, so both checks leave them out.
     {"file": "base/core/docs.md", "find": "width, source = None, None",
      "title": "Documentation line width matches the declared one",
-     "do": RUN, "expect": ["nonzero"]},
+     "do": RUN, "expect": ["nonzero"],
+     "substitute": {'["git", "ls-files", "*.md"]':
+                    '["git", "ls-files", "*.md", '
+                    '":(exclude)tests/efficacy/arms/"]'}},
 
     {"file": "base/core/docs.md", "find": "ungated figures",
      "title": "A documentation figure comes from a generator",
-     "do": RUN, "expect": ["nonzero", "zero"]},
+     "do": RUN, "expect": ["nonzero", "zero"],
+     "substitute": {'SOURCES = ("templates/", "generated/", "examples/")':
+                    'SOURCES = ("templates/", "generated/", "examples/", '
+                    '"tests/efficacy/arms/")'}},
 
     {"file": "base/core/docs.md", "find": "(?:R|TD)[0-9]{2}",
      "title": "Risk and technical-debt identifiers stay in their owning doc",

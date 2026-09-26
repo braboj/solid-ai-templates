@@ -244,6 +244,8 @@ lines.
 
 - `short`'s file must be at most 40 lines, none longer than 88 characters.
 - The generator refuses a result over either bound rather than trimming it.
+- The instruction asks the model to measure every line against the width
+  before answering. It adds no content, only the check.
 - `hybrid` has no budget. The interview's hybrid model fixes what it inlines
   and what it refers to.
 - `short` and `hand` sit within a line of each other, so `short − hand`
@@ -903,6 +905,7 @@ Two limits:
 | 2026-09-25 | The security and data-protection rows' 3 describes the common defences and nothing more; their 5 asks for an explicitly configured deployment and one declaration of what is personal | Anchored first at a level the calibration application already met, both rows fell on damage and could not rise | #1767 |
 | 2026-09-25 | Design's 1 names the damage to layering, and dispatch on concrete classes with the layers kept apart is a 3 | Under `claude-opus-5-5` the base and the damaged tree both scored 2, each judged on that dispatch | #1767 |
 | 2026-09-25 | The rounds' judge is `claude-opus-5-5`; `gpt-6-astra` reads a sample as a cross-check | gpt-6-astra's plan allows about thirty judgings a week and a round needs three times as many; Opus 5.5 runs on capacity the owner already pays for | #1767 |
+| 2026-09-26 | `short`'s instruction asks the model to measure every line against the width before answering | On the round-3 brief two generations in a row were refused, with 1 and then 9 lines over 88 characters; retrying until one passed would select the tersest sample, and dropping the width lets a line carry a paragraph | #1767 |
 
 ¹ This agrees with Anthropic's guidance on context engineering, which asks
 for the smallest set of high-signal tokens:
