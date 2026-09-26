@@ -578,8 +578,15 @@ Security and data protection join them from round 3 (§5.8).
 - **Blind:** the context file and any condition marker are stripped, the
   order is shuffled at a recorded seed, and a bundle that still names its
   arm is not judged.
-- **A different vendor:** `gpt-6-astra` through `codex exec`, while the
-  generator is Claude. The model id and reasoning effort are recorded.
+- **Claude, cross-checked by another vendor:** `claude-opus-5-5` through
+  the `claude` CLI at effort `high`, with the model id and effort recorded.
+  It shares a vendor with the generator, so a judge that favours its own
+  family could favour every arm. Every arm is written by the same generator,
+  so a contrast between arms cancels most of that; what it would not cancel
+  is a preference for the templates' own style, which were largely written
+  with Claude. `gpt-6-astra` through `codex exec` therefore judges a sample
+  of each round, and the report states how often the two agree. The two are
+  never averaged.
 
 ### 5.7 How the judge is checked
 
@@ -608,9 +615,8 @@ The reference implementation cannot serve instead. It is a worked answer to
 the hidden suite and stays private, and a trial keeps the base
 agent-written, like everything else the judge scores.
 
-A second judge, Claude through the `claude` CLI, reads the control fixture
-only, never a round, and its scores are never averaged with the first
-judge's.
+The control fixture is read by both judges, each in a root of its own, and
+a primary counts only if it falls and rises under the rounds' judge.
 
 ### 5.8 Security and data protection
 
@@ -805,7 +811,7 @@ result cannot say which produced it. A control is what rules it out.
 | `hybrid` legitimately carries the templates | Its reads of its own vendored copy are not a reach; naming the repository by URL or owner still is |
 | The model changes between trials | Exact id pinned; trials interleaved |
 | The agent sees the acceptance tests | The hidden suite stays outside the workspace until scoring |
-| The judge favours its own family or longer output | A different vendor from the generator; blind; shuffled; length reported |
+| The judge favours its own family or longer output | Every arm has the same generator; another vendor's judge reads a sample, and the agreement is reported; blind; shuffled; length reported |
 | The judge sees which arm it reads | Context files, the vendored templates and condition markers are stripped; a bundle still naming its arm is refused |
 | The judge's score is noise | Three judgings per tree, averaged |
 | The judge's scale cannot move | Anchored primaries, validated by the control fixture (§5.7) |
@@ -894,6 +900,9 @@ Two limits:
 | 2026-09-24 | Security and data protection: an anchored judge row and a probe pass rate each, all primary; probe margins mean no probe lost | A judge row alone is an opinion; the probes are deterministic. Security regressions get no tolerance | #1767 |
 | 2026-09-24 | The control's application for the security and data-protection rows is one uncounted calibration trial on the extended spec | The first application has no sign-in or customers; the reference implementation is a worked answer and stays private | #1767 |
 | 2026-09-25 | A probe the trial keeps from running is lost, not missing | Missing would drop it from the rate, so a trial would score higher for not signing in | #1767 |
+| 2026-09-25 | The security and data-protection rows' 3 describes the common defences and nothing more; their 5 asks for an explicitly configured deployment and one declaration of what is personal | Anchored first at a level the calibration application already met, both rows fell on damage and could not rise | #1767 |
+| 2026-09-25 | Design's 1 names the damage to layering, and dispatch on concrete classes with the layers kept apart is a 3 | Under `claude-opus-5-5` the base and the damaged tree both scored 2, each judged on that dispatch | #1767 |
+| 2026-09-25 | The rounds' judge is `claude-opus-5-5`; `gpt-6-astra` reads a sample as a cross-check | gpt-6-astra's plan allows about thirty judgings a week and a round needs three times as many; Opus 5.5 runs on capacity the owner already pays for | #1767 |
 
 ¹ This agrees with Anthropic's guidance on context engineering, which asks
 for the smallest set of high-signal tokens:

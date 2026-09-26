@@ -1,11 +1,11 @@
-"""Judge one frozen efficacy trial, blind, through a different vendor.
+"""Judge one frozen efficacy trial, blind.
 
 The design's section 5 fixes what this asks for: a 1-5 rubric with a quoted
 evidence line per score, a pattern census that says what each pattern removes
 or opens, and the three primary dimensions the report leads with. Section 7
-fixes the controls: a different vendor from the generator, blind to arm,
-order shuffled, condition markers stripped, model id and reasoning effort
-recorded.
+fixes the controls: blind to arm, order shuffled, condition markers
+stripped, model id and reasoning effort recorded, and a judge from another
+vendor reading a sample as a cross-check.
 
 Two properties make the result readable as evidence rather than as an
 opinion. The rubric is a JSON Schema the CLI enforces on the final message,
@@ -49,14 +49,15 @@ SPECS = {
         "rounds 1 and 2",
 }
 
-# A different vendor from the generator, which is the stronger form of the
-# design's control: a different family of the same vendor shares a training
-# pipeline with the thing it grades.
-JUDGE_MODEL = "gpt-6-astra"
+# The model each CLI judges with. The rounds' judge is Claude: it shares a
+# vendor with the generator, which a judge from another vendor would not, but
+# that one's plan allows about thirty judgings a week and a round needs three
+# times as many. The other vendor's model reads a sample of each round as a
+# cross-check, and its readings are never meaned with the rounds' judge's.
+JUDGE_MODELS = {"claude": "claude-opus-5-5", "codex": "gpt-6-astra"}
 
-# The CLI that drives the judge. The second backend exists for the control,
-# where the question is whether the rubric moves at all, and not for a round.
-DEFAULT_CLI = "codex"
+# The CLI that drives the rounds' judge.
+DEFAULT_CLI = "claude"
 
 # The local default is low, and the rubric is a reasoning task over long
 # code, so the effort is set on the command and recorded rather than
@@ -143,10 +144,13 @@ place on the scale rather than wherever ordinary work lands. Score against
 the description nearest what you read, and use 2 and 4 for the gaps between.
 
 design
-  1  one module holds the rules, the pricing and the web layer; adding a
-     discount kind means editing the algorithm, the form and the template
-  3  the domain is separated from the web layer, but the algorithm reaches
-     for concrete rule classes, so a new kind reopens more than one function
+  1  the layers are not kept apart: the domain's modules are merged into
+     one, or the domain imports the web framework, and adding a discount
+     kind means editing the algorithm, the form and the template
+  3  the domain is a set of modules of its own that imports nothing from
+     the web layer, and the algorithm dispatches on concrete rule classes,
+     so a new kind reopens more than one function; that dispatch alone, with
+     the layers kept apart, is a 3 and not lower
   5  a discount kind is added by writing one class: the algorithm, the
      persistence mapping, the form and the template read a contract or a
      registry and name no kind of their own
@@ -171,25 +175,31 @@ maintainability
      discount kind sits in one place
 
 security
-  1  the password is stored or compared as plain text, the secret key is a
-     literal in the source, SQL is built from strings, and each route checks
-     sign-in for itself, so a route can be missed
-  3  the password is hashed with a library call and every query is
-     parameterised, but sign-in is still checked route by route, and the
-     `next` target is followed without checking where it points
-  5  one guard covers every route but sign-in, the password is hashed with
-     a salted slow hash, the secret key comes from the environment, every
-     form carries a CSRF token, and `next` is accepted only as a local path
+  1  a secret sits in plain sight or input reaches a query or a redirect
+     unchecked: the password stored or compared as typed, the secret key a
+     literal in the source, SQL built from strings, `next` followed wherever
+     it points
+  3  the common defences are all present - a hashed password, parameterised
+     queries, one sign-in guard, a CSRF token on every form, `next` checked
+     for a local path - and the application stops there: the secret key
+     comes from a default or a file the deployment cannot set, and the
+     session cookie and the responses carry only the framework's defaults
+  5  everything in 3, and the deployment is configured on purpose: the
+     secret key is read from the environment, the session cookie's flags
+     are set, every response carries security headers, and each check a
+     reviewer audits, such as the redirect target, is one named function
 
 data_protection
-  1  customer fields reach the logs, erasure leaves copies of the customer
-     behind, and the export's query is not limited to one customer
-  3  erasure and export are correct, but every place that stores or shows
-     a customer's data handles it for itself, so the next place to hold
-     one is a place to forget
-  5  the personal data sits in one place that erasure and export both read,
-     nothing logs a customer field, and the export is built from the
-     customer's id alone
+  1  personal data escapes: customer fields are written to the logs, erasure
+     leaves the data behind, or an export reaches past one customer
+  3  erasure and export do what the specification asks, but nothing names
+     what is personal: each query, view and template lists the fields or
+     checks the erased flag for itself, so the next field or page added is
+     one to forget
+  5  one declaration names the personal fields, and erasure, export and
+     every read of a single customer go through it; an erased customer
+     cannot be read by accident, and erased data does not linger in the
+     database file
 
 A submission that removes what a lower anchor describes scores above it, even
 where the result is ordinary: these are descriptions of the code, not of how
@@ -530,14 +540,11 @@ def cli_said(outcome):
 
 
 def judge_through_claude(bundle, options, schema_path):
-    """Run the judge through the `claude` CLI instead of `codex`.
+    """Run the judge through the `claude` CLI, the rounds' judge.
 
-    The design fixes the judge as a different vendor from the generator, and
-    this backend is not that judge: it reads the control, where the question is
-    whether the rubric itself falls and rises, not what any one round scored.
-    A reading taken here is recorded under its own CLI and model and is never
-    meaned with another judge's -- a different judge is a different
-    instrument, not another sample of the same one.
+    A reading is recorded under its own CLI and model and is never meaned
+    with another judge's -- a different judge is a different instrument, not
+    another sample of the same one.
 
     There is no schema flag here as there is on `codex`, so the shape is asked
     for in the prompt and enforced afterwards by `validate`, which every answer
@@ -549,6 +556,7 @@ def judge_through_claude(bundle, options, schema_path):
     # output. These three tools read and nothing writes.
     argv = [options.executable, "--print",
             "--model", options.model,
+            "--effort", options.effort,
             "--allowed-tools", "Read", "Glob", "Grep",
             "--add-dir", bundle]
     if options.dry_run:
@@ -1059,10 +1067,10 @@ def launch_checks(scratch):
 
         os.environ["PATH"] = broken_dir
         checks.append(("a CLI that reports no version refuses the run",
-                       refuses(lambda: codex_version(judge_executable()))))
+                       refuses(lambda: codex_version(judge_executable("codex")))))
 
         os.environ["PATH"] = bin_dir
-        executable = judge_executable()
+        executable = judge_executable("codex")
         checks.append(("the CLI resolves to an absolute path",
                        os.path.isabs(executable)
                        and os.path.isfile(executable)))
@@ -1073,7 +1081,7 @@ def launch_checks(scratch):
         plant(bundle, {"SPEC.md": "# spec\n"})
         options = argparse.Namespace(executable=executable, model="m",
                                      effort="high", dry_run=False,
-                                     cli=DEFAULT_CLI, timeout=120)
+                                     cli="codex", timeout=120)
         answer = judge_bundle(bundle, options, os.path.join(scratch, "s.json"))
 
         # The refusal leaves the message file empty, so the failure is read
@@ -1153,6 +1161,12 @@ def backend_checks(scratch):
          and not any(tool in argv for tool in ("Write", "Edit", "Bash"))),
         ("its prompt goes on stdin, not the command line",
          not any("SPEC.md" in arg or "Score each" in arg for arg in argv)),
+
+        # The effort is recorded with every reading, so it has to be the one
+        # the CLI ran at: without the flag the CLI uses its own default.
+        ("the recorded effort is the one passed",
+         argv[argv.index("--effort") + 1:][:1] == ["high"]
+         if "--effort" in argv else False),
     ]
 
 
@@ -1206,10 +1220,10 @@ def parse_args(argv):
                         help="judge only this trial, as none-1; repeatable")
     parser.add_argument("--cli", default=DEFAULT_CLI,
                         choices=("codex", "claude"),
-                        help="which CLI drives the judge. `codex` is the "
-                             "design's judge, a different vendor from the "
-                             "generator; `claude` reads the control only, and "
-                             "its readings are never meaned with the other's.")
+                        help="which CLI drives the judge. `claude` is the "
+                             "rounds' judge; `codex` is the other vendor's, "
+                             "reading a sample as a cross-check, and its "
+                             "readings are never meaned with the other's.")
     parser.add_argument("--repeat", type=int, default=1,
                         help="judgings per trial; the report means them. A "
                              "trial already holding this many is left alone, "
@@ -1217,8 +1231,9 @@ def parse_args(argv):
     parser.add_argument("--rejudge", action="store_true",
                         help="judge a trial already judged; by default such "
                              "a trial is skipped")
-    parser.add_argument("--model", default=JUDGE_MODEL,
-                        help="judge model id, recorded in the report")
+    parser.add_argument("--model",
+                        help="judge model id, recorded in the report; "
+                             "defaults to the CLI's own judge model")
     parser.add_argument("--effort", default=JUDGE_EFFORT,
                         help="reasoning effort, set explicitly because the "
                              "local default is low")
@@ -1228,7 +1243,9 @@ def parse_args(argv):
     parser.add_argument("--dry-run", action="store_true",
                         help="build the bundles and print the command; call "
                              "no model")
-    return parser.parse_args(argv)
+    options = parser.parse_args(argv)
+    options.model = options.model or JUDGE_MODELS[options.cli]
+    return options
 
 
 if __name__ == "__main__":

@@ -30,11 +30,11 @@ as a refusal or a missing metric, not a crash.
 
 | Needs | For | Without it |
 |---|---|---|
-| `claude` on `PATH`, logged in | every trial and every arm's generation | the preflight refuses the run |
+| `claude` on `PATH`, logged in | every trial, every arm's generation, and the judge | the preflight refuses the run |
 | `gh`, logged in with access to `braboj/tariff-hidden-suite` | scoring clones the hidden suite | scoring refuses |
 | a Java runtime on `PATH` | `html5validator`, the HTML validity metric | that metric is missing |
 | a Playwright browser | the suite's browser flows and the accessibility probe | scoring installs one, and refuses the trial where it cannot |
-| `codex` on `PATH`, logged in | the judge | each bundle's judging fails |
+| `codex` on `PATH`, logged in | the cross-check judge, on a sample | each of its judgings fails |
 
 `score.py --no-web` skips both browser-side probes and installs no browser.
 The suite then skips its browser flows, and the trial is flagged as partial.
@@ -372,14 +372,15 @@ resolved path.**
 The self test installs a stand-in CLI behind a shim, checks the prompt and
 every argument arrive whole, and has the stand-in refuse.
 
-**The control fixture checks the judge itself.** Six trees built from one
-application, some damaged, some improved, all passing the same tests. A
-primary row counts only if it falls on the damaged trees and rises on the
-improved ones. See `control/README.md`.
+**The control fixture checks the judge itself.** Trees built from two
+pinned applications, some damaged, some improved, each passing its
+application's tests. A primary row counts only if it falls on the damaged
+trees and rises on the improved ones. See `control/README.md`.
 
-A second judge reads the control fixture only, never a round, through
-`judge.py --cli claude --model <model>`, in a root of its own. Its scores
-are never averaged with the rounds' judge.
+The rounds' judge is `claude-opus-5-5` through the `claude` CLI, the
+default. The other vendor's judge, `gpt-6-astra`, runs with `--cli codex`
+in a root of its own and reads a sample of each round as a cross-check. Its
+scores are never averaged with the rounds' judge (the design's §5.6).
 
 ### Security
 
