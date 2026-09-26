@@ -1,406 +1,391 @@
-CLAUDE.md
-============
+# CLAUDE.md — tariff
 
-# tariff
+Project: `tariff`
+Owner: Imbra Ltd
+Repository: not yet set (add the URL here when the remote exists)
+Agent context file: `CLAUDE.md`
 
-**Owner:** Imbra Ltd
-**Agent context file for:** Claude Code (this file). See `README.md` for the
-human-facing overview once it exists — this file is agent guidance and
-project rules, not a substitute for it.
+## 1. Project
 
-## 1. What this is
+`tariff` is a pricing and invoicing web application for Imbra Ltd. It holds a product catalog, discount rules of several kinds, tax jurisdictions and customers, and assembles invoices from them.
 
-`tariff` is a pricing and invoicing engine: a product catalog, discount
-rules of several kinds, tax jurisdictions, and invoices assembled from
-them. It ships as a Python library with a small Flask web application
-layered on top for interactive use.
+Two actors use it:
 
-The project runs locally only. There is no deployment target, no hosting
-environment, and no network dependency of any kind — everything reaches
-only the local filesystem (a single SQLite file).
+- **The administrator**, the only account, works in a browser.
+- **Another program** imports the pricing engine as a library and consumes invoice exports.
 
-## 2. Actors and boundaries
+The web application is one caller of the engine. The engine MUST work without the web application present.
 
-There are exactly two actors:
+The program's interfaces are the library's own API and the invoice exports. Nothing reaches the network. The store is a local SQLite file. The application runs locally, with no deployment target.
 
-- **A person working in a browser**, via the Flask + Jinja + HTMX web
-  application.
-- **Another program**, which imports the pricing engine directly as a
-  Python library, with no web application present.
+Customers are people. The store holds their name, email and postal address, and invoices name them. The business is in the EU, so the GDPR applies. A customer may ask for their data to be erased or for a copy of it, and the application MUST be able to do both (section 7).
 
-The pricing engine (catalog, discount rules, tax jurisdictions, invoice
-assembly) is a **library**. The Flask web application is **one caller of
-that library**, with no special access the other-program caller lacks. Any
-design that gives the web layer a shortcut into engine internals the
-library API does not expose is a layering violation, not a convenience.
-
-The two supported, stable **interfaces** of this project are:
-
-1. The library's own public Python API (`import tariff`).
-2. Invoice exports (the files/documents the engine produces).
-
-Everything else — the Flask routes, the templates, the HTMX partials, the
-database schema — is implementation detail behind those two interfaces and
-may change without the same stability guarantees. Treat a change to either
-interface as **architecturally significant** per §12 (Decision records):
-it needs an ADR, a deprecation window (see `base-quality`'s "before
-removing or renaming a public symbol, mark it deprecated"), and the same
-scrutiny `backend-quality`'s API-stability rule gives a versioned HTTP API,
-adapted to a Python API and a file format instead of a wire contract.
-
-There is no third actor and no network boundary to defend: nothing in this
-project makes an outbound network call, and the web application is not
-exposed beyond the local machine. Rules elsewhere in this file that assume
-a network-facing service (CORS, SSRF, TLS, security headers, DAST) are
-declined for that reason — see §7.
-
-## 3. Stack
+## 2. Stack
 
 | Concern | Choice |
 | --- | --- |
 | Language | Python 3.12 |
-| Web framework | Flask 3 |
-| Templates | Jinja (bundled with Flask) |
-| Interactivity | HTMX 2.x, server-rendered partials |
-| Storage | SQLite, single local file |
-| Package manager | `uv` |
-| Lint / format | `ruff` / `ruff format` |
-| Type checker | `mypy` (strict) |
-| Tests | `pytest` |
-| Distribution | none — local checkout only |
+| Web framework | Flask 3, application factory, blueprints |
+| Templates | Jinja2 with autoescape, server-rendered |
+| Interactivity | HTMX 2.x, vendored under `static/` and never loaded from a CDN |
+| Store | SQLite, one local file |
+| Packaging | uv, with `pyproject.toml` and a committed `uv.lock` |
+| Lint and format | ruff (`ruff check`, `ruff format`) |
+| Types | mypy `--strict` |
+| Cognitive complexity | complexipy |
+| SAST | bandit |
+| Tests | pytest with pytest-cov |
+| Secrets | gitleaks, in pre-commit and CI |
+| Hooks | pre-commit |
 
-No container image, no CI/CD pipeline, no cloud target. If a deployment
-target is ever added, treat that as the revisit trigger for adopting
-`base-cicd`, `base-containers`, `base-security` transport/headers rules
-and `base-devsecops` — none of them are adopted now, and none of them are
-declined for lack of merit; they are declined because there is nothing
-here for them to protect yet.
+Not adopted, each with a revisit trigger:
 
-## 4. Project structure
+| Candidate | Why not | Revisit when |
+| --- | --- | --- |
+| Containers, CI/CD deploy stages, IaC, Kubernetes | There is no deployment target. | A deployment target is chosen. |
+| Feature flags | Nothing is rolled out progressively. | A second operator or environment exists. |
+| Messaging and background jobs | Nothing is asynchronous. | An operation exceeds one request's budget. |
+| Alpine.js | HTMX and plain HTML cover current needs. | Client-only state beyond a single toggle appears. |
+| Distributed tracing | It is a single local process. | The application is split into more than one process. |
+| Mutation testing | The suite is not yet mature. | The engine's suite is stable and its rules carry real money. |
 
-`README.md`, once created, is the single source of truth for project
-structure (`base-docs`). This section is a pointer plus agent-specific
-placement rules, not a second directory tree to keep in sync — update
-README first, then bring this section's placement notes in line with it
-if they diverge.
+Declining a candidate needs at most a line in the PR. It needs no ADR or ticket.
 
-Initial layout (seed this into `README.md` § Project structure when it is
-created):
+## 3. Project structure
+
+`README.md` is the single source of truth for the directory tree. This section holds only the placement rules for agents.
+
+- `src/tariff/engine/` is the pricing engine library. It holds the catalog model, discount rules, tax calculation, invoice assembly, exports and the public API in `__init__.py`.
+- `src/tariff/store/` holds SQLite access (repositories, unit of work) and migrations.
+- `src/tariff/web/` holds the Flask factory, blueprints per domain, templates and static files.
+  - Blueprints: `catalog`, `discounts`, `tax`, `customers`, `invoices`, `auth`.
+  - Partials live in `templates/partials/`.
+- `tests/` holds `unit/`, `integration/` and `e2e/`, plus `tests/component/` for route-level tests.
+- `examples/` is optional. If created, it needs its own `README.md` and follows section 13.
+- `docs/` holds `ONBOARDING.md`, `PLAYBOOK.md`, `dev-journal.md` and `decisions/`.
+
+### The boundary that must not be crossed
+
+- `tariff.engine` MUST NOT import `flask`, `werkzeug`, `jinja2`, `tariff.web` or `tariff.store`. The engine depends on nothing but the standard library and its own modules.
+- The engine receives data through parameters and protocols (for example a `CatalogReader` protocol) that `store` and `web` implement. This is dependency inversion.
+- `tariff.store` MUST NOT import `tariff.web`.
+- The web layer depends on both the store and the engine. It calls the engine and never re-implements pricing.
+
+Check this after committing. Pass condition: it prints the module count, then `layering violations: 0`, and exits zero.
+
+```bash
+py - <<'EOF'
+import ast, pathlib
+
+ROOT = pathlib.Path("src")
+FORBIDDEN = (
+    ("tariff.engine", "flask"),
+    ("tariff.engine", "werkzeug"),
+    ("tariff.engine", "jinja2"),
+    ("tariff.engine", "tariff.web"),
+    ("tariff.engine", "tariff.store"),
+    ("tariff.store", "tariff.web"),
+)
+
+def imported(tree):
+    names = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            names.append(node.module)
+    return names
+
+files = sorted(ROOT.rglob("*.py"))
+print("modules inspected: %d" % len(files))
+findings = []
+for path in files:
+    module = ".".join(path.relative_to(ROOT).with_suffix("").parts)
+    for name in imported(ast.parse(path.read_text(encoding="utf-8"))):
+        for importer, banned in FORBIDDEN:
+            if module.startswith(importer) and (
+                name == banned or name.startswith(banned + ".")
+            ):
+                findings.append("%s imports %s" % (module, name))
+print("layering violations: %d" % len(findings))
+for finding in findings:
+    print("  " + finding)
+raise SystemExit(1 if findings or not files else 0)
+EOF
+```
+
+A count of zero modules is a failure. It means the enumeration reached nothing.
+
+## 4. Off-limits paths
+
+These MUST NOT be modified without a proposal first. The proposal carries a rollback strategy and the tests that would catch a regression. The approval covers that plan, not the area.
+
+- Auth and session code (`tariff/web/auth/`, session configuration, the password hash and login flow).
+- Schema migrations (`tariff/store/migrations/`). Never edit a merged migration.
+- `.env*` and anything handling secrets. This includes the secret key and the administrator credential.
+- The personal-data erasure and export code (section 7). A defect there is a GDPR defect.
+- The public API of `tariff.engine` (`__init__` exports) and the invoice export formats. Both are observable interfaces (section 12).
+- CI workflow definitions (`.github/workflows/`), if and when they exist.
+
+A diff touching one of these paths MUST say so at the top of its summary, naming the path, whether or not it owes a proposal. A diff confined to comments and prose is ordinary work. A `# noqa` or `# nosec` line is executable, and so is one that touches a comment and a step.
+
+## 5. Commands
 
 ```
-src/
-  tariff/
-    __init__.py        # public library API — catalog, discounts, tax, invoices
-    catalog.py
-    discounts.py
-    tax.py
-    invoices.py
-    storage.py          # SQLite access; file path is an injected setting, never a global
-    web/                 # Flask application — imports tariff, never the reverse
-      __init__.py        # create_app() factory
-      blueprints/
-        catalog/
-        discounts/
-        invoices/
-      templates/
-      static/
-tests/
-  test_catalog.py
-  test_discounts.py
-  test_tax.py
-  test_invoices.py
-  component/            # Flask handler-level tests
-  integration/           # tests against a real SQLite file
-examples/
-  README.md
-  price_and_invoice.py   # uses `tariff` directly, no Flask installed
-data/                    # local SQLite file lives here at runtime (gitignored)
-pyproject.toml
-.env.example
-README.md
-CLAUDE.md
+uv sync --locked                                 # install from the lock
+uv run flask --app tariff.web run --debug        # run locally on 127.0.0.1
+uv run pytest                                    # fast tier: unit + integration
+uv run pytest --cov=tariff                       # with coverage
+uv run ruff check src tests                      # lint
+uv run ruff format --check src tests             # format check
+uv run mypy src tests --strict                   # types
+uv run complexipy src                            # cognitive complexity
+uv run bandit -r src                             # SAST
+pre-commit run --all-files                       # every hook
 ```
 
-Placement rules:
+Before every commit, run pytest, mypy, ruff and pre-commit, and read the output. A local run is evidence about one platform.
 
-- `src/tariff/__init__.py` MUST NOT import anything from `src/tariff/web/`.
-  The dependency runs one way: web depends on the engine, never the
-  reverse (`base-quality`'s acyclic-dependency and directional-boundary
-  rules). This is the mechanical form of "the web application is one
-  caller of it."
-- Flask, Jinja, and HTMX-related code and templates live only under
-  `tariff/web/`. The engine package (`tariff/catalog.py`,
-  `discounts.py`, `tax.py`, `invoices.py`, `storage.py`) MUST be
-  importable and usable with no web dependency installed — this is what
-  lets "another program" import the pricing engine without the web
-  application present.
-- Declare `web` as an optional dependency group in `pyproject.toml`
-  (Flask, Jinja, HTMX static assets), so the core install stays free of
-  it (`base-python-optional-deps`). `import tariff` MUST succeed in an
-  environment with only the core group installed.
-- `examples/` MUST contain at least one runnable example that imports
-  `tariff` directly with no Flask/web dependency present, to make the
-  "library usable without the web application" contract obvious and
-  keep it honest (`base-examples`).
+## 6. Configuration
 
-## 5. Adopted conventions and precedence
+- All configuration comes from environment variables with the `TARIFF_` prefix (for example `TARIFF_DATABASE_PATH`, `TARIFF_SECRET_KEY`, `TARIFF_PORT`).
+- `.env.example` is committed with placeholders. `.env` is gitignored.
+- One typed `Settings` object is built once in `create_app` and passed explicitly. There are no config globals in engine or service code.
+- Required settings that are missing or invalid fail at startup with a message naming the setting.
+- The secret key and the administrator credential are required and have no default.
+- The engine reads no environment variable. Its configuration (rounding policy, currency) is passed in.
+- Bind to `127.0.0.1` by default. The port comes from `TARIFF_PORT`. Binding to another interface needs an explicit setting and an explicit decision.
+- Config precedence is default, then file, then environment, then CLI flag. An empty value is an error, not a fallback to the default.
 
-This file inlines the conventions this project has adopted from its
-template chain (`stack-flask` + `stack-htmx`, over `python-service`,
-`python-lib`, and the base quality/git/testing/security/docs templates).
-The full candidate set is much larger than what follows — declining a
-candidate here required no ADR and needs none to decline later, per
-`base-docs`'s "Adopting shared rules": templates supply candidates, not
-obligations.
+## 7. Personal data (GDPR)
 
-- **This file is authoritative.** Where a rule below narrows, or
-  explicitly declines, something a template would otherwise imply, this
-  file governs. A future template update does not silently re-expand an
-  adopted rule set here.
-- Rules are adopted because they address a defect risk this project
-  actually has (money-adjacent arithmetic, a public library contract, a
-  local data file that must not corrupt) — not by default inheritance.
-- Declined wholesale, with the revisit trigger stated: CI/CD pipeline
-  rules (`base-cicd`), container rules (`base-containers`), DevSecOps
-  pipeline rules (`base-devsecops` SAST/DAST/SBOM automation),
-  network-facing security rules (CORS, SSRF, TLS/HSTS, security headers)
-  from `base-security`, messaging (`backend-messaging`), feature flags
-  (`backend-features`), Kubernetes/orchestration. **Revisit trigger:** the
-  day this project gains a deployment target, a network-facing listener
-  beyond localhost, or an external service dependency. Detection: a
-  person deciding to deploy it is the only thing that will notice —
-  there is no automated check for "this project just got a deployment
-  target."
+Personal data means a customer's name, email and postal address, wherever they appear: the store, invoices, exports, logs, test fixtures and error messages.
 
-## 6. Code quality
+- **Minimise.** Store only the personal fields the product needs. Add a new personal field only with a stated purpose in the PR.
+- **Export.** One function in the store layer produces a complete copy of one customer's data (record and invoices naming them) as JSON, in a machine-readable form. It is reachable from the administrator's UI. Tests assert that every personal column in the schema appears in the export, so a newly added column fails the test until it is exported.
+- **Erasure.** One function erases or anonymises one customer's personal fields in a single transaction.
+  - Invoices already issued keep their amounts, tax lines and numbering, but the customer's name and address on them are replaced by a non-identifying placeholder that keeps the invoice referentially intact.
+  - Whether Imbra's tax or accounting retention duty requires keeping the issued name for a period is a decision for the owner. Until an ADR records it, anonymise and do not hard-delete invoices.
+  - Tests assert that no personal value survives in any table or export after erasure. This includes free-text fields and any audit or history table.
+- **No personal data outside the store.**
+  - Never log names, emails or addresses. Log customer ids only.
+  - Error responses do not echo personal data.
+  - Fixtures and examples use synthetic data only. Never copy a real customer into a test.
+  - Exports and any file the app writes outside the SQLite file are written only where the administrator asks, and the UI says so.
+- **The SQLite file** lives outside the repository (path from `TARIFF_DATABASE_PATH`) and is gitignored. Never commit a database file, dump or backup. Treat every repository as public.
+- **Backups** of the file contain personal data. The playbook names where they go and that an erased customer reappears if a pre-erasure backup is restored, so the erasure is re-applied.
+- Changing what is collected, how erasure behaves or the export shape is an observable change. It needs an ADR (section 12) and a `CHANGELOG.md` entry.
 
-Adopted from `base-quality` and `base-oop`, scoped to what a small
-Python codebase with one library and one thin web layer needs:
+## 8. Security
 
-- DRY, KISS, YAGNI. A discount rule or tax jurisdiction that is not
-  needed yet is not built speculatively — new rule *kinds* are added
-  when a real jurisdiction or promotion needs them, not in anticipation.
-- Names are the primary documentation. No abbreviations, no single-letter
-  names outside loop counters. Functions are verbs (`apply_discount`,
-  `assemble_invoice`); classes are nouns (`TaxJurisdiction`,
-  `DiscountRule`).
-- Cognitive complexity kept low; maximum nesting depth of three levels;
-  early returns and guard clauses over nested conditionals.
-- No boolean flag parameters on public functions — where a call needs to
-  select *which* discount or tax rule applies, pass the rule object or an
-  enum member named for what it does, never a `bool`.
-- Errors this project raises on purpose form one hierarchy under a
-  package base (`base-python-errors`): a `TariffError` root, with
-  specific subtypes (`InvalidDiscountError`, `UnknownJurisdictionError`,
-  `InvoiceAssemblyError`) a caller can catch meaningfully. Both the
-  library caller and the Flask handlers catch from this hierarchy, never
-  bare `except Exception`.
-- Fail fast: invalid catalog entries, malformed discount configuration,
-  or an unrecognized tax jurisdiction raise immediately at the boundary
-  where they enter the system (data load, API call, form submission) —
-  never propagate silently into an invoice.
-- Magic numbers (tax rates, currency minor-unit factors, rounding
-  precision) are named constants with the source of the figure recorded
-  beside them, not scattered literals.
-- No debug `print()`, no commented-out code, no hardcoded breakpoints in
-  committed code.
-- Comments explain *why*, never *what*; no comment cites an issue or PR
-  number — name the source or reasoning instead, since code outlives the
-  tracker.
+There is one administrator and no other account. No network access is expected, but the application is still an authenticated web application.
 
-Composition over inheritance for discount rules and tax jurisdictions:
-model each as a small object implementing a shared protocol (Strategy
-pattern from `base-oop`), not a growing inheritance hierarchy or a chain
-of `if isinstance(...)` checks in the invoice assembler.
+- **Authentication.**
+  - The administrator's password is stored hashed with scrypt (Werkzeug `generate_password_hash`) or Argon2. Never store it plain, and never use MD5, SHA-1 or plain SHA-256.
+  - Compare secrets in constant time.
+  - Throttle failed logins.
+  - Login errors say "invalid credentials" and nothing more.
+  - Every route except the login page and the health endpoint requires the session. Apply the check in one `before_request` guard on the app, not per route, so a new blueprint cannot forget it.
+- **Sessions.** Cookies are `HttpOnly`, `SameSite=Lax`, and `Secure` whenever the app is served over HTTPS. The session id is regenerated at login. Sessions expire after 30 minutes idle, and logout invalidates the session server-side.
+- **CSRF.** The session is authenticated by a cookie, so every `POST`, `PUT`, `PATCH` and `DELETE` carries a CSRF token (Flask-WTF `CSRFProtect`, never hand-rolled). Every form renders the token. HTMX requests send it through `hx-headers` on `<body>`. `GET` never changes state.
+- **Injection and XSS.** Use parameterised queries only. Never build SQL by string interpolation. Jinja autoescape stays on, and never use `| safe` or `Markup` on data that a customer or the administrator typed.
+- **Headers.** Set them in one `after_request` hook: a strict `Content-Security-Policy` (no `unsafe-inline`, no `unsafe-eval`, self-hosted scripts only), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, and a restrictive `Permissions-Policy`.
+  - Pin static MIME types in code, because `nosniff` makes the server the sole authority.
+  - Verify script execution in a real browser, not only status codes.
+  - HSTS applies only if the app is ever served over HTTPS.
+- **Errors.** No stack traces, paths or SQL errors reach the browser. Return a generic message, log the detail with a request id, and use RFC 9457 `application/problem+json` for JSON error responses. Debug mode is never on outside local development.
+- **Nothing reaches the network.** No CDN, font, analytics or telemetry call, and no outbound HTTP client. Adding one needs an ADR. SSRF rules apply the moment a URL from input is fetched. It is not fetched today.
+- **Secrets.** None in source, history, commits, PRs or conversation. An agent MUST NOT read, print or cat `.env`, key or credential files. Check presence with `test -f .env && echo exists`. If a secret is exposed, flag it, name it and recommend rotating it.
+- **Dependencies.** Commit `uv.lock` and install with `uv sync --locked`. Refresh the lock deliberately and name what refreshes it. Prefer maintained dependencies, remove unused ones, and check licences before adding one. GPL and AGPL need explicit approval.
+- Run bandit and gitleaks (full history in CI) on every change.
 
-## 7. Security
+## 9. Architecture and code rules
 
-Scoped down from `base-security` because nothing here is network-facing
-(§2):
+### Layers
 
-- **Adopted:**
-  - Input validation at the boundary — every value entering from a form,
-    an HTTP request, or the library's public API is validated before use
-    (`security-input`). Reject with a clear error; do not silently coerce.
-  - Output encoding — Jinja's autoescaping stays on; no `| safe`, no
-    manual HTML construction with untrusted or computed values
-    (`security-output`).
-  - SQL access is parameterized (via the SQLite driver's parameter
-    binding or SQLAlchemy Core if adopted) — never string-interpolated
-    (`security-injection`).
-  - CSRF protection on state-changing HTTP requests (`security-csrf`),
-    because a browser attaches cookies to `POST`s automatically even to a
-    local origin; use Flask's / an extension's CSRF middleware rather than
-    hand-rolling it.
-  - Secrets handling: no secrets are expected (no external service, no
-    auth), but `.env.example` is still committed with placeholders and
-    `.env` is gitignored, in case a future setting needs to stay out of
-    source control (`security-secrets`).
-  - Agent secrets handling (`security-agent-secrets`): do not print or
-    log the contents of `.env` or any local config file.
-- **Declined, with trigger:** CORS, SSRF protections, TLS/HSTS, security
-  response headers, DAST, rate limiting, authentication/session
-  management. None of these defend anything that exists here — there is
-  no cross-origin caller, no outbound HTTP client, no non-localhost
-  listener, and no login. **Revisit trigger:** any of those change (a
-  network listener beyond `127.0.0.1`, an outbound HTTP call, a login
-  screen). Detection: same as §5 — a design decision a person makes, not
-  an automated signal.
+The order is route handler, then service function, then repository. Handlers are thin: decode the request, call a service, render or encode the response. No database access in handlers. No HTTP concerns in services.
 
-## 8. Configuration
+### Money and rounding
 
-Adopted from `base-config`, scaled to a local-only app:
+- Amounts are `decimal.Decimal` or integer minor units, never `float`. In SQLite store integer minor units, because SQLite has no exact decimal type.
+- Currency codes are ISO 4217. Timestamps are stored in UTC.
+- The rounding rule (mode and the step at which it applies: per line or per invoice) is one named constant, stated once and covered by tests.
+- Never scatter `round()` calls.
 
-- Configuration (SQLite file path, Flask `SECRET_KEY` for CSRF/session
-  signing, debug flag) comes from environment variables, never hardcoded.
-- `.env.example` is committed with placeholder values; `.env` is
-  gitignored.
-- The SQLite file path is a constructor parameter of the storage layer,
-  never read from a global inside `tariff/catalog.py` etc. — this is what
-  keeps the library usable by "another program" with its own data file.
-- Fail fast: missing required configuration (e.g. no database path
-  resolvable) raises at startup, not on first use.
+### The engine
 
-## 9. Data and storage
+- It is a library. Pricing logic is pure: same inputs give the same output, with no I/O, no clock and no global state. Pass "now" in as a parameter.
+- Discount rules of several kinds are a Strategy: one small class per kind behind a common protocol, so adding a kind is adding a class and a registry entry rather than a new branch.
+- Rule ordering and stacking (which rules combine, and in what order) is stated in one place, documented, and tested with worked examples.
+- Errors the engine raises on purpose derive from one `TariffError` base, each type also deriving from the built-in its site raised before. A test walks every `raise` in the package and fails on one outside the hierarchy. The test also asserts it saw at least one raise.
+- No abstract operation declares `*args` or `**kwargs`.
+- Prefer free functions for stateless logic. Use a class when it owns state.
+- Composition over inheritance, and hierarchies at most two levels deep.
+- No AOP or hidden interception. Cross-cutting behaviour is explicit at a visible call site.
 
-The store is a single local SQLite file — not a client-server database.
-Adapted from `backend-database` and `base-data-modeling`:
+### Public API
 
-- Schema changes go through migrations (Alembic, or a minimal
-  hand-rolled versioned-migration script if Alembic is overkill for the
-  eventual schema size) — never hand-edit the SQLite file's schema.
-  Migrations are committed, one logical change per migration, and are
-  never modified once merged.
-- No connection pooling concerns apply (SQLite is a file, not a
-  server) — but a single `sqlite3`/SQLAlchemy engine instance per
-  process is still the right shape, injected into the storage layer
-  rather than opened ad hoc at each call site.
-- Table and column names: lowercase snake_case, plural table names,
-  `is_`/`has_` boolean prefixes, `<table_singular>_id` foreign keys
-  (`data-modeling-naming`).
-- Monetary values are stored as integers in the currency's minor unit
-  (cents), never as floating point (`data-modeling-types`). Tax rates
-  and discount percentages carry a documented, fixed decimal precision.
-- Invoice numbering is generated by the storage layer under a
-  uniqueness constraint the database itself enforces — never computed
-  in application code from a value that can race (e.g. `SELECT MAX(id)
-  + 1`).
+- `tariff.engine` exports its public API from `__init__.py`. Everything else is private. Public functions carry full type hints and Google-style docstrings.
+- The API is stable, following semver. Before removing or renaming a public symbol, deprecate it with a comment naming the replacement, and remove it in a follow-up.
+- A rename spanning a method and its keyword arguments is deprecated together or not at all.
+- Importing `tariff.engine` has no side effects and reads no file or environment.
+- A library attaches `logging.NullHandler()` to its own logger and installs no writing handler. The logger is injectable.
+
+### Store
+
+- SQLite through one connection factory. Foreign keys on (`PRAGMA foreign_keys = ON`) and WAL where it fits.
+- Schema changes go only through versioned migrations, committed and never edited once merged. Each has an `up` and a `down`.
+- Multi-step writes run in one transaction that is short and never spans a request. Timeouts are set on connections. No unbounded queries.
+- Follow the data-modeling rules:
+  - snake_case plural table names
+  - `is_`/`has_` boolean prefixes
+  - `<table>_id` foreign keys
+  - a documented maximum length on text columns
+  - foreign keys defined explicitly with a deliberate cascade choice
+- Tests use a real SQLite file or `:memory:`. SQLite is the production engine, so this is not a substitute.
+
+### HTMX and templates
+
+- The server owns state. Endpoints return HTML.
+- Detect HTMX with the `HX-Request` header. Return the partial for HTMX requests and the full page otherwise.
+- Return `204` when nothing changes on screen. Return `422` with the re-rendered form and inline field errors on validation failure. Never redirect to a blank form after a failed `POST`.
+- Every HTMX interaction sets `hx-target` and `hx-swap` explicitly. Use `hx-push-url` only on real navigation.
+- Use `hx-indicator` and `hx-disabled-elt` on submits so nothing is submitted twice.
+- Pages work without JavaScript, and HTMX enhances them.
+- Partials are named for what they render (`partials/invoice_lines.html`) and take all data as explicit context. Keep at most two or three OOB targets per response.
+- Templates hold conditionals and loops only. No business logic. Keep one template per view and extract repeated markup.
+- Accessibility target: WCAG 2.1 AA. Use semantic HTML, labelled fields, `:focus-visible`, and full keyboard operation.
+
+### Validation and requests
+
+- Validate at the boundary with a schema (Pydantic or an equivalent), allowlisting rather than blocklisting. Internal code trusts validated data.
+- Parse typed query parameters explicitly, so absent, valid and invalid are three distinct states. Invalid means `400`, never a silent default.
+- URLs use lowercase hyphenated nouns, plural collections, nested sub-resources, no trailing slash, and camelCase query parameters.
+- List views are paginated.
+
+### General quality
+
+- DRY, KISS, YAGNI. Every deferral names its revisit trigger.
+- Names are the documentation. Functions take a verb, classes a noun, booleans `is_`, `has_` or `can_`. Use no single-letter names except loop counters and `e` in `except`.
+- No boolean flag parameters. Use two named functions or an enum.
+- Cognitive complexity is at most 15 per function, and nesting at most three levels. Use guard clauses.
+- Magic numbers and strings become named constants. A threshold sized from data records its data source.
+- No circular dependencies. Shared logic moves to a third module, never a local copy.
+- Fail fast at boundaries. Fail loudly rather than fall back to a derived value.
+- Every wait on another thread, process or connection is bounded and reports why it gave up.
+- No dead code, no commented-out code, no debug `print`, no `pdb`. Debug tooling sits behind a flag.
+- A workaround comment naming a rejected mechanism is a prompt to grep the codebase for that mechanism.
+- Comments are for intent the code cannot express. Never cite a ticket, PR or ADR number in a code comment. A block comment sits directly above its item, and a trailing comment is only a tool directive.
+- Identifiers are ASCII. Files are UTF-8 with LF endings. Commit `.editorconfig` and `.gitattributes` (`* text=auto`). A program that writes text sets its encoding and line ending explicitly at the boundary.
+- A destructive operation (delete, truncate, overwrite) acts only on what it can prove it created. Erasure (section 7) deletes by key, never by a broad filter.
+- Probe scripts are named `probe_*.py` and deleted before the commit that uses their findings.
 
 ## 10. Testing
 
-Adopted from `base-testing`, `python-lib`, and `python-service`:
-
-- `pytest` for all tests; run `pytest && mypy src --strict` before every
-  commit.
-- Unit tests for the pricing engine (catalog, discount rules, tax
-  calculation, invoice assembly) cover all happy paths plus edge cases:
-  zero-quantity lines, stacked discounts, an unrecognized jurisdiction,
-  rounding at the smallest currency unit. New engine code MUST have unit
-  tests achieving at least 90% coverage before merging; the project
-  targets 80% overall coverage (`quality-gates-thresholds`).
-- Integration tests exercise the storage layer against a real (temporary)
-  SQLite file — never a mocked database (`backend-database` testing
-  rule). Each test gets its own temp file or an in-memory `:memory:`
-  connection, torn down after the test.
-- Component tests exercise Flask handlers end to end (request in,
-  rendered HTML or HTMX partial out), asserting on meaningful content
-  (headings, field labels, totals) rather than exact markup
-  (`backend-templating-testing`).
-- Test naming: `test_<unit_of_work>_<state>_<expected>`, e.g.
-  `test_apply_discount_expired_promotion_raises_invalid_discount_error`.
-- No mocks for pure functions in the engine — test with real inputs and
-  real (temporary) storage; mocks are reserved for the "another program"
-  integration boundary if that ever needs simulating.
-- Assert against an external definition where one exists: if invoice
-  totals or tax figures are checked against a published example (a
-  known tax table, a hand-computed reference invoice), include at least
-  one test comparing against that external reference, not only
-  round-tripping the engine's own encoder/decoder (`testing-external-
-  definition`).
+- The fast tier (unit and integration) is the default `pytest` run. The tier follows from the directory, set by one collection hook. The e2e tier is opt-in behind a marker.
+- **Unit:**
+  - Engine logic is tested with pure inputs and no mocks.
+  - Cover each discount kind, stacking and ordering, each tax jurisdiction, rounding edges, zero and negative quantities, and empty invoices.
+  - Use worked examples with hand-computed expected totals from the business rules, not values produced by the code under test.
+  - Use `pytest.mark.parametrize` for data-driven cases.
+- **Integration:** real SQLite. Cover repositories, migrations up and down, and the erasure and export functions.
+- **Component:** Flask test client per route. Cover success, `400`/`422` validation, `401` or redirect when unauthenticated, `404`, missing CSRF token rejected, and the partial versus full page split on `HX-Request`.
+- **Engine boundary:** a test imports `tariff.engine` in a fresh interpreter with Flask blocked (for example a stub that raises on import) and exercises the public API.
+- **Export contract:** each invoice export format is asserted against a fixed reference file. A round trip through our own writer and reader proves only self-consistency.
+- **GDPR tests:** as in section 7. They assert that erasure and export cover every personal column.
+- **Negative assertions** assert their inputs were reached. Assert the count of files, rows or records examined, not only that a set is empty.
+- Tests are independent, share no mutable state and set environment variables explicitly per test. A test never touches host state outside the working directory.
+- Never skip or weaken a failing test without a documented reason. A change that deletes or loosens an existing test states why. A change that adds tests needs no ceremony.
+- Coverage is at least 80% overall and at least 90% of new code. It must not regress. Name the `omit` list, and adding to it is a reviewable decision.
+- A test asserting a numeric threshold names what it pins.
+- A visual or template change is verified against the rendered page, not the source.
+- Verify a fix fires on real data, not only on a synthetic case.
 
 ## 11. Quality gates
 
-Local-only, no CI, so the gate layers are editor + pre-commit; there is
-no Layer 3 today (`quality-gates-layers`).
+Every category runs at three layers. CI is the backstop and duplicates pre-commit, because hooks can be bypassed.
 
-| Category | Editor | Pre-commit | Tool |
+| Category | Editor | Pre-commit | CI |
 | --- | --- | --- | --- |
-| Lint | should | must | `ruff check` |
-| Format | should | must | `ruff format` |
-| Type check | should | must | `mypy --strict src` |
-| Secret detection | — | must | `gitleaks` (or equivalent pre-commit hook) |
-| Tests | — | should | `pytest` |
-| Coverage | — | should | `pytest-cov`, 80% overall / 90% new code |
+| Lint (ruff) | yes | yes | yes |
+| Format (ruff format) | yes | yes | yes |
+| Types (mypy strict) | yes | yes | yes |
+| Secrets (gitleaks) | | yes | yes |
+| File hygiene | | yes | |
+| SAST (bandit) | | | yes |
+| Cognitive complexity (complexipy) | | | yes |
+| Tests and coverage | | | yes |
+| Layering check (section 3) | | | yes |
 
-Declined: SAST/DAST scanning, SBOM generation, container image scanning,
-license-compliance automation — no CI pipeline exists to run them in, and
-there is no distributed artifact to scan. **Revisit trigger:** adding a
-CI workflow (even a local `pre-commit` runner is not "CI" in this sense —
-a hosted pipeline is). Detection: same as §5.
+- Thresholds: zero lint, format and type errors, and zero high or critical findings. Coverage is at least 80%.
+- Ruff `D` rules use the Google convention, exempt for `tests/**`. Configuration lives only in `pyproject.toml`.
+- mypy runs `--strict` from the first commit. Never weaken it globally. Scope an escape for an untyped third-party library to a per-module override with a stated reason.
+- Site-local suppressions name the rule (`# noqa: B017`) and are never bare. The reason sits on the line above.
+- When a gate is red, fix the source. Never narrow the gate, and never edit the input a check reads to make a finding disappear. Freeze existing instances by name only, never by count.
+- A check states what it inspected as well as what it found, and its exit status carries its verdict.
+- A skipped check is not a passed check.
+- If a repository host enforces branch protection, CI checks are required status checks and bind administrators.
+- CI runs the same Python version that `.python-version`, `requires-python` and mypy's `python_version` name (3.12), so every gate validates the runtime that runs the app.
 
-`mypy --strict` applies to `src/tariff/` including the `web/`
-subpackage. All public functions in `tariff/__init__.py` and its
-submodules carry full type annotations and Google-style docstrings
-(`base-python-tooling`, `python-lib-conventions`).
+## 12. Git, documentation and decisions
 
-## 12. Decision records
+### Git
 
-Per `base-docs`, an ADR in `docs/decisions/` is required when a change
-alters something a consumer of the two stable interfaces (§2) can observe
-without reading the repository's internals:
+- Always work on a branch and never commit to `main`. Branch names are `feat/…`, `fix/…`, `chore/…` or `docs/…`.
+- Commit messages use conventional prefixes (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `style:`, `test:`), the imperative mood and a subject under 80 characters. When a single-commit branch closes an issue, the subject carries the issue reference.
+- PRs are small, with one concern each. Test locally, then read the CI run before calling the change good. Repeat the closing keyword before each issue number, and never write a closing keyword next to a number you only mean to reference.
+- Never force-push, including `--force-with-lease`. Merge `main` into a stale branch, then regenerate any derived artifact.
+- Regenerate derived artifacts in the same change that edits their source.
+- Do not commit build output, `.venv/`, `__pycache__/`, `.mypy_cache/`, `*.db`, `*.sqlite*`, exports containing personal data, or `.env`. Commit the lockfile. `.gitignore` exists from the first commit.
+- Before merging, review the diff in priority order: security, correctness, clarity, conventions. Personal-data handling is part of security.
+- Tags are annotated `vX.Y.Z` and follow semver. A patch means fixes only, a minor adds compatibly, and a major breaks the API or an export format.
 
-- Any change to the public library API's shape (function signatures,
-  new/removed public symbols in `tariff/__init__.py`, error hierarchy
-  changes a caller might catch on).
-- Any change to the invoice export format (fields, structure, or the
-  file format itself).
-- The choice of discount-rule and tax-jurisdiction extensibility
-  mechanism, if it changes materially (e.g. moving from a Strategy
-  protocol to a plugin-registry model).
+### Documentation
 
-Routine internal refactors, Flask route reshuffling, template changes,
-and HTMX interaction details do not need an ADR — they sit behind the
-stable interfaces, not in them.
+- `README.md` follows the nine-section structure: title and summary, features, quick start, usage, project structure, development setup, configuration reference, links, licence last. It is the source of truth for the directory tree.
+- `docs/ONBOARDING.md` has six numbered sections in order: prerequisites, first-time setup, verify the setup, key files, project context, daily workflow.
+- `docs/PLAYBOOK.md` has five numbered sections in order: git workflow, domain operations (add a discount kind, add a tax jurisdiction, add a personal field, run an erasure or export), quality, maintenance, release and deploy. Release and deploy stays last, and here it means tagging and publishing the library. There is no deployment.
+- `docs/dev-journal.md` is required. Session entries run oldest first, with the heading `## YYYY-MM-DD — Short theme`. Each records Tool, Key changes, PRs merged, Issues closed/created, and Lesson. A P0 or P1 fix or an incident adds a post-mortem.
+- Update the relevant document before every commit. No document states a count or figure about the tree outside a generated block.
+- Rules use RFC 2119 words. Write in the present tense, wrap Markdown at the width declared once in configuration, and write for a reader who lacks context.
+- `CHANGELOG.md` follows Keep a Changelog, with an `Unreleased` section maintained by the change that causes each entry. Entries are at most 40 words and say what changed and what a reader must do. A breaking change names the migration.
+- **ADRs.** A decision needs an ADR in `docs/decisions/` (`NNN-slug.md`, YAML frontmatter, supersession through the frontmatter only) when it changes something observable without reading the internals. Here that means:
+  - the engine's public API
+  - the invoice export formats
+  - discount stacking and rounding semantics
+  - what personal data is kept, and how erasure or export behaves
+  - any new outbound network path
 
-## 13. Git conventions
+  Tool choices, layout and process end in the PR. An ADR is not edited once merged, except for format-only changes.
+- When a document disagrees with the system, establish which is wrong before changing either.
+- Adopting shared rules:
+  - Templates supply candidate conventions, and the project chooses what it adopts.
+  - A template update creates no compliance work by itself.
+  - Rules already adopted here stay in force until this project changes them.
+  - Declining a new candidate needs no ADR or ticket.
 
-Adopted from `base-git`, scaled down (no CI, no release automation, no
-publishing target):
+## 13. Examples
 
-- Conventional commit prefixes (`feat:`, `fix:`, `chore:`, `docs:`,
-  `refactor:`, `test:`), imperative mood, subject under 80 characters.
-- Work on a branch, never commit directly to `main`; small, focused PRs.
-- `.gitignore` covers `.venv/`, `__pycache__/`, `*.egg-info/`,
-  `.mypy_cache/`, `.env`, and the runtime SQLite file under `data/`.
-- Semantic versioning and a `CHANGELOG.md` are **not adopted** while
-  this project has no external consumers or release cadence to serve.
-  **Revisit trigger:** the day "another program" (§2) is a separate
-  team/repository that needs to track compatible versions of the library
-  API. Detection: someone asking "which version of `tariff` am I on" is
-  the signal — there is no automated check for it.
-- Full release-tagging, SBOM, and GitHub Release automation from
-  `base-git`'s release process are declined for the same reason as
-  versioning above, and revisit together with it.
+If an `examples/` directory is created, one file shows one pattern or journey, for instance pricing a basket through the library without the web app.
 
-## 14. Off-limits
+- The directory has its own `README.md`, and each example appears there as an exact command with real output.
+- Examples run offline against the project's own code and synthetic data.
+- Examples are excluded from any built package, and CI runs each one after a plain `uv sync`.
+- An example that verifies something exits non-zero on failure.
 
-Cut down from `base-git`'s default five, because this project has no
-auth subsystem, no payment processing, and no CI/CD workflows to protect
-yet:
+## 14. Working with the agent
 
-- **Database schema and migrations** (`src/tariff/storage.py`'s schema
-  and any migration files) — a change here can silently corrupt or
-  orphan data in the one local SQLite file this project has. Propose the
-  change and its rollback (a down-migration or a documented manual
-  recovery step) before making it.
-- **`.env*` and any file handling configuration/secrets** — never
-  committed with real values; changes to what configuration is read
-  from the environment are proposed before being made, per
-  `base-git`'s off-limits rule.
-
-If auth, a payment integration, or a CI/CD pipeline is added later, add
-it to this list at that time — per `base-quality`'s revisit-trigger
-discipline, that addition is the trigger firing, not a decision to defer
-further.
+- **Plan before implementing.** For a feature or a non-trivial change, first give the files to touch, the function signatures, the edge cases and the assumptions. Wait for approval before writing implementation code. Single-line fixes, typos and fully specified changes are exempt. If a constraint invalidates an approved plan, stop and re-surface the options.
+- **Verify an issue before implementing it.** Re-read the target for existing coverage, check whether an open PR already closes it, and check for ADRs accepted since it was filed.
+- **Verify a finding before reporting it.** Reproduce the defect, or label the finding unverified. A finding from a subagent is a lead, not evidence.
+- **Report faithfully.** If tests fail, say so with the output. If a step was skipped, say that.
+- **Ask before hard-to-reverse or outward-facing actions.** That includes anything that deletes data, touches the real SQLite file, or sends anything anywhere. Nothing may reach the network.
+- **Never use real personal data.** Use synthetic customers in tests, fixtures, examples, docs and conversation.
+- **End-of-session audit.** Before ending a session that changed code:
+  1. Run the full gate set from section 11.
+  2. Run the layering check from section 3.
+  3. Confirm the docs and `CHANGELOG.md` reflect the change.
+  4. Confirm that no personal data, secret or database file is staged.
+  5. State what was and was not verified.
 
 <!-- Generated with solid-ai-templates (github.com/braboj/solid-ai-templates) -->

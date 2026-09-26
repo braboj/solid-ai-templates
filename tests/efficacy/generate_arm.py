@@ -165,12 +165,18 @@ MODELS = {
 }
 
 # The budget clause, stated in the instruction as the design's section 3.3
-# requires. The width keeps a line from carrying a paragraph.
+# requires. The width keeps a line from carrying a paragraph. The closing
+# check adds no content; it asks the model to hold a bound it is already
+# given, since a file over it is refused whole.
 BUDGET = """\
-The finished `CLAUDE.md` MUST be at most %d lines, blank lines counted, and
-no line may be longer than %d characters. Keep the rules that matter most
-for this project and leave the rest out; a rule that does not fit is left
-out, not squeezed onto another rule's line."""
+The finished `CLAUDE.md` MUST be at most {lines} lines, blank lines counted,
+and no line may be longer than {width} characters. Keep the rules that matter
+most for this project and leave the rest out; a rule that does not fit is left
+out, not squeezed onto another rule's line.
+
+Before you answer, measure every line against {width} characters and shorten
+or split each one over it, then count the lines again. A file over either
+bound is refused whole, never trimmed."""
 
 
 def arm_clause(arm):
@@ -178,7 +184,9 @@ def arm_clause(arm):
     entry = GENERATED[arm]
     lines = ["## The output model", "", MODELS[entry["model"]]]
     if entry["budget"]:
-        lines.extend(["", "## The budget", "", BUDGET % entry["budget"]])
+        count, width = entry["budget"]
+        lines.extend(["", "## The budget", "",
+                      BUDGET.format(lines=count, width=width)])
     return "\n".join(lines) + "\n"
 
 
@@ -382,6 +390,8 @@ def self_test():
     print("the budget keeps a file at %d lines of %d characters and refuses "
           "one over either" % (lines, width))
     if "MUST be at most %d lines" % lines not in arm_clause("short") \
+            or "measure every line against %d" % width \
+            not in arm_clause("short") \
             or "budget" in arm_clause("full").lower():
         print("FAIL: the budget clause is not in short's instruction alone")
         return 1
